@@ -1,4 +1,5 @@
 pub mod crypto_primitives;
+pub mod data_structures;
 pub mod error;
 
 use crypto_primitives::byte_array::ByteArray;
