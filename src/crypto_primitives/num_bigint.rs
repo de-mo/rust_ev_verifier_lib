@@ -1,4 +1,4 @@
-use crate::error::VerifierError;
+use crate::error::{create_result_error, VerifierError};
 use num::bigint::{BigUint, ParseBigIntError};
 use num::Num;
 use std::fmt::Debug;
@@ -52,11 +52,12 @@ impl Hexa for BigUint {
     fn from_hexa(s: &String) -> Result<Self, VerifierError<ParseBigIntError, BigUIntErrorType>> {
         match <BigUint as Num>::from_str_radix(s, 16) {
             Ok(n) => Result::Ok(n),
-            Err(e) => Result::Err(VerifierError::new(
+            Err(e) => create_result_error!(
                 BigUIntErrorType::FromHexaError,
-                Option::Some(e),
                 format!("Cannot convert biguint from hexa {}", s),
-            )),
+                e,
+                ParseBigIntError
+            ),
         }
     }
 

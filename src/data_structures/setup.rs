@@ -1,5 +1,6 @@
 use num::BigUint;
 
+/*
 pub struct EncryptionGroup {
     p: BigUint,
     q: BigUint,
@@ -11,3 +12,4 @@ pub struct EncryptionParametersPayload {
     seed: String,
     small_primes: Vec<BigUint>,
 }
+ */

@@ -1,7 +1,7 @@
 //! Module to manage the errors within the verifier
 //TODO Document the module
-//TODO Create macro to create Err with Error
-//TODO Create macro to Create Err withour Error
+
+#![feature(trace_macros)]
 
 use std::{
     error::Error,
@@ -16,6 +16,25 @@ pub struct VerifierError<E: Error, K: Display + Debug> {
     message: String,
 }
 //TODO Add function and function parameters in struct (or do it in message)
+
+macro_rules! create_error {
+    ($k: expr, $m: expr) => {
+        VerifierError::new($k, Option::<EmptyError>::None, $m)
+    };
+    ($k: expr, $m: expr, $e:expr, $et: ty) => {
+        VerifierError::new($k, Option::<$et>::Some($e), $m)
+    };
+}
+
+macro_rules! create_result_error {
+    ($k: expr, $m: expr) => {
+        Result::Err(create_error!($k, $m))
+    };
+    ($k: expr, $m: expr, $e: expr, $et: ty) => {
+        Result::Err(VerifierError::new($k, Option::<$et>::Some($e), $m))
+    };
+}
+pub(crate) use create_result_error;
 
 #[derive(Debug)]
 struct EmptyError {}
@@ -92,7 +111,7 @@ mod test {
         }
     }
     #[test]
-    fn error_new() {
+    fn test_error_new() {
         let e1 = VerifierError::new(
             TestErrorType::Toto,
             Option::<EmptyError>::None,
@@ -108,6 +127,45 @@ mod test {
         );
         assert_eq!(
             e2.__description(),
+            "Error \"fifi\": test.\nInternal Error: test"
+        );
+    }
+
+    #[test]
+    fn test_macro_error_new() {
+        let e1 = create_error!(TestErrorType::Toto, "test".to_string());
+        assert_eq!(e1.__description(), "Error \"toto\": test");
+        let e2 = create_error!(
+            TestErrorType::Fifi,
+            "test".to_string(),
+            TestError {
+                details: "test".to_string(),
+            },
+            TestError
+        );
+        assert_eq!(
+            e2.__description(),
+            "Error \"fifi\": test.\nInternal Error: test"
+        );
+    }
+
+    #[test]
+    fn test_create_result_error() {
+        let e1: Result<u64, VerifierError<EmptyError, TestErrorType>> =
+            create_result_error!(TestErrorType::Toto, "test".to_string());
+        assert!(e1.is_err());
+        assert_eq!(e1.unwrap_err().__description(), "Error \"toto\": test");
+        let e2: Result<u64, VerifierError<TestError, TestErrorType>> = create_result_error!(
+            TestErrorType::Fifi,
+            "test".to_string(),
+            TestError {
+                details: "test".to_string(),
+            },
+            TestError
+        );
+        assert!(e2.is_err());
+        assert_eq!(
+            e2.unwrap_err().__description(),
             "Error \"fifi\": test.\nInternal Error: test"
         );
     }
