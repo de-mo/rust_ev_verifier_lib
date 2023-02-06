@@ -1,8 +1,8 @@
-use crate::error::{create_result_error, VerifierError};
-use num::bigint::{BigUint, ParseBigIntError};
+use crate::error::{create_result_with_error, VerifierError};
+use num::bigint::BigUint;
 use num::Num;
 use std::fmt::Debug;
-use std::{error::Error, fmt::Display};
+use std::fmt::Display;
 //use num::Num;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -18,6 +18,8 @@ impl Display for BigUIntErrorType {
         write!(f, "{s}")
     }
 }
+
+type BigUIntError = VerifierError<BigUIntErrorType>;
 
 pub trait ByteLength {
     /// Byte legnth of a BigUInt
@@ -37,32 +39,29 @@ impl ByteLength for BigUint {
 }
 
 pub trait Hexa: Sized {
-    type HexaErrorType: Error;
-    type ErrorKindType: Display + Debug;
-    fn from_hexa(
-        s: &String,
-    ) -> Result<Self, VerifierError<Self::HexaErrorType, Self::ErrorKindType>>;
+    fn from_hexa(s: &String) -> Result<Self, BigUIntError>;
     fn to_hexa(&self) -> String;
 }
 
 impl Hexa for BigUint {
-    type HexaErrorType = ParseBigIntError;
-    type ErrorKindType = BigUIntErrorType;
-
-    fn from_hexa(s: &String) -> Result<Self, VerifierError<ParseBigIntError, BigUIntErrorType>> {
-        match <BigUint as Num>::from_str_radix(s, 16) {
-            Ok(n) => Result::Ok(n),
-            Err(e) => create_result_error!(
+    fn from_hexa(s: &String) -> Result<Self, BigUIntError> {
+        if !s.starts_with("0x") && !s.starts_with("0X") {
+            return create_result_with_error!(
+                BigUIntErrorType::FromHexaError,
+                format!("Malformed hexa string. Must start with \"0x\" {}", s)
+            );
+        };
+        <BigUint as Num>::from_str_radix(&s[2..], 16).or_else(|e| {
+            create_result_with_error!(
                 BigUIntErrorType::FromHexaError,
                 format!("Cannot convert biguint from hexa {}", s),
-                e,
-                ParseBigIntError
-            ),
-        }
+                e
+            )
+        })
     }
 
     fn to_hexa(&self) -> String {
-        self.to_str_radix(16)
+        format!("{}{}", "0x", self.to_str_radix(16))
     }
 }
 
@@ -90,12 +89,40 @@ mod test {
     }
 
     #[test]
-    fn from_exa() {
+    fn from_str_radix() {
         assert_eq!(
             <BigUint as Num>::from_str_radix("a", 16).unwrap(),
             10.to_biguint().unwrap()
         )
     }
 
-    //TODO Test from_exa and to_hexa
+    #[test]
+    fn from_exa() {
+        assert_eq!(
+            BigUint::from_hexa(&"0x0".to_string()).unwrap(),
+            0.to_biguint().unwrap()
+        );
+        assert_eq!(
+            BigUint::from_hexa(&"0xa".to_string()).unwrap(),
+            10.to_biguint().unwrap()
+        );
+        assert_eq!(
+            BigUint::from_hexa(&"0xab".to_string()).unwrap(),
+            171.to_biguint().unwrap()
+        );
+        assert_eq!(
+            BigUint::from_hexa(&"0x12D9E8".to_string()).unwrap(),
+            1235432.to_biguint().unwrap()
+        );
+        assert!(BigUint::from_hexa(&"123".to_string()).is_err());
+        assert!(BigUint::from_hexa(&"0xtt".to_string()).is_err())
+    }
+
+    #[test]
+    fn to_exa() {
+        assert_eq!(0.to_biguint().unwrap().to_hexa(), "0x0");
+        assert_eq!(10.to_biguint().unwrap().to_hexa(), "0xa");
+        assert_eq!(171.to_biguint().unwrap().to_hexa(), "0xab");
+        assert_eq!(1235432.to_biguint().unwrap().to_hexa(), "0x12d9e8");
+    }
 }
