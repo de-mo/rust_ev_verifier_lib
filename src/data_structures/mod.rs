@@ -5,6 +5,7 @@ use num::BigUint;
 use crate::crypto_primitives::num_bigint::Hexa;
 use crate::error::VerifierError;
 use serde::de::{Deserialize, Deserializer, Error};
+use serde::Deserialize as Deserialize2;
 use std::fmt::Display;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -36,4 +37,10 @@ where
     let buf = String::deserialize(deserializer)?;
 
     BigUint::from_hexa(&buf).map_err(|e| Error::custom(e.message()))
+}
+
+#[derive(Deserialize2, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct Signature {
+    signature_contents: String,
 }
