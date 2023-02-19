@@ -80,10 +80,9 @@ mod test {
             .join("dataset-setup1")
             .join("setup")
             .join("encryptionParametersPayload.json");
-        let json = fs::read_to_string(path).unwrap();
-        println!("{}", json);
-        let r_eg: Result<EncryptionGroup, serde_json::Error> = serde_json::from_str(&json);
-        println!("{:?}", r_eg);
+        let json = fs::read_to_string(&path).unwrap();
+        let r_eg: Result<EncryptionParametersPayload, serde_json::Error> =
+            serde_json::from_str(&json);
         assert!(r_eg.is_ok())
     }
 }

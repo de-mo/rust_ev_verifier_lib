@@ -1,2 +1,4 @@
 pub mod election_event_context_payload;
 pub mod encryption_parameters_payload;
+pub mod control_component_public_keys_payload;
+pub mod setup_component_public_keys_payload;

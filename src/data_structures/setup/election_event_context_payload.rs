@@ -1,13 +1,12 @@
-use super::super::deserialize_string_hex_to_bigunit;
+use super::super::Signature;
 use super::encryption_parameters_payload::EncryptionGroup;
-use num::BigUint;
 use serde::Deserialize;
 
 #[derive(Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct PTableElement {
     actual_voting_option: String,
-    encoded_voting_option: u32,
+    encoded_voting_option: u16,
 }
 
 #[derive(Deserialize, Debug)]
@@ -19,23 +18,46 @@ pub struct PrimesMappingTable {
 #[derive(Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct VerificationCardSetContext {
-    verification_card_set_id: u32,
-    ballot_box_id: u32,
+    verification_card_set_id: String,
+    ballot_box_id: String,
     test_ballot_box: bool,
-    number_of_write_in_fields: u32,
-    number_of_voting_cards: u32,
-    grace_period: u8,
+    number_of_write_in_fields: u16,
+    number_of_voting_cards: u16,
+    grace_period: u16,
     primes_mapping_table: PrimesMappingTable,
 }
 
 #[derive(Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct ElectionEventContext {
-    election_event_id: u32,
+    election_event_id: String,
     verification_card_set_contexts: Vec<VerificationCardSetContext>,
 }
 
+#[derive(Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
 pub struct ElectionEventContextPayload {
     encryption_group: EncryptionGroup,
     election_event_context: ElectionEventContext,
+    signature: Signature,
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use std::fs;
+    use std::path::Path;
+
+    #[test]
+    fn read_data_set() {
+        let path = Path::new(".")
+            .join("datasets")
+            .join("dataset-setup1")
+            .join("setup")
+            .join("electionEventContextPayload.json");
+        let json = fs::read_to_string(&path).unwrap();
+        let r_eec: Result<ElectionEventContextPayload, serde_json::Error> =
+            serde_json::from_str(&json);
+        assert!(r_eec.is_ok())
+    }
 }
