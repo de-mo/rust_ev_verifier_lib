@@ -162,6 +162,12 @@ impl ByteArray {
         self.inner.clone()
     }
 
+    pub fn prepend_byte(&self, byte: u8) -> ByteArray {
+        let mut res = vec![byte];
+        res.extend_from_slice(&self.to_bytes());
+        ByteArray::from_bytes(&res)
+    }
+
     pub fn cut_bit_length(&self, n: usize) -> Result<ByteArray, ByteArrayError> {
         if n < 1 || n > 8 * self.len() {
             return create_result_with_error!(
@@ -247,6 +253,14 @@ mod test {
             ByteArray::from(&4294967296u64.to_biguint().unwrap()).to_bytes(),
             b"\x01\x00\x00\x00\x00"
         );
+    }
+
+    #[test]
+    fn prepend_byte() {
+        assert_eq!(
+            ByteArray::from_bytes(b"\x03").prepend_byte(4u8),
+            ByteArray::from_bytes(b"\x04\x03")
+        )
     }
 
     #[test]
