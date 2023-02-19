@@ -66,20 +66,20 @@ struct VerifierErrorImpl<K: Display + Debug> {
 
 macro_rules! create_verifier_error {
     ($k: expr, $m: expr) => {
-        VerifierError::new($k, None, $m)
+        VerifierError::new($k, None, $m.to_string())
     };
     ($k: expr, $m: expr, $e: expr) => {
-        VerifierError::new($k, Some(Box::new($e)), $m)
+        VerifierError::new($k, Some(Box::new($e)), $m.to_string())
     };
 }
 pub(crate) use create_verifier_error;
 
 macro_rules! create_result_with_error {
     ($k: expr, $m: expr) => {
-        Result::Err(VerifierError::new($k, None, $m))
+        Result::Err(create_verifier_error!($k, $m))
     };
     ($k: expr, $m: expr, $e: expr) => {
-        Result::Err(VerifierError::new($k, Some(Box::new($e)), $m))
+        Result::Err(create_verifier_error!($k, $m, $e))
     };
 }
 pub(crate) use create_result_with_error;

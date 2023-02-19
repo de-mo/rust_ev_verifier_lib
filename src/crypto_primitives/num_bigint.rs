@@ -1,4 +1,4 @@
-use crate::error::{create_result_with_error, VerifierError};
+use crate::error::{create_result_with_error, create_verifier_error, VerifierError};
 use num::bigint::BigUint;
 use num::Num;
 use std::fmt::Debug;
