@@ -64,6 +64,16 @@ struct VerifierErrorImpl<K: Display + Debug> {
 }
 //TODO Add function and function parameters in struct (or do it in message)
 
+macro_rules! create_verifier_error {
+    ($k: expr, $m: expr) => {
+        VerifierError::new($k, None, $m)
+    };
+    ($k: expr, $m: expr, $e: expr) => {
+        VerifierError::new($k, Some(Box::new($e)), $m)
+    };
+}
+pub(crate) use create_verifier_error;
+
 macro_rules! create_result_with_error {
     ($k: expr, $m: expr) => {
         Result::Err(VerifierError::new($k, None, $m))
