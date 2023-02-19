@@ -1,7 +1,8 @@
 use crate::crypto_primitives::num_bigint::ByteLength;
-use crate::error::{create_verifier_error, VerifierError};
+use crate::error::{create_result_with_error, create_verifier_error, VerifierError};
 use data_encoding::{BASE32, BASE64, HEXUPPER};
 use num::bigint::{BigUint, ToBigUint};
+use num::pow;
 use std::fmt::Debug;
 use std::fmt::Display;
 
@@ -10,6 +11,7 @@ pub enum ByteArrayErrorType {
     DecodeBase16Error,
     DecodeBase32Error,
     DecodeBase64Error,
+    CutToBitLengthIndexError,
 }
 
 impl Display for ByteArrayErrorType {
@@ -18,6 +20,7 @@ impl Display for ByteArrayErrorType {
             Self::DecodeBase16Error => "Decode base16 to byte array",
             Self::DecodeBase32Error => "Decode base32 to byte array",
             Self::DecodeBase64Error => "Decode base32 to byte array",
+            Self::CutToBitLengthIndexError => "Index in CutToBitLength",
         };
         write!(f, "{s}")
     }
@@ -25,6 +28,7 @@ impl Display for ByteArrayErrorType {
 
 type ByteArrayError = VerifierError<ByteArrayErrorType>;
 
+#[derive(Clone, PartialEq, Eq)]
 pub struct ByteArray {
     inner: Vec<u8>,
 }
@@ -157,6 +161,37 @@ impl ByteArray {
     pub fn to_bytes(&self) -> Vec<u8> {
         self.inner.clone()
     }
+
+    pub fn cut_bit_length(&self, n: usize) -> Result<ByteArray, ByteArrayError> {
+        if n < 1 || n > 8 * self.len() {
+            return create_result_with_error!(
+                ByteArrayErrorType::CutToBitLengthIndexError,
+                "Index must be between 1 and 8*lenght byte array"
+            );
+        }
+        let bs = self.to_bytes();
+        println!("bs: {:?}", bs);
+        let length = (n + 8 - 1) / 8;
+        println!("length: {:?}", length);
+        let offset = self.len() - length;
+        println!("offset: {:?}", length);
+        let mut arr: Vec<u8> = vec![];
+        if n % 8 != 0 {
+            println!("n % 8: {:?}", (n % 8));
+            println!("2^(n % 8): {:?}", pow(2u8, n % 8));
+            println!("2^(n % 8)-1: {:?}", pow(2u8, n % 8) - 1);
+            println!("mask: {:?}", (pow(2u8, n % 8) - 1) as u8);
+            arr.push(bs[offset] & ((pow(2u8, n % 8) - 1) as u8));
+        } else {
+            arr.push(bs[offset])
+        }
+        for i in 1..length {
+            println!("i: {:?}", i);
+            println!("bs[offset+i]: {:?}", bs[offset + i]);
+            arr.push(bs[offset + i])
+        }
+        Ok(ByteArray::from(&arr))
+    }
 }
 
 #[cfg(test)]
@@ -240,6 +275,54 @@ mod test {
             ByteArray::from_bytes(b"\x01\x00\x00\x00\x00").into_biguint(),
             4294967296u64.to_biguint().unwrap()
         );
+    }
+
+    #[test]
+    fn cut_bit_length() {
+        assert_eq!(
+            ByteArray::base64_decode(&"/w==".to_string())
+                .unwrap()
+                .cut_bit_length(1)
+                .unwrap(),
+            ByteArray::base64_decode(&"AQ==".to_string()).unwrap()
+        );
+        assert_eq!(
+            ByteArray::base64_decode(&"Dw==".to_string())
+                .unwrap()
+                .cut_bit_length(2)
+                .unwrap(),
+            ByteArray::base64_decode(&"Aw==".to_string()).unwrap()
+        );
+        assert_eq!(
+            ByteArray::base64_decode(&"/w==".to_string())
+                .unwrap()
+                .cut_bit_length(8)
+                .unwrap(),
+            ByteArray::base64_decode(&"/w==".to_string()).unwrap()
+        );
+        assert_eq!(
+            ByteArray::base64_decode(&"vu8=".to_string())
+                .unwrap()
+                .cut_bit_length(7)
+                .unwrap(),
+            ByteArray::base64_decode(&"bw==".to_string()).unwrap()
+        );
+        assert_eq!(
+            ByteArray::base64_decode(&"wP/u".to_string())
+                .unwrap()
+                .cut_bit_length(13)
+                .unwrap(),
+            ByteArray::base64_decode(&"H+4=".to_string()).unwrap()
+        );
+        assert_eq!(
+            ByteArray::base64_decode(&"q80=".to_string())
+                .unwrap()
+                .cut_bit_length(9)
+                .unwrap(),
+            ByteArray::base64_decode(&"Ac0=".to_string()).unwrap()
+        );
+        assert!(ByteArray::from_bytes(b"10011").cut_bit_length(0).is_err());
+        assert!(ByteArray::from_bytes(b"\x11").cut_bit_length(9).is_err());
     }
 
     #[test]
