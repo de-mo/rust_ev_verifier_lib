@@ -23,12 +23,12 @@ type BigUIntError = VerifierError<BigUIntErrorType>;
 
 pub trait ByteLength {
     /// Byte legnth of a BigUInt
-    fn byte_length(&self) -> u64;
+    fn byte_length(&self) -> usize;
 }
 
 impl ByteLength for BigUint {
-    fn byte_length(&self) -> u64 {
-        let bits = self.bits();
+    fn byte_length(&self) -> usize {
+        let bits = self.bits() as usize;
         let bytes = bits / 8;
         if bits % 8 == 0 {
             bytes

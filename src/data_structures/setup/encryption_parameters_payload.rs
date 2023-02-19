@@ -18,7 +18,7 @@ pub struct EncryptionGroup {
 pub struct EncryptionParametersPayload {
     encryption_group: EncryptionGroup,
     seed: String,
-    small_primes: Vec<u32>,
+    small_primes: Vec<usize>,
     signature: Signature,
 }
 
@@ -38,9 +38,9 @@ mod test {
             "g": "0x2"
         }"#;
         let eg: EncryptionGroup = serde_json::from_str(json).unwrap();
-        assert_eq!(eg.p, 10u32.to_biguint().unwrap());
-        assert_eq!(eg.q, 171u32.to_biguint().unwrap());
-        assert_eq!(eg.g, 2u32.to_biguint().unwrap());
+        assert_eq!(eg.p, 10usize.to_biguint().unwrap());
+        assert_eq!(eg.q, 171usize.to_biguint().unwrap());
+        assert_eq!(eg.g, 2usize.to_biguint().unwrap());
     }
 
     #[test]
@@ -65,9 +65,9 @@ mod test {
         
         "#;
         let eg: EncryptionParametersPayload = serde_json::from_str(json).unwrap();
-        assert_eq!(eg.encryption_group.p, 10u32.to_biguint().unwrap());
-        assert_eq!(eg.encryption_group.q, 171u32.to_biguint().unwrap());
-        assert_eq!(eg.encryption_group.g, 2u32.to_biguint().unwrap());
+        assert_eq!(eg.encryption_group.p, 10usize.to_biguint().unwrap());
+        assert_eq!(eg.encryption_group.q, 171usize.to_biguint().unwrap());
+        assert_eq!(eg.encryption_group.g, 2usize.to_biguint().unwrap());
         assert_eq!(eg.seed, "toto");
         assert_eq!(eg.small_primes, vec![5, 17, 19]);
         assert_eq!(eg.signature.signature_contents, "fifi")

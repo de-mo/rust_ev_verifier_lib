@@ -14,7 +14,7 @@ pub struct SetupComponentVerificationDataPayload {
     verification_card_set_id: String,
     #[serde(deserialize_with = "deserialize_seq_string_64_to_seq_bytearray")]
     partial_choice_return_codes_allow_list: Vec<ByteArray>,
-    chunk_id: u32,
+    chunk_id: usize,
     encryption_group: EncryptionGroup,
     setup_component_verification_data: Vec<SetupComponentVerificationData>,
     combined_correctness_information: CombinedCorrectnessInformation,
@@ -41,9 +41,9 @@ pub struct CombinedCorrectnessInformation {
 #[serde(rename_all = "camelCase")]
 pub struct CorrectnessInformationElt {
     correctness_id: String,
-    number_of_selections: u32,
-    number_of_voting_options: u32,
-    listOfWriteInOptions: Vec<u32>,
+    number_of_selections: usize,
+    number_of_voting_options: usize,
+    list_of_write_in_options: Vec<usize>,
 }
 
 #[cfg(test)]

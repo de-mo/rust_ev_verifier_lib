@@ -11,10 +11,10 @@ pub type ControlComponentCodeSharesPayload = Vec<ControlComponentCodeSharesPaylo
 pub struct ControlComponentCodeSharesPayloadInner {
     election_event_id: String,
     verification_card_set_id: String,
-    chunk_id: u32,
+    chunk_id: usize,
     control_component_code_shares: Vec<ControlComponentCodeShares>,
     encryption_group: EncryptionGroup,
-    node_id: u32,
+    node_id: usize,
     signature: Signature,
 }
 

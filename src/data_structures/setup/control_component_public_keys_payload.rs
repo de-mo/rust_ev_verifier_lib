@@ -22,7 +22,7 @@ pub struct ControlComponentPublicKeys {
     ccrj_schnorr_proofs: Vec<SchnorrProofUnderline>,
     #[serde(deserialize_with = "deserialize_seq_string_hex_to_seq_bigunit")]
     ccmj_election_public_key: Vec<BigUint>,
-    ccmjSchnorrProofs: Vec<SchnorrProofUnderline>,
+    ccmj_schnorr_proofs: Vec<SchnorrProofUnderline>,
 }
 
 #[cfg(test)]

@@ -6,7 +6,7 @@ use serde::Deserialize;
 #[serde(rename_all = "camelCase")]
 pub struct PTableElement {
     actual_voting_option: String,
-    encoded_voting_option: u16,
+    encoded_voting_option: usize,
 }
 
 #[derive(Deserialize, Debug)]
@@ -21,9 +21,9 @@ pub struct VerificationCardSetContext {
     verification_card_set_id: String,
     ballot_box_id: String,
     test_ballot_box: bool,
-    number_of_write_in_fields: u16,
-    number_of_voting_cards: u16,
-    grace_period: u16,
+    number_of_write_in_fields: usize,
+    number_of_voting_cards: usize,
+    grace_period: usize,
     primes_mapping_table: PrimesMappingTable,
 }
 
