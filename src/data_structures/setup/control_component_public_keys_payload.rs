@@ -1,6 +1,5 @@
 use super::super::deserialize_seq_string_hex_to_seq_bigunit;
-use super::super::deserialize_string_hex_to_bigunit;
-use super::super::Signature;
+use super::super::{SchnorrProofUnderline, Signature};
 use super::encryption_parameters_payload::EncryptionGroup;
 use num::BigUint;
 use serde::Deserialize;
@@ -20,20 +19,10 @@ pub struct ControlComponentPublicKeys {
     node_id: u8,
     #[serde(deserialize_with = "deserialize_seq_string_hex_to_seq_bigunit")]
     ccrj_choice_return_codes_encryption_public_key: Vec<BigUint>,
-    ccrj_schnorr_proofs: Vec<SchnorrProof>,
+    ccrj_schnorr_proofs: Vec<SchnorrProofUnderline>,
     #[serde(deserialize_with = "deserialize_seq_string_hex_to_seq_bigunit")]
     ccmj_election_public_key: Vec<BigUint>,
-    ccmjSchnorrProofs: Vec<SchnorrProof>,
-}
-
-#[derive(Deserialize, Debug)]
-pub struct SchnorrProof {
-    #[serde(deserialize_with = "deserialize_string_hex_to_bigunit")]
-    #[serde(rename = "_e")]
-    e: BigUint,
-    #[serde(deserialize_with = "deserialize_string_hex_to_bigunit")]
-    #[serde(rename = "_z")]
-    z: BigUint,
+    ccmjSchnorrProofs: Vec<SchnorrProofUnderline>,
 }
 
 #[cfg(test)]
