@@ -137,6 +137,12 @@ impl From<&Vec<u8>> for ByteArray {
     }
 }
 
+impl From<&String> for ByteArray {
+    fn from(s: &String) -> Self {
+        ByteArray::from_bytes(s.as_bytes())
+    }
+}
+
 impl ByteArray {
     pub fn new() -> Self {
         ByteArray { inner: vec![0] }
@@ -162,10 +168,15 @@ impl ByteArray {
         self.inner.clone()
     }
 
+    pub fn append(&mut self, other: &ByteArray) -> &ByteArray {
+        self.inner.extend(other.inner.clone().into_iter());
+        self
+    }
+
     pub fn prepend_byte(&self, byte: u8) -> ByteArray {
-        let mut res = vec![byte];
-        res.extend_from_slice(&self.to_bytes());
-        ByteArray::from_bytes(&res)
+        let mut res = ByteArray::from(&vec![byte]);
+        res.append(&self);
+        res
     }
 
     pub fn cut_bit_length(&self, n: usize) -> Result<ByteArray, ByteArrayError> {
@@ -225,6 +236,10 @@ mod test {
             ByteArray::from_bytes(&[10u8, 5u8, 4u8]).to_bytes(),
             [10, 5, 4]
         );
+        assert_eq!(
+            ByteArray::from_bytes(b"\x41\x42\x43").to_bytes(),
+            [65, 66, 67]
+        );
     }
 
     #[test]
@@ -253,6 +268,27 @@ mod test {
             ByteArray::from(&4294967296u64.to_biguint().unwrap()).to_bytes(),
             b"\x01\x00\x00\x00\x00"
         );
+    }
+
+    #[test]
+    fn from_string() {
+        assert_eq!(
+            ByteArray::from(&"ABC".to_string()).to_bytes(),
+            b"\x41\x42\x43"
+        );
+        assert_eq!(ByteArray::from(&"Ä".to_string()).to_bytes(), b"\xc3\x84");
+        assert_eq!(
+            ByteArray::from(&"1001".to_string()).to_bytes(),
+            b"\x31\x30\x30\x31"
+        );
+        assert_eq!(ByteArray::from(&"1A".to_string()).to_bytes(), b"\x31\x41");
+    }
+
+    #[test]
+    fn append() {
+        let mut b = ByteArray::from_bytes(b"\x04\x03");
+        b.append(&ByteArray::from_bytes(b"\x10\x11\x12"));
+        assert_eq!(b, ByteArray::from_bytes(b"\x04\x03\x10\x11\x12"))
     }
 
     #[test]
