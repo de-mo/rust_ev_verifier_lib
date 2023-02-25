@@ -1,7 +1,21 @@
 use super::super::deserialize_string_hex_to_bigunit;
-use super::super::Signature;
+use super::super::{
+    implement_trait_fromjson, DeserializeError, DeserializeErrorType, FromJson, Signature,
+};
+use crate::error::{create_verifier_error, VerifierError};
 use num::BigUint;
 use serde::Deserialize;
+
+#[derive(Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct EncryptionParametersPayload {
+    encryption_group: EncryptionGroup,
+    seed: String,
+    small_primes: Vec<usize>,
+    signature: Signature,
+}
+
+implement_trait_fromjson!(EncryptionParametersPayload);
 
 #[derive(Deserialize, Debug)]
 pub struct EncryptionGroup {
@@ -11,15 +25,6 @@ pub struct EncryptionGroup {
     q: BigUint,
     #[serde(deserialize_with = "deserialize_string_hex_to_bigunit")]
     g: BigUint,
-}
-
-#[derive(Deserialize, Debug)]
-#[serde(rename_all = "camelCase")]
-pub struct EncryptionParametersPayload {
-    encryption_group: EncryptionGroup,
-    seed: String,
-    small_primes: Vec<usize>,
-    signature: Signature,
 }
 
 #[cfg(test)]
@@ -81,8 +86,9 @@ mod test {
             .join("setup")
             .join("encryptionParametersPayload.json");
         let json = fs::read_to_string(&path).unwrap();
-        let r_eg: Result<EncryptionParametersPayload, serde_json::Error> =
-            serde_json::from_str(&json);
+        let r_eg = EncryptionParametersPayload::from_json(&json);
+        //let r_eg: Result<EncryptionParametersPayload, serde_json::Error> =
+        //    serde_json::from_str(&json);
         assert!(r_eg.is_ok())
     }
 }

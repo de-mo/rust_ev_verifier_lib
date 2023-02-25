@@ -1,3 +1,6 @@
+//! Module to collect data structures of the verifier
+//TODO Document the module
+
 pub mod setup;
 
 use num::BigUint;
@@ -11,15 +14,13 @@ use std::fmt::Display;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum DeserializeErrorType {
-    MalformedJSON,
-    FieldError,
+    JSONError,
 }
 
 impl Display for DeserializeErrorType {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let s = match self {
-            Self::MalformedJSON => "MalformedJSON",
-            Self::FieldError => "FieldError",
+            Self::JSONError => "JSONError",
         };
         write!(f, "{s}")
     }
@@ -30,6 +31,35 @@ type DeserializeError = VerifierError<DeserializeErrorType>;
 pub trait FromJson: Sized {
     fn from_json(s: &String) -> Result<Self, DeserializeError>;
 }
+
+macro_rules! implement_trait_fromjson {
+    ($s: ty) => {
+        impl FromJson for $s {
+            fn from_json(s: &String) -> Result<Self, DeserializeError> {
+                serde_json::from_str(s).map_err(|e| {
+                    create_verifier_error!(
+                        DeserializeErrorType::JSONError,
+                        format!("Cannot deserialize json"),
+                        e
+                    )
+                })
+            }
+        }
+    };
+}
+use implement_trait_fromjson;
+/*
+impl FromJson for EncryptionParametersPayload {
+    fn from_json(s: &String) -> Result<Self, DeserializeError> {
+        serde_json::from_str(s).map_err(|e| {
+            create_verifier_error!(
+                DeserializeErrorType::JSONError,
+                format!("Cannot deserialize json"),
+                e
+            )
+        })
+    }
+} */
 
 fn deserialize_string_hex_to_bigunit<'de, D>(deserializer: D) -> Result<BigUint, D::Error>
 where

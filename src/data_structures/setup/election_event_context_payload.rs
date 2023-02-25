@@ -1,6 +1,19 @@
-use super::super::Signature;
+use super::super::{
+    implement_trait_fromjson, DeserializeError, DeserializeErrorType, FromJson, Signature,
+};
 use super::encryption_parameters_payload::EncryptionGroup;
+use crate::error::{create_verifier_error, VerifierError};
 use serde::Deserialize;
+
+#[derive(Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct ElectionEventContextPayload {
+    encryption_group: EncryptionGroup,
+    election_event_context: ElectionEventContext,
+    signature: Signature,
+}
+
+implement_trait_fromjson!(ElectionEventContextPayload);
 
 #[derive(Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
@@ -34,14 +47,6 @@ pub struct ElectionEventContext {
     verification_card_set_contexts: Vec<VerificationCardSetContext>,
 }
 
-#[derive(Deserialize, Debug)]
-#[serde(rename_all = "camelCase")]
-pub struct ElectionEventContextPayload {
-    encryption_group: EncryptionGroup,
-    election_event_context: ElectionEventContext,
-    signature: Signature,
-}
-
 #[cfg(test)]
 mod test {
     use super::*;
@@ -56,8 +61,7 @@ mod test {
             .join("setup")
             .join("electionEventContextPayload.json");
         let json = fs::read_to_string(&path).unwrap();
-        let r_eec: Result<ElectionEventContextPayload, serde_json::Error> =
-            serde_json::from_str(&json);
+        let r_eec = ElectionEventContextPayload::from_json(&json);
         assert!(r_eec.is_ok())
     }
 }

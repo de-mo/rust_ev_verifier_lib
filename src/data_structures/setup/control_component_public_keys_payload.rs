@@ -1,6 +1,10 @@
 use super::super::deserialize_seq_string_hex_to_seq_bigunit;
-use super::super::{SchnorrProofUnderline, Signature};
+use super::super::{
+    implement_trait_fromjson, DeserializeError, DeserializeErrorType, FromJson,
+    SchnorrProofUnderline, Signature,
+};
 use super::encryption_parameters_payload::EncryptionGroup;
+use crate::error::{create_verifier_error, VerifierError};
 use num::BigUint;
 use serde::Deserialize;
 
@@ -12,6 +16,8 @@ pub struct ControlComponentPublicKeysPayload {
     control_component_public_keys: ControlComponentPublicKeys,
     signature: Signature,
 }
+
+implement_trait_fromjson!(ControlComponentPublicKeysPayload);
 
 #[derive(Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
@@ -39,8 +45,7 @@ mod test {
             .join("setup")
             .join("controlComponentPublicKeysPayload.1.json");
         let json = fs::read_to_string(&path).unwrap();
-        let r_eec: Result<ControlComponentPublicKeysPayload, serde_json::Error> =
-            serde_json::from_str(&json);
+        let r_eec = ControlComponentPublicKeysPayload::from_json(&json);
         assert!(r_eec.is_ok())
     }
 }

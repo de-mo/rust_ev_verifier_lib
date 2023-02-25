@@ -1,9 +1,13 @@
 use super::super::{
     deserialize_seq_string_64_to_seq_bytearray, deserialize_seq_string_hex_to_seq_bigunit,
 };
-use super::super::{ExponentiatedEncryptedElement, Signature};
+use super::super::{
+    implement_trait_fromjson, DeserializeError, DeserializeErrorType,
+    ExponentiatedEncryptedElement, FromJson, Signature,
+};
 use super::encryption_parameters_payload::EncryptionGroup;
 use crate::crypto_primitives::byte_array::ByteArray;
+use crate::error::{create_verifier_error, VerifierError};
 use num::BigUint;
 use serde::Deserialize;
 
@@ -20,6 +24,8 @@ pub struct SetupComponentVerificationDataPayload {
     combined_correctness_information: CombinedCorrectnessInformation,
     signature: Signature,
 }
+
+implement_trait_fromjson!(SetupComponentVerificationDataPayload);
 
 #[derive(Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
@@ -62,8 +68,7 @@ mod test {
             .join("743f2d0fc9fc412798876d7763f78f1b")
             .join("setupComponentVerificationDataPayload.0.json");
         let json = fs::read_to_string(&path).unwrap();
-        let r_eec: Result<SetupComponentVerificationDataPayload, serde_json::Error> =
-            serde_json::from_str(&json);
+        let r_eec = SetupComponentVerificationDataPayload::from_json(&json);
         assert!(r_eec.is_ok())
     }
 }

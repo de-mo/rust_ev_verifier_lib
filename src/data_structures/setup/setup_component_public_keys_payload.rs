@@ -1,9 +1,24 @@
 use super::super::deserialize_seq_string_hex_to_seq_bigunit;
-use super::super::{SchnorrProofUnderline, Signature};
+use super::super::{
+    implement_trait_fromjson, DeserializeError, DeserializeErrorType, FromJson,
+    SchnorrProofUnderline, Signature,
+};
 use super::control_component_public_keys_payload::ControlComponentPublicKeys;
 use super::encryption_parameters_payload::EncryptionGroup;
+use crate::error::{create_verifier_error, VerifierError};
 use num::BigUint;
 use serde::Deserialize;
+
+#[derive(Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct SetupComponentPublicKeysPayload {
+    encryption_group: EncryptionGroup,
+    election_event_id: String,
+    setup_component_public_keys: SetupComponentPublicKeys,
+    signature: Signature,
+}
+
+implement_trait_fromjson!(SetupComponentPublicKeysPayload);
 
 #[derive(Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
@@ -16,15 +31,6 @@ pub struct SetupComponentPublicKeys {
     election_public_key: Vec<BigUint>,
     #[serde(deserialize_with = "deserialize_seq_string_hex_to_seq_bigunit")]
     choice_return_codes_encryption_public_key: Vec<BigUint>,
-}
-
-#[derive(Deserialize, Debug)]
-#[serde(rename_all = "camelCase")]
-pub struct SetupComponentPublicKeysPayload {
-    encryption_group: EncryptionGroup,
-    election_event_id: String,
-    setup_component_public_keys: SetupComponentPublicKeys,
-    signature: Signature,
 }
 
 #[cfg(test)]
@@ -41,8 +47,7 @@ mod test {
             .join("setup")
             .join("setupComponentPublicKeysPayload.json");
         let json = fs::read_to_string(&path).unwrap();
-        let r_eec: Result<SetupComponentPublicKeysPayload, serde_json::Error> =
-            serde_json::from_str(&json);
+        let r_eec = SetupComponentPublicKeysPayload::from_json(&json);
         assert!(r_eec.is_ok())
     }
 }

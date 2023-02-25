@@ -1,6 +1,9 @@
 use super::super::deserialize_seq_seq_string_hex_to_seq_seq_bigunit;
-use super::super::Signature;
+use super::super::{
+    implement_trait_fromjson, DeserializeError, DeserializeErrorType, FromJson, Signature,
+};
 use super::encryption_parameters_payload::EncryptionGroup;
+use crate::error::{create_verifier_error, VerifierError};
 use num::BigUint;
 use serde::Deserialize;
 
@@ -16,6 +19,8 @@ pub struct SetupComponentTallyDataPayload {
     verification_card_public_keys: Vec<Vec<BigUint>>,
     signature: Signature,
 }
+
+implement_trait_fromjson!(SetupComponentTallyDataPayload);
 
 #[cfg(test)]
 mod test {
@@ -33,8 +38,7 @@ mod test {
             .join("743f2d0fc9fc412798876d7763f78f1b")
             .join("setupComponentTallyDataPayload.json");
         let json = fs::read_to_string(&path).unwrap();
-        let r_eec: Result<SetupComponentTallyDataPayload, serde_json::Error> =
-            serde_json::from_str(&json);
+        let r_eec = SetupComponentTallyDataPayload::from_json(&json);
         assert!(r_eec.is_ok())
     }
 }
