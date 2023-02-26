@@ -1,6 +1,6 @@
 use super::super::deserialize_seq_string_hex_to_seq_bigunit;
 use super::super::{
-    implement_trait_fromjson, DeserializeError, DeserializeErrorType, FromJson,
+    implement_trait_fromjson, DataStructureTrait, DeserializeError, DeserializeErrorType,
     SchnorrProofUnderline, Signature,
 };
 use super::control_component_public_keys_payload::ControlComponentPublicKeys;

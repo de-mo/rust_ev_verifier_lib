@@ -2,8 +2,8 @@ use super::super::{
     deserialize_seq_string_64_to_seq_bytearray, deserialize_seq_string_hex_to_seq_bigunit,
 };
 use super::super::{
-    implement_trait_fromjson, DeserializeError, DeserializeErrorType,
-    ExponentiatedEncryptedElement, FromJson, Signature,
+    implement_trait_fromjson, DataStructureTrait, DeserializeError, DeserializeErrorType,
+    ExponentiatedEncryptedElement, Signature,
 };
 use super::encryption_parameters_payload::EncryptionGroup;
 use crate::crypto_primitives::byte_array::ByteArray;

@@ -2,6 +2,7 @@
 //TODO Document the module
 
 pub mod setup;
+pub mod verifier_data;
 
 use num::BigUint;
 
@@ -11,6 +12,38 @@ use crate::error::VerifierError;
 use serde::de::{Deserialize, Deserializer, Error};
 use serde::Deserialize as Deserialize2;
 use std::fmt::Display;
+
+pub enum VerifierDataType {
+    Setup(setup::VerifierSetupDataType),
+    Tally,
+}
+
+/*
+pub trait VerifierDataTrait {
+    fn from_json(&self, s: &String) -> Result<Self, DeserializeError>
+    where
+        Self: Sized;
+    fn is_some(&self) -> bool;
+    fn is_none(&self) -> bool {
+        !self.is_some()
+    }
+}
+
+impl VerifierDataTrait for VerifierData {
+    fn from_json(&self, s: &String) -> Result<Self, DeserializeError> {
+        match self {
+            VerifierData::Setup(r) => r.from_json(s).map(|x| VerifierData::Setup(x)),
+            VerifierData::Tally => todo!(),
+        }
+    }
+
+    fn is_some(&self) -> bool {
+        match self {
+            VerifierData::Setup(x) => x.is_some(),
+            VerifierData::Tally => todo!(),
+        }
+    }
+} */
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum DeserializeErrorType {
@@ -28,13 +61,15 @@ impl Display for DeserializeErrorType {
 
 type DeserializeError = VerifierError<DeserializeErrorType>;
 
-pub trait FromJson: Sized {
-    fn from_json(s: &String) -> Result<Self, DeserializeError>;
+pub trait DataStructureTrait {
+    fn from_json(s: &String) -> Result<Self, DeserializeError>
+    where
+        Self: Sized;
 }
 
 macro_rules! implement_trait_fromjson {
     ($s: ty) => {
-        impl FromJson for $s {
+        impl DataStructureTrait for $s {
             fn from_json(s: &String) -> Result<Self, DeserializeError> {
                 serde_json::from_str(s).map_err(|e| {
                     create_verifier_error!(
@@ -48,18 +83,6 @@ macro_rules! implement_trait_fromjson {
     };
 }
 use implement_trait_fromjson;
-/*
-impl FromJson for EncryptionParametersPayload {
-    fn from_json(s: &String) -> Result<Self, DeserializeError> {
-        serde_json::from_str(s).map_err(|e| {
-            create_verifier_error!(
-                DeserializeErrorType::JSONError,
-                format!("Cannot deserialize json"),
-                e
-            )
-        })
-    }
-} */
 
 fn deserialize_string_hex_to_bigunit<'de, D>(deserializer: D) -> Result<BigUint, D::Error>
 where

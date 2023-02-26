@@ -1,6 +1,6 @@
 use super::super::deserialize_seq_seq_string_hex_to_seq_seq_bigunit;
 use super::super::{
-    implement_trait_fromjson, DeserializeError, DeserializeErrorType, FromJson, Signature,
+    implement_trait_fromjson, DataStructureTrait, DeserializeError, DeserializeErrorType, Signature,
 };
 use super::encryption_parameters_payload::EncryptionGroup;
 use crate::error::{create_verifier_error, VerifierError};
