@@ -2,7 +2,6 @@
 //TODO Document the module
 
 pub mod setup;
-pub mod verifier_data;
 
 use num::BigUint;
 
@@ -13,16 +12,16 @@ use serde::de::{Deserialize, Deserializer, Error};
 use serde::Deserialize as Deserialize2;
 use std::fmt::Display;
 
-pub enum VerifierDataType {
-    Setup(setup::VerifierSetupDataType),
+pub enum VerifierData {
+    Setup(setup::VerifierSetupData),
     Tally,
 }
 
-/*
 pub trait VerifierDataTrait {
-    fn from_json(&self, s: &String) -> Result<Self, DeserializeError>
+    fn new_from_json(&self, s: &String) -> Result<Self, DeserializeError>
     where
         Self: Sized;
+
     fn is_some(&self) -> bool;
     fn is_none(&self) -> bool {
         !self.is_some()
@@ -30,20 +29,20 @@ pub trait VerifierDataTrait {
 }
 
 impl VerifierDataTrait for VerifierData {
-    fn from_json(&self, s: &String) -> Result<Self, DeserializeError> {
+    fn new_from_json(&self, s: &String) -> Result<Self, DeserializeError> {
         match self {
-            VerifierData::Setup(r) => r.from_json(s).map(|x| VerifierData::Setup(x)),
+            VerifierData::Setup(t) => t.new_from_json(s).map(|r| VerifierData::Setup(r)),
             VerifierData::Tally => todo!(),
         }
     }
 
     fn is_some(&self) -> bool {
         match self {
-            VerifierData::Setup(x) => x.is_some(),
+            VerifierData::Setup(r) => r.is_some(),
             VerifierData::Tally => todo!(),
         }
     }
-} */
+}
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum DeserializeErrorType {

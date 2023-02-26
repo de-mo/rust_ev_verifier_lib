@@ -1,6 +1,6 @@
 pub mod structure;
-use crate::data_structures::setup::VerifierSetupDataType;
-use crate::data_structures::VerifierDataType;
+use crate::data_structures::setup::VerifierSetupData;
+use crate::data_structures::VerifierData;
 use std::fmt::Display;
 
 use crate::error::VerifierError;
@@ -9,28 +9,32 @@ pub trait GetFileName {
     fn get_file_name(&self) -> String;
 }
 
-impl GetFileName for VerifierSetupDataType {
+impl GetFileName for VerifierSetupData {
     fn get_file_name(&self) -> String {
         let s = match self {
-            Self::EncryptionParametersPayload => "encryptionParametersPayload.json",
-            Self::ElectionEventContextPayload => "electionEventContextPayload.json",
-            Self::SetupComponentPublicKeysPayload => "setupComponentPublicKeysPayload.json",
-            Self::ControlComponentPublicKeysPayload => "controlComponentPublicKeysPayload.{}.json",
-            Self::SetupComponentVerificationDataPayload => {
+            Self::EncryptionParametersPayload(_) => "encryptionParametersPayload.json",
+            Self::ElectionEventContextPayload(_) => "electionEventContextPayload.json",
+            Self::SetupComponentPublicKeysPayload(_) => "setupComponentPublicKeysPayload.json",
+            Self::ControlComponentPublicKeysPayload(_) => {
+                "controlComponentPublicKeysPayload.{}.json"
+            }
+            Self::SetupComponentVerificationDataPayload(_) => {
                 "setupComponentVerificationDataPayload.{}.json"
             }
-            Self::ControlComponentCodeSharesPayload => "controlComponentCodeSharesPayload.{}.json",
-            Self::SetupComponentTallyDataPayload => "setupComponentTallyDataPayload.json",
+            Self::ControlComponentCodeSharesPayload(_) => {
+                "controlComponentCodeSharesPayload.{}.json"
+            }
+            Self::SetupComponentTallyDataPayload(_) => "setupComponentTallyDataPayload.json",
         };
         s.to_string()
     }
 }
 
-impl GetFileName for VerifierDataType {
+impl GetFileName for VerifierData {
     fn get_file_name(&self) -> String {
         match self {
-            VerifierDataType::Setup(t) => t.get_file_name(),
-            VerifierDataType::Tally => todo!(),
+            VerifierData::Setup(t) => t.get_file_name(),
+            VerifierData::Tally => todo!(),
         }
     }
 }
@@ -66,19 +70,19 @@ mod test {
             .join("setup");
         assert!(path
             .join(
-                VerifierDataType::Setup(VerifierSetupDataType::EncryptionParametersPayload)
+                VerifierData::Setup(VerifierSetupData::EncryptionParametersPayload(None))
                     .get_file_name()
             )
             .exists());
         assert!(path
             .join(
-                VerifierDataType::Setup(VerifierSetupDataType::ElectionEventContextPayload)
+                VerifierData::Setup(VerifierSetupData::ElectionEventContextPayload(None))
                     .get_file_name()
             )
             .exists());
         assert!(path
             .join(
-                VerifierDataType::Setup(VerifierSetupDataType::SetupComponentPublicKeysPayload)
+                VerifierData::Setup(VerifierSetupData::SetupComponentPublicKeysPayload(None))
                     .get_file_name()
             )
             .exists());
@@ -87,7 +91,7 @@ mod test {
             .join("743f2d0fc9fc412798876d7763f78f1b");
         assert!(path2
             .join(
-                VerifierDataType::Setup(VerifierSetupDataType::SetupComponentTallyDataPayload)
+                VerifierData::Setup(VerifierSetupData::SetupComponentTallyDataPayload(None))
                     .get_file_name()
             )
             .exists());
@@ -101,7 +105,7 @@ mod test {
             .join("setup");
         assert!(path
             .join(
-                VerifierDataType::Setup(VerifierSetupDataType::ControlComponentPublicKeysPayload)
+                VerifierData::Setup(VerifierSetupData::ControlComponentPublicKeysPayload(None))
                     .get_file_name()
                     .replace("{}", "1")
             )
@@ -111,16 +115,16 @@ mod test {
             .join("743f2d0fc9fc412798876d7763f78f1b");
         assert!(path2
             .join(
-                VerifierDataType::Setup(VerifierSetupDataType::ControlComponentCodeSharesPayload)
+                VerifierData::Setup(VerifierSetupData::ControlComponentCodeSharesPayload(None))
                     .get_file_name()
                     .replace("{}", "1")
             )
             .exists());
         assert!(path2
             .join(
-                VerifierDataType::Setup(
-                    VerifierSetupDataType::SetupComponentVerificationDataPayload
-                )
+                VerifierData::Setup(VerifierSetupData::SetupComponentVerificationDataPayload(
+                    None
+                ))
                 .get_file_name()
                 .replace("{}", "1")
             )

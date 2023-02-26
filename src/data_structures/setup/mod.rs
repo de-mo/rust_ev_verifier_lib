@@ -8,8 +8,7 @@ use self::{
     setup_component_verification_data_payload::SetupComponentVerificationDataPayload,
 };
 
-use super::verifier_data::{VerifierData, VerifierDataTrait, VerifierDataTraitNew};
-use super::VerifierDataType;
+use super::{DataStructureTrait, VerifierDataTrait};
 
 pub mod control_component_code_shares_payload;
 pub mod control_component_public_keys_payload;
@@ -19,89 +18,66 @@ pub mod setup_component_public_keys_payload;
 pub mod setup_component_tally_data_payload;
 pub mod setup_component_verification_data_payload;
 
-pub enum VerifierSetupDataType {
-    EncryptionParametersPayload,
-    ElectionEventContextPayload,
-    SetupComponentPublicKeysPayload,
-    ControlComponentPublicKeysPayload,
-    SetupComponentVerificationDataPayload,
-    ControlComponentCodeSharesPayload,
-    SetupComponentTallyDataPayload,
+pub enum VerifierSetupData {
+    EncryptionParametersPayload(Option<Box<EncryptionParametersPayload>>),
+    ElectionEventContextPayload(Option<Box<ElectionEventContextPayload>>),
+    SetupComponentPublicKeysPayload(Option<Box<SetupComponentPublicKeysPayload>>),
+    ControlComponentPublicKeysPayload(Option<Box<ControlComponentPublicKeysPayload>>),
+    SetupComponentVerificationDataPayload(Option<Box<SetupComponentVerificationDataPayload>>),
+    ControlComponentCodeSharesPayload(Option<Box<ControlComponentCodeSharesPayload>>),
+    SetupComponentTallyDataPayload(Option<Box<SetupComponentTallyDataPayload>>),
 }
 
-impl VerifierDataTraitNew<EncryptionParametersPayload>
-    for VerifierData<EncryptionParametersPayload>
-{
-    fn new_without_data() -> Self {
-        Self::new(
-            VerifierDataType::Setup(VerifierSetupDataType::EncryptionParametersPayload),
-            None,
-        )
+impl VerifierSetupData {
+    /*
+    pub fn new_EncryptionParametersPayload() -> Self {
+        VerifierSetupDataType::EncryptionParametersPayload(None)
     }
-}
-
-impl VerifierDataTraitNew<ElectionEventContextPayload>
-    for VerifierData<ElectionEventContextPayload>
-{
-    fn new_without_data() -> Self {
-        Self::new(
-            VerifierDataType::Setup(VerifierSetupDataType::ElectionEventContextPayload),
-            None,
-        )
+    pub fn new_ElectionEventContextPayload() -> Self {
+        VerifierSetupDataType::ElectionEventContextPayload(None)
     }
-}
-
-impl VerifierDataTraitNew<SetupComponentPublicKeysPayload>
-    for VerifierData<SetupComponentPublicKeysPayload>
-{
-    fn new_without_data() -> Self {
-        Self::new(
-            VerifierDataType::Setup(VerifierSetupDataType::SetupComponentPublicKeysPayload),
-            None,
-        )
+    pub fn new_SetupComponentPublicKeysPayload() -> Self {
+        VerifierSetupDataType::SetupComponentPublicKeysPayload(None)
     }
-}
-
-impl VerifierDataTraitNew<ControlComponentPublicKeysPayload>
-    for VerifierData<ControlComponentPublicKeysPayload>
-{
-    fn new_without_data() -> Self {
-        Self::new(
-            VerifierDataType::Setup(VerifierSetupDataType::ControlComponentPublicKeysPayload),
-            None,
-        )
+    pub fn new_ControlComponentPublicKeysPayload() -> Self {
+        VerifierSetupDataType::ControlComponentPublicKeysPayload(None)
     }
-}
-
-impl VerifierDataTraitNew<SetupComponentVerificationDataPayload>
-    for VerifierData<SetupComponentVerificationDataPayload>
-{
-    fn new_without_data() -> Self {
-        Self::new(
-            VerifierDataType::Setup(VerifierSetupDataType::SetupComponentVerificationDataPayload),
-            None,
-        )
+    pub fn new_SetupComponentVerificationDataPayload() -> Self {
+        VerifierSetupDataType::SetupComponentVerificationDataPayload(None)
     }
-}
-
-impl VerifierDataTraitNew<ControlComponentCodeSharesPayload>
-    for VerifierData<ControlComponentCodeSharesPayload>
-{
-    fn new_without_data() -> Self {
-        Self::new(
-            VerifierDataType::Setup(VerifierSetupDataType::ControlComponentCodeSharesPayload),
-            None,
-        )
+    pub fn new_ControlComponentCodeSharesPayload() -> Self {
+        VerifierSetupDataType::ControlComponentCodeSharesPayload(None)
     }
+    pub fn new_SetupComponentTallyDataPayload() -> Self {
+        VerifierSetupDataType::SetupComponentTallyDataPayload(None)
+    } */
 }
 
-impl VerifierDataTraitNew<SetupComponentTallyDataPayload>
-    for VerifierData<SetupComponentTallyDataPayload>
-{
-    fn new_without_data() -> Self {
-        Self::new(
-            VerifierDataType::Setup(VerifierSetupDataType::SetupComponentTallyDataPayload),
-            None,
-        )
+impl VerifierDataTrait for VerifierSetupData {
+    fn new_from_json(&self, s: &String) -> Result<Self, super::DeserializeError> {
+        match self {
+            VerifierSetupData::EncryptionParametersPayload(_) => {
+                EncryptionParametersPayload::from_json(s)
+                    .map(|r| VerifierSetupData::EncryptionParametersPayload(Some(Box::new(r))))
+            }
+            VerifierSetupData::ElectionEventContextPayload(_) => todo!(),
+            VerifierSetupData::SetupComponentPublicKeysPayload(_) => todo!(),
+            VerifierSetupData::ControlComponentPublicKeysPayload(_) => todo!(),
+            VerifierSetupData::SetupComponentVerificationDataPayload(_) => todo!(),
+            VerifierSetupData::ControlComponentCodeSharesPayload(_) => todo!(),
+            VerifierSetupData::SetupComponentTallyDataPayload(_) => todo!(),
+        }
+    }
+
+    fn is_some(&self) -> bool {
+        match self {
+            VerifierSetupData::EncryptionParametersPayload(x) => x.is_none(),
+            VerifierSetupData::ElectionEventContextPayload(_) => todo!(),
+            VerifierSetupData::SetupComponentPublicKeysPayload(_) => todo!(),
+            VerifierSetupData::ControlComponentPublicKeysPayload(_) => todo!(),
+            VerifierSetupData::SetupComponentVerificationDataPayload(_) => todo!(),
+            VerifierSetupData::ControlComponentCodeSharesPayload(_) => todo!(),
+            VerifierSetupData::SetupComponentTallyDataPayload(_) => todo!(),
+        }
     }
 }

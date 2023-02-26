@@ -1,6 +1,4 @@
-use super::VerifierDataType;
-use crate::data_structures::verifier_data::{VerifierData, VerifierDataTrait};
-use crate::data_structures::DataStructureTrait;
+use crate::data_structures::{VerifierData, VerifierDataTrait};
 use std::collections::HashMap;
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -8,22 +6,22 @@ use std::path::{Path, PathBuf};
 use super::{FileStructureError, FileStructureErrorType, GetFileName};
 use crate::error::{create_result_with_error, create_verifier_error, VerifierError};
 
-pub struct File<T: DataStructureTrait> {
+pub struct File {
     path: PathBuf,
-    pub data: VerifierData<T>,
+    data: VerifierData,
 }
 
-pub struct FileGroup<T: DataStructureTrait> {
+pub struct FileGroup {
     location: PathBuf,
-    data_type: VerifierDataType,
-    files: Option<Box<HashMap<usize, File<T>>>>,
+    data_type: VerifierData,
+    files: Option<Box<HashMap<usize, File>>>,
 }
 
-impl<T: DataStructureTrait> File<T> {
-    pub fn new(location: &Path, data: VerifierData<T>) -> Self {
+impl File {
+    pub fn new(location: &Path, data: VerifierData) -> Self {
         File {
-            path: location.join(data.get_data_type().get_file_name()),
-            data: data,
+            path: location.join(data.get_file_name()),
+            data,
         }
     }
 
@@ -49,7 +47,7 @@ impl<T: DataStructureTrait> File<T> {
         })
     }
 
-    pub fn get_data(&mut self) -> Result<&VerifierData<T>, FileStructureError> {
+    pub fn get_data(&mut self) -> Result<&VerifierData, FileStructureError> {
         if !self.exists() {
             return create_result_with_error!(
                 FileStructureErrorType::FileError,
@@ -67,8 +65,8 @@ impl<T: DataStructureTrait> File<T> {
                     )
                 }
             };
-            match self.data.from_json(&s) {
-                Ok(_) => (),
+            match self.data.new_from_json(&s) {
+                Ok(x) => self.data = x,
                 Err(e) => {
                     return create_result_with_error!(
                         FileStructureErrorType::DataError,
