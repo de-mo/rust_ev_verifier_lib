@@ -22,7 +22,7 @@ pub enum VerificationStatus {
     Failed,
 }
 
-#[derive(Debug, PartialEq, Eq, Hash)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
 pub enum VerificationPeriod {
     Setup,
     Tally,

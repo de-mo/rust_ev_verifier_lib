@@ -1,3 +1,5 @@
+use crate::file_structure::VerificationDirectory;
+
 use super::error::{VerificationError, VerificationFailure};
 use std::time::{Duration, SystemTime};
 
@@ -14,7 +16,8 @@ pub struct VerificationMetaData {
 pub struct Verification {
     meta_data: VerificationMetaData,
     status: VerificationStatus,
-    verification_fn: Box<dyn Fn() -> (Vec<VerificationError>, Vec<VerificationFailure>)>,
+    verification_fn:
+        Box<dyn Fn(&VerificationDirectory) -> (Vec<VerificationError>, Vec<VerificationFailure>)>,
     duration: Option<Duration>,
     errors: Box<Vec<VerificationError>>,
     failures: Box<Vec<VerificationFailure>>,
@@ -23,7 +26,8 @@ pub struct Verification {
 impl Verification {
     fn new(
         meta_data: VerificationMetaData,
-        verification_fn: impl Fn() -> (Vec<VerificationError>, Vec<VerificationFailure>) + 'static,
+        verification_fn: impl Fn(&VerificationDirectory) -> (Vec<VerificationError>, Vec<VerificationFailure>)
+            + 'static,
     ) -> Self {
         Verification {
             meta_data,
@@ -35,10 +39,10 @@ impl Verification {
         }
     }
 
-    pub fn run(&mut self) {
+    pub fn run(&mut self, directory: &VerificationDirectory) {
         self.status = VerificationStatus::Started;
         let start_time = SystemTime::now();
-        let (errors, failures) = (self.verification_fn)();
+        let (errors, failures) = (self.verification_fn)(directory);
         if !errors.is_empty() {
             self.status = VerificationStatus::Error;
             self.errors = Box::new(errors);
@@ -56,6 +60,8 @@ impl Verification {
 
 #[cfg(test)]
 mod test {
+    use std::path::Path;
+
     use crate::error::{create_verifier_error, VerifierError};
     use crate::verification::error::{VerificationErrorType, VerificationFailureType};
 
@@ -63,7 +69,7 @@ mod test {
 
     #[test]
     fn run_ok() {
-        fn ok() -> (Vec<VerificationError>, Vec<VerificationFailure>) {
+        fn ok(d: &VerificationDirectory) -> (Vec<VerificationError>, Vec<VerificationFailure>) {
             (vec![], vec![])
         }
         let mut verif = Verification::new(
@@ -79,7 +85,10 @@ mod test {
         assert_eq!(verif.status, VerificationStatus::Stopped);
         assert!(verif.errors.is_empty());
         assert!(verif.failures.is_empty());
-        verif.run();
+        verif.run(&VerificationDirectory::new(
+            VerificationPeriod::Setup,
+            &Path::new("."),
+        ));
         assert_eq!(verif.status, VerificationStatus::Success);
         assert!(verif.errors.is_empty());
         assert!(verif.failures.is_empty());
@@ -87,7 +96,7 @@ mod test {
 
     #[test]
     fn run_error() {
-        fn error() -> (Vec<VerificationError>, Vec<VerificationFailure>) {
+        fn error(d: &VerificationDirectory) -> (Vec<VerificationError>, Vec<VerificationFailure>) {
             (
                 vec![
                     create_verifier_error!(VerificationErrorType::Error, "toto"),
@@ -112,7 +121,10 @@ mod test {
         assert_eq!(verif.status, VerificationStatus::Stopped);
         assert!(verif.errors.is_empty());
         assert!(verif.failures.is_empty());
-        verif.run();
+        verif.run(&VerificationDirectory::new(
+            VerificationPeriod::Setup,
+            &Path::new("."),
+        ));
         assert_eq!(verif.status, VerificationStatus::Error);
         assert_eq!(verif.errors.len(), 2);
         assert!(verif.failures.is_empty());
@@ -120,7 +132,9 @@ mod test {
 
     #[test]
     fn run_failure() {
-        fn failure() -> (Vec<VerificationError>, Vec<VerificationFailure>) {
+        fn failure(
+            d: &VerificationDirectory,
+        ) -> (Vec<VerificationError>, Vec<VerificationFailure>) {
             (
                 vec![],
                 vec![
@@ -142,7 +156,10 @@ mod test {
         assert_eq!(verif.status, VerificationStatus::Stopped);
         assert!(verif.errors.is_empty());
         assert!(verif.failures.is_empty());
-        verif.run();
+        verif.run(&VerificationDirectory::new(
+            VerificationPeriod::Setup,
+            &Path::new("."),
+        ));
         assert_eq!(verif.status, VerificationStatus::Failed);
         assert!(verif.errors.is_empty());
         assert_eq!(verif.failures.len(), 2);
