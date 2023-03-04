@@ -54,6 +54,20 @@ impl VerifierSetupData {
 }
 
 impl VerifierDataTrait for VerifierSetupData {
+    fn new_empty(&self) -> Self {
+        match self {
+            VerifierSetupData::EncryptionParametersPayload(_) => {
+                VerifierSetupData::EncryptionParametersPayload(None)
+            }
+            VerifierSetupData::ElectionEventContextPayload(_) => todo!(),
+            VerifierSetupData::SetupComponentPublicKeysPayload(_) => todo!(),
+            VerifierSetupData::ControlComponentPublicKeysPayload(_) => todo!(),
+            VerifierSetupData::SetupComponentVerificationDataPayload(_) => todo!(),
+            VerifierSetupData::ControlComponentCodeSharesPayload(_) => todo!(),
+            VerifierSetupData::SetupComponentTallyDataPayload(_) => todo!(),
+        }
+    }
+
     fn new_from_json(&self, s: &String) -> Result<Self, super::DeserializeError> {
         match self {
             VerifierSetupData::EncryptionParametersPayload(_) => {

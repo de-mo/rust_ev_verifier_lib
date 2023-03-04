@@ -18,6 +18,8 @@ pub enum VerifierData {
 }
 
 pub trait VerifierDataTrait {
+    fn new_empty(&self) -> Self;
+
     fn new_from_json(&self, s: &String) -> Result<Self, DeserializeError>
     where
         Self: Sized;
@@ -29,6 +31,13 @@ pub trait VerifierDataTrait {
 }
 
 impl VerifierDataTrait for VerifierData {
+    fn new_empty(&self) -> Self {
+        match self {
+            VerifierData::Setup(t) => VerifierData::Setup(t.new_empty()),
+            VerifierData::Tally => todo!(),
+        }
+    }
+
     fn new_from_json(&self, s: &String) -> Result<Self, DeserializeError> {
         match self {
             VerifierData::Setup(t) => t.new_from_json(s).map(|r| VerifierData::Setup(r)),
