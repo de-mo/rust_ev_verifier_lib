@@ -4,19 +4,19 @@ use super::openssl::sha3_256;
 use num::bigint::BigUint;
 
 enum RecursiveHashable {
-    byte_array(ByteArray),
-    int(BigUint),
-    string(String),
-    composite(Vec<RecursiveHashable>),
+    ByteArray(ByteArray),
+    Int(BigUint),
+    String(String),
+    Composite(Vec<RecursiveHashable>),
 }
 
 impl RecursiveHashable {
     pub fn to_hashable_byte_array(&self) -> ByteArray {
         match self {
-            RecursiveHashable::byte_array(b) => b.prepend_byte(0u8),
-            RecursiveHashable::int(i) => ByteArray::from(i).prepend_byte(1u8),
-            RecursiveHashable::string(s) => ByteArray::from(s).prepend_byte(2u8),
-            RecursiveHashable::composite(c) => {
+            RecursiveHashable::ByteArray(b) => b.prepend_byte(0u8),
+            RecursiveHashable::Int(i) => ByteArray::from(i).prepend_byte(1u8),
+            RecursiveHashable::String(s) => ByteArray::from(s).prepend_byte(2u8),
+            RecursiveHashable::Composite(c) => {
                 let mut res = ByteArray::from_bytes(b"\x03");
                 for e in c {
                     res.append(&e.recursive_hash());
@@ -34,19 +34,19 @@ impl RecursiveHashable {
 
 impl From<&ByteArray> for RecursiveHashable {
     fn from(value: &ByteArray) -> Self {
-        RecursiveHashable::byte_array(value.clone())
+        RecursiveHashable::ByteArray(value.clone())
     }
 }
 
 impl From<&BigUint> for RecursiveHashable {
     fn from(value: &BigUint) -> Self {
-        RecursiveHashable::int(value.clone())
+        RecursiveHashable::Int(value.clone())
     }
 }
 
 impl From<&String> for RecursiveHashable {
     fn from(value: &String) -> Self {
-        RecursiveHashable::string(value.clone())
+        RecursiveHashable::String(value.clone())
     }
 }
 
@@ -97,7 +97,7 @@ mod test {
             .iter()
             .map(|s| RecursiveHashable::from(&BigUint::from_hexa(s).unwrap()))
             .collect();
-        let r = RecursiveHashable::composite(l).recursive_hash();
+        let r = RecursiveHashable::Composite(l).recursive_hash();
         let e =
             ByteArray::base64_decode(&"Qn1sWr2uZ87jwjeEoJa9zS6dc6S92oC0X83yxpyv2ZA=".to_string())
                 .unwrap();
@@ -113,7 +113,7 @@ mod test {
             .iter()
             .map(|s| RecursiveHashable::from(&BigUint::from_hexa(s).unwrap()))
             .collect();
-        let r = RecursiveHashable::composite(l).recursive_hash();
+        let r = RecursiveHashable::Composite(l).recursive_hash();
         let e =
             ByteArray::base64_decode(&"+e9LVZg0L5uHLbnUv8pIVVm28y+QZMtfG1edAFx2oPM=".to_string())
                 .unwrap();
@@ -135,7 +135,7 @@ mod test {
         l.push(RecursiveHashable::from(
             &ByteArray::base64_decode(&"YcOpYm5zaXRwcSBi".to_string()).unwrap(),
         ));
-        let r = RecursiveHashable::composite(l).recursive_hash();
+        let r = RecursiveHashable::Composite(l).recursive_hash();
         let e =
             ByteArray::base64_decode(&"rHGUCWqWKTj9KBY3GgSeNEXZfraTDK+ZGIhlSxpVs5c=".to_string())
                 .unwrap();
@@ -164,8 +164,8 @@ mod test {
         l.push(RecursiveHashable::from(
             &ByteArray::base64_decode(&"YcOpYm5zaXRwcSBi".to_string()).unwrap(),
         ));
-        l.push(RecursiveHashable::composite(nl));
-        let r = RecursiveHashable::composite(l).recursive_hash();
+        l.push(RecursiveHashable::Composite(nl));
+        let r = RecursiveHashable::Composite(l).recursive_hash();
         let e =
             ByteArray::base64_decode(&"HYq9bWhqsm+/Sh8omWJGg2om5sQ2zosPIEhaIQ2m9GE=".to_string())
                 .unwrap();
