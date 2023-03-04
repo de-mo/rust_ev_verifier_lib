@@ -1,5 +1,4 @@
 use crate::data_structures::{VerifierData, VerifierDataTrait};
-use std::borrow::{Borrow, BorrowMut};
 use std::collections::HashMap;
 use std::fs;
 use std::path::{Path, PathBuf};

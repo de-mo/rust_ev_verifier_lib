@@ -1,9 +1,67 @@
 pub mod structure;
 use crate::data_structures::setup::VerifierSetupData;
 use crate::data_structures::VerifierData;
+use crate::verification::VerificationPeriod;
 use std::fmt::Display;
+use std::path::{Path, PathBuf};
 
 use crate::error::VerifierError;
+
+pub struct SetupDirectory {
+    location: PathBuf,
+}
+
+pub struct TallyDirectory {
+    location: PathBuf,
+}
+
+pub enum VerificationDirectory {
+    Setup(SetupDirectory),
+    Tally(TallyDirectory),
+}
+
+impl SetupDirectory {
+    pub fn new(location: &Path) -> SetupDirectory {
+        SetupDirectory {
+            location: location.to_path_buf(),
+        }
+    }
+}
+
+impl TallyDirectory {
+    pub fn new(location: &Path) -> TallyDirectory {
+        TallyDirectory {
+            location: location.to_path_buf(),
+        }
+    }
+}
+
+impl VerificationDirectory {
+    pub fn new(period: VerificationPeriod, location: &Path) -> VerificationDirectory {
+        match period {
+            VerificationPeriod::Setup => {
+                VerificationDirectory::Setup(SetupDirectory::new(location))
+            }
+            VerificationPeriod::Tally => {
+                VerificationDirectory::Tally(TallyDirectory::new(location))
+            }
+        }
+    }
+
+    pub fn get_setup(&self) -> Option<&SetupDirectory> {
+        match self {
+            VerificationDirectory::Setup(d) => Some(d),
+            VerificationDirectory::Tally(_) => None,
+        }
+    }
+
+    pub fn get_tally(&self) -> Option<&TallyDirectory> {
+        match self {
+            VerificationDirectory::Setup(_) => None,
+            VerificationDirectory::Tally(d) => Some(d),
+        }
+    }
+}
 
 pub trait GetFileName {
     fn get_raw_file_name(&self) -> String;
