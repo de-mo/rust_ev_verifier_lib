@@ -6,11 +6,12 @@ use std::fmt::Display;
 use crate::error::VerifierError;
 
 pub trait GetFileName {
-    fn get_file_name(&self) -> String;
+    fn get_raw_file_name(&self) -> String;
+    fn get_file_name(&self, value: Option<usize>) -> String;
 }
 
 impl GetFileName for VerifierSetupData {
-    fn get_file_name(&self) -> String {
+    fn get_raw_file_name(&self) -> String {
         let s = match self {
             Self::EncryptionParametersPayload(_) => "encryptionParametersPayload.json",
             Self::ElectionEventContextPayload(_) => "electionEventContextPayload.json",
@@ -28,12 +29,27 @@ impl GetFileName for VerifierSetupData {
         };
         s.to_string()
     }
+
+    fn get_file_name(&self, value: Option<usize>) -> String {
+        let s = self.get_raw_file_name();
+        match value {
+            Some(i) => s.replace("{}", &i.to_string()),
+            None => s,
+        }
+    }
 }
 
 impl GetFileName for VerifierData {
-    fn get_file_name(&self) -> String {
+    fn get_raw_file_name(&self) -> String {
         match self {
-            VerifierData::Setup(t) => t.get_file_name(),
+            VerifierData::Setup(t) => t.get_raw_file_name(),
+            VerifierData::Tally => todo!(),
+        }
+    }
+
+    fn get_file_name(&self, value: Option<usize>) -> String {
+        match self {
+            VerifierData::Setup(t) => t.get_file_name(value),
             VerifierData::Tally => todo!(),
         }
     }
@@ -43,6 +59,7 @@ impl GetFileName for VerifierData {
 pub enum FileStructureErrorType {
     FileError,
     DataError,
+    IsNotDir,
 }
 
 impl Display for FileStructureErrorType {
@@ -50,6 +67,7 @@ impl Display for FileStructureErrorType {
         let s = match self {
             Self::FileError => "FileError",
             Self::DataError => "DataError",
+            Self::IsNotDir => "Not Directory",
         };
         write!(f, "{s}")
     }
@@ -71,19 +89,19 @@ mod test {
         assert!(path
             .join(
                 VerifierData::Setup(VerifierSetupData::EncryptionParametersPayload(None))
-                    .get_file_name()
+                    .get_file_name(None)
             )
             .exists());
         assert!(path
             .join(
                 VerifierData::Setup(VerifierSetupData::ElectionEventContextPayload(None))
-                    .get_file_name()
+                    .get_file_name(None)
             )
             .exists());
         assert!(path
             .join(
                 VerifierData::Setup(VerifierSetupData::SetupComponentPublicKeysPayload(None))
-                    .get_file_name()
+                    .get_file_name(None)
             )
             .exists());
         let path2 = path
@@ -92,7 +110,7 @@ mod test {
         assert!(path2
             .join(
                 VerifierData::Setup(VerifierSetupData::SetupComponentTallyDataPayload(None))
-                    .get_file_name()
+                    .get_file_name(None)
             )
             .exists());
     }
@@ -106,8 +124,7 @@ mod test {
         assert!(path
             .join(
                 VerifierData::Setup(VerifierSetupData::ControlComponentPublicKeysPayload(None))
-                    .get_file_name()
-                    .replace("{}", "1")
+                    .get_file_name(Some(1))
             )
             .exists());
         let path2 = path
@@ -116,8 +133,7 @@ mod test {
         assert!(path2
             .join(
                 VerifierData::Setup(VerifierSetupData::ControlComponentCodeSharesPayload(None))
-                    .get_file_name()
-                    .replace("{}", "1")
+                    .get_file_name(Some(1))
             )
             .exists());
         assert!(path2
@@ -125,8 +141,7 @@ mod test {
                 VerifierData::Setup(VerifierSetupData::SetupComponentVerificationDataPayload(
                     None
                 ))
-                .get_file_name()
-                .replace("{}", "1")
+                .get_file_name(Some(1))
             )
             .exists());
     }
