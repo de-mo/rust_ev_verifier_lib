@@ -1,6 +1,6 @@
 use super::super::deserialize_seq_string_hex_to_seq_bigunit;
 use super::super::{
-    implement_trait_fromjson, DataStructureTrait, DeserializeError, DeserializeErrorType,
+    implement_trait_data_structure, DataStructureTrait, DeserializeError, DeserializeErrorType,
     SchnorrProofUnderline, Signature,
 };
 use super::encryption_parameters_payload::EncryptionGroup;
@@ -8,7 +8,7 @@ use crate::error::{create_verifier_error, VerifierError};
 use num::BigUint;
 use serde::Deserialize;
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct ControlComponentPublicKeysPayload {
     encryption_group: EncryptionGroup,
@@ -17,9 +17,9 @@ pub struct ControlComponentPublicKeysPayload {
     signature: Signature,
 }
 
-implement_trait_fromjson!(ControlComponentPublicKeysPayload);
+implement_trait_data_structure!(ControlComponentPublicKeysPayload);
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct ControlComponentPublicKeys {
     node_id: u8,

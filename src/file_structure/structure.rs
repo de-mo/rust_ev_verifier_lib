@@ -1,4 +1,6 @@
-use crate::data_structures::{VerifierData, VerifierDataTrait};
+use crate::data_structures::{
+    create_verifier_data_type, VerifierData, VerifierDataTrait, VerifierDataType,
+};
 use std::collections::HashMap;
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -8,27 +10,45 @@ use crate::error::{create_result_with_error, create_verifier_error, VerifierErro
 
 pub struct File {
     path: PathBuf,
-    data: VerifierData,
+    data_type: VerifierDataType,
 }
+
+macro_rules! create_file {
+    ($l: expr, $p: ident, $s: ident) => {
+        File::new(
+                &$l,
+                &VerifierDataType::$p(VerifierSetupDataType::$s),
+                None,
+            )
+    };
+    ($l: expr, $p: ident, $s: ident, $n: expr) => {
+        File::new(
+                &$l,
+                &VerifierDataType::$p(VerifierSetupDataType::$s),
+                Some(n),
+            ),
+    };
+}
+pub(crate) use create_file;
 
 pub struct FileGroup {
     location: PathBuf,
-    data_type: VerifierData,
-    files: Option<Box<HashMap<usize, Box<File>>>>,
+    data_type: VerifierDataType,
+    files: Option<HashMap<usize, File>>,
 }
 
 pub struct Directory {
     path: PathBuf,
-    files: Vec<Box<File>>,
+    files: Vec<File>,
     file_groups: Vec<Box<FileGroup>>,
     directories: Vec<Box<Directory>>,
 }
 
 impl File {
-    pub fn new(location: &Path, data: &VerifierData, file_nb: Option<usize>) -> Self {
+    pub fn new(location: &Path, data_type: &VerifierDataType, file_nb: Option<usize>) -> Self {
         File {
-            path: location.join(data.get_file_name(file_nb)),
-            data: data.new_empty(),
+            path: location.join(data_type.get_file_name(file_nb)),
+            data_type: data_type.clone(),
         }
     }
 
@@ -44,7 +64,7 @@ impl File {
         self.path.to_str().unwrap()
     }
 
-    fn read_data(&self) -> Result<String, FileStructureError> {
+    pub fn read_data(&self) -> Result<String, FileStructureError> {
         fs::read_to_string(&self.path).map_err(|e| {
             create_verifier_error!(
                 FileStructureErrorType::FileError,
@@ -54,41 +74,35 @@ impl File {
         })
     }
 
-    pub fn get_data(&mut self) -> Result<&VerifierData, FileStructureError> {
+    pub fn get_data(&self) -> Result<VerifierData, FileStructureError> {
         if !self.exists() {
             return create_result_with_error!(
                 FileStructureErrorType::FileError,
                 format!("File \"{}\" does not exists", self.to_str())
             );
         }
-        if self.data.is_none() {
-            let s = match self.read_data() {
-                Ok(s) => s,
-                Err(e) => {
-                    return create_result_with_error!(
-                        FileStructureErrorType::FileError,
-                        format!("Cannot read the content of the file \"{}\"", self.to_str()),
-                        e
-                    )
-                }
-            };
-            match self.data.new_from_json(&s) {
-                Ok(x) => self.data = x,
-                Err(e) => {
-                    return create_result_with_error!(
-                        FileStructureErrorType::DataError,
-                        format!("Content of the file \"{}\" is not valid", self.to_str()),
-                        e
-                    )
-                }
+        let s = match self.read_data() {
+            Ok(s) => s,
+            Err(e) => {
+                return create_result_with_error!(
+                    FileStructureErrorType::FileError,
+                    format!("Cannot read the content of the file \"{}\"", self.to_str()),
+                    e
+                )
             }
-        }
-        Ok(&self.data)
+        };
+        self.data_type.verifier_data_from_json(&s).map_err(|e| {
+            create_verifier_error!(
+                FileStructureErrorType::DataError,
+                format!("Content of the file \"{}\" is not valid", self.to_str()),
+                e
+            )
+        })
     }
 }
 
 impl FileGroup {
-    pub fn new(location: &Path, data_type: VerifierData) -> Self {
+    pub fn new(location: &Path, data_type: VerifierDataType) -> Self {
         Self {
             location: location.to_path_buf(),
             data_type,
@@ -131,6 +145,7 @@ impl FileGroup {
         Ok(res)
     }
 
+    /*
     fn set_files(&mut self) {
         let list = self.find_all_files();
         if list.is_ok() {
@@ -143,8 +158,9 @@ impl FileGroup {
             }
             self.files = Some(Box::new(hm));
         }
-    }
+    } */
 
+    /*
     pub fn get_files(&mut self) -> Result<&Box<HashMap<usize, Box<File>>>, FileStructureError> {
         if !self.exists() {
             return create_result_with_error!(
@@ -163,9 +179,10 @@ impl FileGroup {
             }
         };
         Ok(self.files.as_ref().unwrap())
-    }
+    } */
 }
 
+/*
 impl Directory {
     pub fn new(path: &Path) -> Self {
         Self {
@@ -218,4 +235,4 @@ impl Directory {
     pub fn get_directory(&self) -> &Vec<Box<Directory>> {
         &self.directories
     }
-}
+} */

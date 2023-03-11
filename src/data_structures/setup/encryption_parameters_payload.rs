@@ -1,12 +1,13 @@
 use super::super::deserialize_string_hex_to_bigunit;
 use super::super::{
-    implement_trait_fromjson, DataStructureTrait, DeserializeError, DeserializeErrorType, Signature,
+    implement_trait_data_structure, DataStructureTrait, DeserializeError, DeserializeErrorType,
+    Signature,
 };
 use crate::error::{create_verifier_error, VerifierError};
 use num::BigUint;
 use serde::Deserialize;
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct EncryptionParametersPayload {
     encryption_group: EncryptionGroup,
@@ -15,9 +16,9 @@ pub struct EncryptionParametersPayload {
     signature: Signature,
 }
 
-implement_trait_fromjson!(EncryptionParametersPayload);
+implement_trait_data_structure!(EncryptionParametersPayload);
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, Clone)]
 pub struct EncryptionGroup {
     #[serde(deserialize_with = "deserialize_string_hex_to_bigunit")]
     p: BigUint,

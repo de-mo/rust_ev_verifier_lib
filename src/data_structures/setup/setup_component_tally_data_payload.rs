@@ -1,6 +1,7 @@
 use super::super::deserialize_seq_seq_string_hex_to_seq_seq_bigunit;
 use super::super::{
-    implement_trait_fromjson, DataStructureTrait, DeserializeError, DeserializeErrorType, Signature,
+    implement_trait_data_structure, DataStructureTrait, DeserializeError, DeserializeErrorType,
+    Signature,
 };
 use super::encryption_parameters_payload::EncryptionGroup;
 use crate::error::{create_verifier_error, VerifierError};
@@ -20,7 +21,7 @@ pub struct SetupComponentTallyDataPayload {
     signature: Signature,
 }
 
-implement_trait_fromjson!(SetupComponentTallyDataPayload);
+implement_trait_data_structure!(SetupComponentTallyDataPayload);
 
 #[cfg(test)]
 mod test {

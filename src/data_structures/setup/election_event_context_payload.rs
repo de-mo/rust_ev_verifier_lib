@@ -1,11 +1,12 @@
 use super::super::{
-    implement_trait_fromjson, DataStructureTrait, DeserializeError, DeserializeErrorType, Signature,
+    implement_trait_data_structure, DataStructureTrait, DeserializeError, DeserializeErrorType,
+    Signature,
 };
 use super::encryption_parameters_payload::EncryptionGroup;
 use crate::error::{create_verifier_error, VerifierError};
 use serde::Deserialize;
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct ElectionEventContextPayload {
     encryption_group: EncryptionGroup,
@@ -13,22 +14,22 @@ pub struct ElectionEventContextPayload {
     signature: Signature,
 }
 
-implement_trait_fromjson!(ElectionEventContextPayload);
+implement_trait_data_structure!(ElectionEventContextPayload);
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct PTableElement {
     actual_voting_option: String,
     encoded_voting_option: usize,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct PrimesMappingTable {
     p_table: Vec<PTableElement>,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct VerificationCardSetContext {
     verification_card_set_id: String,
@@ -40,7 +41,7 @@ pub struct VerificationCardSetContext {
     primes_mapping_table: PrimesMappingTable,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct ElectionEventContext {
     election_event_id: String,

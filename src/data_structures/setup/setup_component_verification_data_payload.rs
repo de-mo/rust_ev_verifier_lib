@@ -2,7 +2,7 @@ use super::super::{
     deserialize_seq_string_64_to_seq_bytearray, deserialize_seq_string_hex_to_seq_bigunit,
 };
 use super::super::{
-    implement_trait_fromjson, DataStructureTrait, DeserializeError, DeserializeErrorType,
+    implement_trait_data_structure, DataStructureTrait, DeserializeError, DeserializeErrorType,
     ExponentiatedEncryptedElement, Signature,
 };
 use super::encryption_parameters_payload::EncryptionGroup;
@@ -25,7 +25,7 @@ pub struct SetupComponentVerificationDataPayload {
     signature: Signature,
 }
 
-implement_trait_fromjson!(SetupComponentVerificationDataPayload);
+implement_trait_data_structure!(SetupComponentVerificationDataPayload);
 
 #[derive(Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]

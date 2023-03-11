@@ -17,38 +17,55 @@ pub enum VerifierData {
     Tally,
 }
 
+#[derive(Clone)]
+pub enum VerifierDataType {
+    Setup(setup::VerifierSetupDataType),
+    Tally,
+}
+
+macro_rules! create_verifier_data_type {
+    ($p: ident, $s: ident) => {
+        VerifierDataType::$p(VerifierSetupDataType::$s)
+    };
+}
+pub(crate) use create_verifier_data_type;
+
 pub trait VerifierDataTrait {
-    fn new_empty(&self) -> Self;
-
-    fn new_from_json(&self, s: &String) -> Result<Self, DeserializeError>
-    where
-        Self: Sized;
-
-    fn is_some(&self) -> bool;
-    fn is_none(&self) -> bool {
-        !self.is_some()
-    }
+    fn encryption_parameters_payload(&self) -> Option<Box<EncryptionParametersPayload>>;
+    fn setup_component_public_keys_payload(&self) -> Option<Box<SetupComponentPublicKeysPayload>>;
+    fn election_event_context_payload(&self) -> Option<Box<ElectionEventContextPayload>>;
 }
 
 impl VerifierDataTrait for VerifierData {
-    fn new_empty(&self) -> Self {
+    fn encryption_parameters_payload(&self) -> Option<Box<EncryptionParametersPayload>> {
         match self {
-            VerifierData::Setup(t) => VerifierData::Setup(t.new_empty()),
-            VerifierData::Tally => todo!(),
+            VerifierData::Setup(d) => d.encryption_parameters_payload(),
+            VerifierData::Tally => None,
         }
     }
 
-    fn new_from_json(&self, s: &String) -> Result<Self, DeserializeError> {
+    fn setup_component_public_keys_payload(&self) -> Option<Box<SetupComponentPublicKeysPayload>> {
         match self {
-            VerifierData::Setup(t) => t.new_from_json(s).map(|r| VerifierData::Setup(r)),
-            VerifierData::Tally => todo!(),
+            VerifierData::Setup(d) => d.setup_component_public_keys_payload(),
+            VerifierData::Tally => None,
         }
     }
 
-    fn is_some(&self) -> bool {
+    fn election_event_context_payload(&self) -> Option<Box<ElectionEventContextPayload>> {
         match self {
-            VerifierData::Setup(r) => r.is_some(),
-            VerifierData::Tally => todo!(),
+            VerifierData::Setup(d) => d.election_event_context_payload(),
+            VerifierData::Tally => None,
+        }
+    }
+}
+
+impl VerifierDataType {
+    pub fn verifier_data_from_json(&self, s: &String) -> Result<VerifierData, DeserializeError> {
+        match self {
+            VerifierDataType::Setup(t) => {
+                t.verifier_data_from_json(s).map(|r| VerifierData::Setup(r))
+            }
+            VerifierDataType::Tally => todo!(),
         }
     }
 }
@@ -73,9 +90,13 @@ pub trait DataStructureTrait {
     fn from_json(s: &String) -> Result<Self, DeserializeError>
     where
         Self: Sized;
+
+    fn to_encryption_parameters_payload(&self) -> Option<&EncryptionParametersPayload> {
+        None
+    }
 }
 
-macro_rules! implement_trait_fromjson {
+macro_rules! implement_trait_data_structure {
     ($s: ty) => {
         impl DataStructureTrait for $s {
             fn from_json(s: &String) -> Result<Self, DeserializeError> {
@@ -90,7 +111,13 @@ macro_rules! implement_trait_fromjson {
         }
     };
 }
-use implement_trait_fromjson;
+use implement_trait_data_structure;
+
+use self::setup::election_event_context_payload::{
+    ElectionEventContext, ElectionEventContextPayload,
+};
+use self::setup::encryption_parameters_payload::EncryptionParametersPayload;
+use self::setup::setup_component_public_keys_payload::SetupComponentPublicKeysPayload;
 
 fn deserialize_string_hex_to_bigunit<'de, D>(deserializer: D) -> Result<BigUint, D::Error>
 where
@@ -207,13 +234,13 @@ where
     deserializer.deserialize_seq(Visitor)
 }
 
-#[derive(Deserialize2, Debug)]
+#[derive(Deserialize2, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct Signature {
     signature_contents: String,
 }
 
-#[derive(Deserialize2, Debug)]
+#[derive(Deserialize2, Debug, Clone)]
 pub struct SchnorrProofUnderline {
     #[serde(deserialize_with = "deserialize_string_hex_to_bigunit")]
     #[serde(rename = "_e")]
@@ -223,7 +250,7 @@ pub struct SchnorrProofUnderline {
     z: BigUint,
 }
 
-#[derive(Deserialize2, Debug)]
+#[derive(Deserialize2, Debug, Clone)]
 pub struct SchnorrProof {
     #[serde(deserialize_with = "deserialize_string_hex_to_bigunit")]
     e: BigUint,
@@ -231,7 +258,7 @@ pub struct SchnorrProof {
     z: BigUint,
 }
 
-#[derive(Deserialize2, Debug)]
+#[derive(Deserialize2, Debug, Clone)]
 pub struct ExponentiatedEncryptedElement {
     #[serde(deserialize_with = "deserialize_string_hex_to_bigunit")]
     gamma: BigUint,

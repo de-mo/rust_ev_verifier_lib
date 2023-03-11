@@ -1,6 +1,6 @@
 use super::super::deserialize_seq_string_hex_to_seq_bigunit;
 use super::super::{
-    implement_trait_fromjson, DataStructureTrait, DeserializeError, DeserializeErrorType,
+    implement_trait_data_structure, DataStructureTrait, DeserializeError, DeserializeErrorType,
     ExponentiatedEncryptedElement, SchnorrProof, Signature,
 };
 use super::encryption_parameters_payload::EncryptionGroup;
@@ -10,7 +10,7 @@ use serde::Deserialize;
 
 pub type ControlComponentCodeSharesPayload = Vec<ControlComponentCodeSharesPayloadInner>;
 
-implement_trait_fromjson!(ControlComponentCodeSharesPayload);
+implement_trait_data_structure!(ControlComponentCodeSharesPayload);
 
 #[derive(Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
