@@ -1,27 +1,37 @@
 //! Module to collect data structures of the verifier
 //TODO Document the module
 
+pub mod error;
 pub mod setup;
+pub mod setup_or_tally;
+pub mod tally;
 
 use num::BigUint;
 
+use self::{
+    error::{DeserializeError, DeserializeErrorType},
+    setup::{
+        election_event_context_payload::ElectionEventContextPayload,
+        encryption_parameters_payload::EncryptionParametersPayload,
+        setup_component_public_keys_payload::SetupComponentPublicKeysPayload, VerifierSetupData,
+        VerifierSetupDataType,
+    },
+    setup_or_tally::SetupOrTally,
+    tally::{VerifierTallyData, VerifierTallyDataType},
+};
 use crate::crypto_primitives::byte_array::{ByteArray, Decode};
 use crate::crypto_primitives::num_bigint::Hexa;
-use crate::error::VerifierError;
 use serde::de::{Deserialize, Deserializer, Error};
 use serde::Deserialize as Deserialize2;
-use std::fmt::Display;
 
+/*
 pub enum VerifierData {
     Setup(setup::VerifierSetupData),
     Tally,
-}
+} */
 
-#[derive(Clone)]
-pub enum VerifierDataType {
-    Setup(setup::VerifierSetupDataType),
-    Tally,
-}
+pub type VerifierData = SetupOrTally<VerifierSetupData, VerifierTallyData>;
+pub type VerifierDataType = SetupOrTally<VerifierSetupDataType, VerifierTallyDataType>;
 
 macro_rules! create_verifier_data_type {
     ($p: ident, $s: ident) => {
@@ -40,21 +50,21 @@ impl VerifierDataTrait for VerifierData {
     fn encryption_parameters_payload(&self) -> Option<Box<EncryptionParametersPayload>> {
         match self {
             VerifierData::Setup(d) => d.encryption_parameters_payload(),
-            VerifierData::Tally => None,
+            VerifierData::Tally(_) => None,
         }
     }
 
     fn setup_component_public_keys_payload(&self) -> Option<Box<SetupComponentPublicKeysPayload>> {
         match self {
             VerifierData::Setup(d) => d.setup_component_public_keys_payload(),
-            VerifierData::Tally => None,
+            VerifierData::Tally(_) => None,
         }
     }
 
     fn election_event_context_payload(&self) -> Option<Box<ElectionEventContextPayload>> {
         match self {
             VerifierData::Setup(d) => d.election_event_context_payload(),
-            VerifierData::Tally => None,
+            VerifierData::Tally(_) => None,
         }
     }
 }
@@ -65,26 +75,10 @@ impl VerifierDataType {
             VerifierDataType::Setup(t) => {
                 t.verifier_data_from_json(s).map(|r| VerifierData::Setup(r))
             }
-            VerifierDataType::Tally => todo!(),
+            VerifierDataType::Tally(_) => todo!(),
         }
     }
 }
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum DeserializeErrorType {
-    JSONError,
-}
-
-impl Display for DeserializeErrorType {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let s = match self {
-            Self::JSONError => "JSONError",
-        };
-        write!(f, "{s}")
-    }
-}
-
-type DeserializeError = VerifierError<DeserializeErrorType>;
 
 pub trait DataStructureTrait {
     fn from_json(s: &String) -> Result<Self, DeserializeError>
@@ -112,12 +106,6 @@ macro_rules! implement_trait_data_structure {
     };
 }
 use implement_trait_data_structure;
-
-use self::setup::election_event_context_payload::{
-    ElectionEventContext, ElectionEventContextPayload,
-};
-use self::setup::encryption_parameters_payload::EncryptionParametersPayload;
-use self::setup::setup_component_public_keys_payload::SetupComponentPublicKeysPayload;
 
 fn deserialize_string_hex_to_bigunit<'de, D>(deserializer: D) -> Result<BigUint, D::Error>
 where

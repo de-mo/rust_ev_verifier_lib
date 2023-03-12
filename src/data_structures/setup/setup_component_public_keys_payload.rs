@@ -1,7 +1,7 @@
 use super::super::deserialize_seq_string_hex_to_seq_bigunit;
 use super::super::{
-    implement_trait_data_structure, DataStructureTrait, DeserializeError, DeserializeErrorType,
-    SchnorrProofUnderline, Signature,
+    error::{DeserializeError, DeserializeErrorType},
+    implement_trait_data_structure, DataStructureTrait, SchnorrProofUnderline, Signature,
 };
 use super::control_component_public_keys_payload::ControlComponentPublicKeys;
 use super::encryption_parameters_payload::EncryptionGroup;

@@ -7,8 +7,7 @@ use self::{
     setup_component_tally_data_payload::SetupComponentTallyDataPayload,
     setup_component_verification_data_payload::SetupComponentVerificationDataPayload,
 };
-
-use super::{DataStructureTrait, VerifierDataTrait};
+use super::{error::DeserializeError, DataStructureTrait, VerifierDataTrait};
 
 use enum_kinds::EnumKind;
 
@@ -31,7 +30,7 @@ pub enum VerifierSetupDataType {
     SetupComponentTallyDataPayload,
 } */
 
-#[derive(EnumKind)]
+#[derive(Clone, EnumKind)]
 #[enum_kind(VerifierSetupDataType)]
 pub enum VerifierSetupData {
     EncryptionParametersPayload(EncryptionParametersPayload),
@@ -72,7 +71,7 @@ impl VerifierSetupDataType {
     pub fn verifier_data_from_json(
         &self,
         s: &String,
-    ) -> Result<VerifierSetupData, super::DeserializeError> {
+    ) -> Result<VerifierSetupData, DeserializeError> {
         match self {
             VerifierSetupDataType::EncryptionParametersPayload => {
                 EncryptionParametersPayload::from_json(s)

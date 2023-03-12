@@ -1,7 +1,8 @@
 use super::super::deserialize_seq_string_hex_to_seq_bigunit;
 use super::super::{
-    implement_trait_data_structure, DataStructureTrait, DeserializeError, DeserializeErrorType,
-    ExponentiatedEncryptedElement, SchnorrProof, Signature,
+    error::{DeserializeError, DeserializeErrorType},
+    implement_trait_data_structure, DataStructureTrait, ExponentiatedEncryptedElement,
+    SchnorrProof, Signature,
 };
 use super::encryption_parameters_payload::EncryptionGroup;
 use crate::error::{create_verifier_error, VerifierError};
@@ -12,7 +13,7 @@ pub type ControlComponentCodeSharesPayload = Vec<ControlComponentCodeSharesPaylo
 
 implement_trait_data_structure!(ControlComponentCodeSharesPayload);
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct ControlComponentCodeSharesPayloadInner {
     election_event_id: String,
@@ -24,7 +25,7 @@ pub struct ControlComponentCodeSharesPayloadInner {
     signature: Signature,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct ControlComponentCodeShares {
     verification_card_id: String,

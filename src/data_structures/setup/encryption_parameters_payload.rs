@@ -1,7 +1,7 @@
 use super::super::deserialize_string_hex_to_bigunit;
 use super::super::{
-    implement_trait_data_structure, DataStructureTrait, DeserializeError, DeserializeErrorType,
-    Signature,
+    error::{DeserializeError, DeserializeErrorType},
+    implement_trait_data_structure, DataStructureTrait, Signature,
 };
 use crate::error::{create_verifier_error, VerifierError};
 use num::BigUint;

@@ -42,14 +42,14 @@ impl GetFileName for VerifierDataType {
     fn get_raw_file_name(&self) -> String {
         match self {
             VerifierDataType::Setup(t) => t.get_raw_file_name(),
-            VerifierDataType::Tally => todo!(),
+            VerifierDataType::Tally(_) => todo!(),
         }
     }
 
     fn get_file_name(&self, value: Option<usize>) -> String {
         match self {
             VerifierDataType::Setup(t) => t.get_file_name(value),
-            VerifierDataType::Tally => todo!(),
+            VerifierDataType::Tally(_) => todo!(),
         }
     }
 }

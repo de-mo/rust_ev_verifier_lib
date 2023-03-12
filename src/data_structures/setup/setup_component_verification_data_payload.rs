@@ -2,8 +2,8 @@ use super::super::{
     deserialize_seq_string_64_to_seq_bytearray, deserialize_seq_string_hex_to_seq_bigunit,
 };
 use super::super::{
-    implement_trait_data_structure, DataStructureTrait, DeserializeError, DeserializeErrorType,
-    ExponentiatedEncryptedElement, Signature,
+    error::{DeserializeError, DeserializeErrorType},
+    implement_trait_data_structure, DataStructureTrait, ExponentiatedEncryptedElement, Signature,
 };
 use super::encryption_parameters_payload::EncryptionGroup;
 use crate::crypto_primitives::byte_array::ByteArray;
@@ -11,7 +11,7 @@ use crate::error::{create_verifier_error, VerifierError};
 use num::BigUint;
 use serde::Deserialize;
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct SetupComponentVerificationDataPayload {
     election_event_id: String,
@@ -27,7 +27,7 @@ pub struct SetupComponentVerificationDataPayload {
 
 implement_trait_data_structure!(SetupComponentVerificationDataPayload);
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct SetupComponentVerificationData {
     verification_card_id: String,
@@ -37,13 +37,13 @@ pub struct SetupComponentVerificationData {
     verification_card_public_key: Vec<BigUint>,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct CombinedCorrectnessInformation {
     correctness_information_list: Vec<CorrectnessInformationElt>,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct CorrectnessInformationElt {
     correctness_id: String,
