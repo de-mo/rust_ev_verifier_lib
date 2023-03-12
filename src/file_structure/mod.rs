@@ -1,17 +1,36 @@
-pub mod directory;
 pub mod file;
 pub mod file_group;
 pub mod setup_directory;
 pub mod tally_directory;
 use crate::data_structures::setup::VerifierSetupDataType;
+use crate::data_structures::setup_or_tally::SetupOrTally;
 use crate::data_structures::VerifierDataType;
+use crate::verification::VerificationPeriod;
+use setup_directory::SetupDirectory;
 use std::fmt::Display;
+use std::path::Path;
+use tally_directory::TallyDirectory;
 
 use crate::error::VerifierError;
+
+pub type VerificationDirectory = SetupOrTally<SetupDirectory, TallyDirectory>;
 
 pub trait GetFileName {
     fn get_raw_file_name(&self) -> String;
     fn get_file_name(&self, value: Option<usize>) -> String;
+}
+
+impl VerificationDirectory {
+    pub fn new(period: VerificationPeriod, location: &Path) -> Self {
+        match period {
+            VerificationPeriod::Setup => {
+                VerificationDirectory::Setup(SetupDirectory::new(location))
+            }
+            VerificationPeriod::Tally => {
+                VerificationDirectory::Tally(TallyDirectory::new(location))
+            }
+        }
+    }
 }
 
 impl GetFileName for VerifierSetupDataType {

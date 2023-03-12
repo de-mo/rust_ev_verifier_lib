@@ -4,6 +4,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::slice::Iter;
 
+#[derive(Clone)]
 pub struct FileGroup {
     location: PathBuf,
     data_type: VerifierDataType,

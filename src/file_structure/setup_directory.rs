@@ -23,6 +23,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
+#[derive(Clone)]
 pub struct VCSDirectory {
     location: PathBuf,
     setup_component_tally_data_payload: File,
@@ -30,6 +31,7 @@ pub struct VCSDirectory {
     control_component_code_shares_payload_group: FileGroup,
 }
 
+#[derive(Clone)]
 pub struct SetupDirectory {
     location: PathBuf,
     encryption_parameters_payload_file: File,

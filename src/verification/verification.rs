@@ -1,4 +1,4 @@
-use crate::file_structure::directory::VerificationDirectory;
+use crate::file_structure::VerificationDirectory;
 
 use super::error::{VerificationError, VerificationFailure};
 use std::time::{Duration, SystemTime};

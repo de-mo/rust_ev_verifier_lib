@@ -7,6 +7,7 @@ use std::path::{Path, PathBuf};
 use super::{FileStructureError, FileStructureErrorType, GetFileName};
 use crate::error::{create_result_with_error, create_verifier_error, VerifierError};
 
+#[derive(Clone)]
 pub struct File {
     path: PathBuf,
     data_type: VerifierDataType,

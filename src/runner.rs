@@ -1,5 +1,5 @@
 use crate::{
-    file_structure::directory::VerificationDirectory,
+    file_structure::VerificationDirectory,
     verification::{VerificationPeriod, VerificationsForPeriod},
 };
 use std::path::{Path, PathBuf};
