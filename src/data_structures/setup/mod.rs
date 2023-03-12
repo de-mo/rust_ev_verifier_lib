@@ -19,17 +19,6 @@ pub mod setup_component_public_keys_payload;
 pub mod setup_component_tally_data_payload;
 pub mod setup_component_verification_data_payload;
 
-/*
-pub enum VerifierSetupDataType {
-    EncryptionParametersPayload,
-    ElectionEventContextPayload,
-    SetupComponentPublicKeysPayload,
-    ControlComponentPublicKeysPayload,
-    SetupComponentVerificationDataPayload,
-    ControlComponentCodeSharesPayload,
-    SetupComponentTallyDataPayload,
-} */
-
 #[derive(Clone, EnumKind)]
 #[enum_kind(VerifierSetupDataType)]
 pub enum VerifierSetupData {
@@ -40,31 +29,6 @@ pub enum VerifierSetupData {
     SetupComponentVerificationDataPayload(SetupComponentVerificationDataPayload),
     ControlComponentCodeSharesPayload(ControlComponentCodeSharesPayload),
     SetupComponentTallyDataPayload(SetupComponentTallyDataPayload),
-}
-
-impl VerifierSetupData {
-    /*
-    pub fn new_EncryptionParametersPayload() -> Self {
-        VerifierSetupDataType::EncryptionParametersPayload(None)
-    }
-    pub fn new_ElectionEventContextPayload() -> Self {
-        VerifierSetupDataType::ElectionEventContextPayload(None)
-    }
-    pub fn new_SetupComponentPublicKeysPayload() -> Self {
-        VerifierSetupDataType::SetupComponentPublicKeysPayload(None)
-    }
-    pub fn new_ControlComponentPublicKeysPayload() -> Self {
-        VerifierSetupDataType::ControlComponentPublicKeysPayload(None)
-    }
-    pub fn new_SetupComponentVerificationDataPayload() -> Self {
-        VerifierSetupDataType::SetupComponentVerificationDataPayload(None)
-    }
-    pub fn new_ControlComponentCodeSharesPayload() -> Self {
-        VerifierSetupDataType::ControlComponentCodeSharesPayload(None)
-    }
-    pub fn new_SetupComponentTallyDataPayload() -> Self {
-        VerifierSetupDataType::SetupComponentTallyDataPayload(None)
-    } */
 }
 
 impl VerifierSetupDataType {
@@ -105,112 +69,24 @@ impl VerifierSetupDataType {
     }
 }
 
-/*
-impl VerifierSetupDataType {
-    pub fn read_data(&self, s: &String) -> Box<dyn DataStructureTrait> {
-        todo!()
-    }
-
-    fn get_encryption_parameters_payload(&self, s: &String) -> EncryptionParametersPayload {
-        self.read_data(s).as_any()
-    }
-}
- */
-
-/*
-impl VerifierDataTrait for VerifierSetupDataType {
-    fn get_encryption_parameters_payload(&self) -> Self {
-        match self {
-            VerifierSetupData::EncryptionParametersPayload(_) => {
-                VerifierSetupData::EncryptionParametersPayload(None)
-            }
-            VerifierSetupData::ElectionEventContextPayload(_) => todo!(),
-            VerifierSetupData::SetupComponentPublicKeysPayload(_) => todo!(),
-            VerifierSetupData::ControlComponentPublicKeysPayload(_) => todo!(),
-            VerifierSetupData::SetupComponentVerificationDataPayload(_) => todo!(),
-            VerifierSetupData::ControlComponentCodeSharesPayload(_) => todo!(),
-            VerifierSetupData::SetupComponentTallyDataPayload(_) => todo!(),
-        }
-    }
-
-    fn new_from_json(&self, s: &String) -> Result<Self, super::DeserializeError> {
-        match self {
-            VerifierSetupData::EncryptionParametersPayload(_) => {
-                EncryptionParametersPayload::from_json(s)
-                    .map(|r| VerifierSetupData::EncryptionParametersPayload(Some(Box::new(r))))
-            }
-            VerifierSetupData::ElectionEventContextPayload(_) => todo!(),
-            VerifierSetupData::SetupComponentPublicKeysPayload(_) => todo!(),
-            VerifierSetupData::ControlComponentPublicKeysPayload(_) => todo!(),
-            VerifierSetupData::SetupComponentVerificationDataPayload(_) => todo!(),
-            VerifierSetupData::ControlComponentCodeSharesPayload(_) => todo!(),
-            VerifierSetupData::SetupComponentTallyDataPayload(_) => todo!(),
-        }
-    }
-
-    fn is_some(&self) -> bool {
-        match self {
-            VerifierSetupData::EncryptionParametersPayload(x) => x.is_none(),
-            VerifierSetupData::ElectionEventContextPayload(_) => todo!(),
-            VerifierSetupData::SetupComponentPublicKeysPayload(_) => todo!(),
-            VerifierSetupData::ControlComponentPublicKeysPayload(_) => todo!(),
-            VerifierSetupData::SetupComponentVerificationDataPayload(_) => todo!(),
-            VerifierSetupData::ControlComponentCodeSharesPayload(_) => todo!(),
-            VerifierSetupData::SetupComponentTallyDataPayload(_) => todo!(),
-        }
-    }
-
-    fn get_encryption_parameters_payload(&self) -> Option<&Box<EncryptionParametersPayload>> {
-        if let VerifierSetupData::EncryptionParametersPayload(Some(d)) = self {
+impl VerifierDataTrait for VerifierSetupData {
+    fn encryption_parameters_payload(&self) -> Option<&EncryptionParametersPayload> {
+        if let VerifierSetupData::EncryptionParametersPayload(d) = self {
             return Some(d);
         }
         None
     }
-} */
 
-impl VerifierSetupData {
-    /*
-    pub fn new_EncryptionParametersPayload() -> Self {
-        VerifierSetupDataType::EncryptionParametersPayload(None)
-    }
-    pub fn new_ElectionEventContextPayload() -> Self {
-        VerifierSetupDataType::ElectionEventContextPayload(None)
-    }
-    pub fn new_SetupComponentPublicKeysPayload() -> Self {
-        VerifierSetupDataType::SetupComponentPublicKeysPayload(None)
-    }
-    pub fn new_ControlComponentPublicKeysPayload() -> Self {
-        VerifierSetupDataType::ControlComponentPublicKeysPayload(None)
-    }
-    pub fn new_SetupComponentVerificationDataPayload() -> Self {
-        VerifierSetupDataType::SetupComponentVerificationDataPayload(None)
-    }
-    pub fn new_ControlComponentCodeSharesPayload() -> Self {
-        VerifierSetupDataType::ControlComponentCodeSharesPayload(None)
-    }
-    pub fn new_SetupComponentTallyDataPayload() -> Self {
-        VerifierSetupDataType::SetupComponentTallyDataPayload(None)
-    } */
-}
-
-impl VerifierDataTrait for VerifierSetupData {
-    fn encryption_parameters_payload(&self) -> Option<Box<EncryptionParametersPayload>> {
-        if let VerifierSetupData::EncryptionParametersPayload(d) = self {
-            return Some(Box::new(d.clone()));
-        }
-        None
-    }
-
-    fn setup_component_public_keys_payload(&self) -> Option<Box<SetupComponentPublicKeysPayload>> {
+    fn setup_component_public_keys_payload(&self) -> Option<&SetupComponentPublicKeysPayload> {
         if let VerifierSetupData::SetupComponentPublicKeysPayload(d) = self {
-            return Some(Box::new(d.clone()));
+            return Some(d);
         }
         None
     }
 
-    fn election_event_context_payload(&self) -> Option<Box<ElectionEventContextPayload>> {
+    fn election_event_context_payload(&self) -> Option<&ElectionEventContextPayload> {
         if let VerifierSetupData::ElectionEventContextPayload(d) = self {
-            return Some(Box::new(d.clone()));
+            return Some(d);
         }
         None
     }

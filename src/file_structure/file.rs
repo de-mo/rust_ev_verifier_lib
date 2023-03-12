@@ -117,7 +117,7 @@ mod test {
         );
         let data = f.get_data().unwrap();
         assert!(data.is_setup());
-        let enc_data = data.unwrap_setup().encryption_parameters_payload();
+        let enc_data = data.encryption_parameters_payload();
         assert!(enc_data.is_some())
     }
 
@@ -133,7 +133,7 @@ mod test {
         );
         let data = f.get_data().unwrap();
         assert!(data.is_setup());
-        let enc_data = data.unwrap_setup().encryption_parameters_payload();
+        let enc_data = data.encryption_parameters_payload();
         assert!(enc_data.is_some())
     }
 

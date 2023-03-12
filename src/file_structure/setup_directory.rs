@@ -74,7 +74,7 @@ impl SetupDirectory {
     ) -> Result<Box<EncryptionParametersPayload>, FileStructureError> {
         self.encryption_parameters_payload_file
             .get_data()
-            .map(|d| d.encryption_parameters_payload().unwrap())
+            .map(|d| Box::new(d.encryption_parameters_payload().unwrap().clone()))
     }
 
     pub fn setup_component_public_keys_payload(
@@ -82,7 +82,7 @@ impl SetupDirectory {
     ) -> Result<Box<SetupComponentPublicKeysPayload>, FileStructureError> {
         self.setup_component_public_keys_payload_file
             .get_data()
-            .map(|d| d.setup_component_public_keys_payload().unwrap())
+            .map(|d| Box::new(d.setup_component_public_keys_payload().unwrap().clone()))
     }
 
     pub fn election_event_context_payload(
@@ -90,6 +90,6 @@ impl SetupDirectory {
     ) -> Result<Box<ElectionEventContextPayload>, FileStructureError> {
         self.election_event_context_payload_file
             .get_data()
-            .map(|d| d.election_event_context_payload().unwrap())
+            .map(|d| Box::new(d.election_event_context_payload().unwrap().clone()))
     }
 }

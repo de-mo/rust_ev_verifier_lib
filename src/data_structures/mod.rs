@@ -41,27 +41,27 @@ macro_rules! create_verifier_data_type {
 pub(crate) use create_verifier_data_type;
 
 pub trait VerifierDataTrait {
-    fn encryption_parameters_payload(&self) -> Option<Box<EncryptionParametersPayload>>;
-    fn setup_component_public_keys_payload(&self) -> Option<Box<SetupComponentPublicKeysPayload>>;
-    fn election_event_context_payload(&self) -> Option<Box<ElectionEventContextPayload>>;
+    fn encryption_parameters_payload(&self) -> Option<&EncryptionParametersPayload>;
+    fn setup_component_public_keys_payload(&self) -> Option<&SetupComponentPublicKeysPayload>;
+    fn election_event_context_payload(&self) -> Option<&ElectionEventContextPayload>;
 }
 
 impl VerifierDataTrait for VerifierData {
-    fn encryption_parameters_payload(&self) -> Option<Box<EncryptionParametersPayload>> {
+    fn encryption_parameters_payload(&self) -> Option<&EncryptionParametersPayload> {
         match self {
             VerifierData::Setup(d) => d.encryption_parameters_payload(),
             VerifierData::Tally(_) => None,
         }
     }
 
-    fn setup_component_public_keys_payload(&self) -> Option<Box<SetupComponentPublicKeysPayload>> {
+    fn setup_component_public_keys_payload(&self) -> Option<&SetupComponentPublicKeysPayload> {
         match self {
             VerifierData::Setup(d) => d.setup_component_public_keys_payload(),
             VerifierData::Tally(_) => None,
         }
     }
 
-    fn election_event_context_payload(&self) -> Option<Box<ElectionEventContextPayload>> {
+    fn election_event_context_payload(&self) -> Option<&ElectionEventContextPayload> {
         match self {
             VerifierData::Setup(d) => d.election_event_context_payload(),
             VerifierData::Tally(_) => None,
