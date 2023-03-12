@@ -90,4 +90,34 @@ impl VerifierDataTrait for VerifierSetupData {
         }
         None
     }
+
+    fn setup_component_tally_data_payload(&self) -> Option<&SetupComponentTallyDataPayload> {
+        if let VerifierSetupData::SetupComponentTallyDataPayload(d) = self {
+            return Some(d);
+        }
+        None
+    }
+
+    fn control_component_public_keys_payload(&self) -> Option<&ControlComponentPublicKeysPayload> {
+        if let VerifierSetupData::ControlComponentPublicKeysPayload(d) = self {
+            return Some(d);
+        }
+        None
+    }
+
+    fn setup_component_verification_data_payload(
+        &self,
+    ) -> Option<&SetupComponentVerificationDataPayload> {
+        if let VerifierSetupData::SetupComponentVerificationDataPayload(d) = self {
+            return Some(d);
+        }
+        None
+    }
+
+    fn control_component_code_shares_payload(&self) -> Option<&ControlComponentCodeSharesPayload> {
+        if let VerifierSetupData::ControlComponentCodeSharesPayload(d) = self {
+            return Some(d);
+        }
+        None
+    }
 }

@@ -14,15 +14,15 @@ use serde::Deserialize;
 #[derive(Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct SetupComponentVerificationDataPayload {
-    election_event_id: String,
-    verification_card_set_id: String,
+    pub election_event_id: String,
+    pub verification_card_set_id: String,
     #[serde(deserialize_with = "deserialize_seq_string_64_to_seq_bytearray")]
-    partial_choice_return_codes_allow_list: Vec<ByteArray>,
-    chunk_id: usize,
-    encryption_group: EncryptionGroup,
-    setup_component_verification_data: Vec<SetupComponentVerificationData>,
-    combined_correctness_information: CombinedCorrectnessInformation,
-    signature: Signature,
+    pub partial_choice_return_codes_allow_list: Vec<ByteArray>,
+    pub chunk_id: usize,
+    pub encryption_group: EncryptionGroup,
+    pub setup_component_verification_data: Vec<SetupComponentVerificationData>,
+    pub combined_correctness_information: CombinedCorrectnessInformation,
+    pub signature: Signature,
 }
 
 implement_trait_data_structure!(SetupComponentVerificationDataPayload);
@@ -30,11 +30,11 @@ implement_trait_data_structure!(SetupComponentVerificationDataPayload);
 #[derive(Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct SetupComponentVerificationData {
-    verification_card_id: String,
-    encrypted_hashed_squared_confirmation_key: ExponentiatedEncryptedElement,
-    encrypted_hashed_squared_partial_choice_return_codes: ExponentiatedEncryptedElement,
+    pub verification_card_id: String,
+    pub encrypted_hashed_squared_confirmation_key: ExponentiatedEncryptedElement,
+    pub encrypted_hashed_squared_partial_choice_return_codes: ExponentiatedEncryptedElement,
     #[serde(deserialize_with = "deserialize_seq_string_hex_to_seq_bigunit")]
-    verification_card_public_key: Vec<BigUint>,
+    pub verification_card_public_key: Vec<BigUint>,
 }
 
 #[derive(Deserialize, Debug, Clone)]

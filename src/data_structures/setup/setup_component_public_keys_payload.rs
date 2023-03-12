@@ -12,10 +12,10 @@ use serde::Deserialize;
 #[derive(Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct SetupComponentPublicKeysPayload {
-    encryption_group: EncryptionGroup,
-    election_event_id: String,
-    setup_component_public_keys: SetupComponentPublicKeys,
-    signature: Signature,
+    pub encryption_group: EncryptionGroup,
+    pub election_event_id: String,
+    pub setup_component_public_keys: SetupComponentPublicKeys,
+    pub signature: Signature,
 }
 
 implement_trait_data_structure!(SetupComponentPublicKeysPayload);
@@ -23,14 +23,14 @@ implement_trait_data_structure!(SetupComponentPublicKeysPayload);
 #[derive(Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct SetupComponentPublicKeys {
-    combined_control_component_public_keys: Vec<ControlComponentPublicKeys>,
+    pub combined_control_component_public_keys: Vec<ControlComponentPublicKeys>,
     #[serde(deserialize_with = "deserialize_seq_string_hex_to_seq_bigunit")]
-    electoral_board_public_key: Vec<BigUint>,
-    electoral_board_schnorr_proofs: Vec<SchnorrProofUnderline>,
+    pub electoral_board_public_key: Vec<BigUint>,
+    pub electoral_board_schnorr_proofs: Vec<SchnorrProofUnderline>,
     #[serde(deserialize_with = "deserialize_seq_string_hex_to_seq_bigunit")]
-    election_public_key: Vec<BigUint>,
+    pub election_public_key: Vec<BigUint>,
     #[serde(deserialize_with = "deserialize_seq_string_hex_to_seq_bigunit")]
-    choice_return_codes_encryption_public_key: Vec<BigUint>,
+    pub choice_return_codes_encryption_public_key: Vec<BigUint>,
 }
 
 #[cfg(test)]

@@ -9,9 +9,9 @@ use serde::Deserialize;
 #[derive(Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct ElectionEventContextPayload {
-    encryption_group: EncryptionGroup,
-    election_event_context: ElectionEventContext,
-    signature: Signature,
+    pub encryption_group: EncryptionGroup,
+    pub election_event_context: ElectionEventContext,
+    pub signature: Signature,
 }
 
 implement_trait_data_structure!(ElectionEventContextPayload);
@@ -19,33 +19,33 @@ implement_trait_data_structure!(ElectionEventContextPayload);
 #[derive(Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct PTableElement {
-    actual_voting_option: String,
-    encoded_voting_option: usize,
+    pub actual_voting_option: String,
+    pub encoded_voting_option: usize,
 }
 
 #[derive(Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct PrimesMappingTable {
-    p_table: Vec<PTableElement>,
+    pub p_table: Vec<PTableElement>,
 }
 
 #[derive(Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct VerificationCardSetContext {
-    verification_card_set_id: String,
-    ballot_box_id: String,
-    test_ballot_box: bool,
-    number_of_write_in_fields: usize,
-    number_of_voting_cards: usize,
-    grace_period: usize,
-    primes_mapping_table: PrimesMappingTable,
+    pub verification_card_set_id: String,
+    pub ballot_box_id: String,
+    pub test_ballot_box: bool,
+    pub number_of_write_in_fields: usize,
+    pub number_of_voting_cards: usize,
+    pub grace_period: usize,
+    pub primes_mapping_table: PrimesMappingTable,
 }
 
 #[derive(Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct ElectionEventContext {
-    election_event_id: String,
-    verification_card_set_contexts: Vec<VerificationCardSetContext>,
+    pub election_event_id: String,
+    pub verification_card_set_contexts: Vec<VerificationCardSetContext>,
 }
 
 #[cfg(test)]

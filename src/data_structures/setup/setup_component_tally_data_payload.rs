@@ -11,14 +11,14 @@ use serde::Deserialize;
 #[derive(Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct SetupComponentTallyDataPayload {
-    election_event_id: String,
-    verification_card_set_id: String,
-    ballot_box_default_title: String,
-    encryption_group: EncryptionGroup,
-    verification_card_ids: Vec<String>,
+    pub election_event_id: String,
+    pub verification_card_set_id: String,
+    pub ballot_box_default_title: String,
+    pub encryption_group: EncryptionGroup,
+    pub verification_card_ids: Vec<String>,
     #[serde(deserialize_with = "deserialize_seq_seq_string_hex_to_seq_seq_bigunit")]
-    verification_card_public_keys: Vec<Vec<BigUint>>,
-    signature: Signature,
+    pub verification_card_public_keys: Vec<Vec<BigUint>>,
+    pub signature: Signature,
 }
 
 implement_trait_data_structure!(SetupComponentTallyDataPayload);

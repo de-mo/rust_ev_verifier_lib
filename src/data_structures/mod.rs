@@ -11,10 +11,14 @@ use num::BigUint;
 use self::{
     error::DeserializeError,
     setup::{
+        control_component_code_shares_payload::ControlComponentCodeSharesPayload,
+        control_component_public_keys_payload::ControlComponentPublicKeysPayload,
         election_event_context_payload::ElectionEventContextPayload,
         encryption_parameters_payload::EncryptionParametersPayload,
-        setup_component_public_keys_payload::SetupComponentPublicKeysPayload, VerifierSetupData,
-        VerifierSetupDataType,
+        setup_component_public_keys_payload::SetupComponentPublicKeysPayload,
+        setup_component_tally_data_payload::SetupComponentTallyDataPayload,
+        setup_component_verification_data_payload::SetupComponentVerificationDataPayload,
+        VerifierSetupData, VerifierSetupDataType,
     },
     setup_or_tally::SetupOrTally,
     tally::{VerifierTallyData, VerifierTallyDataType},
@@ -44,6 +48,12 @@ pub trait VerifierDataTrait {
     fn encryption_parameters_payload(&self) -> Option<&EncryptionParametersPayload>;
     fn setup_component_public_keys_payload(&self) -> Option<&SetupComponentPublicKeysPayload>;
     fn election_event_context_payload(&self) -> Option<&ElectionEventContextPayload>;
+    fn setup_component_tally_data_payload(&self) -> Option<&SetupComponentTallyDataPayload>;
+    fn control_component_public_keys_payload(&self) -> Option<&ControlComponentPublicKeysPayload>;
+    fn setup_component_verification_data_payload(
+        &self,
+    ) -> Option<&SetupComponentVerificationDataPayload>;
+    fn control_component_code_shares_payload(&self) -> Option<&ControlComponentCodeSharesPayload>;
 }
 
 impl VerifierDataTrait for VerifierData {
@@ -64,6 +74,36 @@ impl VerifierDataTrait for VerifierData {
     fn election_event_context_payload(&self) -> Option<&ElectionEventContextPayload> {
         match self {
             VerifierData::Setup(d) => d.election_event_context_payload(),
+            VerifierData::Tally(_) => None,
+        }
+    }
+
+    fn setup_component_tally_data_payload(&self) -> Option<&SetupComponentTallyDataPayload> {
+        match self {
+            VerifierData::Setup(d) => d.setup_component_tally_data_payload(),
+            VerifierData::Tally(_) => None,
+        }
+    }
+
+    fn control_component_public_keys_payload(&self) -> Option<&ControlComponentPublicKeysPayload> {
+        match self {
+            VerifierData::Setup(d) => d.control_component_public_keys_payload(),
+            VerifierData::Tally(_) => None,
+        }
+    }
+
+    fn setup_component_verification_data_payload(
+        &self,
+    ) -> Option<&SetupComponentVerificationDataPayload> {
+        match self {
+            VerifierData::Setup(d) => d.setup_component_verification_data_payload(),
+            VerifierData::Tally(_) => None,
+        }
+    }
+
+    fn control_component_code_shares_payload(&self) -> Option<&ControlComponentCodeSharesPayload> {
+        match self {
+            VerifierData::Setup(d) => d.control_component_code_shares_payload(),
             VerifierData::Tally(_) => None,
         }
     }
@@ -225,31 +265,31 @@ where
 #[derive(Deserialize2, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct Signature {
-    signature_contents: String,
+    pub signature_contents: String,
 }
 
 #[derive(Deserialize2, Debug, Clone)]
 pub struct SchnorrProofUnderline {
     #[serde(deserialize_with = "deserialize_string_hex_to_bigunit")]
     #[serde(rename = "_e")]
-    e: BigUint,
+    pub e: BigUint,
     #[serde(deserialize_with = "deserialize_string_hex_to_bigunit")]
     #[serde(rename = "_z")]
-    z: BigUint,
+    pub z: BigUint,
 }
 
 #[derive(Deserialize2, Debug, Clone)]
 pub struct SchnorrProof {
     #[serde(deserialize_with = "deserialize_string_hex_to_bigunit")]
-    e: BigUint,
+    pub e: BigUint,
     #[serde(deserialize_with = "deserialize_string_hex_to_bigunit")]
-    z: BigUint,
+    pub z: BigUint,
 }
 
 #[derive(Deserialize2, Debug, Clone)]
 pub struct ExponentiatedEncryptedElement {
     #[serde(deserialize_with = "deserialize_string_hex_to_bigunit")]
-    gamma: BigUint,
+    pub gamma: BigUint,
     #[serde(deserialize_with = "deserialize_seq_string_hex_to_seq_bigunit")]
-    phis: Vec<BigUint>,
+    pub phis: Vec<BigUint>,
 }

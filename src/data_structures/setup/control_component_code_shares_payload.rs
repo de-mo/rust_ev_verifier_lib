@@ -16,27 +16,27 @@ implement_trait_data_structure!(ControlComponentCodeSharesPayload);
 #[derive(Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct ControlComponentCodeSharesPayloadInner {
-    election_event_id: String,
-    verification_card_set_id: String,
-    chunk_id: usize,
-    control_component_code_shares: Vec<ControlComponentCodeShares>,
-    encryption_group: EncryptionGroup,
-    node_id: usize,
-    signature: Signature,
+    pub election_event_id: String,
+    pub verification_card_set_id: String,
+    pub chunk_id: usize,
+    pub control_component_code_shares: Vec<ControlComponentCodeShares>,
+    pub encryption_group: EncryptionGroup,
+    pub node_id: usize,
+    pub signature: Signature,
 }
 
 #[derive(Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct ControlComponentCodeShares {
-    verification_card_id: String,
+    pub verification_card_id: String,
     #[serde(deserialize_with = "deserialize_seq_string_hex_to_seq_bigunit")]
-    voter_choice_return_code_generation_public_key: Vec<BigUint>,
+    pub voter_choice_return_code_generation_public_key: Vec<BigUint>,
     #[serde(deserialize_with = "deserialize_seq_string_hex_to_seq_bigunit")]
-    voter_vote_cast_return_code_generation_public_key: Vec<BigUint>,
-    exponentiated_encrypted_partial_choice_return_codes: ExponentiatedEncryptedElement,
-    encrypted_partial_choice_return_code_exponentiation_proof: SchnorrProof,
-    exponentiated_encrypted_confirmation_key: ExponentiatedEncryptedElement,
-    encrypted_confirmation_key_exponentiation_proof: SchnorrProof,
+    pub voter_vote_cast_return_code_generation_public_key: Vec<BigUint>,
+    pub exponentiated_encrypted_partial_choice_return_codes: ExponentiatedEncryptedElement,
+    pub encrypted_partial_choice_return_code_exponentiation_proof: SchnorrProof,
+    pub exponentiated_encrypted_confirmation_key: ExponentiatedEncryptedElement,
+    pub encrypted_confirmation_key_exponentiation_proof: SchnorrProof,
 }
 
 #[cfg(test)]

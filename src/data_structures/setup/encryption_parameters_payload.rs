@@ -10,10 +10,10 @@ use serde::Deserialize;
 #[derive(Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct EncryptionParametersPayload {
-    encryption_group: EncryptionGroup,
-    seed: String,
-    small_primes: Vec<usize>,
-    signature: Signature,
+    pub encryption_group: EncryptionGroup,
+    pub seed: String,
+    pub small_primes: Vec<usize>,
+    pub signature: Signature,
 }
 
 implement_trait_data_structure!(EncryptionParametersPayload);

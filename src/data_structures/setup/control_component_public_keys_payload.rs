@@ -11,10 +11,10 @@ use serde::Deserialize;
 #[derive(Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct ControlComponentPublicKeysPayload {
-    encryption_group: EncryptionGroup,
-    election_event_id: String,
-    control_component_public_keys: ControlComponentPublicKeys,
-    signature: Signature,
+    pub encryption_group: EncryptionGroup,
+    pub election_event_id: String,
+    pub control_component_public_keys: ControlComponentPublicKeys,
+    pub signature: Signature,
 }
 
 implement_trait_data_structure!(ControlComponentPublicKeysPayload);
@@ -22,13 +22,13 @@ implement_trait_data_structure!(ControlComponentPublicKeysPayload);
 #[derive(Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct ControlComponentPublicKeys {
-    node_id: u8,
+    pub node_id: u8,
     #[serde(deserialize_with = "deserialize_seq_string_hex_to_seq_bigunit")]
-    ccrj_choice_return_codes_encryption_public_key: Vec<BigUint>,
-    ccrj_schnorr_proofs: Vec<SchnorrProofUnderline>,
+    pub ccrj_choice_return_codes_encryption_public_key: Vec<BigUint>,
+    pub ccrj_schnorr_proofs: Vec<SchnorrProofUnderline>,
     #[serde(deserialize_with = "deserialize_seq_string_hex_to_seq_bigunit")]
-    ccmj_election_public_key: Vec<BigUint>,
-    ccmj_schnorr_proofs: Vec<SchnorrProofUnderline>,
+    pub ccmj_election_public_key: Vec<BigUint>,
+    pub ccmj_schnorr_proofs: Vec<SchnorrProofUnderline>,
 }
 
 #[cfg(test)]
