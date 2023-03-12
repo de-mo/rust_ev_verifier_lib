@@ -1,6 +1,7 @@
 use super::{file::File, GetFileName};
 use crate::data_structures::VerifierDataType;
 use std::fs;
+use std::marker::PhantomData;
 use std::path::{Path, PathBuf};
 use std::slice::Iter;
 
@@ -11,12 +12,13 @@ pub struct FileGroup {
     numbers: Vec<usize>,
 }
 
-pub struct FileGroupIter<'a> {
-    file_group: &'a FileGroup,
-    iter: Iter<'a, usize>,
+pub struct FileGroupIter<'a, T> {
+    pub file_group: &'a FileGroup,
+    pub iter: Iter<'a, usize>,
+    not_used: PhantomData<T>,
 }
 
-impl Iterator for FileGroupIter<'_> {
+impl Iterator for FileGroupIter<'_, File> {
     type Item = File;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -30,6 +32,42 @@ impl Iterator for FileGroupIter<'_> {
         }
     }
 }
+
+impl<'a, T> FileGroupIter<'a, T> {
+    pub fn new(file_group: &'a FileGroup) -> Self {
+        FileGroupIter {
+            file_group,
+            iter: file_group.numbers.iter(),
+            not_used: PhantomData,
+        }
+    }
+}
+
+macro_rules! impl_iterator_payload {
+    ($p: ty, $f: ident, $pread: ident, $preaditer: ident) => {
+        type $pread = Result<Box<$p>, FileStructureError>;
+        type $preaditer<'a> = FileGroupIter<'a, $pread>;
+        impl Iterator for $preaditer<'_> {
+            type Item = $pread;
+
+            fn next(&mut self) -> Option<Self::Item> {
+                match self.iter.next() {
+                    Some(i) => Some(
+                        File::new(
+                            &self.file_group.get_location(),
+                            self.file_group.get_data_type(),
+                            Some(*i),
+                        )
+                        .get_data()
+                        .map(|d| Box::new(d.$f().unwrap().clone())),
+                    ),
+                    None => None,
+                }
+            }
+        }
+    };
+}
+pub(crate) use impl_iterator_payload;
 
 impl FileGroup {
     pub fn new(location: &Path, data_type: VerifierDataType) -> Self {
@@ -65,6 +103,10 @@ impl FileGroup {
         self.location.to_path_buf()
     }
 
+    pub fn get_data_type(&self) -> VerifierDataType {
+        self.data_type.clone()
+    }
+
     pub fn exists(&self) -> bool {
         self.location.is_dir()
     }
@@ -77,11 +119,8 @@ impl FileGroup {
         self.numbers.clone()
     }
 
-    pub fn iter(&self) -> FileGroupIter {
-        FileGroupIter {
-            file_group: self,
-            iter: self.numbers.iter(),
-        }
+    pub fn iter(&self) -> FileGroupIter<File> {
+        FileGroupIter::new(self)
     }
 }
 
