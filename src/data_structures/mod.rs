@@ -9,7 +9,7 @@ pub mod tally;
 use num::BigUint;
 
 use self::{
-    error::{DeserializeError, DeserializeErrorType},
+    error::DeserializeError,
     setup::{
         election_event_context_payload::ElectionEventContextPayload,
         encryption_parameters_payload::EncryptionParametersPayload,
