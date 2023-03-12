@@ -1,5 +1,6 @@
 use super::{
-    structure::{create_file, Directory, File, FileGroup},
+    file::{create_file, File},
+    file_group::FileGroup,
     FileStructureError, FileStructureErrorType, GetFileName,
 };
 use crate::{

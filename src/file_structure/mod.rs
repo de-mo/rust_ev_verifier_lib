@@ -1,6 +1,7 @@
 pub mod directory;
+pub mod file;
+pub mod file_group;
 pub mod setup_directory;
-pub mod structure;
 pub mod tally_directory;
 use crate::data_structures::setup::VerifierSetupDataType;
 use crate::data_structures::VerifierDataType;
@@ -115,7 +116,7 @@ mod test {
     }
 
     #[test]
-    fn test_setup_groupss_exist() {
+    fn test_setup_groups_exist() {
         let path = Path::new(".")
             .join("datasets")
             .join("dataset-setup1")
