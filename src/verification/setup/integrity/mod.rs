@@ -1,24 +1,24 @@
 use crate::{
     error::{create_verifier_error, VerifierError},
     file_structure::{setup_directory::VCSDirectory, VerificationDirectory},
-    verification::error::{
-        create_verification_failure, VerificationError, VerificationFailure,
-        VerificationFailureType,
-    },
 };
 
 use super::super::{
+    error::{
+        create_verification_failure, VerificationError, VerificationFailure,
+        VerificationFailureType,
+    },
     verification::{Verification, VerificationMetaData},
     VerificationCategory, VerificationList, VerificationPeriod,
 };
 
 pub fn get_verifications() -> VerificationList {
     let mut res = vec![];
-    res.push(get_verification_100());
+    res.push(get_verification_400());
     res
 }
 
-fn get_verification_100() -> Verification {
+fn get_verification_400() -> Verification {
     Verification::new(
         VerificationMetaData {
             id: "400".to_owned(),
@@ -33,26 +33,39 @@ fn get_verification_100() -> Verification {
 
 fn validate_vcs_dir(dir: &VCSDirectory) -> (Vec<VerificationError>, Vec<VerificationFailure>) {
     let mut failures: Vec<VerificationFailure> = vec![];
-    if !dir.setup_component_tally_data_payload_file.exists() {
-        failures.push(create_verification_failure!(
-            "setup_component_tally_data_payload does not exist"
-        ))
+    match dir.setup_component_tally_data_payload() {
+        Ok(_) => (),
+        Err(e) => failures.push(create_verification_failure!(
+            format!(
+                "{}/setup_component_tally_data_payload has wrong format",
+                dir.get_name()
+            ),
+            e
+        )),
     }
-    if !dir
-        .setup_component_verification_data_payload_group
-        .has_elements()
-    {
-        failures.push(create_verification_failure!(
-            "setup_component_verification_data_payload does not exist"
-        ))
+    for (i, f) in dir.control_component_code_shares_payload_iter() {
+        if f.is_err() {
+            failures.push(create_verification_failure!(
+                format!(
+                    "{}/control_component_code_shares_payload.{} has wrong format",
+                    dir.get_name(),
+                    i
+                ),
+                f.unwrap_err()
+            ))
+        }
     }
-    if !dir
-        .control_component_code_shares_payload_group
-        .has_elements()
-    {
-        failures.push(create_verification_failure!(
-            "control_component_code_shares_payload does not exist"
-        ))
+    for (i, f) in dir.setup_component_verification_data_payload_iter() {
+        if f.is_err() {
+            failures.push(create_verification_failure!(
+                format!(
+                    "{}/setup_component_verification_data_payload.{} has wrong format",
+                    dir.get_name(),
+                    i
+                ),
+                f.unwrap_err()
+            ))
+        }
     }
     (vec![], failures)
 }
@@ -84,14 +97,16 @@ fn fn_verification_400(
             e
         )),
     }
-    for f in setup_dir.control_component_public_keys_payload_iter() {}
-    {
-        failures.push(create_verification_failure!(format!(
-            "control_component_public_keys_payload_group missing. only these parts are present: {:?}",
-            setup_dir
-                .control_component_public_keys_payload_group
-                .get_numbers()
-        )))
+    for (i, f) in setup_dir.control_component_public_keys_payload_iter() {
+        if f.is_err() {
+            failures.push(create_verification_failure!(
+                format!(
+                    "control_component_public_keys_payload.{} has wrong format",
+                    i
+                ),
+                f.unwrap_err()
+            ))
+        }
     }
     for d in setup_dir.vcs_directories_iter() {
         let (mut es, mut fs) = validate_vcs_dir(d);
