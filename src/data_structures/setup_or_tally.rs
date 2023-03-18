@@ -16,7 +16,7 @@ impl<S: Clone, T: Clone> SetupOrTally<S, T> {
         !self.is_setup()
     }
 
-    pub fn unwrap_setup(self) -> S
+    pub fn unwrap_setup(&self) -> &S
 //    where
 //        T: core::fmt::Debug,
     {
@@ -28,7 +28,7 @@ impl<S: Clone, T: Clone> SetupOrTally<S, T> {
         }
     }
 
-    pub fn unwrap_tally(self) -> T
+    pub fn unwrap_tally(&self) -> &T
 //    where
 //        S: core::fmt::Debug,
     {

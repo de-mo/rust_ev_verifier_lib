@@ -12,23 +12,23 @@ pub fn get_verifications() -> VerificationListCategory {
     let mut res: VerificationListCategory = HashMap::new();
     res.insert(
         VerificationCategory::Authenticity,
-        Box::new(authenticity::get_verifications()),
+        authenticity::get_verifications(),
     );
     res.insert(
         VerificationCategory::Completness,
-        Box::new(completness::get_verifications()),
+        completness::get_verifications(),
     );
     res.insert(
         VerificationCategory::Consistency,
-        Box::new(consistency::get_verifications()),
+        consistency::get_verifications(),
     );
     res.insert(
         VerificationCategory::Evidence,
-        Box::new(evidence::get_verifications()),
+        evidence::get_verifications(),
     );
     res.insert(
         VerificationCategory::Integrity,
-        Box::new(integrity::get_verifications()),
+        integrity::get_verifications(),
     );
     res
 }

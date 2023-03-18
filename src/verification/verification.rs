@@ -6,15 +6,15 @@ use std::time::{Duration, SystemTime};
 use super::{VerificationCategory, VerificationPeriod, VerificationStatus};
 
 pub struct VerificationMetaData {
-    id: String,
-    nr: String,
-    name: String,
-    period: VerificationPeriod,
-    category: VerificationCategory,
+    pub id: String,
+    pub nr: String,
+    pub name: String,
+    pub period: VerificationPeriod,
+    pub category: VerificationCategory,
 }
 
 pub struct Verification {
-    meta_data: VerificationMetaData,
+    pub meta_data: VerificationMetaData,
     status: VerificationStatus,
     verification_fn:
         Box<dyn Fn(&VerificationDirectory) -> (Vec<VerificationError>, Vec<VerificationFailure>)>,
@@ -24,7 +24,7 @@ pub struct Verification {
 }
 
 impl Verification {
-    fn new(
+    pub fn new(
         meta_data: VerificationMetaData,
         verification_fn: impl Fn(&VerificationDirectory) -> (Vec<VerificationError>, Vec<VerificationFailure>)
             + 'static,

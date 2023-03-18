@@ -81,7 +81,7 @@ impl FileGroup {
     }
 
     fn set_numbers(&mut self) {
-        if self.exists() {
+        if self.location_exists() {
             for e in fs::read_dir(&self.location).unwrap() {
                 let name = e.unwrap().file_name().to_str().unwrap().to_string();
                 let matching = self.data_type.get_raw_file_name();
@@ -107,8 +107,12 @@ impl FileGroup {
         self.data_type.clone()
     }
 
-    pub fn exists(&self) -> bool {
+    pub fn location_exists(&self) -> bool {
         self.location.is_dir()
+    }
+
+    pub fn has_elements(&self) -> bool {
+        !self.numbers.is_empty()
     }
 
     pub fn get_paths(&self) -> Vec<PathBuf> {
@@ -144,7 +148,8 @@ mod test {
             &location,
             VerifierDataType::Setup(VerifierSetupDataType::ControlComponentPublicKeysPayload),
         );
-        assert!(fg.exists());
+        assert!(fg.location_exists());
+        assert!(fg.has_elements());
         assert_eq!(fg.get_location(), location);
         assert_eq!(fg.get_numbers(), [1, 2, 3, 4]);
         for (i, f) in fg.iter().enumerate() {
@@ -160,7 +165,8 @@ mod test {
             &location,
             VerifierDataType::Setup(VerifierSetupDataType::ControlComponentPublicKeysPayload),
         );
-        assert!(!fg.exists());
+        assert!(!fg.location_exists());
+        assert!(!fg.has_elements());
         assert_eq!(fg.get_location(), location);
         assert!(fg.get_numbers().is_empty());
         assert!(fg.iter().next().is_none());

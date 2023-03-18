@@ -29,19 +29,19 @@ const VCS_DIR_NAME: &str = "verification_card_sets";
 #[derive(Clone)]
 pub struct SetupDirectory {
     location: PathBuf,
-    encryption_parameters_payload_file: File,
-    setup_component_public_keys_payload_file: File,
-    election_event_context_payload_file: File,
-    control_component_public_keys_payload_group: FileGroup,
-    vcs_directories: Box<Vec<VCSDirectory>>,
+    pub encryption_parameters_payload_file: File,
+    pub setup_component_public_keys_payload_file: File,
+    pub election_event_context_payload_file: File,
+    pub control_component_public_keys_payload_group: FileGroup,
+    pub vcs_directories: Box<Vec<VCSDirectory>>,
 }
 
 #[derive(Clone)]
 pub struct VCSDirectory {
     location: PathBuf,
-    setup_component_tally_data_payload: File,
-    setup_component_verification_data_payload_group: FileGroup,
-    control_component_code_shares_payload_group: FileGroup,
+    pub setup_component_tally_data_payload_file: File,
+    pub setup_component_verification_data_payload_group: FileGroup,
+    pub control_component_code_shares_payload_group: FileGroup,
 }
 
 impl_iterator_payload!(
@@ -146,7 +146,7 @@ impl VCSDirectory {
     pub fn new(location: &Path) -> Self {
         Self {
             location: location.to_path_buf(),
-            setup_component_tally_data_payload: create_file!(
+            setup_component_tally_data_payload_file: create_file!(
                 location,
                 Setup,
                 SetupComponentTallyDataPayload
@@ -169,7 +169,7 @@ impl VCSDirectory {
     pub fn setup_component_tally_data_payload(
         &self,
     ) -> Result<Box<SetupComponentTallyDataPayload>, FileStructureError> {
-        self.setup_component_tally_data_payload
+        self.setup_component_tally_data_payload_file
             .get_data()
             .map(|d| Box::new(d.setup_component_tally_data_payload().unwrap().clone()))
     }

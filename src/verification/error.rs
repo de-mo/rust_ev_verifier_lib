@@ -1,15 +1,35 @@
-use crate::error::VerifierError;
+use crate::error::{create_verifier_error, VerifierError};
 use std::fmt::Display;
 
-#[derive(Debug)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum VerificationErrorType {
     Error,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum VerificationFailureType {
     Failure,
 }
+
+macro_rules! create_verification_error {
+    ($m: expr) => {
+        create_verifier_error!(VerificationError, $m)
+    };
+    ($m: expr, $e: expr) => {
+        create_verifier_error!(VerificationError, $m, $e)
+    };
+}
+pub(crate) use create_verification_error;
+
+macro_rules! create_verification_failure {
+    ($m: expr) => {
+        create_verifier_error!(VerificationFailureType::Failure, $m)
+    };
+    ($m: expr, $e: expr) => {
+        create_verifier_error!(VerificationFailureType::Failure, $m, $e)
+    };
+}
+pub(crate) use create_verification_failure;
 
 impl Display for VerificationErrorType {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
