@@ -166,6 +166,15 @@ impl VCSDirectory {
         self.location.to_path_buf()
     }
 
+    pub fn get_name(&self) -> String {
+        self.location
+            .file_name()
+            .unwrap()
+            .to_str()
+            .unwrap()
+            .to_string()
+    }
+
     pub fn setup_component_tally_data_payload(
         &self,
     ) -> Result<Box<SetupComponentTallyDataPayload>, FileStructureError> {
@@ -180,7 +189,7 @@ impl VCSDirectory {
         FileGroupIter::new(&self.setup_component_verification_data_payload_group)
     }
 
-    pub fn control_component_code_shares_payload(
+    pub fn control_component_code_shares_payload_iter(
         &self,
     ) -> ControlComponentCodeSharesPayloadReadIter {
         FileGroupIter::new(&self.control_component_code_shares_payload_group)
@@ -190,7 +199,6 @@ impl VCSDirectory {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::data_structures::setup::VerifierSetupDataType;
     use std::path::{Path, PathBuf};
 
     fn get_location() -> PathBuf {
@@ -207,11 +215,11 @@ mod test {
         assert!(dir.encryption_parameters_payload().is_ok());
         assert!(dir.setup_component_public_keys_payload().is_ok());
         assert!(dir.election_event_context_payload().is_ok());
-        for (i, p) in dir.control_component_public_keys_payload_iter().enumerate() {
+        for (i, p) in dir.control_component_public_keys_payload_iter() {
             assert!(p.is_ok());
             assert_eq!(
                 usize::from(p.unwrap().control_component_public_keys.node_id),
-                i + 1
+                i
             )
         }
         let expected = vec![
@@ -234,16 +242,13 @@ mod test {
         let dir = VCSDirectory::new(&location);
         assert_eq!(dir.get_location(), location);
         assert!(dir.setup_component_tally_data_payload().is_ok());
-        for (i, p) in dir.control_component_code_shares_payload().enumerate() {
+        for (i, p) in dir.control_component_code_shares_payload_iter() {
             assert!(p.is_ok());
             for k in p.unwrap().iter() {
                 assert_eq!(k.chunk_id, i)
             }
         }
-        for (i, p) in dir
-            .setup_component_verification_data_payload_iter()
-            .enumerate()
-        {
+        for (i, p) in dir.setup_component_verification_data_payload_iter() {
             assert!(p.is_ok());
             assert_eq!(usize::from(p.unwrap().chunk_id), i)
         }

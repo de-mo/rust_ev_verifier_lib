@@ -19,14 +19,17 @@ pub struct FileGroupIter<'a, T> {
 }
 
 impl Iterator for FileGroupIter<'_, File> {
-    type Item = File;
+    type Item = (usize, File);
 
     fn next(&mut self) -> Option<Self::Item> {
         match self.iter.next() {
-            Some(i) => Some(File::new(
-                &self.file_group.location,
-                self.file_group.data_type.clone(),
-                Some(*i),
+            Some(i) => Some((
+                *i,
+                File::new(
+                    &self.file_group.location,
+                    self.file_group.data_type.clone(),
+                    Some(*i),
+                ),
             )),
             None => None,
         }
@@ -48,11 +51,12 @@ macro_rules! impl_iterator_payload {
         type $pread = Result<Box<$p>, FileStructureError>;
         type $preaditer<'a> = FileGroupIter<'a, $pread>;
         impl Iterator for $preaditer<'_> {
-            type Item = $pread;
+            type Item = (usize, $pread);
 
             fn next(&mut self) -> Option<Self::Item> {
                 match self.iter.next() {
-                    Some(i) => Some(
+                    Some(i) => Some((
+                        *i,
                         File::new(
                             &self.file_group.get_location(),
                             self.file_group.get_data_type(),
@@ -60,7 +64,7 @@ macro_rules! impl_iterator_payload {
                         )
                         .get_data()
                         .map(|d| Box::new(d.$f().unwrap().clone())),
-                    ),
+                    )),
                     None => None,
                 }
             }
@@ -116,7 +120,7 @@ impl FileGroup {
     }
 
     pub fn get_paths(&self) -> Vec<PathBuf> {
-        self.iter().map(|f| f.get_path()).collect()
+        self.iter().map(|(_, f)| f.get_path()).collect()
     }
 
     pub fn get_numbers(&self) -> Vec<usize> {
@@ -152,8 +156,8 @@ mod test {
         assert!(fg.has_elements());
         assert_eq!(fg.get_location(), location);
         assert_eq!(fg.get_numbers(), [1, 2, 3, 4]);
-        for (i, f) in fg.iter().enumerate() {
-            let name = format!("controlComponentPublicKeysPayload.{}.json", i + 1);
+        for (i, f) in fg.iter() {
+            let name = format!("controlComponentPublicKeysPayload.{}.json", i);
             assert_eq!(f.get_path(), location.join(name));
         }
     }
