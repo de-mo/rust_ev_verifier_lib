@@ -21,11 +21,11 @@ implement_trait_data_structure!(EncryptionParametersPayload);
 #[derive(Deserialize, Debug, Clone)]
 pub struct EncryptionGroup {
     #[serde(deserialize_with = "deserialize_string_hex_to_bigunit")]
-    p: BigUint,
+    pub p: BigUint,
     #[serde(deserialize_with = "deserialize_string_hex_to_bigunit")]
-    q: BigUint,
+    pub q: BigUint,
     #[serde(deserialize_with = "deserialize_string_hex_to_bigunit")]
-    g: BigUint,
+    pub g: BigUint,
 }
 
 #[cfg(test)]
