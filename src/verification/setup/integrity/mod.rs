@@ -11,12 +11,10 @@ use super::super::{
     verification::{Verification, VerificationMetaData},
     VerificationCategory, VerificationList, VerificationPeriod,
 };
-use std::collections::HashMap;
 
 pub fn get_verifications() -> VerificationList {
-    let mut res = HashMap::new();
-    let v = get_verification_100();
-    res.insert(v.meta_data.id.clone(), v);
+    let mut res = vec![];
+    res.push(get_verification_100());
     res
 }
 

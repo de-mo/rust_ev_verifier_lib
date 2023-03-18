@@ -28,19 +28,19 @@ pub enum VerificationPeriod {
     Tally,
 }
 
-pub type VerificationList = HashMap<String, verification::Verification>;
-
-pub type VerificationListCategory = HashMap<VerificationCategory, VerificationList>;
+pub type VerificationList = Vec<verification::Verification>;
 
 pub enum VerificationsForPeriod {
-    Setup(Box<VerificationListCategory>),
-    Tally(Box<VerificationListCategory>),
+    Setup(Box<VerificationList>),
+    Tally(Box<VerificationList>),
 }
 
+/*
 pub struct VerificationsForPeriodIter<'a> {
     iter_category: Iter<'a, VerificationCategory, VerificationList>,
     iter_list: Option<Iter<'a, String, verification::Verification>>,
 }
+ */
 
 impl VerificationsForPeriod {
     pub fn new(period: VerificationPeriod) -> VerificationsForPeriod {
@@ -54,14 +54,14 @@ impl VerificationsForPeriod {
         }
     }
 
-    pub fn value(&self) -> &VerificationListCategory {
+    pub fn value(&self) -> &VerificationList {
         match self {
             VerificationsForPeriod::Setup(vs) => vs.as_ref(),
             VerificationsForPeriod::Tally(vs) => vs.as_ref(),
         }
     }
 
-    pub fn value_mut(&mut self) -> &mut VerificationListCategory {
+    pub fn value_mut(&mut self) -> &mut VerificationList {
         match self {
             VerificationsForPeriod::Setup(vs) => vs.as_mut(),
             VerificationsForPeriod::Tally(vs) => vs.as_mut(),
@@ -69,6 +69,7 @@ impl VerificationsForPeriod {
     }
 }
 
+/*
 impl<'a> VerificationsForPeriodIter<'a> {
     fn new(list: &'a Box<VerificationListCategory>) -> Self {
         Self {
@@ -94,3 +95,4 @@ impl<'a> Iterator for VerificationsForPeriodIter<'a> {
         }
     }
 }
+ */

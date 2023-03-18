@@ -21,10 +21,8 @@ impl Runner {
 
     fn run_all(&mut self) {
         let directory = VerificationDirectory::new(self.period, &self.path);
-        for list in self.verifications.value_mut().values_mut() {
-            for v in list.values_mut() {
-                v.run(&directory);
-            }
+        for v in self.verifications.value_mut().iter_mut() {
+            v.run(&directory);
         }
     }
 }

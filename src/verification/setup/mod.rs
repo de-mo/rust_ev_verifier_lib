@@ -4,31 +4,14 @@ pub mod consistency;
 pub mod evidence;
 pub mod integrity;
 
-use std::collections::HashMap;
+use super::VerificationList;
 
-use super::{VerificationCategory, VerificationListCategory};
-
-pub fn get_verifications() -> VerificationListCategory {
-    let mut res: VerificationListCategory = HashMap::new();
-    res.insert(
-        VerificationCategory::Authenticity,
-        authenticity::get_verifications(),
-    );
-    res.insert(
-        VerificationCategory::Completness,
-        completness::get_verifications(),
-    );
-    res.insert(
-        VerificationCategory::Consistency,
-        consistency::get_verifications(),
-    );
-    res.insert(
-        VerificationCategory::Evidence,
-        evidence::get_verifications(),
-    );
-    res.insert(
-        VerificationCategory::Integrity,
-        integrity::get_verifications(),
-    );
+pub fn get_verifications() -> VerificationList {
+    let mut res: VerificationList = vec![];
+    res.append(&mut authenticity::get_verifications());
+    res.append(&mut completness::get_verifications());
+    res.append(&mut consistency::get_verifications());
+    res.append(&mut evidence::get_verifications());
+    res.append(&mut integrity::get_verifications());
     res
 }
