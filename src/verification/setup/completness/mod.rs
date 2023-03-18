@@ -1,13 +1,13 @@
 use crate::{
     error::{create_verifier_error, VerifierError},
     file_structure::{setup_directory::VCSDirectory, VerificationDirectory},
-    verification::error::{
-        create_verification_failure, VerificationError, VerificationFailure,
-        VerificationFailureType,
-    },
 };
 
 use super::super::{
+    error::{
+        create_verification_failure, VerificationError, VerificationFailure,
+        VerificationFailureType,
+    },
     verification::{Verification, VerificationMetaData},
     VerificationCategory, VerificationList, VerificationPeriod,
 };

@@ -13,10 +13,10 @@ pub enum VerificationFailureType {
 
 macro_rules! create_verification_error {
     ($m: expr) => {
-        create_verifier_error!(VerificationError, $m)
+        create_verifier_error!(VerificationErrorType::Error, $m)
     };
     ($m: expr, $e: expr) => {
-        create_verifier_error!(VerificationError, $m, $e)
+        create_verifier_error!(VerificationErrorType::Error, $m, $e)
     };
 }
 pub(crate) use create_verification_error;

@@ -2,7 +2,6 @@ pub mod error;
 pub mod setup;
 pub mod tally;
 pub mod verification;
-use std::collections::{hash_map::Iter, HashMap};
 
 #[derive(Debug, PartialEq, Eq, Hash)]
 pub enum VerificationCategory {
