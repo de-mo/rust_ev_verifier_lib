@@ -268,6 +268,13 @@ pub struct Signature {
     pub signature_contents: String,
 }
 
+pub trait SignatureTrait {
+    fn get_signature_struct(&self) -> &Signature;
+    fn get_signature(&self) -> ByteArray {
+        ByteArray::base64_decode(&self.get_signature_struct().signature_contents).unwrap()
+    }
+}
+
 #[derive(Deserialize2, Debug, Clone)]
 pub struct SchnorrProofUnderline {
     #[serde(deserialize_with = "deserialize_string_hex_to_bigunit")]

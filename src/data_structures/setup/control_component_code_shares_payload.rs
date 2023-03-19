@@ -4,6 +4,7 @@ use super::super::{
     implement_trait_data_structure, DataStructureTrait, ExponentiatedEncryptedElement,
     SchnorrProof, Signature,
 };
+
 use super::encryption_parameters_payload::EncryptionGroup;
 use crate::error::{create_verifier_error, VerifierError};
 use num::BigUint;
