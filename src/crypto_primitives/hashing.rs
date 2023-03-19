@@ -3,7 +3,8 @@ use super::num_bigint::Hexa;
 use super::openssl::sha3_256;
 use num::bigint::BigUint;
 
-enum RecursiveHashable {
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum RecursiveHashable {
     ByteArray(ByteArray),
     Int(BigUint),
     String(String),
@@ -11,7 +12,7 @@ enum RecursiveHashable {
 }
 
 impl RecursiveHashable {
-    pub fn to_hashable_byte_array(&self) -> ByteArray {
+    fn to_hashable_byte_array(&self) -> ByteArray {
         match self {
             RecursiveHashable::ByteArray(b) => b.prepend_byte(0u8),
             RecursiveHashable::Int(i) => ByteArray::from(i).prepend_byte(1u8),
@@ -30,6 +31,18 @@ impl RecursiveHashable {
         let b = self.to_hashable_byte_array();
         sha3_256(&b)
     }
+
+    pub fn from_biguint_exa(s: &String) -> Self {
+        RecursiveHashable::from(&BigUint::from_hexa(s).unwrap())
+    }
+
+    pub fn from_biguint_exa_vec(v: &Vec<String>) -> Self {
+        let l: Vec<RecursiveHashable> = v
+            .iter()
+            .map(|s| RecursiveHashable::from_biguint_exa(s))
+            .collect();
+        RecursiveHashable::from(&l)
+    }
 }
 
 impl From<&ByteArray> for RecursiveHashable {
@@ -47,6 +60,33 @@ impl From<&BigUint> for RecursiveHashable {
 impl From<&String> for RecursiveHashable {
     fn from(value: &String) -> Self {
         RecursiveHashable::String(value.clone())
+    }
+}
+
+impl From<&Vec<RecursiveHashable>> for RecursiveHashable {
+    fn from(value: &Vec<RecursiveHashable>) -> Self {
+        RecursiveHashable::Composite(value.clone())
+    }
+}
+
+impl From<&Vec<String>> for RecursiveHashable {
+    fn from(value: &Vec<String>) -> Self {
+        let l: Vec<RecursiveHashable> = value.iter().map(|s| RecursiveHashable::from(s)).collect();
+        RecursiveHashable::from(&l)
+    }
+}
+
+impl From<&Vec<ByteArray>> for RecursiveHashable {
+    fn from(value: &Vec<ByteArray>) -> Self {
+        let l: Vec<RecursiveHashable> = value.iter().map(|b| RecursiveHashable::from(b)).collect();
+        RecursiveHashable::from(&l)
+    }
+}
+
+impl From<&Vec<BigUint>> for RecursiveHashable {
+    fn from(value: &Vec<BigUint>) -> Self {
+        let l: Vec<RecursiveHashable> = value.iter().map(|n| RecursiveHashable::from(n)).collect();
+        RecursiveHashable::from(&l)
     }
 }
 
@@ -93,11 +133,7 @@ mod test {
             "0x35E854073500849CB2807B093D5F86176533B04DD81309D771A6461064E4A6E2B7F464D0502E9F2E2F5AD7AB4E225025E65A98CEEE2906C86158E7C432C4F50A149CD31A6C17CA1A000EC879B5CC0EF8E825EF8B83D4111D8AB59FCAB34694F112F5D3C2527F9121A50C95D975D3653972A9F17BFFBA26D542508EC57274202CCFF787EBC5E2E89F3EBEBFF17419B9338D47BF745901BE43D4A132FC503C9D07D7C3D3C35D303CD86C0F44B138E116CAA72B2DEFDA6D56BE841B980732EAE986710882143DAE385EE1832487F824A7AB404DFDFA903BEBDFC7682CE8D08F77B37E3B0AB99F40CAC2BA0EE8B6F64DE4BA3568A22359B114AE560656B8F59D0357".to_string(),
             "0xA2A11C203F431AE713385CDF5F7346EF5A5E8B7B8CF971C947033978CF5F7263938D6B56754BAFBBCF8FC0A5CB2E0AF02D8433883326744E69247F0578A688A4225036F1D22D692ADA0C9515C3DE290797BE0E76FB04C9C17EF96E65F632329FC85C955C828A4DF5DF11962B3E24F32B7F87C47C0496F47ECF77C24C433740B4D3BCE077A7CEEE4EEE2E4B8D21E6DB21C05231EB1CB03D679D0D0B5D9E7BD205F9667FE6C18627E006191A987E5471E73D557B33FAD16D37C0B516D3948FE5B4690CE26059E6FC8B5853EE5AED99B6345206CCD5290CE0AC297163F57058A1ECE8718FBE8DAB9C2C5322D5726A16748F3F259B87FB00B1D54DDB063C7DBB8FF4".to_string()
         ];
-        let l: Vec<RecursiveHashable> = inputs
-            .iter()
-            .map(|s| RecursiveHashable::from(&BigUint::from_hexa(s).unwrap()))
-            .collect();
-        let r = RecursiveHashable::Composite(l).recursive_hash();
+        let r = RecursiveHashable::from_biguint_exa_vec(&inputs).recursive_hash();
         let e =
             ByteArray::base64_decode(&"Qn1sWr2uZ87jwjeEoJa9zS6dc6S92oC0X83yxpyv2ZA=".to_string())
                 .unwrap();
@@ -109,11 +145,7 @@ mod test {
         let inputs = vec![
             "0xA4D9B0B481FB03073E4B3EEE862FA2AA667AED37DD201FF41F786166C98D01AB3CEED0249FA1F12F23DEF203A98C53A294F5DE1A54A98EAA36F7232336FDFE89F28AD86789BCB67B5E41AFF9CE6EE5639A12B763D2A170E0B8208838079A622B11FC7DCDAC3DE178803E767028FEB607C2954834A8A53B400894E2CF7591D9E68CB987D2B5F05C5A799A38A513E53C451E6DF746C5C32FBAFE9AED6B8A1722AC15D40F1CA1DAC5F058618829514811F13516A18A4142D1B69830803A4910A89A5938491F75AFE9C07AC138CCB9B548814794A7B5A6E4F22CD2365FED5011A1E7DD26955958C8A9FCDEE31B9C6AABB6B50CC8E595144F4CCCAFFC74656DA135E3".to_string(),
         ];
-        let l: Vec<RecursiveHashable> = inputs
-            .iter()
-            .map(|s| RecursiveHashable::from(&BigUint::from_hexa(s).unwrap()))
-            .collect();
-        let r = RecursiveHashable::Composite(l).recursive_hash();
+        let r = RecursiveHashable::from_biguint_exa_vec(&inputs).recursive_hash();
         let e =
             ByteArray::base64_decode(&"+e9LVZg0L5uHLbnUv8pIVVm28y+QZMtfG1edAFx2oPM=".to_string())
                 .unwrap();
