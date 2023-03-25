@@ -1,7 +1,8 @@
 use openssl::{
+    asn1::Asn1Time,
     pkcs12::{ParsedPkcs12_2, Pkcs12},
     pkey::{PKey, Public},
-    x509::X509Ref,
+    x509::X509,
 };
 use std::{fmt::Display, fs, path::Path};
 
@@ -15,6 +16,7 @@ pub enum DirectTrustErrorType {
     Keystore,
     Certificate,
     PublicKey,
+    Time,
 }
 
 impl Display for DirectTrustErrorType {
@@ -23,6 +25,7 @@ impl Display for DirectTrustErrorType {
             Self::Keystore => "Read Keystore",
             Self::Certificate => "Read Certificate",
             Self::PublicKey => "Public Key",
+            Self::Time => "Time Error",
         };
         write!(f, "{s}")
     }
@@ -30,6 +33,7 @@ impl Display for DirectTrustErrorType {
 
 pub type DirectTrustError = VerifierError<DirectTrustErrorType>;
 
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum CertificateAuthority {
     Canton,
     SdmConfig,
@@ -58,6 +62,11 @@ impl From<&CertificateAuthority> for String {
 
 pub struct Keystore {
     pub pcks12: ParsedPkcs12_2,
+}
+
+pub struct SigningCertificate {
+    pub authority: CertificateAuthority,
+    pub x509: X509,
 }
 
 impl Keystore {
@@ -105,7 +114,7 @@ impl Keystore {
     pub fn get_certificate(
         &self,
         authority: &CertificateAuthority,
-    ) -> Result<&X509Ref, DirectTrustError> {
+    ) -> Result<SigningCertificate, DirectTrustError> {
         let cas = match self.pcks12.ca.as_ref() {
             Some(s) => s,
             None => {
@@ -120,7 +129,10 @@ impl Keystore {
                 if e.object().to_string() == "commonName".to_string()
                     && e.data().as_slice() == String::from(authority).as_bytes()
                 {
-                    return Ok(x);
+                    return Ok(SigningCertificate {
+                        authority: (*authority).clone(),
+                        x509: x.to_owned(),
+                    });
                 }
             }
         }
@@ -129,22 +141,11 @@ impl Keystore {
             format!("Authority {} not found", String::from(authority))
         )
     }
+}
 
-    pub fn get_public_key(
-        &self,
-        authority: &CertificateAuthority,
-    ) -> Result<PKey<Public>, DirectTrustError> {
-        let x509 = match self.get_certificate(authority) {
-            Ok(x509) => x509,
-            Err(e) => {
-                return create_result_with_error!(
-                    DirectTrustErrorType::PublicKey,
-                    "Error reading certificate",
-                    e
-                )
-            }
-        };
-        match x509.public_key() {
+impl SigningCertificate {
+    pub fn get_public_key(&self) -> Result<PKey<Public>, DirectTrustError> {
+        match self.x509.public_key() {
             Ok(pk) => Ok(pk),
             Err(e) => {
                 return create_result_with_error!(
@@ -154,6 +155,16 @@ impl Keystore {
                 )
             }
         }
+    }
+
+    pub fn is_valid_time(&self) -> Result<bool, DirectTrustError> {
+        let not_before = self.x509.not_before();
+        let not_after = self.x509.not_after();
+        let now = match Asn1Time::days_from_now(0) {
+            Ok(t) => t,
+            Err(e) => return create_result_with_error!(DirectTrustErrorType::Time, "Error now", e),
+        };
+        Ok(not_before < now && now <= not_after)
     }
 }
 

@@ -1,5 +1,12 @@
 use std::fmt::Display;
 
+use openssl::{
+    asn1::Asn1Time,
+    pkcs12::{ParsedPkcs12_2, Pkcs12},
+    pkey::{PKey, Public},
+    x509::X509,
+};
+
 use super::direct_trust::{CertificateAuthority, Keystore};
 use super::{byte_array::ByteArray, hashing::RecursiveHashable};
 use crate::data_structures::SignatureTrait;
@@ -7,19 +14,25 @@ use crate::error::{create_result_with_error, create_verifier_error, VerifierErro
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum SignatureErrorType {
-    PublicKey,
+    DirectTrust,
+    Validation,
 }
 
 impl Display for SignatureErrorType {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let s = match self {
-            Self::PublicKey => "Public Key",
+            Self::DirectTrust => "Direct Trust Error",
+            Self::Validation => "Validation Error",
         };
         write!(f, "{s}")
     }
 }
 
 pub type SignatureError = VerifierError<SignatureErrorType>;
+
+fn verify(pkey: &PKey<Public>, bytes: &ByteArray, signature: &ByteArray) -> bool {
+    todo!()
+}
 
 fn verifiy_signature(
     keystore: &Keystore,
@@ -28,13 +41,42 @@ fn verifiy_signature(
     context_data: &RecursiveHashable,
     signature: &ByteArray,
 ) -> Result<bool, SignatureError> {
-    let pkey = match keystore.get_public_key(authority_id) {
-        Ok(pk) => pk,
+    let cert = match keystore.get_certificate(authority_id) {
+        Ok(c) => c,
         Err(e) => {
-            return create_result_with_error!(SignatureErrorType::PublicKey, "Error reading PK", e)
+            return create_result_with_error!(
+                SignatureErrorType::DirectTrust,
+                "Error reading PK",
+                e
+            )
         }
     };
-    todo!()
+    let time_ok = match cert.is_valid_time() {
+        Ok(b) => b,
+        Err(e) => {
+            return create_result_with_error!(
+                SignatureErrorType::DirectTrust,
+                "Error testing time",
+                e
+            )
+        }
+    };
+    if !time_ok {
+        return create_result_with_error!(SignatureErrorType::Validation, "Time is not valide");
+    }
+    let pkey = match cert.get_public_key() {
+        Ok(pk) => pk,
+        Err(e) => {
+            return create_result_with_error!(
+                SignatureErrorType::DirectTrust,
+                "Error reading PK",
+                e
+            )
+        }
+    };
+    let h = RecursiveHashable::Composite(vec![hashable.to_owned(), context_data.to_owned()])
+        .recursive_hash();
+    Ok(verify(&pkey, &h, signature))
 }
 
 pub trait VerifiySignatureTrait<'a>
