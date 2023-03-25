@@ -38,29 +38,19 @@ fn verifiy_signature_impl(
         create_verifier_error!(SignatureErrorType::DirectTrust, "Error reading keystore", e)
     })?;
     let cert = dt.signing_certificate();
-    let time_ok = match cert.is_valid_time() {
-        Ok(b) => b,
-        Err(e) => {
-            return create_result_with_error!(
-                SignatureErrorType::DirectTrust,
-                "Error testing time",
-                e
-            )
-        }
-    };
+    let time_ok = cert.is_valid_time().map_err(|e| {
+        create_verifier_error!(SignatureErrorType::DirectTrust, "Error testing time", e)
+    })?;
     if !time_ok {
         return create_result_with_error!(SignatureErrorType::Validation, "Time is not valide");
     }
-    let pkey = match cert.get_public_key() {
-        Ok(pk) => pk,
-        Err(e) => {
-            return create_result_with_error!(
-                SignatureErrorType::DirectTrust,
-                "Error reading PK",
-                e
-            )
-        }
-    };
+    let pkey = cert.get_public_key().map_err(|e| {
+        create_verifier_error!(
+            SignatureErrorType::DirectTrust,
+            "Error reading public key",
+            e
+        )
+    })?;
     let h = RecursiveHashable::Composite(vec![hashable.to_owned(), context_data.to_owned()])
         .recursive_hash();
     Ok(verify(&pkey, &h, signature))

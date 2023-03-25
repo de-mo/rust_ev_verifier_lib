@@ -178,11 +178,8 @@ where
             let mut vec = <Self::Value>::new();
 
             while let Some(v) = (seq.next_element())? {
-                let r_b = BigUint::from_hexa(&v);
-                if r_b.is_err() {
-                    return Err(A::Error::custom(r_b.unwrap_err()));
-                }
-                vec.push(r_b.unwrap());
+                let r_b = BigUint::from_hexa(&v).map_err(|e| A::Error::custom(e))?;
+                vec.push(r_b);
             }
             Ok(vec)
         }
@@ -212,11 +209,8 @@ where
             let mut vec = <Self::Value>::new();
 
             while let Some(v) = (seq.next_element())? {
-                let r_b = ByteArray::base64_decode(&v);
-                if r_b.is_err() {
-                    return Err(A::Error::custom(r_b.unwrap_err()));
-                }
-                vec.push(r_b.unwrap());
+                let r_b = ByteArray::base64_decode(&v).map_err(|e| A::Error::custom(e))?;
+                vec.push(r_b);
             }
             Ok(vec)
         }
@@ -248,11 +242,8 @@ where
             while let Some(v) = (seq.next_element::<Vec<String>>())? {
                 let mut inner_vec = Vec::new();
                 for x in v {
-                    let r_b = BigUint::from_hexa(&x);
-                    if r_b.is_err() {
-                        return Err(A::Error::custom(r_b.unwrap_err()));
-                    }
-                    inner_vec.push(r_b.unwrap());
+                    let r_b = BigUint::from_hexa(&x).map_err(|e| A::Error::custom(e))?;
+                    inner_vec.push(r_b);
                 }
                 vec.push(inner_vec.to_owned());
             }

@@ -24,34 +24,29 @@ pub type PublicKey = PKey<Public>;
 
 impl Keystore {
     pub fn read_keystore(path: &Path, password: &str) -> Result<Keystore, OpensslError> {
-        let bytes = match fs::read(path) {
-            Ok(b) => b,
-            Err(e) => {
-                return create_result_with_error!(
-                    OpensslErrorType::Keystore,
-                    format!("Error reading keystore file {:?}", path),
-                    e
-                )
-            }
-        };
-        let p12: Pkcs12 = match Pkcs12::from_der(&bytes) {
-            Ok(p12) => p12,
-            Err(e) => {
-                return create_result_with_error!(
-                    OpensslErrorType::Keystore,
-                    format!("Error reading content of keystore file {:?}", path),
-                    e
-                )
-            }
-        };
-        match p12.parse2(password) {
-            Ok(pcks12) => Ok(Keystore { pcks12 }),
-            Err(e) => create_result_with_error!(
+        let bytes = fs::read(path).map_err(|e| {
+            create_verifier_error!(
                 OpensslErrorType::Keystore,
-                format!("Error parsing keystore file {:?}", path),
+                format!("Error reading keystore file {:?}", path),
                 e
-            ),
-        }
+            )
+        })?;
+        let p12: Pkcs12 = Pkcs12::from_der(&bytes).map_err(|e| {
+            create_verifier_error!(
+                OpensslErrorType::Keystore,
+                format!("Error reading content of keystore file {:?}", path),
+                e
+            )
+        })?;
+        p12.parse2(password)
+            .map(|p| Keystore { pcks12: p })
+            .map_err(|e| {
+                create_verifier_error!(
+                    OpensslErrorType::Keystore,
+                    format!("Error parsing keystore file {:?}", path),
+                    e
+                )
+            })
     }
 
     pub fn get_certificate(&self, authority: &str) -> Result<SigningCertificate, OpensslError> {
@@ -85,16 +80,9 @@ impl Keystore {
 
 impl SigningCertificate {
     pub fn get_public_key(&self) -> Result<PublicKey, OpensslError> {
-        match self.x509.public_key() {
-            Ok(pk) => Ok(pk),
-            Err(e) => {
-                return create_result_with_error!(
-                    OpensslErrorType::PublicKey,
-                    "Error reading public key",
-                    e
-                )
-            }
-        }
+        self.x509.public_key().map_err(|e| {
+            create_verifier_error!(OpensslErrorType::PublicKey, "Error reading public key", e)
+        })
     }
 
     pub fn authority(&self) -> &str {
@@ -104,10 +92,8 @@ impl SigningCertificate {
     pub fn is_valid_time(&self) -> Result<bool, OpensslError> {
         let not_before = self.x509.not_before();
         let not_after = self.x509.not_after();
-        let now = match Asn1Time::days_from_now(0) {
-            Ok(t) => t,
-            Err(e) => return create_result_with_error!(OpensslErrorType::Time, "Error now", e),
-        };
+        let now = Asn1Time::days_from_now(0)
+            .map_err(|e| create_verifier_error!(OpensslErrorType::Time, "Error now", e))?;
         Ok(not_before < now && now <= not_after)
     }
 }
