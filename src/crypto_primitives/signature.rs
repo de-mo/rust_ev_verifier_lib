@@ -53,7 +53,7 @@ fn verifiy_signature_impl(
     })?;
     let h = RecursiveHashable::Composite(vec![hashable.to_owned(), context_data.to_owned()])
         .recursive_hash();
-    Ok(verify(&pkey, &h, signature))
+    Ok(verify(pkey.as_ref(), &h, signature))
 }
 
 pub trait VerifiySignatureTrait<'a>
