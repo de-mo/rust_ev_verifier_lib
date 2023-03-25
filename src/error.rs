@@ -1,21 +1,88 @@
 //! Module to manage the errors within the verifier
 //TODO Document the module
-//TODO Create macro to create Err with Error
-//TODO Create macro to Create Err withour Error
 
 use std::{
     error::Error,
     fmt::{self, Debug, Display},
 };
 
-/// Generic Error for the Verifier
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct VerifierError<E: Error, K: Display + Debug> {
+/// This type represents all possible errors that can occur within the
+/// verifier.
+#[derive(Debug)]
+pub struct VerifierError<K: Display + Debug> {
+    /// This `Box` allows us to keep the size of `Error` as small as possible. A
+    /// larger `Error` type was substantially slower due to all the functions
+    /// that pass around results.
+    err: Box<VerifierErrorImpl<K>>,
+}
+
+impl<K: Display + Debug> VerifierError<K> {
+    pub fn kind(&self) -> &K {
+        &self.err.kind
+    }
+
+    pub fn message(&self) -> &String {
+        &&self.err.message
+    }
+
+    pub fn source(&self) -> &Option<Box<dyn Error + 'static>> {
+        &self.err.source
+    }
+}
+
+impl<K: Display + Debug> VerifierError<K> {
+    fn __description(&self) -> String {
+        let s: String = format!("Error \"{}\": {}", self.kind(), self.message());
+        match &self.source() {
+            None => s,
+            Some(e) => format!("{}.\nInternal Error: {}", s, e.to_string()),
+        }
+    }
+
+    pub fn new(kind: K, source: Option<Box<dyn Error + 'static>>, msg: String) -> Self {
+        Self {
+            err: Box::new(VerifierErrorImpl {
+                kind,
+                source,
+                message: msg,
+            }),
+        }
+    }
+}
+
+impl<K: Display + Debug> fmt::Display for VerifierError<K> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.__description())
+    }
+}
+
+#[derive(Debug)]
+struct VerifierErrorImpl<K: Display + Debug> {
     kind: K,
-    error: Option<E>,
+    source: Option<Box<dyn Error + 'static>>,
     message: String,
 }
 //TODO Add function and function parameters in struct (or do it in message)
+
+macro_rules! create_verifier_error {
+    ($k: expr, $m: expr) => {
+        VerifierError::new($k, None, $m.to_string())
+    };
+    ($k: expr, $m: expr, $e: expr) => {
+        VerifierError::new($k, Some(Box::new($e)), $m.to_string())
+    };
+}
+pub(crate) use create_verifier_error;
+
+macro_rules! create_result_with_error {
+    ($k: expr, $m: expr) => {
+        Result::Err(create_verifier_error!($k, $m))
+    };
+    ($k: expr, $m: expr, $e: expr) => {
+        Result::Err(create_verifier_error!($k, $m, $e))
+    };
+}
+pub(crate) use create_result_with_error;
 
 #[derive(Debug)]
 struct EmptyError {}
@@ -28,31 +95,7 @@ impl Display for EmptyError {
 
 impl Error for EmptyError {}
 
-impl<E: Error, K: Display + Debug> VerifierError<E, K> {
-    fn __description(&self) -> String {
-        let s: String = format!("Error \"{}\": {}", self.kind, self.message);
-        match &self.error {
-            None => s,
-            Some(e) => format!("{}.\nInternal Error: {}", s, e.to_string()),
-        }
-    }
-
-    pub fn new(kind: K, error: Option<E>, msg: String) -> Self {
-        Self {
-            kind,
-            error,
-            message: msg,
-        }
-    }
-}
-
-impl<T: Error, K: Display + Debug> fmt::Display for VerifierError<T, K> {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.__description())
-    }
-}
-
-impl<T: Error, K: Display + Debug> Error for VerifierError<T, K> {}
+impl<K: Display + Debug> Error for VerifierError<K> {}
 
 #[cfg(test)]
 mod test {
@@ -92,22 +135,42 @@ mod test {
         }
     }
     #[test]
-    fn error_new() {
+    fn test_error_new() {
         let e1 = VerifierError::new(
             TestErrorType::Toto,
-            Option::<EmptyError>::None,
+            Option::<Box<dyn Error + 'static>>::None,
             "test".to_string(),
         );
         assert_eq!(e1.__description(), "Error \"toto\": test");
         let e2 = VerifierError::new(
             TestErrorType::Fifi,
-            Option::Some(TestError {
+            Option::Some(Box::new(TestError {
                 details: "test".to_string(),
-            }),
+            })),
             "test".to_string(),
         );
         assert_eq!(
             e2.__description(),
+            "Error \"fifi\": test.\nInternal Error: test"
+        );
+    }
+
+    #[test]
+    fn test_create_result_error() {
+        let e1: Result<u64, VerifierError<TestErrorType>> =
+            create_result_with_error!(TestErrorType::Toto, "test".to_string());
+        assert!(e1.is_err());
+        assert_eq!(e1.unwrap_err().__description(), "Error \"toto\": test");
+        let e2: Result<u64, VerifierError<TestErrorType>> = create_result_with_error!(
+            TestErrorType::Fifi,
+            "test".to_string(),
+            Box::new(TestError {
+                details: "test".to_string(),
+            })
+        );
+        assert!(e2.is_err());
+        assert_eq!(
+            e2.unwrap_err().__description(),
             "Error \"fifi\": test.\nInternal Error: test"
         );
     }
