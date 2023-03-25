@@ -1,14 +1,11 @@
 use std::fmt::Display;
+use std::path::Path;
 
-use openssl::{
-    asn1::Asn1Time,
-    pkcs12::{ParsedPkcs12_2, Pkcs12},
-    pkey::{PKey, Public},
-    x509::X509,
-};
-
-use super::direct_trust::{CertificateAuthority, Keystore};
 use super::{byte_array::ByteArray, hashing::RecursiveHashable};
+use super::{
+    direct_trust::{CertificateAuthority, DirectTrust},
+    openssl_wrapper::signature::verify,
+};
 use crate::data_structures::SignatureTrait;
 use crate::error::{create_result_with_error, create_verifier_error, VerifierError};
 
@@ -30,27 +27,17 @@ impl Display for SignatureErrorType {
 
 pub type SignatureError = VerifierError<SignatureErrorType>;
 
-fn verify(pkey: &PKey<Public>, bytes: &ByteArray, signature: &ByteArray) -> bool {
-    todo!()
-}
-
-fn verifiy_signature(
-    keystore: &Keystore,
+fn verifiy_signature_impl(
+    location: &Path,
     authority_id: &CertificateAuthority,
     hashable: &RecursiveHashable,
     context_data: &RecursiveHashable,
     signature: &ByteArray,
 ) -> Result<bool, SignatureError> {
-    let cert = match keystore.get_certificate(authority_id) {
-        Ok(c) => c,
-        Err(e) => {
-            return create_result_with_error!(
-                SignatureErrorType::DirectTrust,
-                "Error reading PK",
-                e
-            )
-        }
-    };
+    let dt = DirectTrust::new(location, authority_id).map_err(|e| {
+        create_verifier_error!(SignatureErrorType::DirectTrust, "Error reading keystore", e)
+    })?;
+    let cert = dt.signing_certificate();
     let time_ok = match cert.is_valid_time() {
         Ok(b) => b,
         Err(e) => {
@@ -86,9 +73,9 @@ where
 {
     fn get_context_data(&self) -> RecursiveHashable;
     fn get_certificate_authority(&self) -> CertificateAuthority;
-    fn verifiy_signature(&'a self, keystore: &Keystore) -> Result<bool, SignatureError> {
-        verifiy_signature(
-            keystore,
+    fn verifiy_signature(&'a self, location: &Path) -> Result<bool, SignatureError> {
+        verifiy_signature_impl(
+            location,
             &self.get_certificate_authority(),
             &RecursiveHashable::from(self),
             &self.get_context_data(),

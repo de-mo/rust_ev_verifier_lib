@@ -1,4 +1,4 @@
-use super::byte_array::ByteArray;
+use super::super::byte_array::ByteArray;
 use openssl::md::Md;
 use openssl::md_ctx::MdCtx;
 

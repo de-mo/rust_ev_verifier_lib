@@ -1,6 +1,6 @@
 use super::byte_array::ByteArray;
 use super::num_bigint::Hexa;
-use super::openssl::sha3_256;
+use super::openssl_wrapper::hash::sha3_256;
 use num::bigint::BigUint;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
