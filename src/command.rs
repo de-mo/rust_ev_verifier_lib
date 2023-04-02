@@ -1,4 +1,10 @@
 use clap::{Arg, ArgAction, ArgMatches, Command};
+use log::{info, warn, LevelFilter};
+use log4rs::{
+    append::{console::ConsoleAppender, file::FileAppender},
+    config::{Appender, Config, Root},
+    encode::pattern::PatternEncoder,
+};
 
 fn get_verifier_subcommand(
     name: &'static str,
@@ -39,18 +45,48 @@ fn get_command() -> ArgMatches {
         .get_matches()
 }
 
+fn init_logger(level: LevelFilter, with_stdout: bool) {
+    let file = FileAppender::builder()
+        .encoder(Box::new(PatternEncoder::new("{d} {l} - {m}{n}")))
+        .build("log/log.txt")
+        .unwrap();
+
+    let mut root_builder = Root::builder().appender("file");
+    let mut config_builder =
+        Config::builder().appender(Appender::builder().build("file", Box::new(file)));
+
+    if with_stdout {
+        let stdout = ConsoleAppender::builder()
+            .encoder(Box::new(PatternEncoder::new("{h({l})} - {m}{n}")))
+            .build();
+        root_builder = root_builder.appender("stdout");
+        config_builder =
+            config_builder.appender(Appender::builder().build("stdout", Box::new(stdout)));
+    }
+
+    let config = config_builder.build(root_builder.build(level)).unwrap();
+    let _handle = log4rs::init_config(config).unwrap();
+}
+
 pub fn execute_command() {
     let matches = get_command();
     match matches.subcommand() {
         None => {
-            println!("Start GUI Verifier. Not Implemented yet")
+            init_logger(LevelFilter::Debug, false);
+            info!("Start GUI Verifier");
+            warn!("Not Implemented yet");
         }
         Some(("setup", setup_matches)) => {
-            println!("Setup: {:?}", setup_matches)
+            init_logger(LevelFilter::Debug, true);
+            info!("Start Verifier for setup");
+            //println!("Setup: {:?}", setup_matches)
         }
         Some(("tally", tally_matches)) => {
-            println!("tally: {:?}", tally_matches)
+            init_logger(LevelFilter::Debug, true);
+            info!("Start Verifier for tally");
+            //println!("tally: {:?}", tally_matches)
         }
         _ => unreachable!(), // If all subcommands are defined above, anything else is unreachable
     }
+    info!("Verifier finished");
 }

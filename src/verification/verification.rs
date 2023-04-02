@@ -1,9 +1,9 @@
 use crate::file_structure::VerificationDirectory;
 
 use super::error::{VerificationError, VerificationFailure};
-use std::time::{Duration, SystemTime};
-
 use super::{VerificationCategory, VerificationPeriod, VerificationStatus};
+use log::{info, warn};
+use std::time::{Duration, SystemTime};
 
 pub struct VerificationMetaData {
     pub id: String,
@@ -42,19 +42,41 @@ impl Verification {
     pub fn run(&mut self, directory: &VerificationDirectory) {
         self.status = VerificationStatus::Started;
         let start_time = SystemTime::now();
+        info!(
+            "Verification {} ({}) started",
+            self.meta_data.name, self.meta_data.id
+        );
         let (errors, failures) = (self.verification_fn)(directory);
+        self.duration = Some(start_time.elapsed().unwrap());
         if !errors.is_empty() {
             self.status = VerificationStatus::Error;
             self.errors = Box::new(errors);
+            warn!(
+                "Verification {} ({}) finished with errors. Duration: {}",
+                self.meta_data.name,
+                self.meta_data.id,
+                self.duration.unwrap().as_micros()
+            );
         } else {
             if !failures.is_empty() {
                 self.status = VerificationStatus::Failed;
                 self.failures = Box::new(failures);
+                warn!(
+                    "Verification {} ({}) finished with failures. Duration: {}",
+                    self.meta_data.name,
+                    self.meta_data.id,
+                    self.duration.unwrap().as_micros()
+                );
             } else {
                 self.status = VerificationStatus::Success;
+                info!(
+                    "Verification {} ({}) finished successfully. Duration: {}",
+                    self.meta_data.name,
+                    self.meta_data.id,
+                    self.duration.unwrap().as_micros()
+                );
             }
         }
-        self.duration = Some(start_time.elapsed().unwrap());
     }
 }
 
