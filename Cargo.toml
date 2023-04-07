@@ -16,3 +16,4 @@ enum-kinds = "0.5.1"
 clap = { version = "4.1.13", features = ["derive"] }
 log = "0.4.17"
 log4rs = "1.2.0"
+num-prime = { version = "0.4", features = ["big-int"] }
