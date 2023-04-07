@@ -38,6 +38,48 @@ impl ByteLength for BigUint {
     }
 }
 
+pub trait Constants {
+    fn zero() -> Self;
+    fn one() -> Self;
+    fn two() -> Self;
+    fn three() -> Self;
+    fn four() -> Self;
+    fn five() -> Self;
+}
+
+impl Constants for BigUint {
+    fn zero() -> Self {
+        BigUint::from(0u8)
+    }
+
+    fn one() -> Self {
+        BigUint::from(1u8)
+    }
+
+    fn two() -> Self {
+        BigUint::from(2u8)
+    }
+    fn three() -> Self {
+        BigUint::from(3u8)
+    }
+    fn four() -> Self {
+        BigUint::from(4u8)
+    }
+    fn five() -> Self {
+        BigUint::from(5u8)
+    }
+}
+
+pub trait Operations {
+    fn mod_exponentiate(&self, exp: &Self, modulus: &Self) -> Self;
+}
+
+impl Operations for BigUint {
+    fn mod_exponentiate(&self, exp: &Self, modulus: &Self) -> Self {
+        self.modpow(exp, modulus)
+    }
+}
+
 pub trait Hexa: Sized {
     fn from_hexa(s: &String) -> Result<Self, BigUIntError>;
     fn to_hexa(&self) -> String;
