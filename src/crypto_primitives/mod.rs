@@ -1,3 +1,5 @@
+//! Module implementing the necessary cryprographic function
+
 pub mod byte_array;
 pub mod direct_trust;
 pub mod elgamal;

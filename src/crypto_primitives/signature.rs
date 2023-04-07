@@ -1,3 +1,6 @@
+//! Module to implement the signature and the verification of the signature of
+//! an object.
+
 use std::fmt::Display;
 use std::path::Path;
 
@@ -56,13 +59,20 @@ fn verifiy_signature_impl(
     Ok(verify(pkey.as_ref(), &h, signature))
 }
 
+/// Trait that must be implemented for each object
+/// implementing RecursiveHashable
 pub trait VerifiySignatureTrait<'a>
 where
     Self: 'a + SignatureTrait,
     RecursiveHashable: From<&'a Self>,
 {
+    /// Get the context data of the object according to the specifications
     fn get_context_data(&self) -> RecursiveHashable;
+
+    /// Get the Certificate Authority to the specifications
     fn get_certificate_authority(&self) -> CertificateAuthority;
+
+    /// Verfiy the signature according to the specifications
     fn verifiy_signature(&'a self, location: &Path) -> Result<bool, SignatureError> {
         verifiy_signature_impl(
             location,

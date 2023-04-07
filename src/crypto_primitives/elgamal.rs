@@ -1,8 +1,9 @@
-use super::num_bigint::Hexa;
+//! Module to implement El Gamal functions
+
 use num::BigUint;
 
 use super::number_theory::{
-    is_small_prime, satisfy_euler_criterion, MAX_NB_SMALL_PRIMES, SMALL_PRIMES,
+    is_quadratic_residue, is_small_prime, MAX_NB_SMALL_PRIMES, SMALL_PRIMES,
 };
 
 use crate::error::{create_result_with_error, create_verifier_error, VerifierError};
@@ -24,6 +25,7 @@ impl Display for ElgamalErrorType {
 
 type ElgamalError = VerifierError<ElgamalErrorType>;
 
+// Get small prime group members according to the specifications
 pub fn get_small_prime_group_members(
     p: &BigUint,
     desired_number: usize,
@@ -37,7 +39,7 @@ pub fn get_small_prime_group_members(
         } else {
             is_small_prime(current).unwrap()
         };
-        if is_prime && satisfy_euler_criterion(&BigUint::from(current), &p) {
+        if is_prime && is_quadratic_residue(&BigUint::from(current), &p) {
             res.push(current);
         }
         current += 2;
@@ -54,6 +56,7 @@ pub fn get_small_prime_group_members(
 #[cfg(test)]
 mod test {
 
+    use super::super::num_bigint::Hexa;
     use super::*;
 
     #[test]

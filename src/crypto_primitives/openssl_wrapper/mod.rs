@@ -1,3 +1,5 @@
+//! Module to wrap the openssl library for crypto functions
+
 pub mod certificate;
 pub mod hash;
 pub mod signature;

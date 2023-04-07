@@ -1,3 +1,5 @@
+//! Wrapper for Certificate functions
+
 use std::{fs, path::Path};
 
 use openssl::{
@@ -10,19 +12,23 @@ use openssl::{
 use super::{OpensslError, OpensslErrorType};
 use crate::error::{create_result_with_error, create_verifier_error, VerifierError};
 
+/// Wrapper to the keystore
 pub struct Keystore {
     pcks12: ParsedPkcs12_2,
 }
 
+/// The signing certificate
 #[derive(Clone)]
 pub struct SigningCertificate {
     authority: String,
     x509: X509,
 }
 
+// PublicKey
 pub type PublicKey = PKey<Public>;
 
 impl Keystore {
+    /// Read the keystore from file with password to open it
     pub fn read_keystore(path: &Path, password: &str) -> Result<Keystore, OpensslError> {
         let bytes = fs::read(path).map_err(|e| {
             create_verifier_error!(
@@ -49,6 +55,7 @@ impl Keystore {
             })
     }
 
+    /// Get a given certificate from the keystore
     pub fn get_certificate(&self, authority: &str) -> Result<SigningCertificate, OpensslError> {
         let cas = match self.pcks12.ca.as_ref() {
             Some(s) => s,
@@ -79,16 +86,19 @@ impl Keystore {
 }
 
 impl SigningCertificate {
+    /// Get the public key from the certificate
     pub fn get_public_key(&self) -> Result<PublicKey, OpensslError> {
         self.x509.public_key().map_err(|e| {
             create_verifier_error!(OpensslErrorType::PublicKey, "Error reading public key", e)
         })
     }
 
+    /// Get the authority of the certificate
     pub fn authority(&self) -> &str {
         &self.authority
     }
 
+    /// Check the validity of the date according to now
     pub fn is_valid_time(&self) -> Result<bool, OpensslError> {
         let not_before = self.x509.not_before();
         let not_after = self.x509.not_after();

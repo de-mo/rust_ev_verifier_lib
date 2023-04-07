@@ -1,8 +1,15 @@
+//! Module to implement hashing functions
+//!
+
 use super::byte_array::ByteArray;
 use super::num_bigint::Hexa;
 use super::openssl_wrapper::hash::sha3_256;
 use num::bigint::BigUint;
 
+/// Enum to represent an element that is hashable
+///
+/// The specifiction of Swiss Post give the list of possible
+/// elements that can be hashable.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum RecursiveHashable {
     ByteArray(ByteArray),
@@ -27,15 +34,18 @@ impl RecursiveHashable {
         }
     }
 
+    /// Calculate the recursive hash according to the specification of Swiss Post
     pub fn recursive_hash(&self) -> ByteArray {
         let b = self.to_hashable_byte_array();
         sha3_256(&b)
     }
 
+    /// Create a BigUInt Hashable from a string as hexadecimal string
     pub fn from_biguint_exa(s: &String) -> Self {
         RecursiveHashable::from(&BigUint::from_hexa(s).unwrap())
     }
 
+    /// Create a Hashable from a vec of BigUInt given as vec of hexadecimal String
     pub fn from_biguint_exa_vec(v: &Vec<String>) -> Self {
         let l: Vec<RecursiveHashable> = v
             .iter()

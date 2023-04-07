@@ -1,3 +1,4 @@
+///! Module that implement some functions of the number theory
 use super::num_bigint::{Constants, Operations};
 use crate::error::{create_result_with_error, create_verifier_error, VerifierError};
 use num::{BigInt, BigUint};
@@ -21,6 +22,7 @@ impl Display for NumberTheoryErrorType {
 
 type NumberTheoryError = VerifierError<NumberTheoryErrorType>;
 
+/// Validate if the number is a small prime according to the algorithm specified
 pub fn is_small_prime(n: usize) -> Result<bool, NumberTheoryError> {
     if n >= usize::pow(2, 31) {
         return create_result_with_error!(NumberTheoryErrorType::NotInRange, "n is to big");
@@ -48,6 +50,12 @@ pub fn is_small_prime(n: usize) -> Result<bool, NumberTheoryError> {
     return Ok(true);
 }
 
+/// Calculate the jacobi symbol
+///
+/// The algortihm use an algorithm analoguous to the eucledian algorthm
+/// See [Jacobi symbol](https://en.wikipedia.org/wiki/Jacobi_symbol#Calculating_the_Jacobi_symbol)
+///
+/// Return an error if the given number n is not odd.
 pub fn jacobi(a: &BigUint, n: &BigUint) -> Result<i8, NumberTheoryError> {
     if n % 2u8 == BigUint::zero() {
         return create_result_with_error!(NumberTheoryErrorType::NotOdd, "Denominator must be odd");
@@ -76,7 +84,8 @@ pub fn jacobi(a: &BigUint, n: &BigUint) -> Result<i8, NumberTheoryError> {
     }
 }
 
-pub fn satisfy_euler_criterion(n: &BigUint, p: &BigUint) -> bool {
+/// Determine of the number n is a quadratic residue of p
+pub fn is_quadratic_residue(n: &BigUint, p: &BigUint) -> bool {
     jacobi(n, p).unwrap() == 1
 }
 
@@ -123,18 +132,18 @@ mod test {
 
     #[test]
     fn test_satisfy_euler_criterion() {
-        assert!(!satisfy_euler_criterion(
+        assert!(!is_quadratic_residue(
             &BigUint::from(17u8),
             &BigUint::from(3u8)
         ));
-        assert!(satisfy_euler_criterion(
+        assert!(is_quadratic_residue(
             &BigUint::from(17u8),
             &BigUint::from(13u8)
         ));
         let p = BigUint::from_hexa(&"0xCE9E0307D2AE75BDBEEC3E0A6E71A279417B56C955C602FFFD067586BACFDAC3BCC49A49EB4D126F5E9255E57C14F3E09492B6496EC8AC1366FC4BB7F678573FA2767E6547FA727FC0E631AA6F155195C035AF7273F31DFAE1166D1805C8522E95F9AF9CE33239BF3B68111141C20026673A6C8B9AD5FA8372ED716799FE05C0BB6EAF9FCA1590BD9644DBEFAA77BA01FD1C0D4F2D53BAAE965B1786EC55961A8E2D3E4FE8505914A408D50E6B99B71CDA78D8F9AF1A662512F8C4C3A9E72AC72D40AE5D4A0E6571135CBBAAE08C7A2AA0892F664549FA7EEC81BA912743F3E584AC2B2092243C4A17EC98DF079D8EECB8B885E6BBAFA452AAFA8CB8C08024EFF28DE4AF4AC710DCD3D66FD88212101BCB412BCA775F94A2DCE18B1A6452D4CF818B6D099D4505E0040C57AE1F3E84F2F8E07A69C0024C05ACE05666A6B63B0695904478487E78CD0704C14461F24636D7A3F267A654EEDCF8789C7F627C72B4CBD54EED6531C0E54E325D6F09CB648AE9185A7BDA6553E40B125C78E5EAA867".to_string()).unwrap();
-        assert!(satisfy_euler_criterion(&BigUint::from(5u8), &p));
-        assert!(satisfy_euler_criterion(&BigUint::from(17u8), &p));
-        assert!(satisfy_euler_criterion(&BigUint::from(19u8), &p));
+        assert!(is_quadratic_residue(&BigUint::from(5u8), &p));
+        assert!(is_quadratic_residue(&BigUint::from(17u8), &p));
+        assert!(is_quadratic_residue(&BigUint::from(19u8), &p));
     }
 }
 

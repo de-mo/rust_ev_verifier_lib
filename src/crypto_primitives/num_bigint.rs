@@ -1,9 +1,13 @@
+//! Module to extend functionalities of BigUInt
+//!
+//! The extended functionalities are implemented using Trait that have to be
+//! used in the client modules
+
 use crate::error::{create_result_with_error, create_verifier_error, VerifierError};
 use num::bigint::BigUint;
 use num::Num;
 use std::fmt::Debug;
 use std::fmt::Display;
-//use num::Num;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum BigUIntErrorType {
@@ -21,6 +25,7 @@ impl Display for BigUIntErrorType {
 
 type BigUIntError = VerifierError<BigUIntErrorType>;
 
+/// Trait to calculate byte length
 pub trait ByteLength {
     /// Byte legnth of a BigUInt
     fn byte_length(&self) -> usize;
@@ -38,6 +43,7 @@ impl ByteLength for BigUint {
     }
 }
 
+/// Trait to implement constant numbers
 pub trait Constants {
     fn zero() -> Self;
     fn one() -> Self;
@@ -70,7 +76,9 @@ impl Constants for BigUint {
     }
 }
 
+/// Trait to extend operations of BigUInt
 pub trait Operations {
+    /// Calculate the exponentiate modulo: n^exp % modulus
     fn mod_exponentiate(&self, exp: &Self, modulus: &Self) -> Self;
 }
 
@@ -80,8 +88,15 @@ impl Operations for BigUint {
     }
 }
 
+/// Transformation from or to String in hexadecimal according to the specifications
 pub trait Hexa: Sized {
+    /// Create object from hexadecimal String. If not valid return an error
+    /// ```rust
+    /// BigUint::from_hexa(&"0x12D9E8".to_string())
+    /// ```
     fn from_hexa(s: &String) -> Result<Self, BigUIntError>;
+
+    /// Generate the hexadecimal String
     fn to_hexa(&self) -> String;
 }
 

@@ -1,5 +1,4 @@
 //! Module to collect data structures of the verifier
-//TODO Document the module
 
 pub mod error;
 pub mod setup;
@@ -28,13 +27,10 @@ use crate::crypto_primitives::num_bigint::Hexa;
 use serde::de::{Deserialize, Deserializer, Error};
 use serde::Deserialize as Deserialize2;
 
-/*
-pub enum VerifierData {
-    Setup(setup::VerifierSetupData),
-    Tally,
-} */
-
+/// The type VerifierData implement an option between [VerifierSetupData] and [VerifierTallyData]
 pub type VerifierData = SetupOrTally<VerifierSetupData, VerifierTallyData>;
+
+/// The type VerifierDataType implement an option between [VerifierSetupDataType] and [VerifierTallyDataType]
 pub type VerifierDataType = SetupOrTally<VerifierSetupDataType, VerifierTallyDataType>;
 
 macro_rules! create_verifier_data_type {
@@ -44,7 +40,9 @@ macro_rules! create_verifier_data_type {
 }
 pub(crate) use create_verifier_data_type;
 
+/// Trait implementing the collection of the specific data type from the enum object
 pub trait VerifierDataTrait {
+    /// Get the EncryptionParametersPayload is the enum is from correct type. Else give None
     fn encryption_parameters_payload(&self) -> Option<&EncryptionParametersPayload>;
     fn setup_component_public_keys_payload(&self) -> Option<&SetupComponentPublicKeysPayload>;
     fn election_event_context_payload(&self) -> Option<&ElectionEventContextPayload>;
@@ -110,6 +108,7 @@ impl VerifierDataTrait for VerifierData {
 }
 
 impl VerifierDataType {
+    /// Read VerifierDataType from a String as JSON
     pub fn verifier_data_from_json(&self, s: &String) -> Result<VerifierData, DeserializeError> {
         match self {
             VerifierDataType::Setup(t) => {

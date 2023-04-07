@@ -1,7 +1,10 @@
+//! Hash algorithms
+
 use super::super::byte_array::ByteArray;
 use openssl::md::Md;
 use openssl::md_ctx::MdCtx;
 
+/// Wrapper for SHA3-256
 pub fn sha3_256(byte_array: &ByteArray) -> ByteArray {
     let mut ctx = MdCtx::new().unwrap();
     ctx.digest_init(Md::sha3_256()).unwrap();
@@ -11,6 +14,7 @@ pub fn sha3_256(byte_array: &ByteArray) -> ByteArray {
     ByteArray::from_bytes(&digest)
 }
 
+/// Wrapper for SHA256
 pub fn sha256(byte_array: &ByteArray) -> ByteArray {
     let mut ctx = MdCtx::new().unwrap();
     ctx.digest_init(Md::sha256()).unwrap();

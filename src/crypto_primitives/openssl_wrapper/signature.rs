@@ -1,3 +1,5 @@
+//! Implement signature functions
+
 use super::super::byte_array::ByteArray;
 use openssl::{
     hash::MessageDigest,
@@ -5,6 +7,8 @@ use openssl::{
     sign::{RsaPssSaltlen, Verifier},
 };
 
+/// Verify the signature
+/// TODO: Not working
 pub fn verify(pkey: &PKeyRef<Public>, bytes: &ByteArray, signature: &ByteArray) -> bool {
     let mut verifier = Verifier::new(MessageDigest::sha384(), pkey).unwrap();
     //verifier.set_rsa_pss_saltlen(RsaPssSaltlen::DIGEST_LENGTH);

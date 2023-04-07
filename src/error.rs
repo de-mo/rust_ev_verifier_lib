@@ -1,5 +1,35 @@
 //! Module to manage the errors within the verifier
-//TODO Document the module
+//!
+//! The errors of the verifiier can be chained to have a deep view of all the errors
+//!
+//! Each module implements its own error using the following construction
+//! ```rust
+//! #[derive(Debug, Clone, PartialEq, Eq)]
+//! pub enum ExampleErrorType {
+//!    Element1,
+//!    Element2,
+//! }
+//!
+//! impl Display for ExampleErrorType {
+//!    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+//!        let s = match self {
+//!            Self::Element1 => "Text Element1",
+//!            Self::Element1 => "Text Element2",
+//!        };
+//!        write!(f, "{s}")
+//!    }
+//! }
+//!
+//! type ExampleError = VerifierError<ExampleErrorType>;
+//! ```
+//!
+//! Using the macros [create_verifier_error] and [create_result_with_error] is it possible to
+//! create easily errors, e.g.:
+//! ```rust
+//! create_verifier_error!(ExampleErrorType::Element1, "text of error")
+//! create_result_with_error!(ExampleErrorType::Element1, "text of error")
+//! ```
+//!
 
 use std::{
     error::Error,
@@ -62,8 +92,8 @@ struct VerifierErrorImpl<K: Display + Debug> {
     source: Option<Box<dyn Error + 'static>>,
     message: String,
 }
-//TODO Add function and function parameters in struct (or do it in message)
 
+/// Macro to create an error.
 macro_rules! create_verifier_error {
     ($k: expr, $m: expr) => {
         VerifierError::new($k, None, $m.to_string())
@@ -74,6 +104,7 @@ macro_rules! create_verifier_error {
 }
 pub(crate) use create_verifier_error;
 
+/// Macro to create an error and encapuslate it in a Result.
 macro_rules! create_result_with_error {
     ($k: expr, $m: expr) => {
         Result::Err(create_verifier_error!($k, $m))
