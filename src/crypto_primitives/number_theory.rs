@@ -1,6 +1,5 @@
 ///! Module that implement some functions of the number theory
 use super::num_bigint::Constants;
-use super::MAX_NB_SMALL_PRIMES;
 use crate::error::{create_result_with_error, create_verifier_error, VerifierError};
 use num_bigint::BigUint;
 use num_bigint_dig::{
@@ -44,7 +43,11 @@ pub fn is_small_prime(n: usize) -> Result<bool, NumberTheoryError> {
     if n % 2 == 0 || n % 3 == 0 {
         return Ok(false);
     }
-    let mut i = 5;
+    let small_primes = SMALL_PRIMES.to_vec();
+    if n <= *small_primes.last().unwrap() {
+        return Ok(small_primes.contains(&n));
+    }
+    let mut i = NEXT_SMMALL_PRIME;
     let limit = f64::sqrt(n as f64) as usize + 1;
     while i <= limit {
         if n % i == 0 || n % (i + 2) == 0 {
@@ -120,6 +123,9 @@ mod test {
         assert!((!(is_small_prime(12)).unwrap()));
         assert!((!(is_small_prime(49)).unwrap()));
         assert!((!(is_small_prime(99)).unwrap()));
+        assert!(((is_small_prime(104729)).unwrap()));
+        assert!(!((is_small_prime(104730)).unwrap()));
+        assert!(((is_small_prime(111317)).unwrap()));
     }
 
     #[test]
@@ -158,13 +164,9 @@ mod test {
         assert!(is_quadratic_residue(&BigUint::from(17u8), &p));
         assert!(is_quadratic_residue(&BigUint::from(19u8), &p));
     }
-
-    #[test]
-    fn test_size_small_primes() {
-        assert_eq!(SMALL_PRIMES.len(), MAX_NB_SMALL_PRIMES)
-    }
 }
 
+pub const NEXT_SMMALL_PRIME: usize = 104729;
 pub const SMALL_PRIMES: &'static [usize] = &[
     2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89, 97,
     101, 103, 107, 109, 113, 127, 131, 137, 139, 149, 151, 157, 163, 167, 173, 179, 181, 191, 193,
@@ -918,5 +920,5 @@ pub const SMALL_PRIMES: &'static [usize] = &[
     104311, 104323, 104327, 104347, 104369, 104381, 104383, 104393, 104399, 104417, 104459, 104471,
     104473, 104479, 104491, 104513, 104527, 104537, 104543, 104549, 104551, 104561, 104579, 104593,
     104597, 104623, 104639, 104651, 104659, 104677, 104681, 104683, 104693, 104701, 104707, 104711,
-    104717, 104723, 104729,
+    104717, 104723,
 ];
