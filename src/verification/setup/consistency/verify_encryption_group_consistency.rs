@@ -182,6 +182,11 @@ fn fn_verification_300(
             ))
         }
     }
+    for vcs in setup_dir.vcs_directories_iter() {
+        let (mut e, mut f) = test_encryption_group_for_vcs_dir(vcs, &eg);
+        errors.append(&mut e);
+        failures.append(&mut f);
+    }
     (errors, failures)
 }
 
