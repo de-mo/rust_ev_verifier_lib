@@ -25,7 +25,7 @@ fn get_verification_400() -> Verification {
             nr: "3.4".to_owned(),
             name: "Integrity".to_owned(),
             period: VerificationPeriod::Setup,
-            category: VerificationCategory::Completness,
+            category: VerificationCategory::Integrity,
         },
         fn_verification_400,
     )
