@@ -11,7 +11,7 @@ use crate::{
     },
     error::{create_verifier_error, VerifierError},
 };
-use num::BigUint;
+use num_bigint::BigUint;
 use serde::Deserialize;
 
 #[derive(Deserialize, Debug, Clone)]
@@ -71,7 +71,7 @@ pub struct EncryptionGroup {
 #[cfg(test)]
 mod test {
     use super::*;
-    use num::bigint::ToBigUint;
+    use num_bigint::ToBigUint;
     use std::fs;
     use std::path::Path;
 

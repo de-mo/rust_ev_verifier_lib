@@ -6,7 +6,7 @@ use super::super::{
 use super::control_component_public_keys_payload::ControlComponentPublicKeys;
 use super::encryption_parameters_payload::EncryptionGroup;
 use crate::error::{create_verifier_error, VerifierError};
-use num::BigUint;
+use num_bigint::BigUint;
 use serde::Deserialize;
 
 #[derive(Deserialize, Debug, Clone)]

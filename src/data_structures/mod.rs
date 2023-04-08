@@ -5,7 +5,7 @@ pub mod setup;
 pub mod setup_or_tally;
 pub mod tally;
 
-use num::BigUint;
+use num_bigint::BigUint;
 
 use self::{
     error::DeserializeError,
@@ -157,7 +157,7 @@ where
 
 fn deserialize_seq_string_hex_to_seq_bigunit<'de, D>(
     deserializer: D,
-) -> Result<Vec<num::BigUint>, D::Error>
+) -> Result<Vec<BigUint>, D::Error>
 where
     D: Deserializer<'de>,
 {
@@ -219,7 +219,7 @@ where
 
 fn deserialize_seq_seq_string_hex_to_seq_seq_bigunit<'de, D>(
     deserializer: D,
-) -> Result<Vec<Vec<num::BigUint>>, D::Error>
+) -> Result<Vec<Vec<BigUint>>, D::Error>
 where
     D: Deserializer<'de>,
 {

@@ -1,7 +1,12 @@
 ///! Module that implement some functions of the number theory
-use super::num_bigint::{Constants, Operations};
+use super::num_bigint::Constants;
+use super::MAX_NB_SMALL_PRIMES;
 use crate::error::{create_result_with_error, create_verifier_error, VerifierError};
-use num::{BigInt, BigUint};
+use num_bigint::BigUint;
+use num_bigint_dig::{
+    prime::{probably_prime, probably_prime_miller_rabin},
+    BigUint as BigUintDig,
+};
 use std::fmt::Display;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -89,6 +94,14 @@ pub fn is_quadratic_residue(n: &BigUint, p: &BigUint) -> bool {
     jacobi(n, p).unwrap() == 1
 }
 
+pub fn is_probable_prime(n: &BigUint) -> bool {
+    probably_prime(&BigUintDig::new(n.to_u32_digits()), 2)
+}
+
+pub fn miller_rabin_test(n: &BigUint, base: usize) -> bool {
+    probably_prime_miller_rabin(&BigUintDig::new(n.to_u32_digits()), base, false)
+}
+
 #[cfg(test)]
 mod test {
 
@@ -131,7 +144,7 @@ mod test {
     }
 
     #[test]
-    fn test_satisfy_euler_criterion() {
+    fn test_is_quadratic_residue() {
         assert!(!is_quadratic_residue(
             &BigUint::from(17u8),
             &BigUint::from(3u8)
@@ -145,9 +158,13 @@ mod test {
         assert!(is_quadratic_residue(&BigUint::from(17u8), &p));
         assert!(is_quadratic_residue(&BigUint::from(19u8), &p));
     }
+
+    #[test]
+    fn test_size_small_primes() {
+        assert_eq!(SMALL_PRIMES.len(), MAX_NB_SMALL_PRIMES)
+    }
 }
 
-pub const MAX_NB_SMALL_PRIMES: usize = 10000;
 pub const SMALL_PRIMES: &'static [usize] = &[
     2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89, 97,
     101, 103, 107, 109, 113, 127, 131, 137, 139, 149, 151, 157, 163, 167, 173, 179, 181, 191, 193,

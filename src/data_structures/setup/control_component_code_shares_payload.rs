@@ -7,7 +7,7 @@ use super::super::{
 
 use super::encryption_parameters_payload::EncryptionGroup;
 use crate::error::{create_verifier_error, VerifierError};
-use num::BigUint;
+use num_bigint::BigUint;
 use serde::Deserialize;
 
 pub type ControlComponentCodeSharesPayload = Vec<ControlComponentCodeSharesPayloadInner>;

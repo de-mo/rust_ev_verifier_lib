@@ -4,8 +4,8 @@
 //! used in the client modules
 
 use crate::error::{create_result_with_error, create_verifier_error, VerifierError};
-use num::bigint::BigUint;
-use num::Num;
+use num_bigint::BigUint;
+use num_traits::Num;
 use std::fmt::Debug;
 use std::fmt::Display;
 
@@ -108,7 +108,7 @@ impl Hexa for BigUint {
                 format!("Malformed hexa string. Must start with \"0x\" {}", s)
             );
         };
-        <BigUint as Num>::from_str_radix(&s[2..], 16).or_else(|e| {
+        <BigUint>::from_str_radix(&s[2..], 16).or_else(|e| {
             create_result_with_error!(
                 BigUIntErrorType::FromHexaError,
                 format!("Cannot convert biguint from hexa {}", s),
@@ -125,8 +125,7 @@ impl Hexa for BigUint {
 #[cfg(test)]
 mod test {
     use super::*;
-    use num::bigint::ToBigUint;
-    use num::Num;
+    use num_bigint::ToBigUint;
 
     #[test]
     fn bit_length() {
@@ -148,7 +147,7 @@ mod test {
     #[test]
     fn from_str_radix() {
         assert_eq!(
-            <BigUint as Num>::from_str_radix("a", 16).unwrap(),
+            <BigUint>::from_str_radix("a", 16).unwrap(),
             10.to_biguint().unwrap()
         )
     }

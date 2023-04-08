@@ -1,8 +1,8 @@
 use crate::crypto_primitives::num_bigint::ByteLength;
 use crate::error::{create_result_with_error, create_verifier_error, VerifierError};
 use data_encoding::{BASE32, BASE64, HEXUPPER};
-use num::bigint::{BigUint, ToBigUint};
-use num::pow;
+use num_bigint::{BigUint, ToBigUint};
+use num_traits::Pow;
 use std::fmt::Debug;
 use std::fmt::Display;
 
@@ -195,10 +195,10 @@ impl ByteArray {
         let mut arr: Vec<u8> = vec![];
         if n % 8 != 0 {
             println!("n % 8: {:?}", (n % 8));
-            println!("2^(n % 8): {:?}", pow(2u8, n % 8));
-            println!("2^(n % 8)-1: {:?}", pow(2u8, n % 8) - 1);
-            println!("mask: {:?}", (pow(2u8, n % 8) - 1) as u8);
-            arr.push(bs[offset] & ((pow(2u8, n % 8) - 1) as u8));
+            println!("2^(n % 8): {:?}", Pow::pow(2u8, n % 8));
+            println!("2^(n % 8)-1: {:?}", Pow::pow(2u8, n % 8) - 1);
+            println!("mask: {:?}", (Pow::pow(2u8, n % 8) - 1) as u8);
+            arr.push(bs[offset] & ((Pow::pow(2u8, n % 8) - 1) as u8));
         } else {
             arr.push(bs[offset])
         }

@@ -1,23 +1,32 @@
 //! Module to implement El Gamal functions
 
-use num::BigUint;
+use num_bigint::BigUint;
 
+use super::byte_array::ByteArray;
+use super::num_bigint::Constants;
 use super::number_theory::{
-    is_quadratic_residue, is_small_prime, MAX_NB_SMALL_PRIMES, SMALL_PRIMES,
+    is_probable_prime, is_quadratic_residue, is_small_prime, miller_rabin_test, SMALL_PRIMES,
 };
+use super::openssl_wrapper::hash::shake128;
+use super::MAX_NB_SMALL_PRIMES;
 
-use crate::error::{create_result_with_error, create_verifier_error, VerifierError};
+use crate::{
+    data_structures::setup::encryption_parameters_payload::EncryptionGroup,
+    error::{create_result_with_error, create_verifier_error, VerifierError},
+};
 use std::fmt::Display;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ElgamalErrorType {
     TooFewSmallPrimeNumbers,
+    NotPrime,
 }
 
 impl Display for ElgamalErrorType {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let s = match self {
             Self::TooFewSmallPrimeNumbers => "Too few small prime numbers",
+            Self::NotPrime => "Not Prime",
         };
         write!(f, "{s}")
     }
@@ -53,6 +62,50 @@ pub fn get_small_prime_group_members(
     Ok(res)
 }
 
+// GetEncryptionParameters according to the specification
+pub fn get_encryption_parameters(seed: &String) -> Result<EncryptionGroup, ElgamalError> {
+    let q_b_1 = shake128(&ByteArray::from(seed));
+    let q_b = q_b_1.prepend_byte(2u8);
+    let q_prime: BigUint = q_b.into_biguint() >> 3;
+    let q = &q_prime - (&q_prime % 6u8) + 5u8;
+    let rs: Vec<BigUint> = SMALL_PRIMES.iter().map(|sp| &q % sp).collect();
+    let jump: usize = 6;
+    let mut delta: usize = 0;
+    loop {
+        delta = delta + jump;
+        let mut i: usize = 0;
+        while i < rs.len() {
+            if (rs[i].clone() + delta) % SMALL_PRIMES[i] == BigUint::zero()
+                || ((rs[i].clone() + delta) * 2u8 + 1u8) % SMALL_PRIMES[i] == BigUint::zero()
+            {
+                delta = delta + jump;
+                i = 0
+            } else {
+                i = i + 1
+            }
+        }
+        if is_probable_prime(&(&q + delta)) && is_probable_prime(&((&q + delta) * 2u8 + 1u8)) {
+            break;
+        }
+    }
+    let q_final = &q + delta;
+    let p = q_final.clone() * 2u8 + 1u8;
+    let mut g: u8 = 3;
+    if is_quadratic_residue(&BigUint::two(), &p) {
+        g = 2;
+    }
+    match miller_rabin_test(&q_final, 64) && miller_rabin_test(&p, 64) {
+        true => Ok(EncryptionGroup {
+            p,
+            q: q_final,
+            g: BigUint::from(g),
+        }),
+        false => {
+            create_result_with_error!(ElgamalErrorType::NotPrime, "p or q is not probable prime")
+        }
+    }
+}
+
 #[cfg(test)]
 mod test {
 
@@ -67,5 +120,19 @@ mod test {
             get_small_prime_group_members(&p, 5).unwrap(),
             vec![5, 17, 19, 37, 41]
         );
+    }
+
+    #[test]
+    #[ignore]
+    fn test_get_encryption_parameters() {
+        let eg_res = get_encryption_parameters(&"31".to_string());
+        assert!(eg_res.is_ok());
+        let eg = eg_res.unwrap();
+        let p_exp = BigUint::from_hexa(&"0xBFF67CCCAE0F61B38BA70AD736CFA8EA284B5D6CAEBF2FED2FC88D0ADFF9E2B220BFD9CCDA59BD3BD52B12CDFCCF41AA3D9BF81F95A7D59452690BF45F7993BE760ABBCA3E29705D473A66638DCD6EA78663C0DB91E3E0AB1DFE1AFF25181D4D2C3BA059F9131D95D37F431233EA2276E052C960DCB130F9DFFDC0BE977C9947E7AE05EA516AA81B2528FEF03625ACFCF495C3AB5D5F176E06F1382AE96A470321092C0C1C02A196AB4DA20D3605B4E72A5CFD16CF9381C83513EBD18A8A4A21BF95B864EDA4C0214583E99A3180F7A561F19D451BC4354E7A284DC7EB0C5A05DC58856C6DC8CF3A57B42D866D85F453D1BD8CC61117FB606A40AF0A0EF76D603C7A307C0B8854355D5836774C6BB12238E09806782A487BB9888AE1DB54DECA3FEC374D30CC9A722D3052585069D212B62FD6758710337CA17411E82FF7E7E7B754F4C9F3A1C49AA15E0D0A0E9B05A2EA880216D052B780E68168CA336309D3C1802A278AFCF1C0F8FA3381C145DA0864892221B960ECD6D46165E057B55EEB".to_string()).unwrap();
+        let q_exp = BigUint::from_hexa(&"0x5FFB3E665707B0D9C5D3856B9B67D4751425AEB6575F97F697E446856FFCF159105FECE66D2CDE9DEA958966FE67A0D51ECDFC0FCAD3EACA293485FA2FBCC9DF3B055DE51F14B82EA39D3331C6E6B753C331E06DC8F1F0558EFF0D7F928C0EA6961DD02CFC898ECAE9BFA18919F5113B702964B06E58987CEFFEE05F4BBE4CA3F3D702F528B5540D92947F781B12D67E7A4AE1D5AEAF8BB703789C1574B52381908496060E0150CB55A6D1069B02DA73952E7E8B67C9C0E41A89F5E8C5452510DFCADC3276D26010A2C1F4CD18C07BD2B0F8CEA28DE21AA73D1426E3F5862D02EE2C42B636E4679D2BDA16C336C2FA29E8DEC663088BFDB035205785077BB6B01E3D183E05C42A1AAEAC1B3BA635D8911C704C033C15243DDCC44570EDAA6F651FF61BA698664D391698292C2834E9095B17EB3AC38819BE50BA08F417FBF3F3DBAA7A64F9D0E24D50AF0685074D82D17544010B68295BC07340B46519B184E9E0C01513C57E78E07C7D19C0E0A2ED0432449110DCB0766B6A30B2F02BDAAF75".to_string()).unwrap();
+        let g_exp = BigUint::from(3u8);
+        assert_eq!(eg.p, p_exp);
+        assert_eq!(eg.q, q_exp);
+        assert_eq!(eg.g, g_exp);
     }
 }

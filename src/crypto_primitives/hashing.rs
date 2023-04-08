@@ -4,7 +4,7 @@
 use super::byte_array::ByteArray;
 use super::num_bigint::Hexa;
 use super::openssl_wrapper::hash::sha3_256;
-use num::bigint::BigUint;
+use num_bigint::BigUint;
 
 /// Enum to represent an element that is hashable
 ///
