@@ -22,7 +22,7 @@ impl<S: Clone, T: Clone> SetupOrTally<S, T> {
     {
         match self {
             SetupOrTally::Setup(s) => s,
-            SetupOrTally::Tally(t) => {
+            SetupOrTally::Tally(_) => {
                 panic!("called `SetupOrTally::unwrap_setup()` on a `Tally` value")
             }
         }
@@ -33,7 +33,7 @@ impl<S: Clone, T: Clone> SetupOrTally<S, T> {
 //        S: core::fmt::Debug,
     {
         match self {
-            SetupOrTally::Setup(s) => {
+            SetupOrTally::Setup(_) => {
                 panic!("called `SetupOrTally::unwrap_tally()` on a `Setup` value")
             }
             SetupOrTally::Tally(t) => t,

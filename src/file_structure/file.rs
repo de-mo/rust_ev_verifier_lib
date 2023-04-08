@@ -1,6 +1,4 @@
-use crate::data_structures::{
-    create_verifier_data_type, VerifierData, VerifierDataTrait, VerifierDataType,
-};
+use crate::data_structures::{VerifierData, VerifierDataType};
 use std::fs;
 use std::path::{Path, PathBuf};
 
@@ -91,7 +89,9 @@ impl File {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::data_structures::setup::VerifierSetupDataType;
+    use crate::data_structures::{
+        setup::VerifierSetupDataType, VerifierDataTrait, VerifierDataType,
+    };
     use std::path::{Path, PathBuf};
 
     fn get_location() -> PathBuf {

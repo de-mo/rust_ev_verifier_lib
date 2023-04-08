@@ -91,7 +91,7 @@ mod test {
 
     #[test]
     fn run_ok() {
-        fn ok(d: &VerificationDirectory) -> (Vec<VerificationError>, Vec<VerificationFailure>) {
+        fn ok(_: &VerificationDirectory) -> (Vec<VerificationError>, Vec<VerificationFailure>) {
             (vec![], vec![])
         }
         let mut verif = Verification::new(
@@ -118,7 +118,7 @@ mod test {
 
     #[test]
     fn run_error() {
-        fn error(d: &VerificationDirectory) -> (Vec<VerificationError>, Vec<VerificationFailure>) {
+        fn error(_: &VerificationDirectory) -> (Vec<VerificationError>, Vec<VerificationFailure>) {
             (
                 vec![
                     create_verifier_error!(VerificationErrorType::Error, "toto"),
@@ -155,7 +155,7 @@ mod test {
     #[test]
     fn run_failure() {
         fn failure(
-            d: &VerificationDirectory,
+            _: &VerificationDirectory,
         ) -> (Vec<VerificationError>, Vec<VerificationFailure>) {
             (
                 vec![],

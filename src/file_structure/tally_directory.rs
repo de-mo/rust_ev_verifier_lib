@@ -12,4 +12,8 @@ impl TallyDirectory {
             location: location.to_path_buf(),
         }
     }
+
+    pub fn get_location(&self) -> PathBuf {
+        self.location.to_path_buf()
+    }
 }

@@ -1,4 +1,4 @@
-use crate::error::{create_verifier_error, VerifierError};
+use crate::error::VerifierError;
 use std::fmt::Display;
 
 #[derive(Debug, Clone, PartialEq, Eq)]

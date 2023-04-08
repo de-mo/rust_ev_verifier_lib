@@ -1,15 +1,14 @@
 use crate::{
-    data_structures::setup::encryption_parameters_payload::EncryptionGroup,
     error::{create_verifier_error, VerifierError},
-    file_structure::{file::File, setup_directory::VCSDirectory},
+    file_structure::file::File,
 };
 
 use crate::file_structure::VerificationDirectory;
 
 use super::super::super::{
     error::{
-        create_verification_error, create_verification_failure, VerificationError,
-        VerificationErrorType, VerificationFailure, VerificationFailureType,
+        create_verification_failure, VerificationError, VerificationFailure,
+        VerificationFailureType,
     },
     verification::{Verification, VerificationMetaData},
     VerificationCategory, VerificationPeriod,
@@ -61,7 +60,7 @@ fn fn_verification_301(
             cc_group_numbers
         )))
     }
-    for (i, f) in setup_dir.control_component_public_keys_payload_group.iter() {
+    for (_, f) in setup_dir.control_component_public_keys_payload_group.iter() {
         test_file_exists(&f, &mut failures);
     }
     (vec![], failures)

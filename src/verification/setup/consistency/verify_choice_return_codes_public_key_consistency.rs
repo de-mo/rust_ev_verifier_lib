@@ -1,5 +1,3 @@
-use std::iter::zip;
-
 use crate::file_structure::VerificationDirectory;
 use crate::{
     crypto_primitives::num_bigint::Constants,
@@ -32,7 +30,6 @@ pub(super) fn get_verification_305() -> Verification {
 fn fn_verification_305(
     dir: &VerificationDirectory,
 ) -> (Vec<VerificationError>, Vec<VerificationFailure>) {
-    let mut errors: Vec<VerificationError> = vec![];
     let mut failures: Vec<VerificationFailure> = vec![];
     let setup_dir = dir.unwrap_setup();
     let eg_p = match setup_dir.encryption_parameters_payload() {
@@ -77,7 +74,7 @@ fn fn_verification_305(
             )));
         }
     }
-    (errors, failures)
+    (vec![], failures)
 }
 
 #[cfg(test)]

@@ -40,16 +40,16 @@ pub struct SetupComponentVerificationData {
 #[derive(Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct CombinedCorrectnessInformation {
-    correctness_information_list: Vec<CorrectnessInformationElt>,
+    pub correctness_information_list: Vec<CorrectnessInformationElt>,
 }
 
 #[derive(Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct CorrectnessInformationElt {
-    correctness_id: String,
-    number_of_selections: usize,
-    number_of_voting_options: usize,
-    list_of_write_in_options: Vec<usize>,
+    pub correctness_id: String,
+    pub number_of_selections: usize,
+    pub number_of_voting_options: usize,
+    pub list_of_write_in_options: Vec<usize>,
 }
 
 #[cfg(test)]
