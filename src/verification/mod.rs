@@ -174,6 +174,12 @@ mod test {
             "VerifyCcmAndCcrSchnorrProofsConsistency",
             VerificationCategory::Consistency,
         ),
+        (
+            "305",
+            "3.06",
+            "VerifyChoiceReturnCodesPublicKeyConsistency",
+            VerificationCategory::Consistency,
+        ),
         ("400", "3.4", "Integrity", VerificationCategory::Integrity),
         (
             "500",
