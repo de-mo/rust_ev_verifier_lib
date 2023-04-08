@@ -127,6 +127,10 @@ impl FileGroup {
         self.numbers.clone()
     }
 
+    pub fn get_file_with_number(&self, number: usize) -> File {
+        File::new(&self.location, self.data_type.clone(), Some(number))
+    }
+
     pub fn iter(&self) -> FileGroupIter<File> {
         FileGroupIter::new(self)
     }
@@ -160,6 +164,20 @@ mod test {
             let name = format!("controlComponentPublicKeysPayload.{}.json", i);
             assert_eq!(f.get_path(), location.join(name));
         }
+    }
+
+    #[test]
+    fn test_get_file_with_number() {
+        let location = get_location();
+        let fg = FileGroup::new(
+            &location,
+            VerifierDataType::Setup(VerifierSetupDataType::ControlComponentPublicKeysPayload),
+        );
+        let f = fg.get_file_with_number(1);
+        assert_eq!(
+            f.get_path(),
+            location.join("controlComponentPublicKeysPayload.1.json")
+        );
     }
 
     #[test]
