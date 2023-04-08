@@ -131,15 +131,62 @@ impl VerificationsForPeriod {
 mod test {
     use super::*;
 
-    const SETUP_EXPECTED: &[(&str, &str, VerificationCategory)] = &[
-        ("100", "3.1", VerificationCategory::Completness),
-        ("200", "2.01", VerificationCategory::Authenticity),
-        ("300", "3.01", VerificationCategory::Consistency),
-        ("301", "3.02", VerificationCategory::Consistency),
-        ("302", "3.03", VerificationCategory::Consistency),
-        ("400", "3.4", VerificationCategory::Integrity),
-        ("500", "5.01", VerificationCategory::Evidence),
-        ("501", "5.02", VerificationCategory::Evidence),
+    const SETUP_EXPECTED: &[(&str, &str, &str, VerificationCategory)] = &[
+        (
+            "100",
+            "3.1",
+            "VerifySetupCompleteness",
+            VerificationCategory::Completness,
+        ),
+        (
+            "200",
+            "2.01",
+            "VerifySignatureSetupComponentEncryptionParameters",
+            VerificationCategory::Authenticity,
+        ),
+        (
+            "300",
+            "3.01",
+            "VerifyEncryptionGroupConsistency",
+            VerificationCategory::Consistency,
+        ),
+        (
+            "301",
+            "3.02",
+            "VerifySetupFileNamesConsistency",
+            VerificationCategory::Consistency,
+        ),
+        (
+            "302",
+            "3.03",
+            "VerifyCCRChoiceReturnCodesPublicKeyConsistency",
+            VerificationCategory::Consistency,
+        ),
+        (
+            "303",
+            "3.04",
+            "VerifyCcmElectionPublicKeyConsistency",
+            VerificationCategory::Consistency,
+        ),
+        (
+            "304",
+            "3.05",
+            "VerifyCcmAndCcrSchnorrProofsConsistency",
+            VerificationCategory::Consistency,
+        ),
+        ("400", "3.4", "Integrity", VerificationCategory::Integrity),
+        (
+            "500",
+            "5.01",
+            "VerifyEncryptionParameters",
+            VerificationCategory::Evidence,
+        ),
+        (
+            "501",
+            "5.02",
+            "VerifySmallPrimeGroupMembers",
+            VerificationCategory::Evidence,
+        ),
     ];
 
     #[test]
@@ -154,10 +201,11 @@ mod test {
     #[test]
     fn test_setup_metadata() {
         let verifs = VerificationsForPeriod::new(VerificationPeriod::Setup);
-        for (id, nr, cat) in SETUP_EXPECTED.iter() {
+        for (id, nr, name, cat) in SETUP_EXPECTED.iter() {
             let v_md = verifs.find_by_id(id).unwrap();
             assert_eq!(&v_md.meta_data.id, id, "id: {}", id);
             assert_eq!(&v_md.meta_data.nr, nr, "id: {}", id);
+            assert_eq!(&v_md.meta_data.name, name, "id: {}", id);
             assert_eq!(&v_md.meta_data.category, cat, "id: {}", id);
         }
     }

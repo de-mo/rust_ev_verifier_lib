@@ -23,7 +23,7 @@ fn get_verification_100() -> Verification {
         VerificationMetaData {
             id: "100".to_owned(),
             nr: "3.1".to_owned(),
-            name: "Completeness".to_owned(),
+            name: "VerifySetupCompleteness".to_owned(),
             period: VerificationPeriod::Setup,
             category: VerificationCategory::Completness,
         },
