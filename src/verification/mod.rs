@@ -29,8 +29,10 @@ pub enum VerificationPeriod {
 
 pub type VerificationList = Vec<verification::Verification>;
 
-trait VerificationListTrait {
+pub trait VerificationListTrait {
     fn len(&self) -> usize;
+    fn len_with_exclusion(&self, exclusion: &Vec<&String>) -> usize;
+    fn len_excluded(&self, exclusion: &Vec<&String>) -> usize;
     fn get_verifications(&self, category: VerificationCategory)
         -> Vec<&verification::Verification>;
     fn collect_id(&self) -> Vec<String>;
@@ -40,6 +42,16 @@ trait VerificationListTrait {
 impl VerificationListTrait for VerificationList {
     fn len(&self) -> usize {
         self.len()
+    }
+
+    fn len_with_exclusion(&self, exclusion: &Vec<&String>) -> usize {
+        self.iter()
+            .filter(|e| !exclusion.contains(&&e.meta_data.id))
+            .count()
+    }
+
+    fn len_excluded(&self, exclusion: &Vec<&String>) -> usize {
+        self.len() - self.len_with_exclusion(exclusion)
     }
 
     fn get_verifications(
@@ -72,6 +84,20 @@ impl VerificationListTrait for VerificationsForPeriod {
         match self {
             VerificationsForPeriod::Setup(b) => b.len(),
             VerificationsForPeriod::Tally(b) => b.len(),
+        }
+    }
+
+    fn len_with_exclusion(&self, exclusion: &Vec<&String>) -> usize {
+        match self {
+            VerificationsForPeriod::Setup(b) => b.len_with_exclusion(exclusion),
+            VerificationsForPeriod::Tally(b) => b.len_with_exclusion(exclusion),
+        }
+    }
+
+    fn len_excluded(&self, exclusion: &Vec<&String>) -> usize {
+        match self {
+            VerificationsForPeriod::Setup(b) => b.len_excluded(exclusion),
+            VerificationsForPeriod::Tally(b) => b.len_excluded(exclusion),
         }
     }
 
@@ -214,5 +240,39 @@ mod test {
             assert_eq!(&v_md.meta_data.name, name, "id: {}", id);
             assert_eq!(&v_md.meta_data.category, cat, "id: {}", id);
         }
+    }
+
+    #[test]
+    fn test_len_with_exclusion() {
+        let verifs = VerificationsForPeriod::new(VerificationPeriod::Setup);
+        assert_eq!(
+            verifs.len_with_exclusion(&vec![&"200".to_string(), &"500".to_string()]),
+            SETUP_EXPECTED.len() - 2
+        );
+        assert_eq!(
+            verifs.len_excluded(&vec![&"200".to_string(), &"500".to_string()]),
+            2
+        );
+        assert_eq!(
+            verifs.len_with_exclusion(&vec![&"toto".to_string()]),
+            SETUP_EXPECTED.len()
+        );
+        assert_eq!(verifs.len_excluded(&vec![&"toto".to_string()]), 0);
+        assert_eq!(
+            verifs.len_with_exclusion(&vec![
+                &"200".to_string(),
+                &"500".to_string(),
+                &"toto".to_string()
+            ]),
+            SETUP_EXPECTED.len() - 2
+        );
+        assert_eq!(
+            verifs.len_excluded(&vec![
+                &"200".to_string(),
+                &"500".to_string(),
+                &"toto".to_string()
+            ]),
+            2
+        );
     }
 }

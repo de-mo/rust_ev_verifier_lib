@@ -52,28 +52,28 @@ impl Verification {
             self.status = VerificationStatus::Error;
             self.errors = Box::new(errors);
             warn!(
-                "Verification {} ({}) finished with errors. Duration: {}",
+                "Verification {} ({}) finished with errors. Duration: {}s",
                 self.meta_data.name,
                 self.meta_data.id,
-                self.duration.unwrap().as_micros()
+                self.duration.unwrap().as_secs_f32()
             );
         } else {
             if !failures.is_empty() {
                 self.status = VerificationStatus::Failed;
                 self.failures = Box::new(failures);
                 warn!(
-                    "Verification {} ({}) finished with failures. Duration: {}",
+                    "Verification {} ({}) finished with failures. Duration: {}s",
                     self.meta_data.name,
                     self.meta_data.id,
-                    self.duration.unwrap().as_micros()
+                    self.duration.unwrap().as_secs_f32()
                 );
             } else {
                 self.status = VerificationStatus::Success;
                 info!(
-                    "Verification {} ({}) finished successfully. Duration: {}",
+                    "Verification {} ({}) finished successfully. Duration: {}s",
                     self.meta_data.name,
                     self.meta_data.id,
-                    self.duration.unwrap().as_micros()
+                    self.duration.unwrap().as_secs_f32()
                 );
             }
         }

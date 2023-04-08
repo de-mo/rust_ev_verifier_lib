@@ -1,3 +1,7 @@
+use std::path::Path;
+
+use super::runner::Runner;
+use crate::verification::VerificationPeriod;
 use clap::{Arg, ArgAction, ArgMatches, Command};
 use log::{info, warn, LevelFilter};
 use log4rs::{
@@ -26,7 +30,7 @@ fn get_verifier_subcommand(
         .arg(
             Arg::new("exclude")
                 .long("exclude")
-                .help("Exclusion")
+                .help("Exclusion of verifications. Use the id of the verification. Many separated by blanks. E.g. --exclude 200 500")
                 .action(ArgAction::Set)
                 .num_args(1..),
         )
@@ -79,14 +83,25 @@ pub fn execute_command() {
         Some(("setup", setup_matches)) => {
             init_logger(LevelFilter::Debug, true);
             info!("Start Verifier for setup");
-            //println!("Setup: {:?}", setup_matches)
+            execute_runner(VerificationPeriod::Setup, &setup_matches);
         }
         Some(("tally", tally_matches)) => {
             init_logger(LevelFilter::Debug, true);
             info!("Start Verifier for tally");
-            //println!("tally: {:?}", tally_matches)
+            execute_runner(VerificationPeriod::Tally, &tally_matches);
         }
         _ => unreachable!(), // If all subcommands are defined above, anything else is unreachable
     }
     info!("Verifier finished");
+}
+
+fn execute_runner(period: VerificationPeriod, matches: &ArgMatches) {
+    let dir = matches.get_one::<String>("dir").unwrap();
+    let path = Path::new(dir);
+    let mut exclusions: Vec<&String> = vec![];
+    if matches.contains_id("exclude") {
+        exclusions = matches.get_many("exclude").unwrap().collect();
+    }
+    let mut runner = Runner::new(path, period);
+    runner.run_all(&exclusions);
 }
