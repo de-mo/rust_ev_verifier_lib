@@ -223,10 +223,10 @@ mod test {
             )
         }
         let expected = vec![
-            "ecce436619444b2ba4402338301c380c",
-            "efaf6c96462547a8b86ec5379d196a6e",
-            "743f2d0fc9fc412798876d7763f78f1b",
-            "8622175e9fc0431bbfeefb634475ddf8",
+            "7e8ce00c2c164c268c11cfa7066e3d9f",
+            "517e62879eb44ef8bc1292bcf0b5b787",
+            "eb98875b06c841529632cb8edd585f32",
+            "37d2f678ee21425b997ba1dc50ae2c91",
         ];
         for (i, d) in dir.vcs_directories_iter().enumerate() {
             assert_eq!(d.get_location(), vcs_location.join(expected[i]))
@@ -238,7 +238,7 @@ mod test {
         let location = get_location()
             .join("setup")
             .join("verification_card_sets")
-            .join("743f2d0fc9fc412798876d7763f78f1b");
+            .join("7e8ce00c2c164c268c11cfa7066e3d9f");
         let dir = VCSDirectory::new(&location);
         assert_eq!(dir.get_location(), location);
         assert!(dir.setup_component_tally_data_payload().is_ok());

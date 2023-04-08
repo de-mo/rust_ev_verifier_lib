@@ -53,7 +53,7 @@ mod test {
             .join("dataset-setup1")
             .join("setup")
             .join("verification_card_sets")
-            .join("743f2d0fc9fc412798876d7763f78f1b")
+            .join("7e8ce00c2c164c268c11cfa7066e3d9f")
             .join("controlComponentCodeSharesPayload.0.json");
         let json = fs::read_to_string(&path).unwrap();
         let r_eec = ControlComponentCodeSharesPayload::from_json(&json);

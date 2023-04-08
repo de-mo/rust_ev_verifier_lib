@@ -125,7 +125,7 @@ mod test {
             .exists());
         let path2 = path
             .join("verification_card_sets")
-            .join("743f2d0fc9fc412798876d7763f78f1b");
+            .join("7e8ce00c2c164c268c11cfa7066e3d9f");
         assert!(path2
             .join(
                 VerifierDataType::Setup(VerifierSetupDataType::SetupComponentTallyDataPayload)
@@ -148,7 +148,7 @@ mod test {
             .exists());
         let path2 = path
             .join("verification_card_sets")
-            .join("743f2d0fc9fc412798876d7763f78f1b");
+            .join("7e8ce00c2c164c268c11cfa7066e3d9f");
         assert!(path2
             .join(
                 VerifierDataType::Setup(VerifierSetupDataType::ControlComponentCodeSharesPayload)

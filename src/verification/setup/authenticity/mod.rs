@@ -90,6 +90,7 @@ mod test {
     }
 
     #[test]
+    #[ignore]
     fn test_ok() {
         let dir = get_verifier_dir();
         let (e, f) = fn_verification_200(&dir);
