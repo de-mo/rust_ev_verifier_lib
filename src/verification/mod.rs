@@ -204,6 +204,12 @@ mod test {
             "VerifyChoiceReturnCodesPublicKeyConsistency",
             VerificationCategory::Consistency,
         ),
+        (
+            "306",
+            "3.07",
+            "VerifyElectionPublicKeyConsistency",
+            VerificationCategory::Consistency,
+        ),
         ("400", "3.4", "Integrity", VerificationCategory::Integrity),
         (
             "500",
@@ -221,6 +227,12 @@ mod test {
             "502",
             "5.03",
             "VerifyVotingOptions",
+            VerificationCategory::Evidence,
+        ),
+        (
+            "503",
+            "5.04",
+            "VerifyKeyGenerationSchnorrProofs",
             VerificationCategory::Evidence,
         ),
     ];
