@@ -4,7 +4,7 @@
 //! used in the client modules
 
 use crate::error::{create_result_with_error, create_verifier_error, VerifierError};
-use num_bigint::BigUint;
+use num_bigint::{BigInt, BigUint, Sign};
 use num_traits::Num;
 use std::fmt::Debug;
 use std::fmt::Display;
@@ -78,13 +78,59 @@ impl Constants for BigUint {
 
 /// Trait to extend operations of BigUInt
 pub trait Operations {
-    /// Calculate the exponentiate modulo: n^exp % modulus
+    /// Test is is even
+    fn is_even(&self) -> bool;
+
+    /// Test is is even
+    fn is_odd(&self) -> bool {
+        !self.is_even()
+    }
+
+    /// Calculate the exponentiate modulo: self^exp % modulus
     fn mod_exponentiate(&self, exp: &Self, modulus: &Self) -> Self;
+
+    /// Calculate the negative number modulo modulus (is a positive number): -self & modulus
+    fn mod_negate(&self, modulus: &Self) -> Self;
+
+    /// Calculate the exponentiate modulo: self*other % modulus
+    fn mod_multiply(&self, other: &Self, modulus: &Self) -> Self;
 }
 
 impl Operations for BigUint {
+    fn is_even(&self) -> bool {
+        self % Self::two() == Self::zero()
+    }
+
     fn mod_exponentiate(&self, exp: &Self, modulus: &Self) -> Self {
         self.modpow(exp, modulus)
+    }
+
+    fn mod_negate(&self, modulus: &Self) -> Self {
+        let bi = BigInt::from_biguint(Sign::Minus, self.clone());
+        let modulus_bi = BigInt::from_biguint(Sign::Plus, modulus.clone());
+        let neg: BigInt = &bi % &modulus_bi;
+        match neg.to_biguint() {
+            Some(n) => n,
+            None => (&neg + &modulus_bi).to_biguint().unwrap(),
+        }
+    }
+
+    fn mod_multiply(&self, other: &Self, modulus: &Self) -> Self {
+        let mut a = self.clone();
+        let mut b = other.clone();
+        let zero = Self::zero();
+        let one = Self::one();
+        let two = Self::two();
+        let mut res = zero.clone();
+        a = a % modulus;
+        while b > zero {
+            if &b % &two == one {
+                res = (&res + &a) % modulus;
+            }
+            a = (&a * &two) % modulus;
+            b = &b / &two
+        }
+        res
     }
 }
 
@@ -126,6 +172,7 @@ impl Hexa for BigUint {
 mod test {
     use super::*;
     use num_bigint::ToBigUint;
+    use num_traits::FromPrimitive;
 
     #[test]
     fn bit_length() {
@@ -180,5 +227,36 @@ mod test {
         assert_eq!(10.to_biguint().unwrap().to_hexa(), "0xa");
         assert_eq!(171.to_biguint().unwrap().to_hexa(), "0xab");
         assert_eq!(1235432.to_biguint().unwrap().to_hexa(), "0x12d9e8");
+    }
+
+    #[test]
+    fn test_is_even_odd() {
+        assert!(BigUint::from(0u8).is_even());
+        assert!(BigUint::from(2u8).is_even());
+        assert!(!BigUint::from(3u8).is_even());
+        assert!(!BigUint::from(0u8).is_odd());
+        assert!(!BigUint::from(2u8).is_odd());
+        assert!(BigUint::from(3u8).is_odd());
+    }
+
+    #[test]
+    fn test_mod_multiply() {
+        assert_eq!(
+            BigUint::from(426u32).mod_multiply(&BigUint::from(964u32), &BigUint::from(235u32)),
+            BigUint::from(119u32)
+        );
+        let a = BigUint::from_usize(10123465234878998).unwrap();
+        let b = BigUint::from_usize(65746311545646431).unwrap();
+        let m = BigUint::from_usize(10005412336548794).unwrap();
+        let res = BigUint::from_usize(4652135769797794).unwrap();
+        assert_eq!(a.mod_multiply(&b, &m), res)
+    }
+
+    #[test]
+    fn test_mod_negate() {
+        assert_eq!(
+            BigUint::from(12u8).mod_negate(&BigUint::from(10u32)),
+            BigUint::from(8u32)
+        );
     }
 }

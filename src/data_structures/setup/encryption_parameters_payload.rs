@@ -25,7 +25,7 @@ pub struct EncryptionParametersPayload {
 
 implement_trait_data_structure!(EncryptionParametersPayload);
 
-impl From<&EncryptionParametersPayload> for RecursiveHashable {
+impl<'a> From<&EncryptionParametersPayload> for RecursiveHashable {
     fn from(value: &EncryptionParametersPayload) -> Self {
         let mut elts = vec![];
         elts.push(Self::from(&value.encryption_group.p));

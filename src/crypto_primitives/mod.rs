@@ -8,6 +8,7 @@ pub mod num_bigint;
 pub mod number_theory;
 pub mod openssl_wrapper;
 pub mod signature;
+pub mod zero_knowledge_proof;
 
 pub const GROUP_PARAMETER_P_LENGTH: usize = 3072;
 pub const MAX_NB_SMALL_PRIMES: usize = 3000;
