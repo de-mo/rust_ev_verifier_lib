@@ -116,21 +116,7 @@ impl Operations for BigUint {
     }
 
     fn mod_multiply(&self, other: &Self, modulus: &Self) -> Self {
-        let mut a = self.clone();
-        let mut b = other.clone();
-        let zero = Self::zero();
-        let one = Self::one();
-        let two = Self::two();
-        let mut res = zero.clone();
-        a = a % modulus;
-        while b > zero {
-            if &b % &two == one {
-                res = (&res + &a) % modulus;
-            }
-            a = (&a * &two) % modulus;
-            b = &b / &two
-        }
-        res
+        (self * other) % modulus
     }
 }
 
