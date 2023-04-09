@@ -152,7 +152,7 @@ where
 {
     let buf = String::deserialize(deserializer)?;
 
-    BigUint::from_hexa(&buf).map_err(|e| Error::custom(e.message()))
+    BigUint::from_hexa_string(&buf).map_err(|e| Error::custom(e.message()))
 }
 
 fn deserialize_seq_string_hex_to_seq_bigunit<'de, D>(
@@ -177,7 +177,7 @@ where
             let mut vec = <Self::Value>::new();
 
             while let Some(v) = (seq.next_element())? {
-                let r_b = BigUint::from_hexa(&v).map_err(|e| A::Error::custom(e))?;
+                let r_b = BigUint::from_hexa_string(&v).map_err(|e| A::Error::custom(e))?;
                 vec.push(r_b);
             }
             Ok(vec)
@@ -241,7 +241,7 @@ where
             while let Some(v) = (seq.next_element::<Vec<String>>())? {
                 let mut inner_vec = Vec::new();
                 for x in v {
-                    let r_b = BigUint::from_hexa(&x).map_err(|e| A::Error::custom(e))?;
+                    let r_b = BigUint::from_hexa_string(&x).map_err(|e| A::Error::custom(e))?;
                     inner_vec.push(r_b);
                 }
                 vec.push(inner_vec.to_owned());
