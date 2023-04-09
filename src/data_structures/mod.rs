@@ -266,7 +266,7 @@ pub trait SignatureTrait {
 }
 
 #[derive(Deserialize2, Debug, Clone)]
-pub struct SchnorrProofUnderline {
+pub struct ProofUnderline {
     #[serde(deserialize_with = "deserialize_string_hex_to_bigunit")]
     #[serde(rename = "_e")]
     pub e: BigUint,
@@ -281,6 +281,15 @@ pub struct Proof {
     pub e: BigUint,
     #[serde(deserialize_with = "deserialize_string_hex_to_bigunit")]
     pub z: BigUint,
+}
+
+impl From<&ProofUnderline> for Proof {
+    fn from(value: &ProofUnderline) -> Self {
+        Proof {
+            e: value.e.clone(),
+            z: value.z.clone(),
+        }
+    }
 }
 
 #[derive(Deserialize2, Debug, Clone)]
