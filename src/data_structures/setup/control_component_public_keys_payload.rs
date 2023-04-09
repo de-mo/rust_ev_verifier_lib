@@ -1,7 +1,7 @@
 use super::super::deserialize_seq_string_hex_to_seq_bigunit;
 use super::super::{
     error::{DeserializeError, DeserializeErrorType},
-    implement_trait_data_structure, DataStructureTrait, SchnorrProofUnderline, Signature,
+    implement_trait_data_structure, DataStructureTrait, ProofUnderline, Signature,
 };
 use super::encryption_parameters_payload::EncryptionGroup;
 use crate::error::{create_verifier_error, VerifierError};
@@ -25,10 +25,10 @@ pub struct ControlComponentPublicKeys {
     pub node_id: u8,
     #[serde(deserialize_with = "deserialize_seq_string_hex_to_seq_bigunit")]
     pub ccrj_choice_return_codes_encryption_public_key: Vec<BigUint>,
-    pub ccrj_schnorr_proofs: Vec<SchnorrProofUnderline>,
+    pub ccrj_schnorr_proofs: Vec<ProofUnderline>,
     #[serde(deserialize_with = "deserialize_seq_string_hex_to_seq_bigunit")]
     pub ccmj_election_public_key: Vec<BigUint>,
-    pub ccmj_schnorr_proofs: Vec<SchnorrProofUnderline>,
+    pub ccmj_schnorr_proofs: Vec<ProofUnderline>,
 }
 
 #[cfg(test)]

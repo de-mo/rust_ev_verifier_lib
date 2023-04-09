@@ -1,7 +1,7 @@
 use super::super::deserialize_seq_string_hex_to_seq_bigunit;
 use super::super::{
     error::{DeserializeError, DeserializeErrorType},
-    implement_trait_data_structure, DataStructureTrait, SchnorrProofUnderline, Signature,
+    implement_trait_data_structure, DataStructureTrait, ProofUnderline, Signature,
 };
 use super::control_component_public_keys_payload::ControlComponentPublicKeys;
 use super::encryption_parameters_payload::EncryptionGroup;
@@ -26,7 +26,7 @@ pub struct SetupComponentPublicKeys {
     pub combined_control_component_public_keys: Vec<ControlComponentPublicKeys>,
     #[serde(deserialize_with = "deserialize_seq_string_hex_to_seq_bigunit")]
     pub electoral_board_public_key: Vec<BigUint>,
-    pub electoral_board_schnorr_proofs: Vec<SchnorrProofUnderline>,
+    pub electoral_board_schnorr_proofs: Vec<ProofUnderline>,
     #[serde(deserialize_with = "deserialize_seq_string_hex_to_seq_bigunit")]
     pub election_public_key: Vec<BigUint>,
     #[serde(deserialize_with = "deserialize_seq_string_hex_to_seq_bigunit")]
