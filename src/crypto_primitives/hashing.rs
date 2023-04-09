@@ -86,6 +86,13 @@ impl From<&Vec<String>> for RecursiveHashable {
     }
 }
 
+impl From<&Vec<&String>> for RecursiveHashable {
+    fn from(value: &Vec<&String>) -> Self {
+        let v: Vec<String> = value.iter().map(|e| (*e).clone()).collect();
+        RecursiveHashable::from(&v)
+    }
+}
+
 impl From<&Vec<ByteArray>> for RecursiveHashable {
     fn from(value: &Vec<ByteArray>) -> Self {
         let l: Vec<RecursiveHashable> = value.iter().map(|b| RecursiveHashable::from(b)).collect();
@@ -97,6 +104,13 @@ impl From<&Vec<BigUint>> for RecursiveHashable {
     fn from(value: &Vec<BigUint>) -> Self {
         let l: Vec<RecursiveHashable> = value.iter().map(|n| RecursiveHashable::from(n)).collect();
         RecursiveHashable::from(&l)
+    }
+}
+
+impl From<&Vec<&BigUint>> for RecursiveHashable {
+    fn from(value: &Vec<&BigUint>) -> Self {
+        let v: Vec<BigUint> = value.iter().map(|e| (*e).clone()).collect();
+        RecursiveHashable::from(&v)
     }
 }
 
