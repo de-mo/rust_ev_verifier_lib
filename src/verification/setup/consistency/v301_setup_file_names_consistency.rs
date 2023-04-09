@@ -11,7 +11,7 @@ use super::super::super::{
     VerificationCategory, VerificationPeriod,
 };
 
-pub(super) fn get_verification_301() -> Verification {
+pub(super) fn get_verification() -> Verification {
     Verification::new(
         VerificationMetaData {
             id: "301".to_owned(),
@@ -20,7 +20,7 @@ pub(super) fn get_verification_301() -> Verification {
             period: VerificationPeriod::Setup,
             category: VerificationCategory::Consistency,
         },
-        fn_verification_301,
+        fn_verification,
     )
 }
 
@@ -33,7 +33,7 @@ fn test_file_exists(file: &File, result: &mut VerificationResult) {
     }
 }
 
-fn fn_verification_301(dir: &VerificationDirectory, result: &mut VerificationResult) {
+fn fn_verification(dir: &VerificationDirectory, result: &mut VerificationResult) {
     let setup_dir = dir.unwrap_setup();
     test_file_exists(&setup_dir.encryption_parameters_payload_file, result);
     test_file_exists(&setup_dir.election_event_context_payload_file, result);
@@ -70,7 +70,7 @@ mod test {
     fn test_ok() {
         let dir = get_verifier_dir();
         let mut result = VerificationResult::new();
-        fn_verification_301(&dir, &mut result);
+        fn_verification(&dir, &mut result);
         assert!(result.is_ok().unwrap());
     }
 }

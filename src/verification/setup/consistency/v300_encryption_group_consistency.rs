@@ -15,7 +15,7 @@ use super::super::super::{
     VerificationCategory, VerificationPeriod,
 };
 
-pub(super) fn get_verification_300() -> Verification {
+pub(super) fn get_verification() -> Verification {
     Verification::new(
         VerificationMetaData {
             id: "300".to_owned(),
@@ -24,7 +24,7 @@ pub(super) fn get_verification_300() -> Verification {
             period: VerificationPeriod::Setup,
             category: VerificationCategory::Consistency,
         },
-        fn_verification_300,
+        fn_verification,
     )
 }
 
@@ -125,7 +125,7 @@ fn test_encryption_group_for_vcs_dir(
     }
 }
 
-fn fn_verification_300(dir: &VerificationDirectory, result: &mut VerificationResult) {
+fn fn_verification(dir: &VerificationDirectory, result: &mut VerificationResult) {
     let setup_dir = dir.unwrap_setup();
     let eg = match setup_dir.encryption_parameters_payload() {
         Ok(p) => p.encryption_group,
@@ -201,7 +201,7 @@ mod test {
     fn test_ok() {
         let dir = get_verifier_dir();
         let mut result = VerificationResult::new();
-        fn_verification_300(&dir, &mut result);
+        fn_verification(&dir, &mut result);
         assert!(result.is_ok().unwrap());
     }
 }

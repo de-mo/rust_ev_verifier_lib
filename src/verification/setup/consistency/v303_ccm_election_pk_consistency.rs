@@ -1,5 +1,3 @@
-use std::iter::zip;
-
 use crate::{
     data_structures::{
         setup::control_component_public_keys_payload::ControlComponentPublicKeys, VerifierDataTrait,
@@ -19,20 +17,20 @@ use super::super::super::{
     VerificationCategory, VerificationPeriod,
 };
 
-pub(super) fn get_verification_304() -> Verification {
+pub(super) fn get_verification() -> Verification {
     Verification::new(
         VerificationMetaData {
-            id: "304".to_owned(),
-            algorithm: "3.05".to_owned(),
-            name: "VerifyCcmAndCcrSchnorrProofsConsistency".to_owned(),
+            id: "303".to_owned(),
+            algorithm: "3.04".to_owned(),
+            name: "VerifyCcmElectionPublicKeyConsistency".to_owned(),
             period: VerificationPeriod::Setup,
             category: VerificationCategory::Consistency,
         },
-        fn_verification_304,
+        fn_verification,
     )
 }
 
-fn validate_ccm_and_ccr_schorr_proofs(
+fn validate_cc_ccm_pk(
     setup_dir: &SetupDirectory,
     setup: &ControlComponentPublicKeys,
     node_id: usize,
@@ -54,45 +52,21 @@ fn validate_ccm_and_ccr_schorr_proofs(
             return;
         }
     };
-    if setup.ccmj_schnorr_proofs.len() != cc_pk.ccmj_schnorr_proofs.len() {
+    if setup.ccmj_election_public_key.len() != cc_pk.ccmj_election_public_key.len() {
         result.push_failure(create_verification_failure!(format!("The length of CCM public keys for control component {} are identical from both sources", node_id)));
     } else {
-        for (i, (a, b)) in zip(&setup.ccmj_schnorr_proofs, &cc_pk.ccmj_schnorr_proofs).enumerate() {
-            if a.e != b.e {
-                result.push_failure(create_verification_failure!(format!(
-            "The field e for Ccm Schor Proof is not the same at pos {} for control component {}", i,
-            node_id
-        )));
-            }
-            if a.z != b.z {
-                result.push_failure(create_verification_failure!(format!(
-            "The field z for Ccm Schor Proof is not the same at pos {} for control component {}", i,
-            node_id
-        )));
-            }
-        }
-    }
-    if setup.ccmj_schnorr_proofs.len() != cc_pk.ccmj_schnorr_proofs.len() {
-        result.push_failure(create_verification_failure!(format!("The length of CCM public keys for control component {} are identical from both sources", node_id)));
-    } else {
-        for (i, (a, b)) in zip(&setup.ccmj_schnorr_proofs, &cc_pk.ccmj_schnorr_proofs).enumerate() {
-            if a.e != b.e {
-                result.push_failure(create_verification_failure!(format!(
-            "The field e for Ccm Schor Proof is not the same at pos {} for control component {}", i,
-            node_id
-        )));
-            }
-            if a.z != b.z {
-                result.push_failure(create_verification_failure!(format!(
-            "The field z for Ccm Schor Proof is not the same at pos {} for control component {}", i,
-            node_id
-        )));
-            }
-        }
+        if setup.ccrj_choice_return_codes_encryption_public_key
+            != cc_pk.ccrj_choice_return_codes_encryption_public_key
+        {
+            result.push_failure(create_verification_failure!(format!(
+                "The CCM public keys for control component {} are identical from both sources",
+                node_id
+            )));
+        };
     }
 }
 
-fn fn_verification_304(dir: &VerificationDirectory, result: &mut VerificationResult) {
+fn fn_verification(dir: &VerificationDirectory, result: &mut VerificationResult) {
     let setup_dir = dir.unwrap_setup();
     let sc_pk = match setup_dir.setup_component_public_keys_payload() {
         Ok(o) => o,
@@ -108,7 +82,7 @@ fn fn_verification_304(dir: &VerificationDirectory, result: &mut VerificationRes
         .setup_component_public_keys
         .combined_control_component_public_keys
     {
-        validate_ccm_and_ccr_schorr_proofs(setup_dir, &node, node.node_id as usize, result)
+        validate_cc_ccm_pk(setup_dir, &node, node.node_id as usize, result)
     }
 }
 
@@ -129,7 +103,7 @@ mod test {
     fn test_ok() {
         let dir = get_verifier_dir();
         let mut result = VerificationResult::new();
-        fn_verification_304(&dir, &mut result);
+        fn_verification(&dir, &mut result);
         assert!(result.is_ok().unwrap());
     }
 }

@@ -17,20 +17,20 @@ use super::super::super::{
     VerificationCategory, VerificationPeriod,
 };
 
-pub(super) fn get_verification_303() -> Verification {
+pub(super) fn get_verification() -> Verification {
     Verification::new(
         VerificationMetaData {
-            id: "303".to_owned(),
-            algorithm: "3.04".to_owned(),
-            name: "VerifyCcmElectionPublicKeyConsistency".to_owned(),
+            id: "302".to_owned(),
+            algorithm: "3.03".to_owned(),
+            name: "VerifyCCRChoiceReturnCodesPublicKeyConsistency".to_owned(),
             period: VerificationPeriod::Setup,
             category: VerificationCategory::Consistency,
         },
-        fn_verification_303,
+        fn_verification,
     )
 }
 
-fn validate_cc_ccm_pk(
+fn validate_cc_ccr_enc_pk(
     setup_dir: &SetupDirectory,
     setup: &ControlComponentPublicKeys,
     node_id: usize,
@@ -52,21 +52,20 @@ fn validate_cc_ccm_pk(
             return;
         }
     };
-    if setup.ccmj_election_public_key.len() != cc_pk.ccmj_election_public_key.len() {
-        result.push_failure(create_verification_failure!(format!("The length of CCM public keys for control component {} are identical from both sources", node_id)));
+    if setup.ccrj_choice_return_codes_encryption_public_key.len()
+        != cc_pk.ccrj_choice_return_codes_encryption_public_key.len()
+    {
+        result.push_failure(create_verification_failure!(format!("The length of CCR Choice Return Codes encryption public keys for control component {} are identical from both sources", node_id)));
     } else {
         if setup.ccrj_choice_return_codes_encryption_public_key
             != cc_pk.ccrj_choice_return_codes_encryption_public_key
         {
-            result.push_failure(create_verification_failure!(format!(
-                "The CCM public keys for control component {} are identical from both sources",
-                node_id
-            )));
-        };
+            result.push_failure(create_verification_failure!(format!("The CCR Choice Return Codes encryption public keys for control component {} are identical from both sources", node_id)));
+        }
     }
 }
 
-fn fn_verification_303(dir: &VerificationDirectory, result: &mut VerificationResult) {
+fn fn_verification(dir: &VerificationDirectory, result: &mut VerificationResult) {
     let setup_dir = dir.unwrap_setup();
     let sc_pk = match setup_dir.setup_component_public_keys_payload() {
         Ok(o) => o,
@@ -82,7 +81,7 @@ fn fn_verification_303(dir: &VerificationDirectory, result: &mut VerificationRes
         .setup_component_public_keys
         .combined_control_component_public_keys
     {
-        validate_cc_ccm_pk(setup_dir, &node, node.node_id as usize, result)
+        validate_cc_ccr_enc_pk(setup_dir, &node, node.node_id as usize, result)
     }
 }
 
@@ -103,7 +102,7 @@ mod test {
     fn test_ok() {
         let dir = get_verifier_dir();
         let mut result = VerificationResult::new();
-        fn_verification_303(&dir, &mut result);
+        fn_verification(&dir, &mut result);
         assert!(result.is_ok().unwrap());
     }
 }

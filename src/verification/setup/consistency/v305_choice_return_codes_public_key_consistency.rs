@@ -14,7 +14,7 @@ use super::super::super::{
     VerificationCategory, VerificationPeriod,
 };
 
-pub(super) fn get_verification_305() -> Verification {
+pub(super) fn get_verification() -> Verification {
     Verification::new(
         VerificationMetaData {
             id: "305".to_owned(),
@@ -23,11 +23,11 @@ pub(super) fn get_verification_305() -> Verification {
             period: VerificationPeriod::Setup,
             category: VerificationCategory::Consistency,
         },
-        fn_verification_305,
+        fn_verification,
     )
 }
 
-fn fn_verification_305(dir: &VerificationDirectory, result: &mut VerificationResult) {
+fn fn_verification(dir: &VerificationDirectory, result: &mut VerificationResult) {
     let setup_dir = dir.unwrap_setup();
     let eg_p = match setup_dir.encryption_parameters_payload() {
         Ok(o) => o.encryption_group.p,
@@ -86,7 +86,7 @@ mod test {
     fn test_ok() {
         let dir = get_verifier_dir();
         let mut result = VerificationResult::new();
-        fn_verification_305(&dir, &mut result);
+        fn_verification(&dir, &mut result);
         assert!(result.is_ok().unwrap());
     }
 }
