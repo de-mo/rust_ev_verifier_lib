@@ -7,10 +7,8 @@ use super::super::super::{
     VerificationCategory, VerificationPeriod,
 };
 use crate::{
-    crypto_primitives::{
-        elgamal::{get_encryption_parameters, get_small_prime_group_members},
-        MAX_NB_SMALL_PRIMES,
-    },
+    constants::MAXIMUM_NUMBER_OF_VOTING_OPTIONS,
+    crypto_primitives::elgamal::{get_encryption_parameters, get_small_prime_group_members},
     error::{create_verifier_error, VerifierError},
     file_structure::VerificationDirectory,
 };
@@ -86,7 +84,10 @@ fn fn_verification_501(dir: &VerificationDirectory, result: &mut VerificationRes
             return;
         }
     };
-    let primes = match get_small_prime_group_members(&eg.encryption_group.p, MAX_NB_SMALL_PRIMES) {
+    let primes = match get_small_prime_group_members(
+        &eg.encryption_group.p,
+        MAXIMUM_NUMBER_OF_VOTING_OPTIONS,
+    ) {
         Ok(p) => p,
         Err(e) => {
             result.push_error(create_verification_error!(
