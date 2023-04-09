@@ -4,11 +4,8 @@ use crate::{
 };
 
 use super::super::{
-    error::{
-        create_verification_failure, VerificationError, VerificationFailure,
-        VerificationFailureType,
-    },
-    verification::{Verification, VerificationMetaData},
+    error::{create_verification_failure, VerificationFailureType},
+    verification::{Verification, VerificationMetaData, VerificationResult},
     VerificationCategory, VerificationList, VerificationPeriod,
 };
 
@@ -31,10 +28,9 @@ fn get_verification_100() -> Verification {
     )
 }
 
-fn validate_vcs_dir(dir: &VCSDirectory) -> (Vec<VerificationError>, Vec<VerificationFailure>) {
-    let mut failures: Vec<VerificationFailure> = vec![];
+fn validate_vcs_dir(dir: &VCSDirectory, result: &mut VerificationResult) {
     if !dir.setup_component_tally_data_payload_file.exists() {
-        failures.push(create_verification_failure!(
+        result.push_failure(create_verification_failure!(
             "setup_component_tally_data_payload does not exist"
         ))
     }
@@ -42,7 +38,7 @@ fn validate_vcs_dir(dir: &VCSDirectory) -> (Vec<VerificationError>, Vec<Verifica
         .setup_component_verification_data_payload_group
         .has_elements()
     {
-        failures.push(create_verification_failure!(
+        result.push_failure(create_verification_failure!(
             "setup_component_verification_data_payload does not exist"
         ))
     }
@@ -50,31 +46,26 @@ fn validate_vcs_dir(dir: &VCSDirectory) -> (Vec<VerificationError>, Vec<Verifica
         .control_component_code_shares_payload_group
         .has_elements()
     {
-        failures.push(create_verification_failure!(
+        result.push_failure(create_verification_failure!(
             "control_component_code_shares_payload does not exist"
         ))
     }
-    (vec![], failures)
 }
 
-fn fn_verification_100(
-    dir: &VerificationDirectory,
-) -> (Vec<VerificationError>, Vec<VerificationFailure>) {
-    let mut errors: Vec<VerificationError> = vec![];
-    let mut failures: Vec<VerificationFailure> = vec![];
+fn fn_verification_100(dir: &VerificationDirectory, result: &mut VerificationResult) {
     let setup_dir = dir.unwrap_setup();
     if !setup_dir.encryption_parameters_payload_file.exists() {
-        failures.push(create_verification_failure!(
+        result.push_failure(create_verification_failure!(
             "encryption_parameters_payload does not exist"
         ))
     }
     if !setup_dir.election_event_context_payload_file.exists() {
-        failures.push(create_verification_failure!(
+        result.push_failure(create_verification_failure!(
             "election_event_context_payload does not exist"
         ))
     }
     if !setup_dir.setup_component_public_keys_payload_file.exists() {
-        failures.push(create_verification_failure!(
+        result.push_failure(create_verification_failure!(
             "setup_component_public_keys_payload_file does not exist"
         ))
     }
@@ -83,7 +74,7 @@ fn fn_verification_100(
         .get_numbers()
         != vec![1, 2, 3, 4]
     {
-        failures.push(create_verification_failure!(format!(
+        result.push_failure(create_verification_failure!(format!(
             "control_component_public_keys_payload_group missing. only these parts are present: {:?}",
             setup_dir
                 .control_component_public_keys_payload_group
@@ -91,17 +82,15 @@ fn fn_verification_100(
         )))
     }
     for d in setup_dir.vcs_directories_iter() {
-        let (mut es, mut fs) = validate_vcs_dir(d);
-        errors.append(&mut es);
-        failures.append(&mut fs);
+        validate_vcs_dir(d, result);
     }
-    (errors, failures)
 }
 
 #[cfg(test)]
 mod test {
     use crate::file_structure::setup_directory::SetupDirectory;
 
+    use super::super::super::verification::VerificationResultTrait;
     use super::*;
     use std::path::Path;
 
@@ -113,8 +102,8 @@ mod test {
     #[test]
     fn test_ok() {
         let dir = get_verifier_dir();
-        let (e, f) = fn_verification_100(&dir);
-        assert!(e.is_empty());
-        assert!(f.is_empty());
+        let mut result = VerificationResult::new();
+        fn_verification_100(&dir, &mut result);
+        assert!(result.is_ok().unwrap());
     }
 }

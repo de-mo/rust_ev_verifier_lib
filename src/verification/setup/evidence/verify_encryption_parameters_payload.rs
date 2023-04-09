@@ -1,9 +1,9 @@
 use super::super::super::{
     error::{
-        create_verification_error, create_verification_failure, VerificationError,
-        VerificationErrorType, VerificationFailure, VerificationFailureType,
+        create_verification_error, create_verification_failure, VerificationErrorType,
+        VerificationFailureType,
     },
-    verification::{Verification, VerificationMetaData},
+    verification::{Verification, VerificationMetaData, VerificationResult},
     VerificationCategory, VerificationPeriod,
 };
 use crate::{
@@ -41,96 +41,81 @@ pub(super) fn get_verification_501() -> Verification {
     )
 }
 
-fn fn_verification_500(
-    dir: &VerificationDirectory,
-) -> (Vec<VerificationError>, Vec<VerificationFailure>) {
-    let mut failures: Vec<VerificationFailure> = vec![];
+fn fn_verification_500(dir: &VerificationDirectory, result: &mut VerificationResult) {
     let setup_dir = dir.unwrap_setup();
     let eg = match setup_dir.encryption_parameters_payload() {
         Ok(eg) => eg,
         Err(e) => {
-            return (
-                vec![create_verification_error!(
-                    "encryption_parameters_payload cannot be read",
-                    e
-                )],
-                failures,
-            )
+            result.push_error(create_verification_error!(
+                "encryption_parameters_payload cannot be read",
+                e
+            ));
+            return;
         }
     };
     let eg_test = match get_encryption_parameters(&eg.seed) {
         Ok(eg) => eg,
         Err(e) => {
-            return (
-                vec![create_verification_error!(
-                    "Error getting encrpytion parameters",
-                    e
-                )],
-                failures,
-            )
+            result.push_error(create_verification_error!(
+                "Error getting encrpytion parameters",
+                e
+            ));
+            return;
         }
     };
     if eg_test.p != eg.encryption_group.p {
-        failures.push(create_verification_failure!("p are equal in {}"))
+        result.push_failure(create_verification_failure!("p are equal in {}"))
     }
     if eg_test.q != eg.encryption_group.q {
-        failures.push(create_verification_failure!("q are equal in {}"))
+        result.push_failure(create_verification_failure!("q are equal in {}"))
     }
     if eg_test.g != eg.encryption_group.g {
-        failures.push(create_verification_failure!("g are equal in {}"))
+        result.push_failure(create_verification_failure!("g are equal in {}"))
     }
-    (vec![], failures)
 }
 
-fn fn_verification_501(
-    dir: &VerificationDirectory,
-) -> (Vec<VerificationError>, Vec<VerificationFailure>) {
-    let mut failures: Vec<VerificationFailure> = vec![];
+fn fn_verification_501(dir: &VerificationDirectory, result: &mut VerificationResult) {
     let setup_dir = dir.unwrap_setup();
     let eg = match setup_dir.encryption_parameters_payload() {
         Ok(eg) => eg,
         Err(e) => {
-            return (
-                vec![create_verification_error!(
-                    "encryption_parameters_payload cannot be read",
-                    e
-                )],
-                failures,
-            )
+            result.push_error(create_verification_error!(
+                "encryption_parameters_payload cannot be read",
+                e
+            ));
+            return;
         }
     };
     let primes = match get_small_prime_group_members(&eg.encryption_group.p, MAX_NB_SMALL_PRIMES) {
         Ok(p) => p,
         Err(e) => {
-            return (
-                vec![create_verification_error!(
-                    "Error getting small prime group members",
-                    e
-                )],
-                failures,
-            )
+            result.push_error(create_verification_error!(
+                "Error getting small prime group members",
+                e
+            ));
+            return;
         }
     };
     if eg.small_primes.len() != primes.len() {
-        failures.push(create_verification_failure!(format!(
+        result.push_failure(create_verification_failure!(format!(
             "length of primes not the same: calculated: {} / expected {}",
             primes.len(),
             eg.small_primes.len()
         )))
     } else {
         if eg.small_primes != primes {
-            failures.push(create_verification_failure!(
+            result.push_failure(create_verification_failure!(
                 "Small prime group members are not the same"
             ))
         }
     }
-    (vec![], failures)
 }
 
 #[cfg(test)]
 mod test {
     use crate::file_structure::setup_directory::SetupDirectory;
 
+    use super::super::super::super::verification::VerificationResultTrait;
     use super::*;
     use std::path::Path;
 
@@ -143,16 +128,16 @@ mod test {
     #[ignore]
     fn test_500_ok() {
         let dir = get_verifier_dir();
-        let (e, f) = fn_verification_500(&dir);
-        assert!(e.is_empty());
-        assert!(f.is_empty());
+        let mut result = VerificationResult::new();
+        fn_verification_500(&dir, &mut result);
+        assert!(result.is_ok().unwrap());
     }
 
     #[test]
     fn test_501_ok() {
         let dir = get_verifier_dir();
-        let (e, f) = fn_verification_501(&dir);
-        assert!(e.is_empty());
-        assert!(f.is_empty());
+        let mut result = VerificationResult::new();
+        fn_verification_501(&dir, &mut result);
+        assert!(result.is_ok().unwrap());
     }
 }

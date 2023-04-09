@@ -7,10 +7,10 @@ use num_bigint::BigUint;
 
 use super::super::super::{
     error::{
-        create_verification_error, create_verification_failure, VerificationError,
-        VerificationErrorType, VerificationFailure, VerificationFailureType,
+        create_verification_error, create_verification_failure, VerificationErrorType,
+        VerificationFailureType,
     },
-    verification::{Verification, VerificationMetaData},
+    verification::{Verification, VerificationMetaData, VerificationResult},
     VerificationCategory, VerificationPeriod,
 };
 
@@ -27,33 +27,26 @@ pub(super) fn get_verification_305() -> Verification {
     )
 }
 
-fn fn_verification_305(
-    dir: &VerificationDirectory,
-) -> (Vec<VerificationError>, Vec<VerificationFailure>) {
-    let mut failures: Vec<VerificationFailure> = vec![];
+fn fn_verification_305(dir: &VerificationDirectory, result: &mut VerificationResult) {
     let setup_dir = dir.unwrap_setup();
     let eg_p = match setup_dir.encryption_parameters_payload() {
         Ok(o) => o.encryption_group.p,
         Err(e) => {
-            return (
-                vec![create_verification_error!(
-                    "Cannot extract encryption_parameters_payload",
-                    e
-                )],
-                vec![],
-            )
+            result.push_error(create_verification_error!(
+                "Cannot extract encryption_parameters_payload",
+                e
+            ));
+            return;
         }
     };
     let sc_pk = match setup_dir.setup_component_public_keys_payload() {
         Ok(o) => o,
         Err(e) => {
-            return (
-                vec![create_verification_error!(
-                    "Cannot extract setup_component_public_keys_payload",
-                    e
-                )],
-                vec![],
-            )
+            result.push_error(create_verification_error!(
+                "Cannot extract setup_component_public_keys_payload",
+                e
+            ));
+            return;
         }
     };
     let setup_ccr = sc_pk
@@ -68,17 +61,17 @@ fn fn_verification_305(
             .fold(BigUint::one(), |acc, x| acc * x);
         let calculated_ccr = product_ccr % &eg_p;
         if &calculated_ccr != ccr {
-            failures.push(create_verification_failure!(format!(
+            result.push_failure(create_verification_failure!(format!(
                 "The ccr at position {} is not the product of the cc ccr",
                 i
             )));
         }
     }
-    (vec![], failures)
 }
 
 #[cfg(test)]
 mod test {
+    use super::super::super::super::verification::VerificationResultTrait;
     use crate::file_structure::setup_directory::SetupDirectory;
 
     use super::*;
@@ -92,8 +85,8 @@ mod test {
     #[test]
     fn test_ok() {
         let dir = get_verifier_dir();
-        let (e, f) = fn_verification_305(&dir);
-        assert!(e.is_empty());
-        assert!(f.is_empty());
+        let mut result = VerificationResult::new();
+        fn_verification_305(&dir, &mut result);
+        assert!(result.is_ok().unwrap());
     }
 }

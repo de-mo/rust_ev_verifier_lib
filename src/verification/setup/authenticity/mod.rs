@@ -4,10 +4,10 @@ use crate::file_structure::VerificationDirectory;
 
 use super::super::{
     error::{
-        create_verification_error, create_verification_failure, VerificationError,
-        VerificationErrorType, VerificationFailure, VerificationFailureType,
+        create_verification_error, create_verification_failure, VerificationErrorType,
+        VerificationFailureType,
     },
-    verification::{Verification, VerificationMetaData},
+    verification::{Verification, VerificationMetaData, VerificationResult},
     VerificationCategory, VerificationList, VerificationPeriod,
 };
 
@@ -35,20 +35,16 @@ pub(super) fn get_verification_200() -> Verification {
     )
 }
 
-fn fn_verification_200(
-    dir: &VerificationDirectory,
-) -> (Vec<VerificationError>, Vec<VerificationFailure>) {
+fn fn_verification_200(dir: &VerificationDirectory, result: &mut VerificationResult) {
     let setup_dir = dir.unwrap_setup();
     let eg = match setup_dir.encryption_parameters_payload() {
         Ok(p) => p,
         Err(e) => {
-            return (
-                vec![create_verification_error!(
-                    "encryption_parameters_payload cannot be read",
-                    e
-                )],
-                vec![],
-            )
+            result.push_error(create_verification_error!(
+                "encryption_parameters_payload cannot be read",
+                e
+            ));
+            return;
         }
     };
     match eg
@@ -56,24 +52,18 @@ fn fn_verification_200(
         .verifiy_signature(&Path::new(".").join("datasets").join("direct-trust"))
     {
         Ok(t) => {
-            if t {
-                (vec![], vec![])
-            } else {
-                (
-                    vec![],
-                    vec![create_verification_failure!(
-                        "Wrong signature for encryption_parameters_payload"
-                    )],
-                )
+            if !t {
+                result.push_failure(create_verification_failure!(
+                    "Wrong signature for encryption_parameters_payload"
+                ))
             }
         }
-        Err(e) => (
-            vec![create_verification_error!(
+        Err(e) => {
+            result.push_error(create_verification_error!(
                 "Error testing signature of encryption_parameters_payload",
                 e
-            )],
-            vec![],
-        ),
+            ));
+        }
     }
 }
 
@@ -81,6 +71,7 @@ fn fn_verification_200(
 mod test {
     use crate::file_structure::setup_directory::SetupDirectory;
 
+    use super::super::super::verification::VerificationResultTrait;
     use super::*;
     use std::path::Path;
 
@@ -93,8 +84,8 @@ mod test {
     #[ignore]
     fn test_ok() {
         let dir = get_verifier_dir();
-        let (e, f) = fn_verification_200(&dir);
-        assert!(e.is_empty());
-        assert!(f.is_empty());
+        let mut result = VerificationResult::new();
+        fn_verification_200(&dir, &mut result);
+        assert!(result.is_ok().unwrap());
     }
 }

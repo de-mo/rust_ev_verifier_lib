@@ -15,10 +15,8 @@ pub enum VerificationCategory {
 #[derive(Debug, PartialEq, Eq)]
 pub enum VerificationStatus {
     Stopped,
-    Started,
-    Success,
-    Error,
-    Failed,
+    Running,
+    Finished,
 }
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]

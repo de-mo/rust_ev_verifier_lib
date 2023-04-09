@@ -16,67 +16,159 @@ pub struct VerificationMetaData {
 pub struct Verification {
     pub meta_data: VerificationMetaData,
     status: VerificationStatus,
-    verification_fn:
-        Box<dyn Fn(&VerificationDirectory) -> (Vec<VerificationError>, Vec<VerificationFailure>)>,
+    verification_fn: Box<dyn Fn(&VerificationDirectory, &mut VerificationResult)>,
     duration: Option<Duration>,
-    errors: Box<Vec<VerificationError>>,
-    failures: Box<Vec<VerificationFailure>>,
+    result: Box<VerificationResult>,
+}
+
+pub struct VerificationResult {
+    errors: Vec<VerificationError>,
+    failures: Vec<VerificationFailure>,
+}
+
+pub trait VerificationResultTrait {
+    fn is_ok(&self) -> Option<bool>;
+    fn has_errors(&self) -> Option<bool>;
+    fn has_failures(&self) -> Option<bool>;
+    fn errors(&self) -> &Vec<VerificationError>;
+    fn failures(&self) -> &Vec<VerificationFailure>;
+}
+
+impl VerificationResult {
+    pub fn new() -> Self {
+        VerificationResult {
+            errors: vec![],
+            failures: vec![],
+        }
+    }
+
+    fn errors_mut(&mut self) -> &mut Vec<VerificationError> {
+        &mut self.errors
+    }
+
+    fn failures_mut(&mut self) -> &mut Vec<VerificationFailure> {
+        &mut self.failures
+    }
+
+    pub fn push_error(&mut self, e: VerificationError) {
+        self.errors.push(e)
+    }
+
+    pub fn push_failure(&mut self, f: VerificationFailure) {
+        self.failures.push(f)
+    }
+
+    // Append the results of ohter to self, emptying the vectors of other
+    pub fn append(&mut self, other: &mut Self) {
+        self.errors.append(&mut other.errors_mut());
+        self.failures.append(&mut other.failures_mut());
+    }
+}
+
+impl VerificationResultTrait for VerificationResult {
+    fn is_ok(&self) -> Option<bool> {
+        Some(!self.has_errors().unwrap() && !self.has_failures().unwrap())
+    }
+
+    fn has_errors(&self) -> Option<bool> {
+        Some(!self.errors.is_empty())
+    }
+
+    fn has_failures(&self) -> Option<bool> {
+        Some(!self.failures.is_empty())
+    }
+
+    fn errors(&self) -> &Vec<VerificationError> {
+        &self.errors
+    }
+
+    fn failures(&self) -> &Vec<VerificationFailure> {
+        &self.failures
+    }
 }
 
 impl Verification {
     pub fn new(
         meta_data: VerificationMetaData,
-        verification_fn: impl Fn(&VerificationDirectory) -> (Vec<VerificationError>, Vec<VerificationFailure>)
-            + 'static,
+        verification_fn: impl Fn(&VerificationDirectory, &mut VerificationResult) + 'static,
     ) -> Self {
         Verification {
             meta_data,
             status: VerificationStatus::Stopped,
             verification_fn: Box::new(verification_fn),
             duration: None,
-            errors: Box::new(vec![]),
-            failures: Box::new(vec![]),
+            result: Box::new(VerificationResult::new()),
         }
     }
 
     pub fn run(&mut self, directory: &VerificationDirectory) {
-        self.status = VerificationStatus::Started;
+        self.status = VerificationStatus::Running;
         let start_time = SystemTime::now();
         info!(
             "Verification {} ({}) started",
             self.meta_data.name, self.meta_data.id
         );
-        let (errors, failures) = (self.verification_fn)(directory);
+        (self.verification_fn)(directory, self.result.as_mut());
         self.duration = Some(start_time.elapsed().unwrap());
-        if !errors.is_empty() {
-            self.status = VerificationStatus::Error;
-            self.errors = Box::new(errors);
+        self.status = VerificationStatus::Finished;
+        if self.is_ok().unwrap() {
+            info!(
+                "Verification {} ({}) finished successfully. Duration: {}s",
+                self.meta_data.name,
+                self.meta_data.id,
+                self.duration.unwrap().as_secs_f32()
+            );
+        }
+        if self.has_errors().unwrap() {
             warn!(
                 "Verification {} ({}) finished with errors. Duration: {}s",
                 self.meta_data.name,
                 self.meta_data.id,
                 self.duration.unwrap().as_secs_f32()
             );
-        } else {
-            if !failures.is_empty() {
-                self.status = VerificationStatus::Failed;
-                self.failures = Box::new(failures);
-                warn!(
-                    "Verification {} ({}) finished with failures. Duration: {}s",
-                    self.meta_data.name,
-                    self.meta_data.id,
-                    self.duration.unwrap().as_secs_f32()
-                );
-            } else {
-                self.status = VerificationStatus::Success;
-                info!(
-                    "Verification {} ({}) finished successfully. Duration: {}s",
-                    self.meta_data.name,
-                    self.meta_data.id,
-                    self.duration.unwrap().as_secs_f32()
-                );
-            }
         }
+        if self.has_failures().unwrap() {
+            warn!(
+                "Verification {} ({}) finished with failures. Duration: {}s",
+                self.meta_data.name,
+                self.meta_data.id,
+                self.duration.unwrap().as_secs_f32()
+            );
+        }
+    }
+}
+
+impl VerificationResultTrait for Verification {
+    fn is_ok(&self) -> Option<bool> {
+        match self.status {
+            VerificationStatus::Stopped => None,
+            VerificationStatus::Running => None,
+            VerificationStatus::Finished => self.result.is_ok(),
+        }
+    }
+
+    fn has_errors(&self) -> Option<bool> {
+        match self.status {
+            VerificationStatus::Stopped => None,
+            VerificationStatus::Running => None,
+            VerificationStatus::Finished => self.result.has_errors(),
+        }
+    }
+
+    fn has_failures(&self) -> Option<bool> {
+        match self.status {
+            VerificationStatus::Stopped => None,
+            VerificationStatus::Running => None,
+            VerificationStatus::Finished => self.result.has_failures(),
+        }
+    }
+
+    fn errors(&self) -> &Vec<VerificationError> {
+        self.result.errors()
+    }
+
+    fn failures(&self) -> &Vec<VerificationFailure> {
+        self.result.failures()
     }
 }
 
@@ -91,9 +183,7 @@ mod test {
 
     #[test]
     fn run_ok() {
-        fn ok(_: &VerificationDirectory) -> (Vec<VerificationError>, Vec<VerificationFailure>) {
-            (vec![], vec![])
-        }
+        fn ok(_: &VerificationDirectory, _: &mut VerificationResult) {}
         let mut verif = Verification::new(
             VerificationMetaData {
                 id: "test_ok".to_string(),
@@ -105,30 +195,31 @@ mod test {
             Box::new(ok),
         );
         assert_eq!(verif.status, VerificationStatus::Stopped);
-        assert!(verif.errors.is_empty());
-        assert!(verif.failures.is_empty());
+        assert!(verif.is_ok().is_none());
+        assert!(verif.has_errors().is_none());
+        assert!(verif.has_failures().is_none());
         verif.run(&VerificationDirectory::new(
             VerificationPeriod::Setup,
             &Path::new("."),
         ));
-        assert_eq!(verif.status, VerificationStatus::Success);
-        assert!(verif.errors.is_empty());
-        assert!(verif.failures.is_empty());
+        assert_eq!(verif.status, VerificationStatus::Finished);
+        assert!(verif.is_ok().unwrap());
+        assert!(!verif.has_errors().unwrap());
+        assert!(!verif.has_failures().unwrap());
     }
 
     #[test]
     fn run_error() {
-        fn error(_: &VerificationDirectory) -> (Vec<VerificationError>, Vec<VerificationFailure>) {
-            (
-                vec![
-                    create_verifier_error!(VerificationErrorType::Error, "toto"),
-                    create_verifier_error!(VerificationErrorType::Error, "toto"),
-                ],
-                vec![create_verifier_error!(
-                    VerificationFailureType::Failure,
-                    "toto"
-                )],
-            )
+        fn error(_: &VerificationDirectory, result: &mut VerificationResult) {
+            result.push_error(create_verifier_error!(VerificationErrorType::Error, "toto"));
+            result.push_error(create_verifier_error!(
+                VerificationErrorType::Error,
+                "toto2"
+            ));
+            result.push_failure(create_verifier_error!(
+                VerificationFailureType::Failure,
+                "toto"
+            ));
         }
         let mut verif = Verification::new(
             VerificationMetaData {
@@ -141,29 +232,32 @@ mod test {
             Box::new(error),
         );
         assert_eq!(verif.status, VerificationStatus::Stopped);
-        assert!(verif.errors.is_empty());
-        assert!(verif.failures.is_empty());
+        assert!(verif.is_ok().is_none());
+        assert!(verif.has_errors().is_none());
+        assert!(verif.has_failures().is_none());
         verif.run(&VerificationDirectory::new(
             VerificationPeriod::Setup,
             &Path::new("."),
         ));
-        assert_eq!(verif.status, VerificationStatus::Error);
-        assert_eq!(verif.errors.len(), 2);
-        assert!(verif.failures.is_empty());
+        assert_eq!(verif.status, VerificationStatus::Finished);
+        assert!(!verif.is_ok().unwrap());
+        assert!(verif.has_errors().unwrap());
+        assert!(verif.has_failures().unwrap());
+        assert_eq!(verif.errors().len(), 2);
+        assert_eq!(verif.failures().len(), 1);
     }
 
     #[test]
     fn run_failure() {
-        fn failure(
-            _: &VerificationDirectory,
-        ) -> (Vec<VerificationError>, Vec<VerificationFailure>) {
-            (
-                vec![],
-                vec![
-                    create_verifier_error!(VerificationFailureType::Failure, "toto"),
-                    create_verifier_error!(VerificationFailureType::Failure, "toto"),
-                ],
-            )
+        fn failure(_: &VerificationDirectory, result: &mut VerificationResult) {
+            result.push_failure(create_verifier_error!(
+                VerificationFailureType::Failure,
+                "toto"
+            ));
+            result.push_failure(create_verifier_error!(
+                VerificationFailureType::Failure,
+                "toto2"
+            ));
         }
         let mut verif = Verification::new(
             VerificationMetaData {
@@ -176,14 +270,18 @@ mod test {
             Box::new(failure),
         );
         assert_eq!(verif.status, VerificationStatus::Stopped);
-        assert!(verif.errors.is_empty());
-        assert!(verif.failures.is_empty());
+        assert!(verif.is_ok().is_none());
+        assert!(verif.has_errors().is_none());
+        assert!(verif.has_failures().is_none());
         verif.run(&VerificationDirectory::new(
             VerificationPeriod::Setup,
             &Path::new("."),
         ));
-        assert_eq!(verif.status, VerificationStatus::Failed);
-        assert!(verif.errors.is_empty());
-        assert_eq!(verif.failures.len(), 2);
+        assert_eq!(verif.status, VerificationStatus::Finished);
+        assert!(!verif.is_ok().unwrap());
+        assert!(!verif.has_errors().unwrap());
+        assert!(verif.has_failures().unwrap());
+        assert_eq!(verif.errors().len(), 0);
+        assert_eq!(verif.failures().len(), 2);
     }
 }
