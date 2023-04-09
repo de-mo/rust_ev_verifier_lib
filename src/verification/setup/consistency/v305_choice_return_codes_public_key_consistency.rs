@@ -1,6 +1,6 @@
 use crate::file_structure::VerificationDirectory;
 use crate::{
-    crypto_primitives::num_bigint::Constants,
+    crypto_primitives::num_bigint::{Constants, Operations},
     error::{create_verifier_error, VerifierError},
 };
 use num_bigint::BigUint;
@@ -49,18 +49,19 @@ fn fn_verification(dir: &VerificationDirectory, result: &mut VerificationResult)
             return;
         }
     };
+    let combined_cc_pk = sc_pk
+        .setup_component_public_keys
+        .combined_control_component_public_keys;
     let setup_ccr = sc_pk
         .setup_component_public_keys
         .choice_return_codes_encryption_public_key;
+
     for (i, ccr) in setup_ccr.iter().enumerate() {
-        let product_ccr = sc_pk
-            .setup_component_public_keys
-            .combined_control_component_public_keys
+        let product_ccr = combined_cc_pk
             .iter()
             .map(|e| &e.ccrj_choice_return_codes_encryption_public_key[i])
-            .fold(BigUint::one(), |acc, x| acc * x);
-        let calculated_ccr = product_ccr % &eg_p;
-        if &calculated_ccr != ccr {
+            .fold(BigUint::one(), |acc, x| acc.mod_multiply(x, &eg_p));
+        if &product_ccr != ccr {
             result.push_failure(create_verification_failure!(format!(
                 "The ccr at position {} is not the product of the cc ccr",
                 i
