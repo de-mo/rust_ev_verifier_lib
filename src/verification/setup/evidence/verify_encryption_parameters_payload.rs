@@ -19,7 +19,7 @@ pub(super) fn get_verification_500() -> Verification {
     Verification::new(
         VerificationMetaData {
             id: "500".to_owned(),
-            nr: "5.01".to_owned(),
+            algorithm: "5.01".to_owned(),
             name: "VerifyEncryptionParameters".to_owned(),
             period: VerificationPeriod::Setup,
             category: VerificationCategory::Evidence,
@@ -32,7 +32,7 @@ pub(super) fn get_verification_501() -> Verification {
     Verification::new(
         VerificationMetaData {
             id: "501".to_owned(),
-            nr: "5.02".to_owned(),
+            algorithm: "5.02".to_owned(),
             name: "VerifySmallPrimeGroupMembers".to_owned(),
             period: VerificationPeriod::Setup,
             category: VerificationCategory::Evidence,

@@ -15,7 +15,7 @@ pub(super) fn get_verification_301() -> Verification {
     Verification::new(
         VerificationMetaData {
             id: "301".to_owned(),
-            nr: "3.02".to_owned(),
+            algorithm: "3.02".to_owned(),
             name: "VerifySetupFileNamesConsistency".to_owned(),
             period: VerificationPeriod::Setup,
             category: VerificationCategory::Consistency,

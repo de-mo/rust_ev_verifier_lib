@@ -19,7 +19,7 @@ pub(super) fn get_verification_300() -> Verification {
     Verification::new(
         VerificationMetaData {
             id: "300".to_owned(),
-            nr: "3.01".to_owned(),
+            algorithm: "3.01".to_owned(),
             name: "VerifyEncryptionGroupConsistency".to_owned(),
             period: VerificationPeriod::Setup,
             category: VerificationCategory::Consistency,

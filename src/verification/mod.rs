@@ -234,7 +234,7 @@ mod test {
         for (id, nr, name, cat) in SETUP_EXPECTED.iter() {
             let v_md = verifs.find_by_id(id).unwrap();
             assert_eq!(&v_md.meta_data.id, id, "id: {}", id);
-            assert_eq!(&v_md.meta_data.nr, nr, "id: {}", id);
+            assert_eq!(&v_md.meta_data.algorithm, nr, "id: {}", id);
             assert_eq!(&v_md.meta_data.name, name, "id: {}", id);
             assert_eq!(&v_md.meta_data.category, cat, "id: {}", id);
         }

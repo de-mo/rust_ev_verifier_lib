@@ -19,7 +19,7 @@ fn get_verification_400() -> Verification {
     Verification::new(
         VerificationMetaData {
             id: "400".to_owned(),
-            nr: "3.4".to_owned(),
+            algorithm: "3.4".to_owned(),
             name: "Integrity".to_owned(),
             period: VerificationPeriod::Setup,
             category: VerificationCategory::Integrity,

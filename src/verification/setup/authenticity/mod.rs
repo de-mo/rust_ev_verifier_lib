@@ -26,7 +26,7 @@ pub(super) fn get_verification_200() -> Verification {
     Verification::new(
         VerificationMetaData {
             id: "200".to_owned(),
-            nr: "2.01".to_owned(),
+            algorithm: "2.01".to_owned(),
             name: "VerifySignatureSetupComponentEncryptionParameters".to_owned(),
             period: VerificationPeriod::Setup,
             category: VerificationCategory::Authenticity,

@@ -7,8 +7,8 @@ use std::time::{Duration, SystemTime};
 
 pub struct VerificationMetaData {
     pub id: String,
-    pub nr: String,
     pub name: String,
+    pub algorithm: String,
     pub period: VerificationPeriod,
     pub category: VerificationCategory,
 }
@@ -187,7 +187,7 @@ mod test {
         let mut verif = Verification::new(
             VerificationMetaData {
                 id: "test_ok".to_string(),
-                nr: "1".to_string(),
+                algorithm: "1".to_string(),
                 name: "test_ok".to_string(),
                 period: VerificationPeriod::Setup,
                 category: VerificationCategory::Authenticity,
@@ -224,7 +224,7 @@ mod test {
         let mut verif = Verification::new(
             VerificationMetaData {
                 id: "test_ok".to_string(),
-                nr: "1".to_string(),
+                algorithm: "1".to_string(),
                 name: "test_ok".to_string(),
                 period: VerificationPeriod::Setup,
                 category: VerificationCategory::Authenticity,
@@ -262,7 +262,7 @@ mod test {
         let mut verif = Verification::new(
             VerificationMetaData {
                 id: "test_ok".to_string(),
-                nr: "1".to_string(),
+                algorithm: "1".to_string(),
                 name: "test_ok".to_string(),
                 period: VerificationPeriod::Setup,
                 category: VerificationCategory::Authenticity,

@@ -18,7 +18,7 @@ pub(super) fn get_verification_305() -> Verification {
     Verification::new(
         VerificationMetaData {
             id: "305".to_owned(),
-            nr: "3.06".to_owned(),
+            algorithm: "3.06".to_owned(),
             name: "VerifyChoiceReturnCodesPublicKeyConsistency".to_owned(),
             period: VerificationPeriod::Setup,
             category: VerificationCategory::Consistency,

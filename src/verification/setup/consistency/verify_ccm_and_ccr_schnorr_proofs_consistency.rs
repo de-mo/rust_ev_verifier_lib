@@ -23,7 +23,7 @@ pub(super) fn get_verification_304() -> Verification {
     Verification::new(
         VerificationMetaData {
             id: "304".to_owned(),
-            nr: "3.05".to_owned(),
+            algorithm: "3.05".to_owned(),
             name: "VerifyCcmAndCcrSchnorrProofsConsistency".to_owned(),
             period: VerificationPeriod::Setup,
             category: VerificationCategory::Consistency,

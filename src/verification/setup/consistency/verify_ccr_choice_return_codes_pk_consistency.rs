@@ -21,7 +21,7 @@ pub(super) fn get_verification_302() -> Verification {
     Verification::new(
         VerificationMetaData {
             id: "302".to_owned(),
-            nr: "3.03".to_owned(),
+            algorithm: "3.03".to_owned(),
             name: "VerifyCCRChoiceReturnCodesPublicKeyConsistency".to_owned(),
             period: VerificationPeriod::Setup,
             category: VerificationCategory::Consistency,
