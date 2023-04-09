@@ -217,6 +217,12 @@ mod test {
             "VerifySmallPrimeGroupMembers",
             VerificationCategory::Evidence,
         ),
+        (
+            "502",
+            "5.03",
+            "VerifyVotingOptions",
+            VerificationCategory::Evidence,
+        ),
     ];
 
     #[test]
