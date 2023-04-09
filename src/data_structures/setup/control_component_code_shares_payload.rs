@@ -1,8 +1,8 @@
 use super::super::deserialize_seq_string_hex_to_seq_bigunit;
 use super::super::{
     error::{DeserializeError, DeserializeErrorType},
-    implement_trait_data_structure, DataStructureTrait, ExponentiatedEncryptedElement,
-    SchnorrProof, Signature,
+    implement_trait_data_structure, DataStructureTrait, ExponentiatedEncryptedElement, Proof,
+    Signature,
 };
 
 use super::encryption_parameters_payload::EncryptionGroup;
@@ -35,9 +35,9 @@ pub struct ControlComponentCodeShares {
     #[serde(deserialize_with = "deserialize_seq_string_hex_to_seq_bigunit")]
     pub voter_vote_cast_return_code_generation_public_key: Vec<BigUint>,
     pub exponentiated_encrypted_partial_choice_return_codes: ExponentiatedEncryptedElement,
-    pub encrypted_partial_choice_return_code_exponentiation_proof: SchnorrProof,
+    pub encrypted_partial_choice_return_code_exponentiation_proof: Proof,
     pub exponentiated_encrypted_confirmation_key: ExponentiatedEncryptedElement,
-    pub encrypted_confirmation_key_exponentiation_proof: SchnorrProof,
+    pub encrypted_confirmation_key_exponentiation_proof: Proof,
 }
 
 #[cfg(test)]

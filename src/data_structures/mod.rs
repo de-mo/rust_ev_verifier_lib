@@ -276,7 +276,7 @@ pub struct SchnorrProofUnderline {
 }
 
 #[derive(Deserialize2, Debug, Clone)]
-pub struct SchnorrProof {
+pub struct Proof {
     #[serde(deserialize_with = "deserialize_string_hex_to_bigunit")]
     pub e: BigUint,
     #[serde(deserialize_with = "deserialize_string_hex_to_bigunit")]
