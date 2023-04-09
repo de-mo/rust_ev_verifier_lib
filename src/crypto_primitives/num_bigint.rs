@@ -140,14 +140,16 @@ pub trait Hexa: Sized {
     /// ```rust
     /// BigUint::from_hexa(&"0x12D9E8".to_string())
     /// ```
-    fn from_hexa(s: &String) -> Result<Self, BigUIntError>;
+    fn from_hexa_string(s: &String) -> Result<Self, BigUIntError>;
+
+    fn from_hexa_slice(s: &str) -> Result<Self, BigUIntError>;
 
     /// Generate the hexadecimal String
     fn to_hexa(&self) -> String;
 }
 
 impl Hexa for BigUint {
-    fn from_hexa(s: &String) -> Result<Self, BigUIntError> {
+    fn from_hexa_string(s: &String) -> Result<Self, BigUIntError> {
         if !s.starts_with("0x") && !s.starts_with("0X") {
             return create_result_with_error!(
                 BigUIntErrorType::FromHexaError,
@@ -161,6 +163,10 @@ impl Hexa for BigUint {
                 e
             )
         })
+    }
+
+    fn from_hexa_slice(s: &str) -> Result<Self, BigUIntError> {
+        Self::from_hexa_string(&s.to_string())
     }
 
     fn to_hexa(&self) -> String {
@@ -202,23 +208,27 @@ mod test {
     #[test]
     fn from_exa() {
         assert_eq!(
-            BigUint::from_hexa(&"0x0".to_string()).unwrap(),
+            BigUint::from_hexa_string(&"0x0".to_string()).unwrap(),
             0.to_biguint().unwrap()
         );
         assert_eq!(
-            BigUint::from_hexa(&"0xa".to_string()).unwrap(),
+            BigUint::from_hexa_string(&"0xa".to_string()).unwrap(),
             10.to_biguint().unwrap()
         );
         assert_eq!(
-            BigUint::from_hexa(&"0xab".to_string()).unwrap(),
+            BigUint::from_hexa_string(&"0xab".to_string()).unwrap(),
             171.to_biguint().unwrap()
         );
         assert_eq!(
-            BigUint::from_hexa(&"0x12D9E8".to_string()).unwrap(),
+            BigUint::from_hexa_string(&"0x12D9E8".to_string()).unwrap(),
             1235432.to_biguint().unwrap()
         );
-        assert!(BigUint::from_hexa(&"123".to_string()).is_err());
-        assert!(BigUint::from_hexa(&"0xtt".to_string()).is_err())
+        assert!(BigUint::from_hexa_string(&"123".to_string()).is_err());
+        assert!(BigUint::from_hexa_string(&"0xtt".to_string()).is_err());
+        assert_eq!(
+            BigUint::from_hexa_slice("0x12D9E8").unwrap(),
+            1235432.to_biguint().unwrap()
+        );
     }
 
     #[test]
