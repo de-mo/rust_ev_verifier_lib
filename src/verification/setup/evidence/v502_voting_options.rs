@@ -63,7 +63,8 @@ fn fn_verification(dir: &VerificationDirectory, result: &mut VerificationResult)
                 .map(|e| e.encoded_voting_option.clone()),
         );
     }
-    p_tilde.sort();
+    p_tilde.sort(); // Sort the primes
+    p_tilde.dedup(); // remove duplicates
     let p_prime: Vec<usize> = eg
         .small_primes
         .iter()
@@ -102,7 +103,6 @@ mod test {
     }
 
     #[test]
-    #[ignore]
     fn test_ok() {
         let dir = get_verifier_dir();
         let mut result = VerificationResult::new();
