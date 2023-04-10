@@ -24,6 +24,16 @@ The implementation not used any code of Swiss Post.
 
 A major difference to Swiss Post is that the verifications does not return true or false, but return all the errors and failures found. In that case it helps a better granularity to found a reason of a problem.
 
+## Development guide
+
+The application is implemented with the version 1.67.0 of rust.
+
+Generate the doc to see the documentation of the modules:
+
+```shell
+cargo doc
+```
+
 ## Licence
 
 Copyright 2023 Denis Morel
@@ -36,4 +46,4 @@ Unless required by applicable law or agreed to in writing, software distributed 
 
 ## Third party
 
-See [THIRD_PARTY]
+See [THIRD_PARTY](THIRD_PARTY)
