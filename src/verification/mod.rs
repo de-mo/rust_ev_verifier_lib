@@ -218,6 +218,12 @@ mod test {
             "VerifyPrimesMappingTableConsistency",
             VerificationCategory::Consistency,
         ),
+        (
+            "308",
+            "3.09",
+            "VerifyElectionEventIdConsistency",
+            VerificationCategory::Consistency,
+        ),
         ("400", "3.4", "Integrity", VerificationCategory::Integrity),
         (
             "500",
