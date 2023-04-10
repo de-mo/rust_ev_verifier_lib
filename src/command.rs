@@ -1,3 +1,9 @@
+//! Shell command implementation
+//!
+//! For help:
+//! ```shell
+//! rust_verifier --help
+//! ```
 use std::path::Path;
 
 use super::runner::Runner;
@@ -49,6 +55,7 @@ fn get_command() -> ArgMatches {
         .get_matches()
 }
 
+/// Init the logger with or without stdout
 fn init_logger(level: LevelFilter, with_stdout: bool) {
     let file = FileAppender::builder()
         .encoder(Box::new(PatternEncoder::new("{d} {l} - {m}{n}")))
@@ -103,5 +110,5 @@ fn execute_runner(period: VerificationPeriod, matches: &ArgMatches) {
         exclusions = matches.get_many("exclude").unwrap().collect();
     }
     let mut runner = Runner::new(path, period);
-    runner.run_all(&exclusions);
+    runner.run_all_sequential(&exclusions);
 }

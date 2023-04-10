@@ -1,3 +1,5 @@
+//! Some constants according to the specifications
+
 pub const MAXIMUM_NUMBER_OF_VOTING_OPTIONS: usize = 3000;
 pub const MAXIMUM_NUMBER_OF_SELECTABLE_VOTING_OPTIONS: usize = 120;
 pub const MAXIMUM_NUMBER_OF_WRITE_IN_OPTIONS: usize = 15;

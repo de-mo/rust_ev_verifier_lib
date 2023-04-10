@@ -1,3 +1,5 @@
+//! Module implementing the runner
+
 use crate::{
     file_structure::VerificationDirectory,
     verification::{VerificationListTrait, VerificationPeriod, VerificationsForPeriod},
@@ -8,6 +10,7 @@ use std::{
     time::SystemTime,
 };
 
+/// Structure defining the runner
 pub struct Runner {
     path: PathBuf,
     period: VerificationPeriod,
@@ -15,6 +18,10 @@ pub struct Runner {
 }
 
 impl Runner {
+    /// Create a new runner.
+    ///
+    /// path represents the location where the directory setup and tally are stored
+    /// period ist the verification period
     pub fn new(path: &Path, period: VerificationPeriod) -> Runner {
         Runner {
             path: path.to_path_buf(),
@@ -23,7 +30,8 @@ impl Runner {
         }
     }
 
-    pub fn run_all(&mut self, exclusion: &Vec<&String>) {
+    /// Run all tests sequentially
+    pub fn run_all_sequential(&mut self, exclusion: &Vec<&String>) {
         let start_time = SystemTime::now();
         info!(
             "Start all verifications ({} verifications; {} excluded)",
