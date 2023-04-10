@@ -5,6 +5,7 @@ pub mod v303_ccm_election_pk_consistency;
 pub mod v304_ccm_and_ccr_schnorr_proofs_consistency;
 pub mod v305_choice_return_codes_public_key_consistency;
 pub mod v306_election_pk_consistency;
+pub mod v307_primes_mapping_table_consistency;
 
 use super::super::VerificationList;
 
@@ -17,5 +18,6 @@ pub fn get_verifications() -> VerificationList {
     res.push(v304_ccm_and_ccr_schnorr_proofs_consistency::get_verification());
     res.push(v305_choice_return_codes_public_key_consistency::get_verification());
     res.push(v306_election_pk_consistency::get_verification());
+    res.push(v307_primes_mapping_table_consistency::get_verification());
     res
 }

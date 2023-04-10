@@ -212,6 +212,12 @@ mod test {
             "VerifyElectionPublicKeyConsistency",
             VerificationCategory::Consistency,
         ),
+        (
+            "307",
+            "3.08",
+            "VerifyPrimesMappingTableConsistency",
+            VerificationCategory::Consistency,
+        ),
         ("400", "3.4", "Integrity", VerificationCategory::Integrity),
         (
             "500",
