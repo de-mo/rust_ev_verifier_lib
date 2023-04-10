@@ -1,4 +1,4 @@
-use super::{file::File, GetFileName};
+use super::{file::File, GetFileNameTrait};
 use crate::data_structures::VerifierDataType;
 use std::fs;
 use std::marker::PhantomData;

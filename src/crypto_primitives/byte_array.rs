@@ -1,10 +1,119 @@
-use crate::crypto_primitives::num_bigint::ByteLength;
-use crate::error::{create_result_with_error, create_verifier_error, VerifierError};
+//! This module implement the struct ByteArray that is used over the
+//! crate
+
+use crate::{
+    crypto_primitives::num_bigint::ByteLength,
+    error::{create_result_with_error, create_verifier_error, VerifierError},
+};
 use data_encoding::{BASE32, BASE64, HEXUPPER};
 use num_bigint::{BigUint, ToBigUint};
 use num_traits::Pow;
-use std::fmt::Debug;
-use std::fmt::Display;
+use std::fmt::{Debug, Display};
+
+/// ByteArray represent a byte of arrays
+#[derive(Clone, PartialEq, Eq)]
+pub struct ByteArray {
+    inner: Vec<u8>,
+}
+
+/// Trait to encode in string in different bases
+pub trait Encode {
+    /// Code to baase16 according specifications
+    fn base16_encode(&self) -> String;
+
+    /// Code to baase32 according specifications
+    fn base32_encode(&self) -> String;
+
+    /// Code to baase64 according specifications
+    fn base64_encode(&self) -> String;
+}
+
+/// Trait to decode from string in different bases
+pub trait Decode: Sized {
+    /// Code from string in base16 according specifications. The letters are in upper.
+    fn base16_decode(s: &String) -> Result<Self, ByteArrayError>;
+
+    /// Code from string in base32 according specifications.
+    fn base32_decode(s: &String) -> Result<Self, ByteArrayError>;
+
+    /// Code from string in base32 according specifications.
+    fn base64_decode(s: &String) -> Result<Self, ByteArrayError>;
+}
+
+impl ByteArray {
+    /// Create an ampty Bytearray (only woth 0)
+    pub fn new() -> Self {
+        ByteArray { inner: vec![0] }
+    }
+
+    /// ByteArray from a slice of bytes
+    pub fn from_bytes(bytes: &[u8]) -> Self {
+        ByteArray::from(&Vec::from(bytes))
+    }
+
+    /// ByteArray into BigUint
+    pub fn into_biguint(&self) -> BigUint {
+        let mut x: BigUint = 0.to_biguint().unwrap();
+        for b in self.inner.clone() {
+            x = b + x * 256.to_biguint().unwrap()
+        }
+        x
+    }
+
+    /// Len of the ByteArray in bytes
+    pub fn len(&self) -> usize {
+        self.inner.len()
+    }
+
+    /// ByteArray to bytes
+    pub fn to_bytes(&self) -> Vec<u8> {
+        self.inner.clone()
+    }
+
+    pub fn append(&mut self, other: &ByteArray) -> &ByteArray {
+        self.inner.extend(other.inner.clone().into_iter());
+        self
+    }
+
+    /// Create a bew ByteArray prepending a byte
+    pub fn prepend_byte(&self, byte: u8) -> ByteArray {
+        let mut res = ByteArray::from(&vec![byte]);
+        res.append(&self);
+        res
+    }
+
+    /// Cut the byte array to given bit length according to the specifications
+    pub fn cut_bit_length(&self, n: usize) -> Result<ByteArray, ByteArrayError> {
+        if n < 1 || n > 8 * self.len() {
+            return create_result_with_error!(
+                ByteArrayErrorType::CutToBitLengthIndexError,
+                "Index must be between 1 and 8*lenght byte array"
+            );
+        }
+        let bs = self.to_bytes();
+        println!("bs: {:?}", bs);
+        let length = (n + 8 - 1) / 8;
+        println!("length: {:?}", length);
+        let offset = self.len() - length;
+        println!("offset: {:?}", length);
+        let mut arr: Vec<u8> = vec![];
+        if n % 8 != 0 {
+            println!("n % 8: {:?}", (n % 8));
+            println!("2^(n % 8): {:?}", Pow::pow(2u8, n % 8));
+            println!("2^(n % 8)-1: {:?}", Pow::pow(2u8, n % 8) - 1);
+            println!("mask: {:?}", (Pow::pow(2u8, n % 8) - 1) as u8);
+            arr.push(bs[offset] & ((Pow::pow(2u8, n % 8) - 1) as u8));
+        } else {
+            arr.push(bs[offset])
+        }
+        for i in 1..length {
+            println!("i: {:?}", i);
+            println!("bs[offset+i]: {:?}", bs[offset + i]);
+            arr.push(bs[offset + i])
+        }
+        Ok(ByteArray::from(&arr))
+    }
+}
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ByteArrayErrorType {
@@ -27,23 +136,6 @@ impl Display for ByteArrayErrorType {
 }
 
 type ByteArrayError = VerifierError<ByteArrayErrorType>;
-
-#[derive(Clone, PartialEq, Eq)]
-pub struct ByteArray {
-    inner: Vec<u8>,
-}
-
-pub trait Encode {
-    fn base16_encode(&self) -> String;
-    fn base32_encode(&self) -> String;
-    fn base64_encode(&self) -> String;
-}
-
-pub trait Decode: Sized {
-    fn base16_decode(s: &String) -> Result<Self, ByteArrayError>;
-    fn base32_decode(s: &String) -> Result<Self, ByteArrayError>;
-    fn base64_decode(s: &String) -> Result<Self, ByteArrayError>;
-}
 
 impl Encode for ByteArray {
     fn base16_encode(&self) -> String {
@@ -140,74 +232,6 @@ impl From<&Vec<u8>> for ByteArray {
 impl From<&String> for ByteArray {
     fn from(s: &String) -> Self {
         ByteArray::from_bytes(s.as_bytes())
-    }
-}
-
-impl ByteArray {
-    pub fn new() -> Self {
-        ByteArray { inner: vec![0] }
-    }
-
-    pub fn from_bytes(bytes: &[u8]) -> Self {
-        ByteArray::from(&Vec::from(bytes))
-    }
-
-    pub fn into_biguint(&self) -> BigUint {
-        let mut x: BigUint = 0.to_biguint().unwrap();
-        for b in self.inner.clone() {
-            x = b + x * 256.to_biguint().unwrap()
-        }
-        x
-    }
-
-    pub fn len(&self) -> usize {
-        self.inner.len()
-    }
-
-    pub fn to_bytes(&self) -> Vec<u8> {
-        self.inner.clone()
-    }
-
-    pub fn append(&mut self, other: &ByteArray) -> &ByteArray {
-        self.inner.extend(other.inner.clone().into_iter());
-        self
-    }
-
-    pub fn prepend_byte(&self, byte: u8) -> ByteArray {
-        let mut res = ByteArray::from(&vec![byte]);
-        res.append(&self);
-        res
-    }
-
-    pub fn cut_bit_length(&self, n: usize) -> Result<ByteArray, ByteArrayError> {
-        if n < 1 || n > 8 * self.len() {
-            return create_result_with_error!(
-                ByteArrayErrorType::CutToBitLengthIndexError,
-                "Index must be between 1 and 8*lenght byte array"
-            );
-        }
-        let bs = self.to_bytes();
-        println!("bs: {:?}", bs);
-        let length = (n + 8 - 1) / 8;
-        println!("length: {:?}", length);
-        let offset = self.len() - length;
-        println!("offset: {:?}", length);
-        let mut arr: Vec<u8> = vec![];
-        if n % 8 != 0 {
-            println!("n % 8: {:?}", (n % 8));
-            println!("2^(n % 8): {:?}", Pow::pow(2u8, n % 8));
-            println!("2^(n % 8)-1: {:?}", Pow::pow(2u8, n % 8) - 1);
-            println!("mask: {:?}", (Pow::pow(2u8, n % 8) - 1) as u8);
-            arr.push(bs[offset] & ((Pow::pow(2u8, n % 8) - 1) as u8));
-        } else {
-            arr.push(bs[offset])
-        }
-        for i in 1..length {
-            println!("i: {:?}", i);
-            println!("bs[offset+i]: {:?}", bs[offset + i]);
-            arr.push(bs[offset + i])
-        }
-        Ok(ByteArray::from(&arr))
     }
 }
 

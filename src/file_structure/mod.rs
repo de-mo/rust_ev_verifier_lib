@@ -2,25 +2,31 @@ pub mod file;
 pub mod file_group;
 pub mod setup_directory;
 pub mod tally_directory;
-use crate::data_structures::setup::VerifierSetupDataType;
-use crate::data_structures::setup_or_tally::SetupOrTally;
-use crate::data_structures::VerifierDataType;
-use crate::verification::VerificationPeriod;
+
+use crate::{
+    data_structures::{setup::VerifierSetupDataType, VerifierDataType},
+    error::VerifierError,
+    setup_or_tally::SetupOrTally,
+    verification::VerificationPeriod,
+};
 use setup_directory::SetupDirectory;
-use std::fmt::Display;
-use std::path::Path;
+use std::{fmt::Display, path::Path};
 use tally_directory::TallyDirectory;
 
-use crate::error::VerifierError;
-
+/// Type represending a VerificationDirectory ([SetupDirectory] or [TallyDirectory])
 pub type VerificationDirectory = SetupOrTally<SetupDirectory, TallyDirectory>;
 
-pub trait GetFileName {
+/// Trait defining functions to get the filename
+pub trait GetFileNameTrait {
+    /// Get the file name as it is defiened
     fn get_raw_file_name(&self) -> String;
+
+    /// Get the filename injecting the number (if given)
     fn get_file_name(&self, value: Option<usize>) -> String;
 }
 
 impl VerificationDirectory {
+    /// Create a new VerificationDirectory
     pub fn new(period: VerificationPeriod, location: &Path) -> Self {
         match period {
             VerificationPeriod::Setup => {
@@ -33,7 +39,7 @@ impl VerificationDirectory {
     }
 }
 
-impl GetFileName for VerifierSetupDataType {
+impl GetFileNameTrait for VerifierSetupDataType {
     fn get_raw_file_name(&self) -> String {
         let s = match self {
             Self::EncryptionParametersPayload => "encryptionParametersPayload.json",
@@ -58,7 +64,7 @@ impl GetFileName for VerifierSetupDataType {
     }
 }
 
-impl GetFileName for VerifierDataType {
+impl GetFileNameTrait for VerifierDataType {
     fn get_raw_file_name(&self) -> String {
         match self {
             VerifierDataType::Setup(t) => t.get_raw_file_name(),

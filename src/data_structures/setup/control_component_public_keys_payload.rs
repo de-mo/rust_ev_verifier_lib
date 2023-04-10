@@ -1,9 +1,9 @@
-use super::super::deserialize_seq_string_hex_to_seq_bigunit;
 use super::super::{
+    common_types::{EncryptionGroup, ProofUnderline, Signature},
+    deserialize_seq_string_hex_to_seq_bigunit,
     error::{DeserializeError, DeserializeErrorType},
-    implement_trait_data_structure, DataStructureTrait, ProofUnderline, Signature,
+    implement_trait_data_structure, DataStructureTrait,
 };
-use super::encryption_parameters_payload::EncryptionGroup;
 use crate::error::{create_verifier_error, VerifierError};
 use num_bigint::BigUint;
 use serde::Deserialize;

@@ -1,11 +1,9 @@
 //! Module to collect data structures of the verifier
 
+pub mod common_types;
 pub mod error;
 pub mod setup;
-pub mod setup_or_tally;
 pub mod tally;
-
-use num_bigint::BigUint;
 
 use self::{
     error::DeserializeError,
@@ -19,13 +17,17 @@ use self::{
         setup_component_verification_data_payload::SetupComponentVerificationDataPayload,
         VerifierSetupData, VerifierSetupDataType,
     },
-    setup_or_tally::SetupOrTally,
     tally::{VerifierTallyData, VerifierTallyDataType},
 };
-use crate::crypto_primitives::byte_array::{ByteArray, Decode};
-use crate::crypto_primitives::num_bigint::Hexa;
+use crate::{
+    crypto_primitives::{
+        byte_array::{ByteArray, Decode},
+        num_bigint::Hexa,
+    },
+    setup_or_tally::SetupOrTally,
+};
+use num_bigint::BigUint;
 use serde::de::{Deserialize, Deserializer, Error};
-use serde::Deserialize as Deserialize2;
 
 /// The type VerifierData implement an option between [VerifierSetupData] and [VerifierTallyData]
 pub type VerifierData = SetupOrTally<VerifierSetupData, VerifierTallyData>;
@@ -53,6 +55,35 @@ pub trait VerifierDataTrait {
     ) -> Option<&SetupComponentVerificationDataPayload>;
     fn control_component_code_shares_payload(&self) -> Option<&ControlComponentCodeSharesPayload>;
 }
+
+/// A trait defining the necessary function for the Data Structures
+pub trait DataStructureTrait {
+    fn from_json(s: &String) -> Result<Self, DeserializeError>
+    where
+        Self: Sized;
+
+    fn to_encryption_parameters_payload(&self) -> Option<&EncryptionParametersPayload> {
+        None
+    }
+}
+
+/// Macro to automatically implement the DataStructureTrait for a type
+macro_rules! implement_trait_data_structure {
+    ($s: ty) => {
+        impl DataStructureTrait for $s {
+            fn from_json(s: &String) -> Result<Self, DeserializeError> {
+                serde_json::from_str(s).map_err(|e| {
+                    create_verifier_error!(
+                        DeserializeErrorType::JSONError,
+                        format!("Cannot deserialize json"),
+                        e
+                    )
+                })
+            }
+        }
+    };
+}
+use implement_trait_data_structure;
 
 impl VerifierDataTrait for VerifierData {
     fn encryption_parameters_payload(&self) -> Option<&EncryptionParametersPayload> {
@@ -118,33 +149,6 @@ impl VerifierDataType {
         }
     }
 }
-
-pub trait DataStructureTrait {
-    fn from_json(s: &String) -> Result<Self, DeserializeError>
-    where
-        Self: Sized;
-
-    fn to_encryption_parameters_payload(&self) -> Option<&EncryptionParametersPayload> {
-        None
-    }
-}
-
-macro_rules! implement_trait_data_structure {
-    ($s: ty) => {
-        impl DataStructureTrait for $s {
-            fn from_json(s: &String) -> Result<Self, DeserializeError> {
-                serde_json::from_str(s).map_err(|e| {
-                    create_verifier_error!(
-                        DeserializeErrorType::JSONError,
-                        format!("Cannot deserialize json"),
-                        e
-                    )
-                })
-            }
-        }
-    };
-}
-use implement_trait_data_structure;
 
 fn deserialize_string_hex_to_bigunit<'de, D>(deserializer: D) -> Result<BigUint, D::Error>
 where
@@ -250,52 +254,4 @@ where
         }
     }
     deserializer.deserialize_seq(Visitor)
-}
-
-#[derive(Deserialize2, Debug, Clone)]
-#[serde(rename_all = "camelCase")]
-pub struct Signature {
-    pub signature_contents: String,
-}
-
-pub trait SignatureTrait {
-    fn get_signature_struct(&self) -> &Signature;
-    fn get_signature(&self) -> ByteArray {
-        ByteArray::base64_decode(&self.get_signature_struct().signature_contents).unwrap()
-    }
-}
-
-#[derive(Deserialize2, Debug, Clone)]
-pub struct ProofUnderline {
-    #[serde(deserialize_with = "deserialize_string_hex_to_bigunit")]
-    #[serde(rename = "_e")]
-    pub e: BigUint,
-    #[serde(deserialize_with = "deserialize_string_hex_to_bigunit")]
-    #[serde(rename = "_z")]
-    pub z: BigUint,
-}
-
-#[derive(Deserialize2, Debug, Clone)]
-pub struct Proof {
-    #[serde(deserialize_with = "deserialize_string_hex_to_bigunit")]
-    pub e: BigUint,
-    #[serde(deserialize_with = "deserialize_string_hex_to_bigunit")]
-    pub z: BigUint,
-}
-
-impl From<&ProofUnderline> for Proof {
-    fn from(value: &ProofUnderline) -> Self {
-        Proof {
-            e: value.e.clone(),
-            z: value.z.clone(),
-        }
-    }
-}
-
-#[derive(Deserialize2, Debug, Clone)]
-pub struct ExponentiatedEncryptedElement {
-    #[serde(deserialize_with = "deserialize_string_hex_to_bigunit")]
-    pub gamma: BigUint,
-    #[serde(deserialize_with = "deserialize_seq_string_hex_to_seq_bigunit")]
-    pub phis: Vec<BigUint>,
 }

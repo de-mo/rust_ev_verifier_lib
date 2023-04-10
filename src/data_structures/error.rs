@@ -1,6 +1,7 @@
-use std::fmt::Display;
+//! Module implementing the errors for the data structures
 
 use crate::error::VerifierError;
+use std::fmt::Display;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum DeserializeErrorType {

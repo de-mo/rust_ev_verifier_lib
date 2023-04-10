@@ -1,11 +1,3 @@
-use crate::{
-    data_structures::setup::encryption_parameters_payload::EncryptionGroup,
-    error::{create_verifier_error, VerifierError},
-    file_structure::setup_directory::VCSDirectory,
-};
-
-use crate::file_structure::VerificationDirectory;
-
 use super::super::super::{
     error::{
         create_verification_error, create_verification_failure, VerificationErrorType,
@@ -13,6 +5,11 @@ use super::super::super::{
     },
     verification::{Verification, VerificationMetaData, VerificationResult},
     VerificationCategory, VerificationPeriod,
+};
+use crate::{
+    data_structures::common_types::EncryptionGroup,
+    error::{create_verifier_error, VerifierError},
+    file_structure::{setup_directory::VCSDirectory, VerificationDirectory},
 };
 
 pub(super) fn get_verification() -> Verification {

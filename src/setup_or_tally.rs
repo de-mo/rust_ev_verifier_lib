@@ -1,10 +1,14 @@
+//! Module implementing [SetupOrTally]
+
+/// Enum that is a type of setup or tally
 #[derive(Clone)]
-pub enum SetupOrTally<S: Clone, T: Clone> {
+pub enum SetupOrTally<S, T> {
     Setup(S),
     Tally(T),
 }
 
 impl<S: Clone, T: Clone> SetupOrTally<S, T> {
+    /// Is setup
     pub fn is_setup(&self) -> bool {
         match self {
             SetupOrTally::Setup(_) => true,
@@ -12,14 +16,15 @@ impl<S: Clone, T: Clone> SetupOrTally<S, T> {
         }
     }
 
+    /// Is tally
     pub fn is_tally(&self) -> bool {
         !self.is_setup()
     }
 
-    pub fn unwrap_setup(&self) -> &S
-//    where
-//        T: core::fmt::Debug,
-    {
+    /// Unwrap setup and give a reference to S
+    ///
+    /// panic if type is tally
+    pub fn unwrap_setup(&self) -> &S {
         match self {
             SetupOrTally::Setup(s) => s,
             SetupOrTally::Tally(_) => {
@@ -28,10 +33,10 @@ impl<S: Clone, T: Clone> SetupOrTally<S, T> {
         }
     }
 
-    pub fn unwrap_tally(&self) -> &T
-//    where
-//        S: core::fmt::Debug,
-    {
+    /// Unwrap tally and give a reference to S
+    ///
+    /// panic if type is seup
+    pub fn unwrap_tally(&self) -> &T {
         match self {
             SetupOrTally::Setup(_) => {
                 panic!("called `SetupOrTally::unwrap_tally()` on a `Setup` value")

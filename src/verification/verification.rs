@@ -1,19 +1,34 @@
+///! Module implementing the structure of a verification
 use crate::file_structure::VerificationDirectory;
 
-use super::error::{VerificationError, VerificationFailure};
-use super::{VerificationCategory, VerificationPeriod, VerificationStatus};
+use super::{
+    error::{VerificationError, VerificationFailure},
+    VerificationCategory, VerificationPeriod, VerificationStatus,
+};
 use log::{info, warn};
 use std::time::{Duration, SystemTime};
 
+/// Metadata of a verification
 pub struct VerificationMetaData {
+    /// id of the verification
     pub id: String,
+
+    /// Name of the verification
     pub name: String,
+
+    /// Algorithm in the specifications
     pub algorithm: String,
+
+    /// Period (Set or Tally) of the verification
     pub period: VerificationPeriod,
+
+    /// Category of the verification
     pub category: VerificationCategory,
 }
 
+/// Struct representing a verification
 pub struct Verification {
+    /// Metadata of the verification
     pub meta_data: VerificationMetaData,
     status: VerificationStatus,
     verification_fn: Box<dyn Fn(&VerificationDirectory, &mut VerificationResult)>,
@@ -21,73 +36,52 @@ pub struct Verification {
     result: Box<VerificationResult>,
 }
 
+/// Struct representing a result of the verification
+/// The verification can have many errors and/or many failures
 pub struct VerificationResult {
     errors: Vec<VerificationError>,
     failures: Vec<VerificationFailure>,
 }
 
+/// Trait defining functions to access the verficiation result
 pub trait VerificationResultTrait {
+    /// Is the verification ok ?
+    ///
+    /// If not run, the output is None
     fn is_ok(&self) -> Option<bool>;
+
+    /// Has the verification errors ?
+    ///
+    /// If not run, the output is None
     fn has_errors(&self) -> Option<bool>;
+
+    /// Has the verification failures ?
+    ///
+    /// If not run, the output is None
     fn has_failures(&self) -> Option<bool>;
+
+    /// All the errors
     fn errors(&self) -> &Vec<VerificationError>;
+
+    /// All the failures
     fn failures(&self) -> &Vec<VerificationFailure>;
 }
 
-impl VerificationResult {
-    pub fn new() -> Self {
-        VerificationResult {
-            errors: vec![],
-            failures: vec![],
-        }
-    }
-
-    fn errors_mut(&mut self) -> &mut Vec<VerificationError> {
-        &mut self.errors
-    }
-
-    fn failures_mut(&mut self) -> &mut Vec<VerificationFailure> {
-        &mut self.failures
-    }
-
-    pub fn push_error(&mut self, e: VerificationError) {
-        self.errors.push(e)
-    }
-
-    pub fn push_failure(&mut self, f: VerificationFailure) {
-        self.failures.push(f)
-    }
-
-    // Append the results of ohter to self, emptying the vectors of other
-    pub fn append(&mut self, other: &mut Self) {
-        self.errors.append(&mut other.errors_mut());
-        self.failures.append(&mut other.failures_mut());
-    }
-}
-
-impl VerificationResultTrait for VerificationResult {
-    fn is_ok(&self) -> Option<bool> {
-        Some(!self.has_errors().unwrap() && !self.has_failures().unwrap())
-    }
-
-    fn has_errors(&self) -> Option<bool> {
-        Some(!self.errors.is_empty())
-    }
-
-    fn has_failures(&self) -> Option<bool> {
-        Some(!self.failures.is_empty())
-    }
-
-    fn errors(&self) -> &Vec<VerificationError> {
-        &self.errors
-    }
-
-    fn failures(&self) -> &Vec<VerificationFailure> {
-        &self.failures
-    }
-}
-
 impl Verification {
+    /// Create a new verification.
+    ///
+    /// The input are the metadata and the explicit function of the verification. The function
+    /// must have the following form:
+    /// ```rust
+    /// fn verification_function(dir: &VerificationDirectory, result: &mut VerificationResult)
+    /// {
+    ///     ...
+    /// }
+    /// ```
+    ///
+    /// The directory contains the directory where the folder setup and tally are located. The result
+    /// has to be changed according to the results of the verification (pushing errors and/or failures).
+    /// The function is called by the method rust of the Verification
     pub fn new(
         meta_data: VerificationMetaData,
         verification_fn: impl Fn(&VerificationDirectory, &mut VerificationResult) + 'static,
@@ -101,6 +95,7 @@ impl Verification {
         }
     }
 
+    /// Run the test.
     pub fn run(&mut self, directory: &VerificationDirectory) {
         self.status = VerificationStatus::Running;
         let start_time = SystemTime::now();
@@ -135,6 +130,64 @@ impl Verification {
                 self.duration.unwrap().as_secs_f32()
             );
         }
+    }
+}
+
+impl VerificationResult {
+    /// New VerificationResult
+    pub fn new() -> Self {
+        VerificationResult {
+            errors: vec![],
+            failures: vec![],
+        }
+    }
+
+    /// Mutable reference to the errors
+    fn errors_mut(&mut self) -> &mut Vec<VerificationError> {
+        &mut self.errors
+    }
+
+    /// Mutable reference to the failures
+    fn failures_mut(&mut self) -> &mut Vec<VerificationFailure> {
+        &mut self.failures
+    }
+
+    /// Push a new error to the VerificationResult
+    pub fn push_error(&mut self, e: VerificationError) {
+        self.errors.push(e)
+    }
+
+    /// Push a new failure to the VerificationResult
+    pub fn push_failure(&mut self, f: VerificationFailure) {
+        self.failures.push(f)
+    }
+
+    /// Append the results of ohter to self, emptying the vectors of other
+    pub fn append(&mut self, other: &mut Self) {
+        self.errors.append(&mut other.errors_mut());
+        self.failures.append(&mut other.failures_mut());
+    }
+}
+
+impl VerificationResultTrait for VerificationResult {
+    fn is_ok(&self) -> Option<bool> {
+        Some(!self.has_errors().unwrap() && !self.has_failures().unwrap())
+    }
+
+    fn has_errors(&self) -> Option<bool> {
+        Some(!self.errors.is_empty())
+    }
+
+    fn has_failures(&self) -> Option<bool> {
+        Some(!self.failures.is_empty())
+    }
+
+    fn errors(&self) -> &Vec<VerificationError> {
+        &self.errors
+    }
+
+    fn failures(&self) -> &Vec<VerificationFailure> {
+        &self.failures
     }
 }
 

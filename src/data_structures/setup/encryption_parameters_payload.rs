@@ -1,9 +1,8 @@
-use super::super::deserialize_string_hex_to_bigunit;
 use super::super::{
+    common_types::{EncryptionGroup, Signature, SignatureTrait},
     error::{DeserializeError, DeserializeErrorType},
-    implement_trait_data_structure, DataStructureTrait, Signature,
+    implement_trait_data_structure, DataStructureTrait,
 };
-use crate::data_structures::SignatureTrait;
 use crate::{
     crypto_primitives::{
         direct_trust::CertificateAuthority, hashing::RecursiveHashable,
@@ -56,16 +55,6 @@ impl SignatureTrait for EncryptionParametersPayload {
     fn get_signature_struct(&self) -> &Signature {
         &self.signature
     }
-}
-
-#[derive(Deserialize, Debug, Clone)]
-pub struct EncryptionGroup {
-    #[serde(deserialize_with = "deserialize_string_hex_to_bigunit")]
-    pub p: BigUint,
-    #[serde(deserialize_with = "deserialize_string_hex_to_bigunit")]
-    pub q: BigUint,
-    #[serde(deserialize_with = "deserialize_string_hex_to_bigunit")]
-    pub g: BigUint,
 }
 
 #[cfg(test)]

@@ -1,16 +1,14 @@
 //! Wrapper for Certificate functions
 
-use std::{fs, path::Path};
-
+use super::{OpensslError, OpensslErrorType};
+use crate::error::{create_result_with_error, create_verifier_error, VerifierError};
 use openssl::{
     asn1::Asn1Time,
     pkcs12::{ParsedPkcs12_2, Pkcs12},
     pkey::{PKey, Public},
     x509::X509,
 };
-
-use super::{OpensslError, OpensslErrorType};
-use crate::error::{create_result_with_error, create_verifier_error, VerifierError};
+use std::{fs, path::Path};
 
 /// Wrapper to the keystore
 pub struct Keystore {

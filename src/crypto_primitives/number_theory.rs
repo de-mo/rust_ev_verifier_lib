@@ -8,24 +8,6 @@ use num_bigint_dig::{
 };
 use std::fmt::Display;
 
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum NumberTheoryErrorType {
-    NotInRange,
-    NotOdd,
-}
-
-impl Display for NumberTheoryErrorType {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let s = match self {
-            Self::NotInRange => "Not in Range",
-            Self::NotOdd => "Not odo",
-        };
-        write!(f, "{s}")
-    }
-}
-
-type NumberTheoryError = VerifierError<NumberTheoryErrorType>;
-
 /// Validate if the number is a small prime according to the algorithm specified
 pub fn is_small_prime(n: usize) -> Result<bool, NumberTheoryError> {
     if n >= usize::pow(2, 31) {
@@ -104,6 +86,24 @@ pub fn is_probable_prime(n: &BigUint) -> bool {
 pub fn miller_rabin_test(n: &BigUint, base: usize) -> bool {
     probably_prime_miller_rabin(&BigUintDig::new(n.to_u32_digits()), base, false)
 }
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum NumberTheoryErrorType {
+    NotInRange,
+    NotOdd,
+}
+
+impl Display for NumberTheoryErrorType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let s = match self {
+            Self::NotInRange => "Not in Range",
+            Self::NotOdd => "Not odo",
+        };
+        write!(f, "{s}")
+    }
+}
+
+type NumberTheoryError = VerifierError<NumberTheoryErrorType>;
 
 #[cfg(test)]
 mod test {

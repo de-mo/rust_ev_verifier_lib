@@ -9,8 +9,33 @@ use super::{
     direct_trust::{CertificateAuthority, DirectTrust},
     openssl_wrapper::signature::verify,
 };
-use crate::data_structures::SignatureTrait;
+use crate::data_structures::common_types::SignatureTrait;
 use crate::error::{create_result_with_error, create_verifier_error, VerifierError};
+
+/// Trait that must be implemented for each object
+/// implementing RecursiveHashable
+pub trait VerifiySignatureTrait<'a>
+where
+    Self: 'a + SignatureTrait,
+    RecursiveHashable: From<&'a Self>,
+{
+    /// Get the context data of the object according to the specifications
+    fn get_context_data(&self) -> RecursiveHashable;
+
+    /// Get the Certificate Authority to the specifications
+    fn get_certificate_authority(&self) -> CertificateAuthority;
+
+    /// Verfiy the signature according to the specifications
+    fn verifiy_signature(&'a self, location: &Path) -> Result<bool, SignatureError> {
+        verifiy_signature_impl(
+            location,
+            &self.get_certificate_authority(),
+            &RecursiveHashable::from(self),
+            &self.get_context_data(),
+            &self.get_signature(),
+        )
+    }
+}
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum SignatureErrorType {
@@ -57,29 +82,4 @@ fn verifiy_signature_impl(
     let h = RecursiveHashable::Composite(vec![hashable.to_owned(), context_data.to_owned()])
         .recursive_hash();
     Ok(verify(pkey.as_ref(), &h, signature))
-}
-
-/// Trait that must be implemented for each object
-/// implementing RecursiveHashable
-pub trait VerifiySignatureTrait<'a>
-where
-    Self: 'a + SignatureTrait,
-    RecursiveHashable: From<&'a Self>,
-{
-    /// Get the context data of the object according to the specifications
-    fn get_context_data(&self) -> RecursiveHashable;
-
-    /// Get the Certificate Authority to the specifications
-    fn get_certificate_authority(&self) -> CertificateAuthority;
-
-    /// Verfiy the signature according to the specifications
-    fn verifiy_signature(&'a self, location: &Path) -> Result<bool, SignatureError> {
-        verifiy_signature_impl(
-            location,
-            &self.get_certificate_authority(),
-            &RecursiveHashable::from(self),
-            &self.get_context_data(),
-            &self.get_signature(),
-        )
-    }
 }

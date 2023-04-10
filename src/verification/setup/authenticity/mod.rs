@@ -1,7 +1,5 @@
 use std::path::Path;
 
-use crate::file_structure::VerificationDirectory;
-
 use super::super::{
     error::{
         create_verification_error, create_verification_failure, VerificationErrorType,
@@ -10,10 +8,10 @@ use super::super::{
     verification::{Verification, VerificationMetaData, VerificationResult},
     VerificationCategory, VerificationList, VerificationPeriod,
 };
-
 use crate::{
     crypto_primitives::signature::VerifiySignatureTrait,
     error::{create_verifier_error, VerifierError},
+    file_structure::VerificationDirectory,
 };
 
 pub fn get_verifications() -> VerificationList {

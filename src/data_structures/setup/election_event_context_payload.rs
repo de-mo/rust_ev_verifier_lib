@@ -1,8 +1,8 @@
 use super::super::{
+    common_types::{EncryptionGroup, Signature},
     error::{DeserializeError, DeserializeErrorType},
-    implement_trait_data_structure, DataStructureTrait, Signature,
+    implement_trait_data_structure, DataStructureTrait,
 };
-use super::encryption_parameters_payload::EncryptionGroup;
 use crate::error::{create_verifier_error, VerifierError};
 use serde::Deserialize;
 

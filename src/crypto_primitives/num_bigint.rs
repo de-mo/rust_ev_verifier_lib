@@ -6,8 +6,51 @@
 use crate::error::{create_result_with_error, create_verifier_error, VerifierError};
 use num_bigint::{BigInt, BigUint, Sign};
 use num_traits::Num;
-use std::fmt::Debug;
-use std::fmt::Display;
+use std::fmt::{Debug, Display};
+
+/// Trait to implement constant numbers
+pub trait Constants {
+    fn zero() -> Self;
+    fn one() -> Self;
+    fn two() -> Self;
+    fn three() -> Self;
+    fn four() -> Self;
+    fn five() -> Self;
+}
+
+/// Trait to extend operations of BigUInt
+pub trait Operations {
+    /// Test is is even
+    fn is_even(&self) -> bool;
+
+    /// Test is is even
+    fn is_odd(&self) -> bool {
+        !self.is_even()
+    }
+
+    /// Calculate the exponentiate modulo: self^exp % modulus
+    fn mod_exponentiate(&self, exp: &Self, modulus: &Self) -> Self;
+
+    /// Calculate the negative number modulo modulus (is a positive number): -self & modulus
+    fn mod_negate(&self, modulus: &Self) -> Self;
+
+    /// Calculate the exponentiate modulo: self*other % modulus
+    fn mod_multiply(&self, other: &Self, modulus: &Self) -> Self;
+}
+
+/// Transformation from or to String in hexadecimal according to the specifications
+pub trait Hexa: Sized {
+    /// Create object from hexadecimal String. If not valid return an error
+    /// ```rust
+    /// BigUint::from_hexa(&"0x12D9E8".to_string())
+    /// ```
+    fn from_hexa_string(s: &String) -> Result<Self, BigUIntError>;
+
+    fn from_hexa_slice(s: &str) -> Result<Self, BigUIntError>;
+
+    /// Generate the hexadecimal String
+    fn to_hexa(&self) -> String;
+}
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum BigUIntErrorType {
@@ -43,16 +86,6 @@ impl ByteLength for BigUint {
     }
 }
 
-/// Trait to implement constant numbers
-pub trait Constants {
-    fn zero() -> Self;
-    fn one() -> Self;
-    fn two() -> Self;
-    fn three() -> Self;
-    fn four() -> Self;
-    fn five() -> Self;
-}
-
 impl Constants for BigUint {
     fn zero() -> Self {
         BigUint::from(0u8)
@@ -74,26 +107,6 @@ impl Constants for BigUint {
     fn five() -> Self {
         BigUint::from(5u8)
     }
-}
-
-/// Trait to extend operations of BigUInt
-pub trait Operations {
-    /// Test is is even
-    fn is_even(&self) -> bool;
-
-    /// Test is is even
-    fn is_odd(&self) -> bool {
-        !self.is_even()
-    }
-
-    /// Calculate the exponentiate modulo: self^exp % modulus
-    fn mod_exponentiate(&self, exp: &Self, modulus: &Self) -> Self;
-
-    /// Calculate the negative number modulo modulus (is a positive number): -self & modulus
-    fn mod_negate(&self, modulus: &Self) -> Self;
-
-    /// Calculate the exponentiate modulo: self*other % modulus
-    fn mod_multiply(&self, other: &Self, modulus: &Self) -> Self;
 }
 
 impl Operations for BigUint {
@@ -118,20 +131,6 @@ impl Operations for BigUint {
     fn mod_multiply(&self, other: &Self, modulus: &Self) -> Self {
         (self * other) % modulus
     }
-}
-
-/// Transformation from or to String in hexadecimal according to the specifications
-pub trait Hexa: Sized {
-    /// Create object from hexadecimal String. If not valid return an error
-    /// ```rust
-    /// BigUint::from_hexa(&"0x12D9E8".to_string())
-    /// ```
-    fn from_hexa_string(s: &String) -> Result<Self, BigUIntError>;
-
-    fn from_hexa_slice(s: &str) -> Result<Self, BigUIntError>;
-
-    /// Generate the hexadecimal String
-    fn to_hexa(&self) -> String;
 }
 
 impl Hexa for BigUint {

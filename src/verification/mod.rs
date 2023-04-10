@@ -1,3 +1,5 @@
+//! Module implementing all the verifications
+
 pub mod error;
 pub mod setup;
 pub mod tally;

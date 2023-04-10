@@ -1,37 +1,19 @@
 //! Module to implement El Gamal functions
 
-use num_bigint::BigUint;
-
-use super::byte_array::ByteArray;
-use super::num_bigint::Constants;
-use super::number_theory::{
-    is_probable_prime, is_quadratic_residue, is_small_prime, miller_rabin_test, SMALL_PRIMES,
+use super::{
+    byte_array::ByteArray,
+    num_bigint::Constants,
+    number_theory::{
+        is_probable_prime, is_quadratic_residue, is_small_prime, miller_rabin_test, SMALL_PRIMES,
+    },
+    openssl_wrapper::hash::shake128,
 };
-use super::openssl_wrapper::hash::shake128;
-
 use crate::{
-    data_structures::setup::encryption_parameters_payload::EncryptionGroup,
+    data_structures::common_types::EncryptionGroup,
     error::{create_result_with_error, create_verifier_error, VerifierError},
 };
+use num_bigint::BigUint;
 use std::fmt::Display;
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum ElgamalErrorType {
-    TooFewSmallPrimeNumbers,
-    NotPrime,
-}
-
-impl Display for ElgamalErrorType {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let s = match self {
-            Self::TooFewSmallPrimeNumbers => "Too few small prime numbers",
-            Self::NotPrime => "Not Prime",
-        };
-        write!(f, "{s}")
-    }
-}
-
-type ElgamalError = VerifierError<ElgamalErrorType>;
 
 // Get small prime group members according to the specifications
 pub fn get_small_prime_group_members(
@@ -99,6 +81,24 @@ pub fn get_encryption_parameters(seed: &String) -> Result<EncryptionGroup, Elgam
         }
     }
 }
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum ElgamalErrorType {
+    TooFewSmallPrimeNumbers,
+    NotPrime,
+}
+
+impl Display for ElgamalErrorType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let s = match self {
+            Self::TooFewSmallPrimeNumbers => "Too few small prime numbers",
+            Self::NotPrime => "Not Prime",
+        };
+        write!(f, "{s}")
+    }
+}
+
+type ElgamalError = VerifierError<ElgamalErrorType>;
 
 #[cfg(test)]
 mod test {

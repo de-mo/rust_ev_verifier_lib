@@ -1,13 +1,13 @@
 use super::super::{
+    common_types::{EncryptionGroup, ExponentiatedEncryptedElement, Signature},
     deserialize_seq_string_64_to_seq_bytearray, deserialize_seq_string_hex_to_seq_bigunit,
-};
-use super::super::{
     error::{DeserializeError, DeserializeErrorType},
-    implement_trait_data_structure, DataStructureTrait, ExponentiatedEncryptedElement, Signature,
+    implement_trait_data_structure, DataStructureTrait,
 };
-use super::encryption_parameters_payload::EncryptionGroup;
-use crate::crypto_primitives::byte_array::ByteArray;
-use crate::error::{create_verifier_error, VerifierError};
+use crate::{
+    crypto_primitives::byte_array::ByteArray,
+    error::{create_verifier_error, VerifierError},
+};
 use num_bigint::BigUint;
 use serde::Deserialize;
 

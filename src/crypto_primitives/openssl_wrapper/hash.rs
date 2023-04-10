@@ -1,10 +1,11 @@
 //! Hash algorithms
 
-use super::super::byte_array::ByteArray;
-use super::super::GROUP_PARAMETER_P_LENGTH;
-use openssl::hash::{hash_xof, MessageDigest};
-use openssl::md::Md;
-use openssl::md_ctx::MdCtx;
+use super::super::{byte_array::ByteArray, GROUP_PARAMETER_P_LENGTH};
+use openssl::{
+    hash::{hash_xof, MessageDigest},
+    md::Md,
+    md_ctx::MdCtx,
+};
 
 /// Wrapper for SHA3-256
 pub fn sha3_256(byte_array: &ByteArray) -> ByteArray {

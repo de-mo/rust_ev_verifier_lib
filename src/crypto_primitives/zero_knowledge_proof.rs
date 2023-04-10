@@ -1,15 +1,15 @@
-use super::hashing::RecursiveHashable;
-use super::num_bigint::Operations;
-use crate::data_structures::setup::encryption_parameters_payload::EncryptionGroup;
-use crate::data_structures::Proof;
+use super::{hashing::RecursiveHashable, num_bigint::Operations};
+use crate::data_structures::common_types::{EncryptionGroup, Proof};
 use num_bigint::BigUint;
 use std::iter::zip;
 
+/// Compute Phi Schnorr according to specifications
 pub fn compute_phi_schnorr(eg: &EncryptionGroup, x: &BigUint) -> BigUint {
     let y = eg.g.mod_exponentiate(x, &eg.p);
     y
 }
 
+/// Verify Schnorr Proof according to specifications
 pub fn verify_schnorr(
     eg: &EncryptionGroup,
     schnorr: &Proof,
@@ -41,6 +41,7 @@ pub fn verify_schnorr(
     e_prime == schnorr.e
 }
 
+/// Compute phi exponation according to specifications
 pub fn compute_phi_exponentiation(
     eg: &EncryptionGroup,
     x: &BigUint,
@@ -50,6 +51,7 @@ pub fn compute_phi_exponentiation(
     ys
 }
 
+/// Verify Exponation proof according to specifications
 pub fn verify_exponentiation(
     eg: &EncryptionGroup,
     gs: &Vec<BigUint>,

@@ -1,3 +1,13 @@
+//! Module implementing the data structures of the setup directory
+
+pub mod control_component_code_shares_payload;
+pub mod control_component_public_keys_payload;
+pub mod election_event_context_payload;
+pub mod encryption_parameters_payload;
+pub mod setup_component_public_keys_payload;
+pub mod setup_component_tally_data_payload;
+pub mod setup_component_verification_data_payload;
+
 use self::{
     control_component_code_shares_payload::ControlComponentCodeSharesPayload,
     control_component_public_keys_payload::ControlComponentPublicKeysPayload,
@@ -8,17 +18,10 @@ use self::{
     setup_component_verification_data_payload::SetupComponentVerificationDataPayload,
 };
 use super::{error::DeserializeError, DataStructureTrait, VerifierDataTrait};
-
 use enum_kinds::EnumKind;
 
-pub mod control_component_code_shares_payload;
-pub mod control_component_public_keys_payload;
-pub mod election_event_context_payload;
-pub mod encryption_parameters_payload;
-pub mod setup_component_public_keys_payload;
-pub mod setup_component_tally_data_payload;
-pub mod setup_component_verification_data_payload;
-
+/// Types of the setup directory
+/// An enum VerifierSetupDataType is automatically creating
 #[derive(Clone, EnumKind)]
 #[enum_kind(VerifierSetupDataType)]
 pub enum VerifierSetupData {
@@ -32,6 +35,9 @@ pub enum VerifierSetupData {
 }
 
 impl VerifierSetupDataType {
+    /// Read from String as json
+    ///
+    /// All the types have to oimplement the trait [DataStructureTrait]
     pub fn verifier_data_from_json(
         &self,
         s: &String,

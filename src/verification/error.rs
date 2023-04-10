@@ -1,16 +1,9 @@
+//! Module implementing the errors of the verifications
+//!
 use crate::error::VerifierError;
 use std::fmt::Display;
 
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum VerificationErrorType {
-    Error,
-}
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum VerificationFailureType {
-    Failure,
-}
-
+/// Macro to create a verification error (with or without embedded error)
 macro_rules! create_verification_error {
     ($m: expr) => {
         create_verifier_error!(VerificationErrorType::Error, $m)
@@ -21,6 +14,7 @@ macro_rules! create_verification_error {
 }
 pub(crate) use create_verification_error;
 
+/// Macro to create a verification failure (with or without embedded error)
 macro_rules! create_verification_failure {
     ($m: expr) => {
         create_verifier_error!(VerificationFailureType::Failure, $m)
@@ -30,6 +24,15 @@ macro_rules! create_verification_failure {
     };
 }
 pub(crate) use create_verification_failure;
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum VerificationErrorType {
+    Error,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum VerificationFailureType {
+    Failure,
+}
 
 impl Display for VerificationErrorType {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {

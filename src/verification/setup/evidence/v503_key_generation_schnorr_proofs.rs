@@ -10,7 +10,7 @@ use super::super::super::{
 };
 use crate::{
     crypto_primitives::zero_knowledge_proof::verify_schnorr,
-    data_structures::Proof,
+    data_structures::common_types::Proof,
     error::{create_verifier_error, VerifierError},
     file_structure::VerificationDirectory,
 };

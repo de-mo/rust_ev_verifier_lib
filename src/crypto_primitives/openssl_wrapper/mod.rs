@@ -4,9 +4,8 @@ pub mod certificate;
 pub mod hash;
 pub mod signature;
 
-use std::fmt::Display;
-
 use crate::error::VerifierError;
+use std::fmt::Display;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum OpensslErrorType {
