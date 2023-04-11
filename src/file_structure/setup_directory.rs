@@ -8,6 +8,7 @@ use crate::data_structures::{
     setup::{
         control_component_code_shares_payload::ControlComponentCodeSharesPayload,
         control_component_public_keys_payload::ControlComponentPublicKeysPayload,
+        election_event_configuration::ElectionEventConfiguration,
         election_event_context_payload::ElectionEventContextPayload,
         encryption_parameters_payload::EncryptionParametersPayload,
         setup_component_public_keys_payload::SetupComponentPublicKeysPayload,
@@ -32,6 +33,7 @@ pub struct SetupDirectory {
     pub encryption_parameters_payload_file: File,
     pub setup_component_public_keys_payload_file: File,
     pub election_event_context_payload_file: File,
+    pub election_event_configuration: File,
     pub control_component_public_keys_payload_group: FileGroup,
     pub vcs_directories: Box<Vec<VCSDirectory>>,
 }
@@ -85,6 +87,7 @@ impl SetupDirectory {
                 Setup,
                 ElectionEventContextPayload
             ),
+            election_event_configuration: create_file!(location, Setup, ElectionEventConfiguration),
             control_component_public_keys_payload_group: FileGroup::new(
                 &location,
                 create_verifier_data_type!(Setup, ControlComponentPublicKeysPayload),
@@ -133,6 +136,14 @@ impl SetupDirectory {
         self.election_event_context_payload_file
             .get_data()
             .map(|d| Box::new(d.election_event_context_payload().unwrap().clone()))
+    }
+
+    pub fn election_event_configuration(
+        &self,
+    ) -> Result<Box<ElectionEventConfiguration>, FileStructureError> {
+        self.election_event_configuration
+            .get_data()
+            .map(|d| Box::new(d.election_event_configuration().unwrap().clone()))
     }
 
     pub fn control_component_public_keys_payload_iter(
