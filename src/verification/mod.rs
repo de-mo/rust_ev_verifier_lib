@@ -224,6 +224,12 @@ mod test {
             "VerifyElectionEventIdConsistency",
             VerificationCategory::Consistency,
         ),
+        (
+            "312",
+            "3.13",
+            "VerifyTotalVotersConsistency",
+            VerificationCategory::Consistency,
+        ),
         ("400", "3.4", "Integrity", VerificationCategory::Integrity),
         (
             "500",
