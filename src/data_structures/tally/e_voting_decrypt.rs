@@ -12,7 +12,7 @@ use roxmltree::Document;
 pub struct EVotingDecrypt {}
 
 impl DataStructureTrait for EVotingDecrypt {
-    fn from_roxmltree<'a>(doc: &'a Document<'a>) -> Result<Self, DeserializeError> {
+    fn from_roxmltree<'a>(_: &'a Document<'a>) -> Result<Self, DeserializeError> {
         Ok(EVotingDecrypt {})
     }
 }

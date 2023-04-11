@@ -104,8 +104,11 @@ impl GetFileNameTrait for VerifierSetupDataType {
 impl GetFileNameTrait for VerifierTallyDataType {
     fn get_raw_file_name(&self) -> String {
         let s = match self {
-            Self::ECH0110 => "eCH-0110_*.json",
-            Self::EVotingDecrypt => "evoting_decrypt_*.json",
+            Self::ECH0110 => "eCH-0110_*.xml",
+            Self::EVotingDecrypt => "evoting_decrypt_*.xml",
+            Self::ECH0222 => "eCH-0222_*.xml",
+            Self::TallyComponentVotesPayload => "tallyComponentVotesPayload.json",
+            Self::TallyComponentShufflePayload => "TallyComponentShufflePayload.json",
         };
         s.to_string()
     }

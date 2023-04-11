@@ -9,21 +9,21 @@ use crate::{
 use roxmltree::Document;
 
 #[derive(Debug, Clone)]
-pub struct ECH0110 {}
+pub struct ECH0222 {}
 
-impl DataStructureTrait for ECH0110 {
+impl DataStructureTrait for ECH0222 {
     fn from_roxmltree<'a>(_: &'a Document<'a>) -> Result<Self, DeserializeError> {
-        Ok(ECH0110 {})
+        Ok(ECH0222 {})
     }
 }
 
-impl From<&ECH0110> for RecursiveHashable {
-    fn from(_: &ECH0110) -> Self {
+impl From<&ECH0222> for RecursiveHashable {
+    fn from(_: &ECH0222) -> Self {
         todo!()
     }
 }
 
-impl VerifiySignatureTrait<'_> for ECH0110 {
+impl VerifiySignatureTrait<'_> for ECH0222 {
     fn get_context_data(&self) -> RecursiveHashable {
         RecursiveHashable::from(&"evoting decrypt".to_string())
     }
@@ -33,7 +33,7 @@ impl VerifiySignatureTrait<'_> for ECH0110 {
     }
 }
 
-impl SignatureTrait for ECH0110 {
+impl SignatureTrait for ECH0222 {
     fn get_signature_struct(&self) -> &Signature {
         todo!()
     }
@@ -51,9 +51,9 @@ mod test {
             .join("datasets")
             .join("dataset1")
             .join("tally")
-            .join("eCH-0110_Post_E2E_DEV.xml");
+            .join("eCH-0222_Post_E2E_DEV.xml");
         let xml = fs::read_to_string(&path).unwrap();
-        let config = ECH0110::from_string(&xml, &FileType::Xml);
+        let config = ECH0222::from_string(&xml, &FileType::Xml);
         assert!(config.is_ok())
     }
 }

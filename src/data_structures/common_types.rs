@@ -45,7 +45,7 @@ pub struct ProofUnderline {
     pub z: BigUint,
 }
 
-/// A proof (e,z) where the keys are _e and _z in json
+/// A proof (e,z) where the keys are e and z in json
 #[derive(Deserialize, Debug, Clone)]
 pub struct Proof {
     #[serde(deserialize_with = "deserialize_string_hex_to_bigunit")]
@@ -62,6 +62,15 @@ impl From<&ProofUnderline> for Proof {
             z: value.z.clone(),
         }
     }
+}
+
+/// A proof (e,z) where the keys are _e and _z in json
+#[derive(Deserialize, Debug, Clone)]
+pub struct DecryptionProof {
+    #[serde(deserialize_with = "deserialize_string_hex_to_bigunit")]
+    pub e: BigUint,
+    #[serde(deserialize_with = "deserialize_seq_string_hex_to_seq_bigunit")]
+    pub z: Vec<BigUint>,
 }
 
 /// A exponentieted encrypted element (gamman, phi)

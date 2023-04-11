@@ -19,7 +19,9 @@ use self::{
         VerifierSetupData, VerifierSetupDataType,
     },
     tally::{
-        e_voting_decrypt::EVotingDecrypt, ech_0110::ECH0110, VerifierTallyData,
+        e_voting_decrypt::EVotingDecrypt, ech_0110::ECH0110, ech_0222::ECH0222,
+        tally_component_shuffle_payload::TallyComponentShufflePayload,
+        tally_component_votes_payload::TallyComponentVotesPayload, VerifierTallyData,
         VerifierTallyDataType,
     },
 };
@@ -81,7 +83,16 @@ pub trait VerifierDataTrait {
     fn e_voting_decrypt(&self) -> Option<&EVotingDecrypt> {
         None
     }
-    fn ech_110(&self) -> Option<&ECH0110> {
+    fn ech_0110(&self) -> Option<&ECH0110> {
+        None
+    }
+    fn ech_0222(&self) -> Option<&ECH0222> {
+        None
+    }
+    fn tally_component_votes_payload(&self) -> Option<&TallyComponentVotesPayload> {
+        None
+    }
+    fn tally_component_shuffle_payload(&self) -> Option<&TallyComponentShufflePayload> {
         None
     }
 }
@@ -206,10 +217,28 @@ impl VerifierDataTrait for VerifierData {
             VerifierData::Tally(d) => d.e_voting_decrypt(),
         }
     }
-    fn ech_110(&self) -> Option<&ECH0110> {
+    fn ech_0110(&self) -> Option<&ECH0110> {
         match self {
             VerifierData::Setup(_) => None,
-            VerifierData::Tally(d) => d.ech_110(),
+            VerifierData::Tally(d) => d.ech_0110(),
+        }
+    }
+    fn ech_0222(&self) -> Option<&ECH0222> {
+        match self {
+            VerifierData::Setup(_) => None,
+            VerifierData::Tally(d) => d.ech_0222(),
+        }
+    }
+    fn tally_component_votes_payload(&self) -> Option<&TallyComponentVotesPayload> {
+        match self {
+            VerifierData::Setup(_) => None,
+            VerifierData::Tally(d) => d.tally_component_votes_payload(),
+        }
+    }
+    fn tally_component_shuffle_payload(&self) -> Option<&TallyComponentShufflePayload> {
+        match self {
+            VerifierData::Setup(_) => None,
+            VerifierData::Tally(d) => d.tally_component_shuffle_payload(),
         }
     }
 }
