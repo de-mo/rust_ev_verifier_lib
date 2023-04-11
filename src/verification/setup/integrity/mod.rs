@@ -88,6 +88,13 @@ fn fn_verification_400(dir: &VerificationDirectory, result: &mut VerificationRes
             e
         )),
     }
+    match setup_dir.election_event_configuration() {
+        Ok(_) => (),
+        Err(e) => result.push_failure(create_verification_failure!(
+            "election_event_configuration has wrong format",
+            e
+        )),
+    }
     for (i, f) in setup_dir.control_component_public_keys_payload_iter() {
         if f.is_err() {
             result.push_failure(create_verification_failure!(
@@ -106,7 +113,6 @@ fn fn_verification_400(dir: &VerificationDirectory, result: &mut VerificationRes
 
 #[cfg(test)]
 mod test {
-    use crate::file_structure::setup_directory::SetupDirectory;
 
     use super::super::super::verification::VerificationResultTrait;
     use super::*;
@@ -114,7 +120,7 @@ mod test {
 
     fn get_verifier_dir() -> VerificationDirectory {
         let location = Path::new(".").join("datasets").join("dataset-setup1");
-        VerificationDirectory::Setup(SetupDirectory::new(&location))
+        VerificationDirectory::new(VerificationPeriod::Setup, &location)
     }
 
     #[test]

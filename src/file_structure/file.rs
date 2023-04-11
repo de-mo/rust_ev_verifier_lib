@@ -12,15 +12,11 @@ pub struct File {
 }
 
 macro_rules! create_file {
-    ($l: expr, $p: ident, $s: ident) => {
-        File::new(&$l, VerifierDataType::$p(VerifierSetupDataType::$s), None)
+    ($l: expr, $p: ident, $s: expr) => {
+        File::new(&$l, VerifierDataType::$p($s), None)
     };
-    ($l: expr, $p: ident, $s: ident, $n: expr) => {
-        File::new(
-            &$l,
-            VerifierDataType::$p(VerifierSetupDataType::$s),
-            Some($n),
-        )
+    ($l: expr, $p: ident, $s: expr, $n: expr) => {
+        File::new(&$l, VerifierDataType::$p($s), Some($n))
     };
 }
 pub(crate) use create_file;
@@ -50,7 +46,7 @@ impl File {
     }
 
     pub fn read_data(&self) -> Result<String, FileStructureError> {
-        fs::read_to_string(&self.path).map_err(|e| {
+        fs::read_to_string(&self.get_path()).map_err(|e| {
             create_verifier_error!(
                 FileStructureErrorType::FileError,
                 format!("Cannot read file \"{}\"", self.to_str()),
@@ -124,7 +120,11 @@ mod test {
     #[test]
     fn test_file_macro() {
         let location = get_location();
-        let f = create_file!(&location, Setup, EncryptionParametersPayload);
+        let f = create_file!(
+            &location,
+            Setup,
+            VerifierSetupDataType::EncryptionParametersPayload
+        );
         assert!(f.exists());
         assert_eq!(f.get_location(), location);
         assert_eq!(
@@ -194,7 +194,12 @@ mod test {
     #[test]
     fn test_file_with_nb_macro() {
         let location = get_location();
-        let f = create_file!(&location, Setup, ControlComponentPublicKeysPayload, 2);
+        let f = create_file!(
+            &location,
+            Setup,
+            VerifierSetupDataType::ControlComponentPublicKeysPayload,
+            2
+        );
         assert!(f.exists());
         assert_eq!(f.get_location(), location);
         assert_eq!(

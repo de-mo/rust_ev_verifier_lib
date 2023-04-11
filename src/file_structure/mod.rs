@@ -4,17 +4,21 @@ pub mod setup_directory;
 pub mod tally_directory;
 
 use crate::{
-    data_structures::{setup::VerifierSetupDataType, VerifierDataType},
+    data_structures::{
+        setup::VerifierSetupDataType, tally::VerifierTallyDataType, VerifierDataType,
+    },
     error::VerifierError,
-    setup_or_tally::SetupOrTally,
     verification::VerificationPeriod,
 };
 use setup_directory::SetupDirectory;
 use std::{fmt::Display, path::Path};
 use tally_directory::TallyDirectory;
 
-/// Type represending a VerificationDirectory ([SetupDirectory] or [TallyDirectory])
-pub type VerificationDirectory = SetupOrTally<SetupDirectory, TallyDirectory>;
+/// Type represending a VerificationDirectory
+pub struct VerificationDirectory {
+    setup: SetupDirectory,
+    tally: Option<TallyDirectory>,
+}
 
 pub enum FileType {
     Json,
@@ -27,19 +31,54 @@ pub trait GetFileNameTrait {
     fn get_raw_file_name(&self) -> String;
 
     /// Get the filename injecting the number (if given)
-    fn get_file_name(&self, value: Option<usize>) -> String;
+    fn get_file_name(&self, value: Option<usize>) -> String {
+        let s = self.get_raw_file_name();
+        match value {
+            Some(i) => s.replace("{}", &i.to_string()),
+            None => s,
+        }
+    }
 }
 
 impl VerificationDirectory {
     /// Create a new VerificationDirectory
     pub fn new(period: VerificationPeriod, location: &Path) -> Self {
         match period {
-            VerificationPeriod::Setup => {
-                VerificationDirectory::Setup(SetupDirectory::new(location))
-            }
-            VerificationPeriod::Tally => {
-                VerificationDirectory::Tally(TallyDirectory::new(location))
-            }
+            VerificationPeriod::Setup => VerificationDirectory {
+                setup: SetupDirectory::new(location),
+                tally: None,
+            },
+            VerificationPeriod::Tally => VerificationDirectory {
+                setup: SetupDirectory::new(location),
+                tally: Some(TallyDirectory::new(location)),
+            },
+        }
+    }
+
+    /// Is setup
+    pub fn is_setup(&self) -> bool {
+        self.tally.is_none()
+    }
+
+    /// Is tally
+    pub fn is_tally(&self) -> bool {
+        !self.is_setup()
+    }
+
+    /// Unwrap setup and give a reference to S
+    ///
+    /// panic if type is tally
+    pub fn unwrap_setup(&self) -> &SetupDirectory {
+        &self.setup
+    }
+
+    /// Unwrap tally and give a reference to S
+    ///
+    /// panic if type is seup
+    pub fn unwrap_tally(&self) -> &TallyDirectory {
+        match &self.tally {
+            Some(t) => t,
+            None => panic!("called `unwrap_tally()` on a `Setup` value"),
         }
     }
 }
@@ -60,13 +99,15 @@ impl GetFileNameTrait for VerifierSetupDataType {
         };
         s.to_string()
     }
+}
 
-    fn get_file_name(&self, value: Option<usize>) -> String {
-        let s = self.get_raw_file_name();
-        match value {
-            Some(i) => s.replace("{}", &i.to_string()),
-            None => s,
-        }
+impl GetFileNameTrait for VerifierTallyDataType {
+    fn get_raw_file_name(&self) -> String {
+        let s = match self {
+            Self::ECH0110 => "eCH-0110_*.json",
+            Self::EVotingDecrypt => "evoting_decrypt_*.json",
+        };
+        s.to_string()
     }
 }
 
@@ -74,13 +115,6 @@ impl GetFileNameTrait for VerifierDataType {
     fn get_raw_file_name(&self) -> String {
         match self {
             VerifierDataType::Setup(t) => t.get_raw_file_name(),
-            VerifierDataType::Tally(_) => todo!(),
-        }
-    }
-
-    fn get_file_name(&self, value: Option<usize>) -> String {
-        match self {
-            VerifierDataType::Setup(t) => t.get_file_name(value),
             VerifierDataType::Tally(_) => todo!(),
         }
     }

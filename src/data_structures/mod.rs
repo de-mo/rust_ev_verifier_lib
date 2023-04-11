@@ -18,7 +18,10 @@ use self::{
         setup_component_verification_data_payload::SetupComponentVerificationDataPayload,
         VerifierSetupData, VerifierSetupDataType,
     },
-    tally::{VerifierTallyData, VerifierTallyDataType},
+    tally::{
+        e_voting_decrypt::EVotingDecrypt, ech_0110::ECH0110, VerifierTallyData,
+        VerifierTallyDataType,
+    },
 };
 use crate::{
     crypto_primitives::{
@@ -49,16 +52,38 @@ pub(crate) use create_verifier_data_type;
 /// Trait implementing the collection of the specific data type from the enum object
 pub trait VerifierDataTrait {
     /// Get the EncryptionParametersPayload is the enum is from correct type. Else give None
-    fn encryption_parameters_payload(&self) -> Option<&EncryptionParametersPayload>;
-    fn setup_component_public_keys_payload(&self) -> Option<&SetupComponentPublicKeysPayload>;
-    fn election_event_context_payload(&self) -> Option<&ElectionEventContextPayload>;
-    fn setup_component_tally_data_payload(&self) -> Option<&SetupComponentTallyDataPayload>;
-    fn control_component_public_keys_payload(&self) -> Option<&ControlComponentPublicKeysPayload>;
+    fn encryption_parameters_payload(&self) -> Option<&EncryptionParametersPayload> {
+        None
+    }
+    fn setup_component_public_keys_payload(&self) -> Option<&SetupComponentPublicKeysPayload> {
+        None
+    }
+    fn election_event_context_payload(&self) -> Option<&ElectionEventContextPayload> {
+        None
+    }
+    fn setup_component_tally_data_payload(&self) -> Option<&SetupComponentTallyDataPayload> {
+        None
+    }
+    fn control_component_public_keys_payload(&self) -> Option<&ControlComponentPublicKeysPayload> {
+        None
+    }
     fn setup_component_verification_data_payload(
         &self,
-    ) -> Option<&SetupComponentVerificationDataPayload>;
-    fn control_component_code_shares_payload(&self) -> Option<&ControlComponentCodeSharesPayload>;
-    fn election_event_configuration(&self) -> Option<&ElectionEventConfiguration>;
+    ) -> Option<&SetupComponentVerificationDataPayload> {
+        None
+    }
+    fn control_component_code_shares_payload(&self) -> Option<&ControlComponentCodeSharesPayload> {
+        None
+    }
+    fn election_event_configuration(&self) -> Option<&ElectionEventConfiguration> {
+        None
+    }
+    fn e_voting_decrypt(&self) -> Option<&EVotingDecrypt> {
+        None
+    }
+    fn ech_110(&self) -> Option<&ECH0110> {
+        None
+    }
 }
 
 /// A trait defining the necessary function for the Data Structures
@@ -172,6 +197,19 @@ impl VerifierDataTrait for VerifierData {
         match self {
             VerifierData::Setup(d) => d.election_event_configuration(),
             VerifierData::Tally(_) => None,
+        }
+    }
+
+    fn e_voting_decrypt(&self) -> Option<&EVotingDecrypt> {
+        match self {
+            VerifierData::Setup(_) => None,
+            VerifierData::Tally(d) => d.e_voting_decrypt(),
+        }
+    }
+    fn ech_110(&self) -> Option<&ECH0110> {
+        match self {
+            VerifierData::Setup(_) => None,
+            VerifierData::Tally(d) => d.ech_110(),
         }
     }
 }

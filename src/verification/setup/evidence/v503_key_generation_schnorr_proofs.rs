@@ -162,7 +162,6 @@ fn fn_verification(dir: &VerificationDirectory, result: &mut VerificationResult)
 
 #[cfg(test)]
 mod test {
-    use crate::file_structure::setup_directory::SetupDirectory;
 
     use super::super::super::super::verification::VerificationResultTrait;
     use super::*;
@@ -170,7 +169,7 @@ mod test {
 
     fn get_verifier_dir() -> VerificationDirectory {
         let location = Path::new(".").join("datasets").join("dataset-setup1");
-        VerificationDirectory::Setup(SetupDirectory::new(&location))
+        VerificationDirectory::new(VerificationPeriod::Setup, &location)
     }
 
     #[test]

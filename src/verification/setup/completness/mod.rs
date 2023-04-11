@@ -69,6 +69,11 @@ fn fn_verification_100(dir: &VerificationDirectory, result: &mut VerificationRes
             "setup_component_public_keys_payload_file does not exist"
         ))
     }
+    if !setup_dir.election_event_configuration_file.exists() {
+        result.push_failure(create_verification_failure!(
+            "setup_component_public_keys_payload_file does not exist"
+        ))
+    }
     if setup_dir
         .control_component_public_keys_payload_group
         .get_numbers()
@@ -88,15 +93,13 @@ fn fn_verification_100(dir: &VerificationDirectory, result: &mut VerificationRes
 
 #[cfg(test)]
 mod test {
-    use crate::file_structure::setup_directory::SetupDirectory;
-
     use super::super::super::verification::VerificationResultTrait;
     use super::*;
     use std::path::Path;
 
     fn get_verifier_dir() -> VerificationDirectory {
         let location = Path::new(".").join("datasets").join("dataset-setup1");
-        VerificationDirectory::Setup(SetupDirectory::new(&location))
+        VerificationDirectory::new(VerificationPeriod::Setup, &location)
     }
 
     #[test]

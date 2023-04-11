@@ -33,7 +33,7 @@ pub struct SetupDirectory {
     pub encryption_parameters_payload_file: File,
     pub setup_component_public_keys_payload_file: File,
     pub election_event_context_payload_file: File,
-    pub election_event_configuration: File,
+    pub election_event_configuration_file: File,
     pub control_component_public_keys_payload_group: FileGroup,
     pub vcs_directories: Box<Vec<VCSDirectory>>,
 }
@@ -75,19 +75,23 @@ impl SetupDirectory {
             encryption_parameters_payload_file: create_file!(
                 location,
                 Setup,
-                EncryptionParametersPayload
+                VerifierSetupDataType::EncryptionParametersPayload
             ),
             setup_component_public_keys_payload_file: create_file!(
                 location,
                 Setup,
-                SetupComponentPublicKeysPayload
+                VerifierSetupDataType::SetupComponentPublicKeysPayload
             ),
             election_event_context_payload_file: create_file!(
                 location,
                 Setup,
-                ElectionEventContextPayload
+                VerifierSetupDataType::ElectionEventContextPayload
             ),
-            election_event_configuration: create_file!(location, Setup, ElectionEventConfiguration),
+            election_event_configuration_file: create_file!(
+                location,
+                Setup,
+                VerifierSetupDataType::ElectionEventConfiguration
+            ),
             control_component_public_keys_payload_group: FileGroup::new(
                 &location,
                 create_verifier_data_type!(Setup, ControlComponentPublicKeysPayload),
@@ -141,7 +145,7 @@ impl SetupDirectory {
     pub fn election_event_configuration(
         &self,
     ) -> Result<Box<ElectionEventConfiguration>, FileStructureError> {
-        self.election_event_configuration
+        self.election_event_configuration_file
             .get_data()
             .map(|d| Box::new(d.election_event_configuration().unwrap().clone()))
     }
@@ -160,7 +164,7 @@ impl VCSDirectory {
             setup_component_tally_data_payload_file: create_file!(
                 location,
                 Setup,
-                SetupComponentTallyDataPayload
+                VerifierSetupDataType::SetupComponentTallyDataPayload
             ),
             setup_component_verification_data_payload_group: FileGroup::new(
                 &location,
