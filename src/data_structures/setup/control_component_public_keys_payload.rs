@@ -1,5 +1,5 @@
 use super::super::{
-    common_types::{EncryptionGroup, ProofUnderline, Signature},
+    common_types::{EncryptionGroup, ProofUnderline, SignatureJson},
     deserialize_seq_string_hex_to_seq_bigunit,
     error::{DeserializeError, DeserializeErrorType},
     implement_trait_data_structure, DataStructureTrait,
@@ -14,7 +14,7 @@ pub struct ControlComponentPublicKeysPayload {
     pub encryption_group: EncryptionGroup,
     pub election_event_id: String,
     pub control_component_public_keys: ControlComponentPublicKeys,
-    pub signature: Signature,
+    pub signature: SignatureJson,
 }
 
 implement_trait_data_structure!(ControlComponentPublicKeysPayload);

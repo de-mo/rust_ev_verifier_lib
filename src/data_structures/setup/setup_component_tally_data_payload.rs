@@ -1,5 +1,5 @@
 use super::super::{
-    common_types::{EncryptionGroup, Signature},
+    common_types::{EncryptionGroup, SignatureJson},
     deserialize_seq_seq_string_hex_to_seq_seq_bigunit,
     error::{DeserializeError, DeserializeErrorType},
     implement_trait_data_structure, DataStructureTrait,
@@ -18,7 +18,7 @@ pub struct SetupComponentTallyDataPayload {
     pub verification_card_ids: Vec<String>,
     #[serde(deserialize_with = "deserialize_seq_seq_string_hex_to_seq_seq_bigunit")]
     pub verification_card_public_keys: Vec<Vec<BigUint>>,
-    pub signature: Signature,
+    pub signature: SignatureJson,
 }
 
 implement_trait_data_structure!(SetupComponentTallyDataPayload);

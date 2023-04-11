@@ -1,11 +1,11 @@
 use super::super::{
-    common_types::{EncryptionGroup, Signature, SignatureTrait},
+    common_types::{EncryptionGroup, SignatureJson},
     error::{DeserializeError, DeserializeErrorType},
     implement_trait_data_structure, DataStructureTrait,
 };
 use crate::{
     crypto_primitives::{
-        direct_trust::CertificateAuthority, hashing::RecursiveHashable,
+        byte_array::ByteArray, direct_trust::CertificateAuthority, hashing::RecursiveHashable,
         signature::VerifiySignatureTrait,
     },
     error::{create_verifier_error, VerifierError},
@@ -19,7 +19,7 @@ pub struct EncryptionParametersPayload {
     pub encryption_group: EncryptionGroup,
     pub seed: String,
     pub small_primes: Vec<usize>,
-    pub signature: Signature,
+    pub signature: SignatureJson,
 }
 
 implement_trait_data_structure!(EncryptionParametersPayload);
@@ -27,9 +27,7 @@ implement_trait_data_structure!(EncryptionParametersPayload);
 impl<'a> From<&EncryptionParametersPayload> for RecursiveHashable {
     fn from(value: &EncryptionParametersPayload) -> Self {
         let mut elts = vec![];
-        elts.push(Self::from(&value.encryption_group.p));
-        elts.push(Self::from(&value.encryption_group.q));
-        elts.push(Self::from(&value.encryption_group.g));
+        elts.push(Self::from(&value.encryption_group));
         elts.push(Self::from(&value.seed));
         let sp_hash: Vec<BigUint> = value
             .small_primes
@@ -49,11 +47,9 @@ impl VerifiySignatureTrait<'_> for EncryptionParametersPayload {
     fn get_certificate_authority(&self) -> CertificateAuthority {
         CertificateAuthority::SdmConfig
     }
-}
 
-impl SignatureTrait for EncryptionParametersPayload {
-    fn get_signature_struct(&self) -> &Signature {
-        &self.signature
+    fn get_signature(&self) -> ByteArray {
+        self.signature.get_signature()
     }
 }
 

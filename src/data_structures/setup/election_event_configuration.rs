@@ -4,10 +4,9 @@ use super::super::{
 };
 use crate::{
     crypto_primitives::{
-        direct_trust::CertificateAuthority, hashing::RecursiveHashable,
+        byte_array::ByteArray, direct_trust::CertificateAuthority, hashing::RecursiveHashable,
         signature::VerifiySignatureTrait,
     },
-    data_structures::common_types::{Signature, SignatureTrait},
     error::{create_result_with_error, create_verifier_error, VerifierError},
 };
 use roxmltree::Document;
@@ -61,10 +60,8 @@ impl VerifiySignatureTrait<'_> for ElectionEventConfiguration {
     fn get_certificate_authority(&self) -> CertificateAuthority {
         CertificateAuthority::Canton
     }
-}
 
-impl SignatureTrait for ElectionEventConfiguration {
-    fn get_signature_struct(&self) -> &Signature {
+    fn get_signature(&self) -> ByteArray {
         todo!()
     }
 }

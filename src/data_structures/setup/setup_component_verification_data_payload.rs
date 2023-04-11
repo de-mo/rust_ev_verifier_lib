@@ -1,5 +1,5 @@
 use super::super::{
-    common_types::{EncryptionGroup, ExponentiatedEncryptedElement, Signature},
+    common_types::{EncryptionGroup, ExponentiatedEncryptedElement, SignatureJson},
     deserialize_seq_string_64_to_seq_bytearray, deserialize_seq_string_hex_to_seq_bigunit,
     error::{DeserializeError, DeserializeErrorType},
     implement_trait_data_structure, DataStructureTrait,
@@ -22,7 +22,7 @@ pub struct SetupComponentVerificationDataPayload {
     pub encryption_group: EncryptionGroup,
     pub setup_component_verification_data: Vec<SetupComponentVerificationData>,
     pub combined_correctness_information: CombinedCorrectnessInformation,
-    pub signature: Signature,
+    pub signature: SignatureJson,
 }
 
 implement_trait_data_structure!(SetupComponentVerificationDataPayload);

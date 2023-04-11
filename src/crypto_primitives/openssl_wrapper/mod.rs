@@ -13,6 +13,7 @@ pub enum OpensslErrorType {
     Certificate,
     PublicKey,
     Time,
+    VerifiySignature,
 }
 
 impl Display for OpensslErrorType {
@@ -22,6 +23,7 @@ impl Display for OpensslErrorType {
             Self::Certificate => "Read Certificate",
             Self::PublicKey => "Public Key",
             Self::Time => "Time Error",
+            Self::VerifiySignature => "Verify Signature",
         };
         write!(f, "{s}")
     }

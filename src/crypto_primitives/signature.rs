@@ -9,14 +9,14 @@ use super::{
     direct_trust::{CertificateAuthority, DirectTrust},
     openssl_wrapper::signature::verify,
 };
-use crate::data_structures::common_types::SignatureTrait;
 use crate::error::{create_result_with_error, create_verifier_error, VerifierError};
 
-/// Trait that must be implemented for each object
-/// implementing RecursiveHashable
+/// Trait that must be implemented for each object implementing a signature to be verified
+///
+/// [RecursiveHasable] has to implement the trait From<&...>
 pub trait VerifiySignatureTrait<'a>
 where
-    Self: 'a + SignatureTrait,
+    Self: 'a,
     RecursiveHashable: From<&'a Self>,
 {
     /// Get the context data of the object according to the specifications
@@ -25,15 +25,35 @@ where
     /// Get the Certificate Authority to the specifications
     fn get_certificate_authority(&self) -> CertificateAuthority;
 
-    /// Verfiy the signature according to the specifications
+    /// Get the signature of the object
+    fn get_signature(&self) -> ByteArray;
+
+    /// Verfiy the signature according to the specifications of Verifier
     fn verifiy_signature(&'a self, location: &Path) -> Result<bool, SignatureError> {
-        verifiy_signature_impl(
-            location,
-            &self.get_certificate_authority(),
+        let dt = DirectTrust::new(location, &self.get_certificate_authority()).map_err(|e| {
+            create_verifier_error!(SignatureErrorType::DirectTrust, "Error reading keystore", e)
+        })?;
+        let cert = dt.signing_certificate();
+        let time_ok = cert.is_valid_time().map_err(|e| {
+            create_verifier_error!(SignatureErrorType::DirectTrust, "Error testing time", e)
+        })?;
+        if !time_ok {
+            return create_result_with_error!(SignatureErrorType::Validation, "Time is not valid");
+        }
+        let pkey = cert.get_public_key().map_err(|e| {
+            create_verifier_error!(
+                SignatureErrorType::DirectTrust,
+                "Error reading public key",
+                e
+            )
+        })?;
+        verify(
+            pkey.as_ref(),
             &RecursiveHashable::from(self),
             &self.get_context_data(),
             &self.get_signature(),
         )
+        .map_err(|e| create_verifier_error!(SignatureErrorType::Validation, "Error verfying", e))
     }
 }
 
@@ -54,32 +74,3 @@ impl Display for SignatureErrorType {
 }
 
 pub type SignatureError = VerifierError<SignatureErrorType>;
-
-fn verifiy_signature_impl(
-    location: &Path,
-    authority_id: &CertificateAuthority,
-    hashable: &RecursiveHashable,
-    context_data: &RecursiveHashable,
-    signature: &ByteArray,
-) -> Result<bool, SignatureError> {
-    let dt = DirectTrust::new(location, authority_id).map_err(|e| {
-        create_verifier_error!(SignatureErrorType::DirectTrust, "Error reading keystore", e)
-    })?;
-    let cert = dt.signing_certificate();
-    let time_ok = cert.is_valid_time().map_err(|e| {
-        create_verifier_error!(SignatureErrorType::DirectTrust, "Error testing time", e)
-    })?;
-    if !time_ok {
-        return create_result_with_error!(SignatureErrorType::Validation, "Time is not valide");
-    }
-    let pkey = cert.get_public_key().map_err(|e| {
-        create_verifier_error!(
-            SignatureErrorType::DirectTrust,
-            "Error reading public key",
-            e
-        )
-    })?;
-    let h = RecursiveHashable::Composite(vec![hashable.to_owned(), context_data.to_owned()])
-        .recursive_hash();
-    Ok(verify(pkey.as_ref(), &h, signature))
-}

@@ -1,5 +1,5 @@
 use super::super::{
-    common_types::{EncryptionGroup, Signature},
+    common_types::{EncryptionGroup, SignatureJson},
     error::{DeserializeError, DeserializeErrorType},
     implement_trait_data_structure, DataStructureTrait,
 };
@@ -16,7 +16,7 @@ pub struct TallyComponentVotesPayload {
     pub votes: Vec<Vec<usize>>,
     pub actual_selected_voting_options: Vec<Vec<String>>,
     pub decoded_write_in_votes: Vec<Vec<String>>,
-    pub signature: Signature,
+    pub signature: SignatureJson,
 }
 
 implement_trait_data_structure!(TallyComponentVotesPayload);

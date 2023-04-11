@@ -1,5 +1,5 @@
 use super::super::{
-    common_types::{EncryptionGroup, ExponentiatedEncryptedElement, Proof, Signature},
+    common_types::{EncryptionGroup, ExponentiatedEncryptedElement, Proof, SignatureJson},
     deserialize_seq_string_hex_to_seq_bigunit,
     error::{DeserializeError, DeserializeErrorType},
     implement_trait_data_structure, DataStructureTrait,
@@ -21,7 +21,7 @@ pub struct ControlComponentCodeSharesPayloadInner {
     pub control_component_code_shares: Vec<ControlComponentCodeShares>,
     pub encryption_group: EncryptionGroup,
     pub node_id: usize,
-    pub signature: Signature,
+    pub signature: SignatureJson,
 }
 
 #[derive(Deserialize, Debug, Clone)]

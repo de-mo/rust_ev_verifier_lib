@@ -1,10 +1,7 @@
 use super::super::{error::DeserializeError, DataStructureTrait};
-use crate::{
-    crypto_primitives::{
-        direct_trust::CertificateAuthority, hashing::RecursiveHashable,
-        signature::VerifiySignatureTrait,
-    },
-    data_structures::common_types::{Signature, SignatureTrait},
+use crate::crypto_primitives::{
+    byte_array::ByteArray, direct_trust::CertificateAuthority, hashing::RecursiveHashable,
+    signature::VerifiySignatureTrait,
 };
 use roxmltree::Document;
 
@@ -31,10 +28,7 @@ impl VerifiySignatureTrait<'_> for ECH0110 {
     fn get_certificate_authority(&self) -> CertificateAuthority {
         CertificateAuthority::Canton
     }
-}
-
-impl SignatureTrait for ECH0110 {
-    fn get_signature_struct(&self) -> &Signature {
+    fn get_signature(&self) -> ByteArray {
         todo!()
     }
 }

@@ -1,5 +1,5 @@
 use super::super::{
-    common_types::{EncryptionGroup, ExponentiatedEncryptedElement, Signature},
+    common_types::{EncryptionGroup, ExponentiatedEncryptedElement, SignatureJson},
     deserialize_seq_string_hex_to_seq_bigunit, deserialize_string_hex_to_bigunit,
     error::{DeserializeError, DeserializeErrorType},
     implement_trait_data_structure, DataStructureTrait,
@@ -19,7 +19,7 @@ pub struct TallyComponentShufflePayload {
     pub ballot_box_id: String,
     pub verifiable_shuffle: VerifiableShuffle,
     pub verifiable_plaintext_decryption: VerifiablePlaintextDecryption,
-    pub signature: Signature,
+    pub signature: SignatureJson,
 }
 implement_trait_data_structure!(TallyComponentShufflePayload);
 

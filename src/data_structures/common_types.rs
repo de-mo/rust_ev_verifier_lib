@@ -1,7 +1,10 @@
 //! Type that are used in many structures
 
 use super::{deserialize_seq_string_hex_to_seq_bigunit, deserialize_string_hex_to_bigunit};
-use crate::crypto_primitives::byte_array::{ByteArray, Decode};
+use crate::crypto_primitives::{
+    byte_array::{ByteArray, Decode},
+    hashing::RecursiveHashable,
+};
 use num_bigint::BigUint;
 use serde::Deserialize;
 
@@ -16,21 +19,27 @@ pub struct EncryptionGroup {
     pub g: BigUint,
 }
 
+impl<'a> From<&EncryptionGroup> for RecursiveHashable {
+    fn from(value: &EncryptionGroup) -> Self {
+        let mut elts = vec![];
+        elts.push(Self::from(&value.p));
+        elts.push(Self::from(&value.q));
+        elts.push(Self::from(&value.g));
+        Self::from(&elts)
+    }
+}
+
 /// Struct representing the signature of a json file
 #[derive(Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
-pub struct Signature {
+pub struct SignatureJson {
     pub signature_contents: String,
 }
 
-/// Trait defining the functions to get the signature
-pub trait SignatureTrait {
-    /// Get the signature structure
-    fn get_signature_struct(&self) -> &Signature;
-
+impl SignatureJson {
     /// Get the signature as ByteArray
-    fn get_signature(&self) -> ByteArray {
-        ByteArray::base64_decode(&self.get_signature_struct().signature_contents).unwrap()
+    pub fn get_signature(&self) -> ByteArray {
+        ByteArray::base64_decode(&self.signature_contents).unwrap()
     }
 }
 

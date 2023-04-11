@@ -77,7 +77,6 @@ mod test {
     }
 
     #[test]
-    #[ignore]
     fn test_ok() {
         let dir = get_verifier_dir();
         let mut result = VerificationResult::new();

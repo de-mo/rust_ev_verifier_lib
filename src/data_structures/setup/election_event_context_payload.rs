@@ -1,5 +1,5 @@
 use super::super::{
-    common_types::{EncryptionGroup, Signature},
+    common_types::{EncryptionGroup, SignatureJson},
     error::{DeserializeError, DeserializeErrorType},
     implement_trait_data_structure, DataStructureTrait,
 };
@@ -11,7 +11,7 @@ use serde::Deserialize;
 pub struct ElectionEventContextPayload {
     pub encryption_group: EncryptionGroup,
     pub election_event_context: ElectionEventContext,
-    pub signature: Signature,
+    pub signature: SignatureJson,
 }
 
 implement_trait_data_structure!(ElectionEventContextPayload);
