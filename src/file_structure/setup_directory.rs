@@ -3,29 +3,29 @@ use super::{
     file_group::{impl_iterator_payload, FileGroup, FileGroupIter},
     FileStructureError,
 };
-use crate::data_structures::{
-    create_verifier_data_type,
-    setup::{
-        control_component_code_shares_payload::ControlComponentCodeSharesPayload,
-        control_component_public_keys_payload::ControlComponentPublicKeysPayload,
-        election_event_configuration::ElectionEventConfiguration,
-        election_event_context_payload::ElectionEventContextPayload,
-        encryption_parameters_payload::EncryptionParametersPayload,
-        setup_component_public_keys_payload::SetupComponentPublicKeysPayload,
-        setup_component_tally_data_payload::SetupComponentTallyDataPayload,
-        setup_component_verification_data_payload::SetupComponentVerificationDataPayload,
-        VerifierSetupDataType,
+use crate::{
+    constants::{SETUP_DIR_NAME, VCS_DIR_NAME},
+    data_structures::{
+        create_verifier_data_type,
+        setup::{
+            control_component_code_shares_payload::ControlComponentCodeSharesPayload,
+            control_component_public_keys_payload::ControlComponentPublicKeysPayload,
+            election_event_configuration::ElectionEventConfiguration,
+            election_event_context_payload::ElectionEventContextPayload,
+            encryption_parameters_payload::EncryptionParametersPayload,
+            setup_component_public_keys_payload::SetupComponentPublicKeysPayload,
+            setup_component_tally_data_payload::SetupComponentTallyDataPayload,
+            setup_component_verification_data_payload::SetupComponentVerificationDataPayload,
+            VerifierSetupDataType,
+        },
+        VerifierDataTrait, VerifierDataType,
     },
-    VerifierDataTrait, VerifierDataType,
 };
 use std::{
     fs,
     path::{Path, PathBuf},
     slice::Iter,
 };
-
-const SETUP_NAME: &str = "setup";
-const VCS_DIR_NAME: &str = "verification_card_sets";
 
 #[derive(Clone)]
 pub struct SetupDirectory {
@@ -69,7 +69,7 @@ impl_iterator_payload!(
 
 impl SetupDirectory {
     pub fn new(data_location: &Path) -> Self {
-        let location = data_location.join(SETUP_NAME);
+        let location = data_location.join(SETUP_DIR_NAME);
         let mut res = Self {
             location: location.to_path_buf(),
             encryption_parameters_payload_file: create_file!(

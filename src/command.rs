@@ -7,7 +7,7 @@
 use std::path::Path;
 
 use super::runner::Runner;
-use crate::verification::VerificationPeriod;
+use crate::{constants::LOG_PATH, verification::VerificationPeriod};
 use clap::{Arg, ArgAction, ArgMatches, Command};
 use log::{info, warn, LevelFilter};
 use log4rs::{
@@ -59,7 +59,7 @@ fn get_command() -> ArgMatches {
 fn init_logger(level: LevelFilter, with_stdout: bool) {
     let file = FileAppender::builder()
         .encoder(Box::new(PatternEncoder::new("{d} {l} - {m}{n}")))
-        .build("log/log.txt")
+        .build(LOG_PATH)
         .unwrap();
 
     let mut root_builder = Root::builder().appender("file");

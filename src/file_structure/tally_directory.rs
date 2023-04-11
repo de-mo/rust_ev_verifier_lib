@@ -1,10 +1,13 @@
 use super::file::{create_file, File};
-use crate::data_structures::{
-    tally::{
-        e_voting_decrypt::EVotingDecrypt, ech_0110::ECH0110, VerifierTallyData,
-        VerifierTallyDataType,
+use crate::{
+    constants::{BB_DIR_NAME, TALLY_DIR_NAME},
+    data_structures::{
+        tally::{
+            e_voting_decrypt::EVotingDecrypt, ech_0110::ECH0110, VerifierTallyData,
+            VerifierTallyDataType,
+        },
+        VerifierDataType,
     },
-    VerifierDataType,
 };
 use std::path::{Path, PathBuf};
 
@@ -16,9 +19,6 @@ pub struct TallyDirectory {
     pub bb_directories: Box<Vec<BBDirectory>>,
 }
 
-const SETUP_NAME: &str = "tally";
-const BB_DIR_NAME: &str = "ballot_boxes";
-
 #[derive(Clone)]
 pub struct BBDirectory {
     location: PathBuf,
@@ -26,7 +26,7 @@ pub struct BBDirectory {
 
 impl TallyDirectory {
     pub fn new(data_location: &Path) -> TallyDirectory {
-        let location = data_location.join("tally");
+        let location = data_location.join(TALLY_DIR_NAME);
         TallyDirectory {
             location: location.to_path_buf(),
             e_voting_decrypt: create_file!(location, Tally, VerifierTallyDataType::EVotingDecrypt),
