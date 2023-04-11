@@ -34,6 +34,7 @@ pub struct ControlComponentPublicKeys {
 #[cfg(test)]
 mod test {
     use super::*;
+    use crate::file_structure::FileType;
     use std::fs;
     use std::path::Path;
 
@@ -45,7 +46,7 @@ mod test {
             .join("setup")
             .join("controlComponentPublicKeysPayload.1.json");
         let json = fs::read_to_string(&path).unwrap();
-        let r_eec = ControlComponentPublicKeysPayload::from_json(&json);
+        let r_eec = ControlComponentPublicKeysPayload::from_string(&json, &FileType::Json);
         assert!(r_eec.is_ok())
     }
 }

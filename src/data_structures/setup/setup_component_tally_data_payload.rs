@@ -26,6 +26,7 @@ implement_trait_data_structure!(SetupComponentTallyDataPayload);
 #[cfg(test)]
 mod test {
     use super::*;
+    use crate::file_structure::FileType;
     use std::fs;
     use std::path::Path;
 
@@ -39,7 +40,7 @@ mod test {
             .join("7e8ce00c2c164c268c11cfa7066e3d9f")
             .join("setupComponentTallyDataPayload.json");
         let json = fs::read_to_string(&path).unwrap();
-        let r_eec = SetupComponentTallyDataPayload::from_json(&json);
+        let r_eec = SetupComponentTallyDataPayload::from_string(&json, &FileType::Json);
         assert!(r_eec.is_ok())
     }
 }

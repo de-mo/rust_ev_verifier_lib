@@ -16,6 +16,11 @@ use tally_directory::TallyDirectory;
 /// Type represending a VerificationDirectory ([SetupDirectory] or [TallyDirectory])
 pub type VerificationDirectory = SetupOrTally<SetupDirectory, TallyDirectory>;
 
+pub enum FileType {
+    Json,
+    Xml,
+}
+
 /// Trait defining functions to get the filename
 pub trait GetFileNameTrait {
     /// Get the file name as it is defiened
@@ -51,6 +56,7 @@ impl GetFileNameTrait for VerifierSetupDataType {
             }
             Self::ControlComponentCodeSharesPayload => "controlComponentCodeSharesPayload.{}.json",
             Self::SetupComponentTallyDataPayload => "setupComponentTallyDataPayload.json",
+            Self::ElectionEventConfiguration => "configuration-anonymized.xml",
         };
         s.to_string()
     }

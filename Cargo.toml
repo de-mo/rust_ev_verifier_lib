@@ -18,4 +18,5 @@ log4rs = "1.2.0"
 num-bigint = "0.4"
 num-bigint-dig = { version="0.8", features= ["prime"] }
 num-traits = "0.2"
+roxmltree = "0.18.0"
 

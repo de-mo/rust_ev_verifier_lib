@@ -51,6 +51,7 @@ pub struct ElectionEventContext {
 #[cfg(test)]
 mod test {
     use super::*;
+    use crate::file_structure::FileType;
     use std::fs;
     use std::path::Path;
 
@@ -62,7 +63,7 @@ mod test {
             .join("setup")
             .join("electionEventContextPayload.json");
         let json = fs::read_to_string(&path).unwrap();
-        let r_eec = ElectionEventContextPayload::from_json(&json);
+        let r_eec = ElectionEventContextPayload::from_string(&json, &FileType::Json);
         assert!(r_eec.is_ok())
     }
 }

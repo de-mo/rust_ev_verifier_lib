@@ -60,6 +60,7 @@ impl SignatureTrait for EncryptionParametersPayload {
 #[cfg(test)]
 mod test {
     use super::*;
+    use crate::file_structure::FileType;
     use num_bigint::ToBigUint;
     use std::fs;
     use std::path::Path;
@@ -116,7 +117,7 @@ mod test {
             .join("setup")
             .join("encryptionParametersPayload.json");
         let json = fs::read_to_string(&path).unwrap();
-        let r_eg = EncryptionParametersPayload::from_json(&json);
+        let r_eg = EncryptionParametersPayload::from_string(&json, &FileType::Json);
         //let r_eg: Result<EncryptionParametersPayload, serde_json::Error> =
         //    serde_json::from_str(&json);
         assert!(r_eg.is_ok())

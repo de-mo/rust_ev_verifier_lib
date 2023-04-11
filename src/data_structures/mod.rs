@@ -6,10 +6,11 @@ pub mod setup;
 pub mod tally;
 
 use self::{
-    error::DeserializeError,
+    error::{DeserializeError, DeserializeErrorType},
     setup::{
         control_component_code_shares_payload::ControlComponentCodeSharesPayload,
         control_component_public_keys_payload::ControlComponentPublicKeysPayload,
+        election_event_configuration::ElectionEventConfiguration,
         election_event_context_payload::ElectionEventContextPayload,
         encryption_parameters_payload::EncryptionParametersPayload,
         setup_component_public_keys_payload::SetupComponentPublicKeysPayload,
@@ -24,9 +25,12 @@ use crate::{
         byte_array::{ByteArray, Decode},
         num_bigint::Hexa,
     },
+    error::{create_result_with_error, create_verifier_error, VerifierError},
+    file_structure::FileType,
     setup_or_tally::SetupOrTally,
 };
 use num_bigint::BigUint;
+use roxmltree::Document;
 use serde::de::{Deserialize, Deserializer, Error};
 
 /// The type VerifierData implement an option between [VerifierSetupData] and [VerifierTallyData]
@@ -54,13 +58,40 @@ pub trait VerifierDataTrait {
         &self,
     ) -> Option<&SetupComponentVerificationDataPayload>;
     fn control_component_code_shares_payload(&self) -> Option<&ControlComponentCodeSharesPayload>;
+    fn election_event_configuration(&self) -> Option<&ElectionEventConfiguration>;
 }
 
 /// A trait defining the necessary function for the Data Structures
-pub trait DataStructureTrait {
-    fn from_json(s: &String) -> Result<Self, DeserializeError>
-    where
-        Self: Sized;
+pub trait DataStructureTrait: Sized {
+    fn from_string(s: &String, t: &FileType) -> Result<Self, DeserializeError> {
+        match t {
+            FileType::Json => Self::from_json(s),
+            FileType::Xml => {
+                let doc = Document::parse(&s).map_err(|e| {
+                    create_verifier_error!(
+                        DeserializeErrorType::XMLError,
+                        "Cannot parse content of xml file",
+                        e
+                    )
+                })?;
+                Self::from_roxmltree(&doc)
+            }
+        }
+    }
+
+    fn from_json(_: &String) -> Result<Self, DeserializeError> {
+        create_result_with_error!(
+            DeserializeErrorType::JSONError,
+            "from_json not implemented now"
+        )
+    }
+
+    fn from_roxmltree<'a>(_: &'a Document<'a>) -> Result<Self, DeserializeError> {
+        create_result_with_error!(
+            DeserializeErrorType::JSONError,
+            "from_roxmltree not implemented"
+        )
+    }
 
     fn to_encryption_parameters_payload(&self) -> Option<&EncryptionParametersPayload> {
         None
@@ -136,6 +167,13 @@ impl VerifierDataTrait for VerifierData {
             VerifierData::Tally(_) => None,
         }
     }
+
+    fn election_event_configuration(&self) -> Option<&ElectionEventConfiguration> {
+        match self {
+            VerifierData::Setup(d) => d.election_event_configuration(),
+            VerifierData::Tally(_) => None,
+        }
+    }
 }
 
 impl VerifierDataType {
@@ -143,7 +181,7 @@ impl VerifierDataType {
     pub fn verifier_data_from_json(&self, s: &String) -> Result<VerifierData, DeserializeError> {
         match self {
             VerifierDataType::Setup(t) => {
-                t.verifier_data_from_json(s).map(|r| VerifierData::Setup(r))
+                t.verifier_data_from_file(s).map(|r| VerifierData::Setup(r))
             }
             VerifierDataType::Tally(_) => todo!(),
         }
