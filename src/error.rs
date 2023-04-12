@@ -65,7 +65,7 @@ impl<K: Display + Debug> VerifierError<K> {
         let s: String = format!("Error \"{}\": {}", self.kind(), self.message());
         match &self.source() {
             None => s,
-            Some(e) => format!("{}.\nInternal Error: {}", s, e.to_string()),
+            Some(e) => format!("{}.\nInternal Error: {}", s, e),
         }
     }
 
