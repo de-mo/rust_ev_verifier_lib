@@ -2,42 +2,42 @@
     {
         "id": "s100",
         "name": "VerifySetupCompleteness",
-        "algorithm": "",
+        "algorithm": "Section 3.1",
         "period": "setup",
         "category": "completness",
-        "description": ""
+        "description": "The required elements for the setup verification, along with their path, are present"
     },
     {
         "id": "s200",
         "name": "VerifySignatureSetupComponentEncryptionParameters",
-        "algorithm": "",
+        "algorithm": "Verification 2.01",
         "period": "setup",
         "category": "authenticity",
-        "description": ""
+        "description": "The signature of EncryptionParametersPayload is valid"
     },
     {
         "id": "s201",
         "name": "VerifySignatureCantonConfig",
-        "algorithm": "",
+        "algorithm": "Verification 2.02",
         "period": "setup",
         "category": "authenticity",
-        "description": ""
+        "description": "The signature of ElectionEventConfiguration is valid"
     },
     {
         "id": "s202",
         "name": "VerifySignatureSetupComponentPublicKeys",
-        "algorithm": "",
+        "algorithm": "Verification 2.03",
         "period": "setup",
         "category": "authenticity",
-        "description": ""
+        "description": "The signature of SetupComponentPublicKeysPayload is valid"
     },
     {
         "id": "s203",
         "name": "VerifySignatureControlComponentPublicKeys",
-        "algorithm": "",
+        "algorithm": "Verification 2.04",
         "period": "setup",
         "category": "authenticity",
-        "description": ""
+        "description": "The signature of ControlComponentPublicKeysPayload is valid"
     },
     {
         "id": "s204",
@@ -74,10 +74,10 @@
     {
         "id": "s300",
         "name": "VerifyEncryptionGroupConsistency",
-        "algorithm": "",
+        "algorithm": "Verification 3.01",
         "period": "setup",
         "category": "consistency",
-        "description": ""
+        "description": "All encryption group parameters are identical"
     },
     {
         "id": "s301",
@@ -202,10 +202,10 @@
     {
         "id": "s500",
         "name": "VerifyEncryptionParameters",
-        "algorithm": "",
+        "algorithm": "Verification 5.01",
         "period": "setup",
         "category": "evidence",
-        "description": ""
+        "description": "The encryption group parameters cannot be regenerated from seed and are the same"
     },
     {
         "id": "s501",
