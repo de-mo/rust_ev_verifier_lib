@@ -9,7 +9,10 @@ use std::path::Path;
 use super::runner::Runner;
 use crate::{
     constants::LOG_PATH,
-    verification::{meta_data::VerificationMetaDataList, VerificationPeriod},
+    verification::{
+        meta_data::{VerificationMetaDataList, VerificationMetaDataListTrait},
+        VerificationPeriod,
+    },
 };
 use clap::{Arg, ArgAction, ArgMatches, Command};
 use log::{info, warn, LevelFilter};
@@ -106,7 +109,7 @@ pub fn execute_command() {
 }
 
 fn execute_runner(period: VerificationPeriod, matches: &ArgMatches) {
-    let metadata = VerificationMetaDataList::new();
+    let metadata = VerificationMetaDataList::load().unwrap();
     let dir = matches.get_one::<String>("dir").unwrap();
     let path = Path::new(dir);
     let mut exclusions: Vec<&String> = vec![];
