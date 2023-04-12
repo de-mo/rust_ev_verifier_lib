@@ -66,17 +66,12 @@ pub(super) fn fn_verification(dir: &VerificationDirectory, result: &mut Verifica
         )
         .enumerate()
         {
-            println!("VerifSchnorrCCRji for cc {} at pos {}", j, i);
-            //println!("pk_ccr_j_i: {:?}", pk_ccr_j_i.to_hexa());
-            //println!("pi_pk_ccr_j_i.e: {:?}", pi_pk_ccr_j_i.e.to_hexa());
-            //println!("pi_pk_ccr_j_i.z: {:?}", pi_pk_ccr_j_i.z.to_hexa());
             if !verify_schnorr(
                 &eg.encryption_group,
                 &Proof::from(&pi_pk_ccr_j_i),
                 &pk_ccr_j_i,
                 &i_aux_ccr_j,
             ) {
-                println!("Failure");
                 result.push_failure(create_verification_failure!(format!(
                     "VerifSchnorrCCRji: Verifiy CCR_j Schnorrproof not ok at pos {} for cc {}",
                     i, j
@@ -96,17 +91,12 @@ pub(super) fn fn_verification(dir: &VerificationDirectory, result: &mut Verifica
         )
         .enumerate()
         {
-            println!("VerifSchnorrCCMji for cc {} at pos {}", j, i);
-            //println!("pk_ccr_j_i: {:?}", pk_ccr_j_i.to_hexa());
-            //println!("pi_pk_ccr_j_i.e: {:?}", pi_pk_ccr_j_i.e.to_hexa());
-            //println!("pi_pk_ccr_j_i.z: {:?}", pi_pk_ccr_j_i.z.to_hexa());
             if !verify_schnorr(
                 &eg.encryption_group,
                 &Proof::from(&pi_el_pk_j_i),
                 &el_pk_j_i,
                 &i_aux_ccm_j,
             ) {
-                println!("Failure");
                 result.push_failure(create_verification_failure!(format!(
                     "VerifSchnorrCCMji: Verifiy CCM_j Schnorrproof not ok at pos {} for cc {}",
                     i, j
@@ -130,14 +120,12 @@ pub(super) fn fn_verification(dir: &VerificationDirectory, result: &mut Verifica
     )
     .enumerate()
     {
-        println!("VerifSchnorrEBi at pos {}", i);
         if !verify_schnorr(
             &eg.encryption_group,
             &Proof::from(&pi_eb_i),
             &eb_pk_i,
             &i_aux_eb,
         ) {
-            println!("Failure");
             result.push_failure(create_verification_failure!(format!(
                 "VerifSchnorrCCRji: Verifiy Electoral board Schnorr proofs not ok at pos {}",
                 i
