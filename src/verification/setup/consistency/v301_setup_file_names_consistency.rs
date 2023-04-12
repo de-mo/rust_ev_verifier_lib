@@ -7,22 +7,8 @@ use crate::file_structure::VerificationDirectory;
 
 use super::super::super::{
     error::{create_verification_failure, VerificationFailureType},
-    verification::{Verification, VerificationMetaData, VerificationResult},
-    VerificationCategory, VerificationPeriod,
+    verification::VerificationResult,
 };
-
-pub(super) fn get_verification() -> Verification {
-    Verification::new(
-        VerificationMetaData {
-            id: "301".to_owned(),
-            algorithm: "3.02".to_owned(),
-            name: "VerifySetupFileNamesConsistency".to_owned(),
-            period: VerificationPeriod::Setup,
-            category: VerificationCategory::Consistency,
-        },
-        fn_verification,
-    )
-}
 
 fn test_file_exists(file: &File, result: &mut VerificationResult) {
     if !file.exists() {
@@ -33,7 +19,7 @@ fn test_file_exists(file: &File, result: &mut VerificationResult) {
     }
 }
 
-fn fn_verification(dir: &VerificationDirectory, result: &mut VerificationResult) {
+pub(super) fn fn_verification(dir: &VerificationDirectory, result: &mut VerificationResult) {
     let setup_dir = dir.unwrap_setup();
     test_file_exists(&setup_dir.encryption_parameters_payload_file, result);
     test_file_exists(&setup_dir.election_event_context_payload_file, result);
@@ -55,6 +41,8 @@ fn fn_verification(dir: &VerificationDirectory, result: &mut VerificationResult)
 
 #[cfg(test)]
 mod test {
+    use crate::verification::VerificationPeriod;
+
     use super::super::super::super::verification::VerificationResultTrait;
     use super::*;
     use std::path::Path;

@@ -5,8 +5,7 @@ use super::super::super::{
         create_verification_error, create_verification_failure, VerificationErrorType,
         VerificationFailureType,
     },
-    verification::{Verification, VerificationMetaData, VerificationResult},
-    VerificationCategory, VerificationPeriod,
+    verification::VerificationResult,
 };
 use crate::{
     constants::{MAXIMUM_NUMBER_OF_SELECTABLE_VOTING_OPTIONS, MAXIMUM_NUMBER_OF_VOTING_OPTIONS},
@@ -15,20 +14,7 @@ use crate::{
     file_structure::VerificationDirectory,
 };
 
-pub(super) fn get_verification() -> Verification {
-    Verification::new(
-        VerificationMetaData {
-            id: "502".to_owned(),
-            algorithm: "5.03".to_owned(),
-            name: "VerifyVotingOptions".to_owned(),
-            period: VerificationPeriod::Setup,
-            category: VerificationCategory::Evidence,
-        },
-        fn_verification,
-    )
-}
-
-fn fn_verification(dir: &VerificationDirectory, result: &mut VerificationResult) {
+pub(super) fn fn_verification(dir: &VerificationDirectory, result: &mut VerificationResult) {
     let setup_dir = dir.unwrap_setup();
     let eg = match setup_dir.encryption_parameters_payload() {
         Ok(eg) => eg,
@@ -91,6 +77,8 @@ fn fn_verification(dir: &VerificationDirectory, result: &mut VerificationResult)
 
 #[cfg(test)]
 mod test {
+
+    use crate::verification::VerificationPeriod;
 
     use super::super::super::super::verification::VerificationResultTrait;
     use super::*;

@@ -3,27 +3,13 @@ use super::super::super::{
         create_verification_error, create_verification_failure, VerificationErrorType,
         VerificationFailureType,
     },
-    verification::{Verification, VerificationMetaData, VerificationResult},
-    VerificationCategory, VerificationPeriod,
+    verification::VerificationResult,
 };
 use crate::{
     data_structures::common_types::EncryptionGroup,
     error::{create_verifier_error, VerifierError},
     file_structure::{setup_directory::VCSDirectory, VerificationDirectory},
 };
-
-pub(super) fn get_verification() -> Verification {
-    Verification::new(
-        VerificationMetaData {
-            id: "300".to_owned(),
-            algorithm: "3.01".to_owned(),
-            name: "VerifyEncryptionGroupConsistency".to_owned(),
-            period: VerificationPeriod::Setup,
-            category: VerificationCategory::Consistency,
-        },
-        fn_verification,
-    )
-}
 
 fn test_encryption_group(
     eg: &EncryptionGroup,
@@ -122,7 +108,7 @@ fn test_encryption_group_for_vcs_dir(
     }
 }
 
-fn fn_verification(dir: &VerificationDirectory, result: &mut VerificationResult) {
+pub(super) fn fn_verification(dir: &VerificationDirectory, result: &mut VerificationResult) {
     let setup_dir = dir.unwrap_setup();
     let eg = match setup_dir.encryption_parameters_payload() {
         Ok(p) => p.encryption_group,
@@ -183,6 +169,8 @@ fn fn_verification(dir: &VerificationDirectory, result: &mut VerificationResult)
 
 #[cfg(test)]
 mod test {
+    use crate::verification::VerificationPeriod;
+
     use super::super::super::super::verification::VerificationResultTrait;
     use super::*;
     use std::path::Path;

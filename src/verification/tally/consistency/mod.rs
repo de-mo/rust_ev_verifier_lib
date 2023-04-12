@@ -1,6 +1,8 @@
-use super::super::VerificationList;
+use crate::verification::meta_data::VerificationMetaDataList;
 
-pub fn get_verifications() -> VerificationList {
+use super::super::VerificationSuite;
+
+pub fn get_verifications(metadata_list: &VerificationMetaDataList) -> VerificationSuite {
     let res = vec![];
     res
 }

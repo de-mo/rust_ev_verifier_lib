@@ -3,8 +3,7 @@ use super::super::super::{
         create_verification_error, create_verification_failure, VerificationErrorType,
         VerificationFailureType,
     },
-    verification::{Verification, VerificationMetaData, VerificationResult},
-    VerificationCategory, VerificationPeriod,
+    verification::VerificationResult,
 };
 use crate::{
     error::{create_verifier_error, VerifierError},
@@ -12,20 +11,7 @@ use crate::{
 };
 use std::collections::HashMap;
 
-pub(super) fn get_verification() -> Verification {
-    Verification::new(
-        VerificationMetaData {
-            id: "307".to_owned(),
-            algorithm: "3.08".to_owned(),
-            name: "VerifyPrimesMappingTableConsistency".to_owned(),
-            period: VerificationPeriod::Setup,
-            category: VerificationCategory::Consistency,
-        },
-        fn_verification,
-    )
-}
-
-fn fn_verification(dir: &VerificationDirectory, result: &mut VerificationResult) {
+pub(super) fn fn_verification(dir: &VerificationDirectory, result: &mut VerificationResult) {
     let setup_dir = dir.unwrap_setup();
     let ee_c_paylod = match setup_dir.election_event_context_payload() {
         Ok(o) => o,
@@ -66,6 +52,8 @@ fn fn_verification(dir: &VerificationDirectory, result: &mut VerificationResult)
 
 #[cfg(test)]
 mod test {
+    use crate::verification::VerificationPeriod;
+
     use super::super::super::super::verification::VerificationResultTrait;
     use super::*;
     use std::path::Path;

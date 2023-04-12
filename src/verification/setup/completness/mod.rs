@@ -1,31 +1,19 @@
 use crate::{
     error::{create_verifier_error, VerifierError},
     file_structure::{setup_directory::VCSDirectory, VerificationDirectory},
+    verification::meta_data::VerificationMetaDataList,
 };
 
 use super::super::{
     error::{create_verification_failure, VerificationFailureType},
-    verification::{Verification, VerificationMetaData, VerificationResult},
-    VerificationCategory, VerificationList, VerificationPeriod,
+    verification::{Verification, VerificationResult},
+    VerificationSuite,
 };
 
-pub fn get_verifications() -> VerificationList {
+pub fn get_verifications(metadata_list: &VerificationMetaDataList) -> VerificationSuite {
     let mut res = vec![];
-    res.push(get_verification_100());
+    res.push(Verification::new("s100", fn_verification_100, metadata_list).unwrap());
     res
-}
-
-fn get_verification_100() -> Verification {
-    Verification::new(
-        VerificationMetaData {
-            id: "100".to_owned(),
-            algorithm: "3.1".to_owned(),
-            name: "VerifySetupCompleteness".to_owned(),
-            period: VerificationPeriod::Setup,
-            category: VerificationCategory::Completness,
-        },
-        fn_verification_100,
-    )
 }
 
 fn validate_vcs_dir(dir: &VCSDirectory, result: &mut VerificationResult) {
@@ -93,6 +81,8 @@ fn fn_verification_100(dir: &VerificationDirectory, result: &mut VerificationRes
 
 #[cfg(test)]
 mod test {
+    use crate::verification::VerificationPeriod;
+
     use super::super::super::verification::VerificationResultTrait;
     use super::*;
     use std::path::Path;

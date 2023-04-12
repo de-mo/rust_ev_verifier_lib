@@ -1,0 +1,426 @@
+[
+    {
+        "id": "s100",
+        "name": "VerifySetupCompleteness",
+        "algorithm": "",
+        "period": "setup",
+        "category": "completness",
+        "description": ""
+    },
+    {
+        "id": "s200",
+        "name": "VerifySignatureSetupComponentEncryptionParameters",
+        "algorithm": "",
+        "period": "setup",
+        "category": "authenticity",
+        "description": ""
+    },
+    {
+        "id": "s201",
+        "name": "VerifySignatureCantonConfig",
+        "algorithm": "",
+        "period": "setup",
+        "category": "authenticity",
+        "description": ""
+    },
+    {
+        "id": "s202",
+        "name": "VerifySignatureSetupComponentPublicKeys",
+        "algorithm": "",
+        "period": "setup",
+        "category": "authenticity",
+        "description": ""
+    },
+    {
+        "id": "s203",
+        "name": "VerifySignatureControlComponentPublicKeys",
+        "algorithm": "",
+        "period": "setup",
+        "category": "authenticity",
+        "description": ""
+    },
+    {
+        "id": "s204",
+        "name": "VerifySignatureSetupComponentVerificationData",
+        "algorithm": "",
+        "period": "setup",
+        "category": "authenticity",
+        "description": ""
+    },
+    {
+        "id": "s205",
+        "name": "VerifySignatureControlComponentCodeShares",
+        "algorithm": "",
+        "period": "setup",
+        "category": "authenticity",
+        "description": ""
+    },
+    {
+        "id": "s206",
+        "name": "VerifySignatureSetupComponentTallyData",
+        "algorithm": "",
+        "period": "setup",
+        "category": "authenticity",
+        "description": ""
+    },
+    {
+        "id": "s207",
+        "name": "VerifySignatureElectionEventContext",
+        "algorithm": "",
+        "period": "setup",
+        "category": "authenticity",
+        "description": ""
+    },
+    {
+        "id": "s300",
+        "name": "VerifyEncryptionGroupConsistency",
+        "algorithm": "",
+        "period": "setup",
+        "category": "consistency",
+        "description": ""
+    },
+    {
+        "id": "s301",
+        "name": "VerifySetupFileNamesConsistency",
+        "algorithm": "",
+        "period": "setup",
+        "category": "consistency",
+        "description": ""
+    },
+    {
+        "id": "s302",
+        "name": "VerifyCCrChoiceReturnCodesPublicKeyConsistency",
+        "algorithm": "",
+        "period": "setup",
+        "category": "consistency",
+        "description": ""
+    },
+    {
+        "id": "s303",
+        "name": "VerifyCCmElectionPublicKeyConsistency",
+        "algorithm": "",
+        "period": "setup",
+        "category": "consistency",
+        "description": ""
+    },
+    {
+        "id": "s304",
+        "name": "VerifyCcmAndCcrSchnorrProofsConsistency",
+        "algorithm": "",
+        "period": "setup",
+        "category": "consistency",
+        "description": ""
+    },
+    {
+        "id": "s305",
+        "name": "VerifyChoiceReturnCodesPublicKeyConsistency",
+        "algorithm": "",
+        "period": "setup",
+        "category": "consistency",
+        "description": ""
+    },
+    {
+        "id": "s306",
+        "name": "VerifyElectionPublicKeyConsistency",
+        "algorithm": "",
+        "period": "setup",
+        "category": "consistency",
+        "description": ""
+    },
+    {
+        "id": "s307",
+        "name": "VerifyPrimesMappingTableConsistency",
+        "algorithm": "",
+        "period": "setup",
+        "category": "consistency",
+        "description": ""
+    },
+    {
+        "id": "s308",
+        "name": "VerifyElectionEventIdConsistency",
+        "algorithm": "",
+        "period": "setup",
+        "category": "consistency",
+        "description": ""
+    },
+    {
+        "id": "s309",
+        "name": "VerifyVerificationCardSetIdsConsistency",
+        "algorithm": "",
+        "period": "setup",
+        "category": "consistency",
+        "description": ""
+    },
+    {
+        "id": "s310",
+        "name": "VerifyFileNameVerificationCardSetIdsConsistency",
+        "algorithm": "",
+        "period": "setup",
+        "category": "consistency",
+        "description": ""
+    },
+    {
+        "id": "s311",
+        "name": "VerifyVerificationCardIdsConsistency",
+        "algorithm": "",
+        "period": "setup",
+        "category": "consistency",
+        "description": ""
+    },
+    {
+        "id": "s312",
+        "name": "VerifyTotalVotersConsistency",
+        "algorithm": "",
+        "period": "setup",
+        "category": "consistency",
+        "description": ""
+    },
+    {
+        "id": "s313",
+        "name": "VerifyNodeIdsConsistency",
+        "algorithm": "",
+        "period": "setup",
+        "category": "consistency",
+        "description": ""
+    },
+    {
+        "id": "s314",
+        "name": "VerifyChunkConsistency",
+        "algorithm": "",
+        "period": "setup",
+        "category": "consistency",
+        "description": ""
+    },
+    {
+        "id": "s400",
+        "name": "VerifySetupIntegrity",
+        "algorithm": "",
+        "period": "setup",
+        "category": "integrity",
+        "description": ""
+    },
+    {
+        "id": "s500",
+        "name": "VerifyEncryptionParameters",
+        "algorithm": "",
+        "period": "setup",
+        "category": "evidence",
+        "description": ""
+    },
+    {
+        "id": "s501",
+        "name": "VerifySmallPrimeGroupMembers",
+        "algorithm": "",
+        "period": "setup",
+        "category": "evidence",
+        "description": ""
+    },
+    {
+        "id": "s502",
+        "name": "VerifyVotingOptions",
+        "algorithm": "",
+        "period": "setup",
+        "category": "evidence",
+        "description": ""
+    },
+    {
+        "id": "s503",
+        "name": "VerifyKeyGenerationSchnorrProofs",
+        "algorithm": "",
+        "period": "setup",
+        "category": "evidence",
+        "description": ""
+    },
+    {
+        "id": "s504",
+        "name": "VerifyEncryptedPCCExponentiationProofs",
+        "algorithm": "",
+        "period": "setup",
+        "category": "evidence",
+        "description": ""
+    },
+    {
+        "id": "s505",
+        "name": "VerifyEncryptedCKExponentiationProofs",
+        "algorithm": "",
+        "period": "setup",
+        "category": "evidence",
+        "description": ""
+    },
+    {
+        "id": "t100",
+        "name": "VerifySetupCompleteness",
+        "algorithm": "",
+        "period": "tally",
+        "category": "completness",
+        "description": ""
+    },
+    {
+        "id": "t200",
+        "name": "VerifySignatureControlComponentBallotBox",
+        "algorithm": "",
+        "period": "tally",
+        "category": "authenticity",
+        "description": ""
+    },
+    {
+        "id": "t201",
+        "name": "VerifySignatureControlComponentShuffle",
+        "algorithm": "",
+        "period": "tally",
+        "category": "authenticity",
+        "description": ""
+    },
+    {
+        "id": "t202",
+        "name": "VerifySignatureTallyComponentShuffle",
+        "algorithm": "",
+        "period": "tally",
+        "category": "authenticity",
+        "description": ""
+    },
+    {
+        "id": "t203",
+        "name": "VerifySignatureTallyComponentVotes",
+        "algorithm": "",
+        "period": "tally",
+        "category": "authenticity",
+        "description": ""
+    },
+    {
+        "id": "t204",
+        "name": "VerifySignatureTallyComponentDecrypt",
+        "algorithm": "",
+        "period": "tally",
+        "category": "authenticity",
+        "description": ""
+    },
+    {
+        "id": "t205",
+        "name": "VerifySignatureTallyComponentEch0110",
+        "algorithm": "",
+        "period": "tally",
+        "category": "authenticity",
+        "description": ""
+    },
+    {
+        "id": "t206",
+        "name": "VerifySignatureTallyComponentEch0222",
+        "algorithm": "",
+        "period": "tally",
+        "category": "authenticity",
+        "description": ""
+    },
+    {
+        "id": "t300",
+        "name": "VerifyConfirmedEncryptedVotesConsistency",
+        "algorithm": "",
+        "period": "tally",
+        "category": "consistency",
+        "description": ""
+    },
+    {
+        "id": "t301",
+        "name": "VerifyCiphertextsConsistency",
+        "algorithm": "",
+        "period": "tally",
+        "category": "consistency",
+        "description": ""
+    },
+    {
+        "id": "t302",
+        "name": "VerifyPlaintextsConsistency",
+        "algorithm": "",
+        "period": "tally",
+        "category": "consistency",
+        "description": ""
+    },
+    {
+        "id": "t303",
+        "name": "VerifyVerificationCardIdsConsistency",
+        "algorithm": "",
+        "period": "tally",
+        "category": "consistency",
+        "description": ""
+    },
+    {
+        "id": "t304",
+        "name": "VerifyBallotBoxIdsConsistency",
+        "algorithm": "",
+        "period": "tally",
+        "category": "consistency",
+        "description": ""
+    },
+    {
+        "id": "t305",
+        "name": "VerifyFileNameBallotBoxIdsConsistency",
+        "algorithm": "",
+        "period": "tally",
+        "category": "consistency",
+        "description": ""
+    },
+    {
+        "id": "t306",
+        "name": "VerifyNumberConfirmedEncryptedVotesConsistency",
+        "algorithm": "",
+        "period": "tally",
+        "category": "consistency",
+        "description": ""
+    },
+    {
+        "id": "t307",
+        "name": "VerifyElectionEventIdConsistency",
+        "algorithm": "",
+        "period": "tally",
+        "category": "consistency",
+        "description": ""
+    },
+    {
+        "id": "t308",
+        "name": "VerifyNodeIdsConsistency",
+        "algorithm": "",
+        "period": "tally",
+        "category": "consistency",
+        "description": ""
+    },
+    {
+        "id": "t309",
+        "name": "VerifyFileNameNodeIdsConsistency",
+        "algorithm": "",
+        "period": "tally",
+        "category": "consistency",
+        "description": ""
+    },
+    {
+        "id": "t310",
+        "name": "VerifyEncryptionGroupConsistency",
+        "algorithm": "",
+        "period": "tally",
+        "category": "consistency",
+        "description": ""
+    },
+    {
+        "id": "t400",
+        "name": "VerifySetupIntegrity",
+        "algorithm": "",
+        "period": "tally",
+        "category": "integrity",
+        "description": ""
+    },
+    {
+        "id": "t500",
+        "name": "VerifyOnlineControlComponents",
+        "algorithm": "",
+        "period": "tally",
+        "category": "evidence",
+        "description": ""
+    },
+    {
+        "id": "t501",
+        "name": "VerifyTallyControlComponent",
+        "algorithm": "",
+        "period": "tally",
+        "category": "evidence",
+        "description": ""
+    }
+]

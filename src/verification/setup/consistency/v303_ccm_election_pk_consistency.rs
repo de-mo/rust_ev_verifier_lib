@@ -13,22 +13,8 @@ use super::super::super::{
         create_verification_error, create_verification_failure, VerificationErrorType,
         VerificationFailureType,
     },
-    verification::{Verification, VerificationMetaData, VerificationResult},
-    VerificationCategory, VerificationPeriod,
+    verification::VerificationResult,
 };
-
-pub(super) fn get_verification() -> Verification {
-    Verification::new(
-        VerificationMetaData {
-            id: "303".to_owned(),
-            algorithm: "3.04".to_owned(),
-            name: "VerifyCcmElectionPublicKeyConsistency".to_owned(),
-            period: VerificationPeriod::Setup,
-            category: VerificationCategory::Consistency,
-        },
-        fn_verification,
-    )
-}
 
 fn validate_cc_ccm_pk(
     setup_dir: &SetupDirectory,
@@ -66,7 +52,7 @@ fn validate_cc_ccm_pk(
     }
 }
 
-fn fn_verification(dir: &VerificationDirectory, result: &mut VerificationResult) {
+pub(super) fn fn_verification(dir: &VerificationDirectory, result: &mut VerificationResult) {
     let setup_dir = dir.unwrap_setup();
     let sc_pk = match setup_dir.setup_component_public_keys_payload() {
         Ok(o) => o,
@@ -88,6 +74,8 @@ fn fn_verification(dir: &VerificationDirectory, result: &mut VerificationResult)
 
 #[cfg(test)]
 mod test {
+    use crate::verification::VerificationPeriod;
+
     use super::super::super::super::verification::VerificationResultTrait;
     use super::*;
     use std::path::Path;

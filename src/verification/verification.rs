@@ -1,34 +1,20 @@
 ///! Module implementing the structure of a verification
-use crate::file_structure::VerificationDirectory;
-
 use super::{
     error::{VerificationError, VerificationFailure},
-    VerificationCategory, VerificationPeriod, VerificationStatus,
+    meta_data::{VerificationMetaData, VerificationMetaDataList, VerificationMetaDataListTrait},
+    VerificationPreparationError, VerificationPreparationErrorType, VerificationStatus,
+};
+use crate::{
+    error::{create_result_with_error, create_verifier_error, VerifierError},
+    file_structure::VerificationDirectory,
 };
 use log::{info, warn};
 use std::time::{Duration, SystemTime};
 
-/// Metadata of a verification
-pub struct VerificationMetaData {
-    /// id of the verification
-    pub id: String,
-
-    /// Name of the verification
-    pub name: String,
-
-    /// Algorithm in the specifications
-    pub algorithm: String,
-
-    /// Period (Set or Tally) of the verification
-    pub period: VerificationPeriod,
-
-    /// Category of the verification
-    pub category: VerificationCategory,
-}
-
 /// Struct representing a verification
 pub struct Verification {
     /// Metadata of the verification
+    pub id: String,
     pub meta_data: VerificationMetaData,
     status: VerificationStatus,
     verification_fn: Box<dyn Fn(&VerificationDirectory, &mut VerificationResult)>,
@@ -83,16 +69,27 @@ impl Verification {
     /// has to be changed according to the results of the verification (pushing errors and/or failures).
     /// The function is called by the method rust of the Verification
     pub fn new(
-        meta_data: VerificationMetaData,
+        id: &str,
         verification_fn: impl Fn(&VerificationDirectory, &mut VerificationResult) + 'static,
-    ) -> Self {
-        Verification {
+        metadata_list: &VerificationMetaDataList,
+    ) -> Result<Self, VerificationPreparationError> {
+        let meta_data = match metadata_list.meta_data_from_id(id) {
+            Some(m) => m.clone(),
+            None => {
+                return create_result_with_error!(
+                    VerificationPreparationErrorType::Metadata,
+                    format!("metadata for id {} not found", id)
+                )
+            }
+        };
+        Ok(Verification {
+            id: id.to_string(),
             meta_data,
             status: VerificationStatus::Stopped,
             verification_fn: Box::new(verification_fn),
             duration: None,
             result: Box::new(VerificationResult::new()),
-        }
+        })
     }
 
     /// Run the test.
@@ -231,22 +228,15 @@ mod test {
 
     use crate::error::{create_verifier_error, VerifierError};
     use crate::verification::error::{VerificationErrorType, VerificationFailureType};
+    use crate::verification::VerificationPeriod;
 
     use super::*;
 
     #[test]
     fn run_ok() {
         fn ok(_: &VerificationDirectory, _: &mut VerificationResult) {}
-        let mut verif = Verification::new(
-            VerificationMetaData {
-                id: "test_ok".to_string(),
-                algorithm: "1".to_string(),
-                name: "test_ok".to_string(),
-                period: VerificationPeriod::Setup,
-                category: VerificationCategory::Authenticity,
-            },
-            Box::new(ok),
-        );
+        let mut verif =
+            Verification::new("s100", ok, &VerificationMetaDataList::load().unwrap()).unwrap();
         assert_eq!(verif.status, VerificationStatus::Stopped);
         assert!(verif.is_ok().is_none());
         assert!(verif.has_errors().is_none());
@@ -274,16 +264,8 @@ mod test {
                 "toto"
             ));
         }
-        let mut verif = Verification::new(
-            VerificationMetaData {
-                id: "test_ok".to_string(),
-                algorithm: "1".to_string(),
-                name: "test_ok".to_string(),
-                period: VerificationPeriod::Setup,
-                category: VerificationCategory::Authenticity,
-            },
-            Box::new(error),
-        );
+        let mut verif =
+            Verification::new("s100", error, &VerificationMetaDataList::load().unwrap()).unwrap();
         assert_eq!(verif.status, VerificationStatus::Stopped);
         assert!(verif.is_ok().is_none());
         assert!(verif.has_errors().is_none());
@@ -312,16 +294,8 @@ mod test {
                 "toto2"
             ));
         }
-        let mut verif = Verification::new(
-            VerificationMetaData {
-                id: "test_ok".to_string(),
-                algorithm: "1".to_string(),
-                name: "test_ok".to_string(),
-                period: VerificationPeriod::Setup,
-                category: VerificationCategory::Authenticity,
-            },
-            Box::new(failure),
-        );
+        let mut verif =
+            Verification::new("s100", failure, &VerificationMetaDataList::load().unwrap()).unwrap();
         assert_eq!(verif.status, VerificationStatus::Stopped);
         assert!(verif.is_ok().is_none());
         assert!(verif.has_errors().is_none());

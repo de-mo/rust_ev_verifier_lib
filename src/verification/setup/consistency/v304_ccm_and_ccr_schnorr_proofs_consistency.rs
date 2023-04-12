@@ -15,22 +15,8 @@ use super::super::super::{
         create_verification_error, create_verification_failure, VerificationErrorType,
         VerificationFailureType,
     },
-    verification::{Verification, VerificationMetaData, VerificationResult},
-    VerificationCategory, VerificationPeriod,
+    verification::VerificationResult,
 };
-
-pub(super) fn get_verification() -> Verification {
-    Verification::new(
-        VerificationMetaData {
-            id: "304".to_owned(),
-            algorithm: "3.05".to_owned(),
-            name: "VerifyCcmAndCcrSchnorrProofsConsistency".to_owned(),
-            period: VerificationPeriod::Setup,
-            category: VerificationCategory::Consistency,
-        },
-        fn_verification,
-    )
-}
 
 fn validate_ccm_and_ccr_schorr_proofs(
     setup_dir: &SetupDirectory,
@@ -92,7 +78,7 @@ fn validate_ccm_and_ccr_schorr_proofs(
     }
 }
 
-fn fn_verification(dir: &VerificationDirectory, result: &mut VerificationResult) {
+pub(super) fn fn_verification(dir: &VerificationDirectory, result: &mut VerificationResult) {
     let setup_dir = dir.unwrap_setup();
     let sc_pk = match setup_dir.setup_component_public_keys_payload() {
         Ok(o) => o,
@@ -114,6 +100,8 @@ fn fn_verification(dir: &VerificationDirectory, result: &mut VerificationResult)
 
 #[cfg(test)]
 mod test {
+    use crate::verification::VerificationPeriod;
+
     use super::super::super::super::verification::VerificationResultTrait;
     use super::*;
     use std::path::Path;

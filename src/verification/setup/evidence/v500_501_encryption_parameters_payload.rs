@@ -3,8 +3,7 @@ use super::super::super::{
         create_verification_error, create_verification_failure, VerificationErrorType,
         VerificationFailureType,
     },
-    verification::{Verification, VerificationMetaData, VerificationResult},
-    VerificationCategory, VerificationPeriod,
+    verification::VerificationResult,
 };
 use crate::{
     constants::MAXIMUM_NUMBER_OF_VOTING_OPTIONS,
@@ -13,33 +12,7 @@ use crate::{
     file_structure::VerificationDirectory,
 };
 
-pub(super) fn get_verification_500() -> Verification {
-    Verification::new(
-        VerificationMetaData {
-            id: "500".to_owned(),
-            algorithm: "5.01".to_owned(),
-            name: "VerifyEncryptionParameters".to_owned(),
-            period: VerificationPeriod::Setup,
-            category: VerificationCategory::Evidence,
-        },
-        fn_verification_500,
-    )
-}
-
-pub(super) fn get_verification_501() -> Verification {
-    Verification::new(
-        VerificationMetaData {
-            id: "501".to_owned(),
-            algorithm: "5.02".to_owned(),
-            name: "VerifySmallPrimeGroupMembers".to_owned(),
-            period: VerificationPeriod::Setup,
-            category: VerificationCategory::Evidence,
-        },
-        fn_verification_501,
-    )
-}
-
-fn fn_verification_500(dir: &VerificationDirectory, result: &mut VerificationResult) {
+pub(super) fn fn_verification_500(dir: &VerificationDirectory, result: &mut VerificationResult) {
     let setup_dir = dir.unwrap_setup();
     let eg = match setup_dir.encryption_parameters_payload() {
         Ok(eg) => eg,
@@ -72,7 +45,7 @@ fn fn_verification_500(dir: &VerificationDirectory, result: &mut VerificationRes
     }
 }
 
-fn fn_verification_501(dir: &VerificationDirectory, result: &mut VerificationResult) {
+pub(super) fn fn_verification_501(dir: &VerificationDirectory, result: &mut VerificationResult) {
     let setup_dir = dir.unwrap_setup();
     let eg = match setup_dir.encryption_parameters_payload() {
         Ok(eg) => eg,
@@ -114,6 +87,8 @@ fn fn_verification_501(dir: &VerificationDirectory, result: &mut VerificationRes
 
 #[cfg(test)]
 mod test {
+    use crate::verification::VerificationPeriod;
+
     use super::super::super::super::verification::VerificationResultTrait;
     use super::*;
     use std::path::Path;

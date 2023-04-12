@@ -7,7 +7,10 @@
 use std::path::Path;
 
 use super::runner::Runner;
-use crate::{constants::LOG_PATH, verification::VerificationPeriod};
+use crate::{
+    constants::LOG_PATH,
+    verification::{meta_data::VerificationMetaDataList, VerificationPeriod},
+};
 use clap::{Arg, ArgAction, ArgMatches, Command};
 use log::{info, warn, LevelFilter};
 use log4rs::{
@@ -103,12 +106,13 @@ pub fn execute_command() {
 }
 
 fn execute_runner(period: VerificationPeriod, matches: &ArgMatches) {
+    let metadata = VerificationMetaDataList::new();
     let dir = matches.get_one::<String>("dir").unwrap();
     let path = Path::new(dir);
     let mut exclusions: Vec<&String> = vec![];
     if matches.contains_id("exclude") {
         exclusions = matches.get_many("exclude").unwrap().collect();
     }
-    let mut runner = Runner::new(path, period);
+    let mut runner = Runner::new(path, period, &metadata);
     runner.run_all_sequential(&exclusions);
 }

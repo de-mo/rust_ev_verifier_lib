@@ -5,32 +5,20 @@ use super::super::{
         create_verification_error, create_verification_failure, VerificationErrorType,
         VerificationFailureType,
     },
-    verification::{Verification, VerificationMetaData, VerificationResult},
-    VerificationCategory, VerificationList, VerificationPeriod,
+    verification::{Verification, VerificationResult},
+    VerificationSuite,
 };
 use crate::{
     crypto_primitives::signature::VerifiySignatureTrait,
     error::{create_verifier_error, VerifierError},
     file_structure::VerificationDirectory,
+    verification::meta_data::VerificationMetaDataList,
 };
 
-pub fn get_verifications() -> VerificationList {
+pub fn get_verifications(metadata_list: &VerificationMetaDataList) -> VerificationSuite {
     let mut res = vec![];
-    res.push(get_verification_200());
+    res.push(Verification::new("s200", fn_verification_200, metadata_list).unwrap());
     res
-}
-
-pub(super) fn get_verification_200() -> Verification {
-    Verification::new(
-        VerificationMetaData {
-            id: "200".to_owned(),
-            algorithm: "2.01".to_owned(),
-            name: "VerifySignatureSetupComponentEncryptionParameters".to_owned(),
-            period: VerificationPeriod::Setup,
-            category: VerificationCategory::Authenticity,
-        },
-        fn_verification_200,
-    )
 }
 
 fn fn_verification_200(dir: &VerificationDirectory, result: &mut VerificationResult) {
@@ -67,6 +55,8 @@ fn fn_verification_200(dir: &VerificationDirectory, result: &mut VerificationRes
 
 #[cfg(test)]
 mod test {
+    use crate::verification::VerificationPeriod;
+
     use super::super::super::verification::VerificationResultTrait;
     use super::*;
     use std::path::Path;

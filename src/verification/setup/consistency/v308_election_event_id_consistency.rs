@@ -3,26 +3,12 @@ use super::super::super::{
         create_verification_error, create_verification_failure, VerificationErrorType,
         VerificationFailureType,
     },
-    verification::{Verification, VerificationMetaData, VerificationResult},
-    VerificationCategory, VerificationPeriod,
+    verification::VerificationResult,
 };
 use crate::{
     error::{create_verifier_error, VerifierError},
     file_structure::{setup_directory::VCSDirectory, VerificationDirectory},
 };
-
-pub(super) fn get_verification() -> Verification {
-    Verification::new(
-        VerificationMetaData {
-            id: "308".to_owned(),
-            algorithm: "3.09".to_owned(),
-            name: "VerifyElectionEventIdConsistency".to_owned(),
-            period: VerificationPeriod::Setup,
-            category: VerificationCategory::Consistency,
-        },
-        fn_verification,
-    )
-}
 
 fn test_election_event_id(
     ee_id: &String,
@@ -105,7 +91,7 @@ fn test_ee_id_for_vcs_dir(dir: &VCSDirectory, expected: &String, result: &mut Ve
     }
 }
 
-fn fn_verification(dir: &VerificationDirectory, result: &mut VerificationResult) {
+pub(super) fn fn_verification(dir: &VerificationDirectory, result: &mut VerificationResult) {
     let setup_dir = dir.unwrap_setup();
     let ee_id = match setup_dir.election_event_context_payload() {
         Ok(o) => o.election_event_context.election_event_id,
@@ -154,6 +140,8 @@ fn fn_verification(dir: &VerificationDirectory, result: &mut VerificationResult)
 
 #[cfg(test)]
 mod test {
+    use crate::verification::VerificationPeriod;
+
     use super::super::super::super::verification::VerificationResultTrait;
     use super::*;
     use std::path::Path;

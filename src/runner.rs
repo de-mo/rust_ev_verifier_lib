@@ -2,7 +2,10 @@
 
 use crate::{
     file_structure::VerificationDirectory,
-    verification::{VerificationListTrait, VerificationPeriod, VerificationsForPeriod},
+    verification::{
+        meta_data::VerificationMetaDataList, VerificationPeriod, VerificationSuiteTrait,
+        VerificationsForPeriod,
+    },
 };
 use log::{info, warn};
 use std::{
@@ -22,11 +25,15 @@ impl Runner {
     ///
     /// path represents the location where the directory setup and tally are stored
     /// period ist the verification period
-    pub fn new(path: &Path, period: VerificationPeriod) -> Runner {
+    pub fn new(
+        path: &Path,
+        period: VerificationPeriod,
+        metadata: &VerificationMetaDataList,
+    ) -> Runner {
         Runner {
             path: path.to_path_buf(),
             period,
-            verifications: VerificationsForPeriod::new(period),
+            verifications: VerificationsForPeriod::new(period, metadata),
         }
     }
 

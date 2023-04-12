@@ -4,14 +4,14 @@ pub mod consistency;
 pub mod evidence;
 pub mod integrity;
 
-use super::VerificationList;
+use super::{meta_data::VerificationMetaDataList, VerificationSuite};
 
-pub fn get_verifications() -> VerificationList {
-    let mut res: VerificationList = vec![];
-    res.append(&mut authenticity::get_verifications());
-    res.append(&mut completness::get_verifications());
-    res.append(&mut consistency::get_verifications());
-    res.append(&mut evidence::get_verifications());
-    res.append(&mut integrity::get_verifications());
+pub fn get_verifications(metadata_list: &VerificationMetaDataList) -> VerificationSuite {
+    let mut res: VerificationSuite = vec![];
+    res.append(&mut authenticity::get_verifications(metadata_list));
+    res.append(&mut completness::get_verifications(metadata_list));
+    res.append(&mut consistency::get_verifications(metadata_list));
+    res.append(&mut evidence::get_verifications(metadata_list));
+    res.append(&mut integrity::get_verifications(metadata_list));
     res
 }
