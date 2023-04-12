@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+   Copyright 2022 Post CH Ltd
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+  -->
+<jxb:bindings version="1.0"
+							xmlns:jxb="http://java.sun.com/xml/ns/jaxb"
+							xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+							xmlns:namespace="http://jaxb2-commons.dev.java.net/namespace-prefix"
+							xsi:schemaLocation="http://java.sun.com/xml/ns/jaxb http://java.sun.com/xml/ns/jaxb/bindingschema_2_0.xsd http://jaxb2-commons.dev.java.net/namespace-prefix">
+
+	<jxb:bindings schemaLocation="eCH-0110-4-0.xsd">
+		<jxb:bindings>
+			<namespace:prefix name="eCH-0110"/>
+			<namespace:prefix name="eCH-0008" namespaceURI="http://www.ech.ch/xmlns/eCH-0008/3"/>
+			<namespace:prefix name="eCH-0010" namespaceURI="http://www.ech.ch/xmlns/eCH-0010/6"/>
+			<namespace:prefix name="eCH-0044" namespaceURI="http://www.ech.ch/xmlns/eCH-0044/4"/>
+			<namespace:prefix name="eCH-0058" namespaceURI="http://www.ech.ch/xmlns/eCH-0058/5"/>
+			<namespace:prefix name="eCH-0155" namespaceURI="http://www.ech.ch/xmlns/eCH-0155/4"/>
+			<namespace:prefix name="eCH-0222" namespaceURI="http://www.ech.ch/xmlns/eCH-0222/1"/>
+		</jxb:bindings>
+	</jxb:bindings>
+	<jxb:bindings schemaLocation="eCH-0222-1-0.xsd">
+		<jxb:bindings>
+			<namespace:prefix name="eCH-0222"/>
+			<namespace:prefix name="eCH-0008" namespaceURI="http://www.ech.ch/xmlns/eCH-0008/3"/>
+			<namespace:prefix name="eCH-0010" namespaceURI="http://www.ech.ch/xmlns/eCH-0010/6"/>
+			<namespace:prefix name="eCH-0044" namespaceURI="http://www.ech.ch/xmlns/eCH-0044/4"/>
+			<namespace:prefix name="eCH-0058" namespaceURI="http://www.ech.ch/xmlns/eCH-0058/5"/>
+			<namespace:prefix name="eCH-0155" namespaceURI="http://www.ech.ch/xmlns/eCH-0155/4"/>
+		</jxb:bindings>
+	</jxb:bindings>
+</jxb:bindings>
