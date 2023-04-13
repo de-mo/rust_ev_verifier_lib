@@ -70,6 +70,7 @@ impl ByteArray {
         self.inner.clone()
     }
 
+    /// Append other to self
     pub fn append(&mut self, other: &ByteArray) -> &ByteArray {
         self.inner.extend(other.inner.clone().into_iter());
         self
@@ -217,6 +218,11 @@ impl From<&BigUint> for ByteArray {
     }
 }
 
+impl From<&usize> for ByteArray {
+    fn from(value: &usize) -> Self {
+        ByteArray::from(&BigUint::from(*value))
+    }
+}
 impl From<&Vec<u8>> for ByteArray {
     fn from(bytes: &Vec<u8>) -> Self {
         if bytes.is_empty() {
@@ -232,6 +238,12 @@ impl From<&Vec<u8>> for ByteArray {
 impl From<&String> for ByteArray {
     fn from(s: &String) -> Self {
         ByteArray::from_bytes(s.as_bytes())
+    }
+}
+
+impl From<&str> for ByteArray {
+    fn from(s: &str) -> Self {
+        ByteArray::from(&s.to_string())
     }
 }
 
