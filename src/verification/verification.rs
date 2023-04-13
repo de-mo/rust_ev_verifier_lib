@@ -12,10 +12,13 @@ use log::{info, warn};
 use std::time::{Duration, SystemTime};
 
 /// Struct representing a verification
-pub struct Verification {
-    /// Metadata of the verification
+pub struct Verification<'a> {
+    /// Id of the verification
     pub id: String,
-    pub meta_data: VerificationMetaData,
+    /// Metadata of the verification
+    ///
+    /// The meta data is a reference to the metadata list loaded from json
+    pub meta_data: &'a VerificationMetaData,
     status: VerificationStatus,
     verification_fn: Box<dyn Fn(&VerificationDirectory, &mut VerificationResult)>,
     duration: Option<Duration>,
@@ -53,7 +56,7 @@ pub trait VerificationResultTrait {
     fn failures(&self) -> &Vec<VerificationFailure>;
 }
 
-impl Verification {
+impl<'a> Verification<'a> {
     /// Create a new verification.
     ///
     /// The input are the metadata and the explicit function of the verification. The function
@@ -71,10 +74,10 @@ impl Verification {
     pub fn new(
         id: &str,
         verification_fn: impl Fn(&VerificationDirectory, &mut VerificationResult) + 'static,
-        metadata_list: &VerificationMetaDataList,
+        metadata_list: &'a VerificationMetaDataList,
     ) -> Result<Self, VerificationPreparationError> {
         let meta_data = match metadata_list.meta_data_from_id(id) {
-            Some(m) => m.clone(),
+            Some(m) => m,
             None => {
                 return create_result_with_error!(
                     VerificationPreparationErrorType::Metadata,
@@ -188,7 +191,7 @@ impl VerificationResultTrait for VerificationResult {
     }
 }
 
-impl VerificationResultTrait for Verification {
+impl<'a> VerificationResultTrait for Verification<'a> {
     fn is_ok(&self) -> Option<bool> {
         match self.status {
             VerificationStatus::Stopped => None,
@@ -235,8 +238,8 @@ mod test {
     #[test]
     fn run_ok() {
         fn ok(_: &VerificationDirectory, _: &mut VerificationResult) {}
-        let mut verif =
-            Verification::new("s100", ok, &VerificationMetaDataList::load().unwrap()).unwrap();
+        let md_list = VerificationMetaDataList::load().unwrap();
+        let mut verif = Verification::new("s100", ok, &md_list).unwrap();
         assert_eq!(verif.status, VerificationStatus::Stopped);
         assert!(verif.is_ok().is_none());
         assert!(verif.has_errors().is_none());
@@ -264,8 +267,8 @@ mod test {
                 "toto"
             ));
         }
-        let mut verif =
-            Verification::new("s100", error, &VerificationMetaDataList::load().unwrap()).unwrap();
+        let md_list = VerificationMetaDataList::load().unwrap();
+        let mut verif = Verification::new("s100", error, &md_list).unwrap();
         assert_eq!(verif.status, VerificationStatus::Stopped);
         assert!(verif.is_ok().is_none());
         assert!(verif.has_errors().is_none());
@@ -294,8 +297,8 @@ mod test {
                 "toto2"
             ));
         }
-        let mut verif =
-            Verification::new("s100", failure, &VerificationMetaDataList::load().unwrap()).unwrap();
+        let md_list = VerificationMetaDataList::load().unwrap();
+        let mut verif = Verification::new("s100", failure, &md_list).unwrap();
         assert_eq!(verif.status, VerificationStatus::Stopped);
         assert!(verif.is_ok().is_none());
         assert!(verif.has_errors().is_none());

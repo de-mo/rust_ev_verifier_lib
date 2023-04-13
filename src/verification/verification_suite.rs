@@ -9,25 +9,25 @@ use super::{
 };
 
 /// Enum for the suite of verifications
-pub struct VerificationSuite {
+pub struct VerificationSuite<'a> {
     period: VerificationPeriod,
-    list: Box<VerificationList>,
+    pub list: Box<VerificationList<'a>>,
     exclusion: Vec<String>,
 }
 
 /// List of verifications
-pub type VerificationList = Vec<Verification>;
+pub type VerificationList<'a> = Vec<Verification<'a>>;
 
-impl VerificationSuite {
+impl<'a> VerificationSuite<'a> {
     /// Create a new suite
     ///
     /// The function collects all the implemented tests and remove the excluded
     /// verifications. The ids in exclusion that does not exist are ignored
     pub fn new(
         period: &VerificationPeriod,
-        metadata_list: &VerificationMetaDataList,
+        metadata_list: &'a VerificationMetaDataList,
         exclusion: &Option<Vec<String>>,
-    ) -> VerificationSuite {
+    ) -> VerificationSuite<'a> {
         let mut all_verifs = match period {
             VerificationPeriod::Setup => get_verifications_setup(metadata_list),
 
@@ -58,14 +58,14 @@ impl VerificationSuite {
     /// All verifications
     ///
     /// The excluded verifications are not collected
-    pub fn verifications(&self) -> &VerificationList {
+    pub fn verifications(&'a self) -> &'a VerificationList {
         &self.list
     }
 
     /// All verifications mutable
     ///
     /// The excluded verifications are not collected
-    pub fn verifications_mut(&mut self) -> &mut VerificationList {
+    pub fn verifications_mut(&'a mut self) -> &'a mut VerificationList {
         &mut self.list
     }
 
