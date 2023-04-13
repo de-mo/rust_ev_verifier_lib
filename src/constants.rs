@@ -28,3 +28,7 @@ pub fn verification_list_path() -> PathBuf {
         .join(RESOURCES_PATH)
         .join(VERIFICATION_LIST_PATH)
 }
+
+pub fn direct_trust_path() -> PathBuf {
+    Path::new(".").join(DIRECT_TRUST_PATH)
+}

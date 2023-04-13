@@ -1,5 +1,3 @@
-use std::path::Path;
-
 use super::super::{
     error::{
         create_verification_error, create_verification_failure, VerificationErrorType,
@@ -7,8 +5,10 @@ use super::super::{
     },
     verification::{Verification, VerificationResult},
     verification_suite::VerificationList,
+    verifiy_signature,
 };
 use crate::{
+    constants::direct_trust_path,
     crypto_primitives::signature::VerifiySignatureTrait,
     error::{create_verifier_error, VerifierError},
     file_structure::VerificationDirectory,
@@ -21,37 +21,11 @@ pub fn get_verifications(metadata_list: &VerificationMetaDataList) -> Verificati
     res
 }
 
-fn fn_verification_200(dir: &VerificationDirectory, result: &mut VerificationResult) {
-    let setup_dir = dir.unwrap_setup();
-    let eg = match setup_dir.encryption_parameters_payload() {
-        Ok(p) => p,
-        Err(e) => {
-            result.push_error(create_verification_error!(
-                "encryption_parameters_payload cannot be read",
-                e
-            ));
-            return;
-        }
-    };
-    match eg
-        .as_ref()
-        .verifiy_signature(&Path::new(".").join("datasets").join("direct-trust"))
-    {
-        Ok(t) => {
-            if !t {
-                result.push_failure(create_verification_failure!(
-                    "Wrong signature for encryption_parameters_payload"
-                ))
-            }
-        }
-        Err(e) => {
-            result.push_error(create_verification_error!(
-                "Error testing signature of encryption_parameters_payload",
-                e
-            ));
-        }
-    }
-}
+verifiy_signature!(
+    fn_verification_200,
+    encryption_parameters_payload,
+    "encryption_parameters_payload"
+);
 
 #[cfg(test)]
 mod test {

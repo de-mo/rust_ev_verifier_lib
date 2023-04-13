@@ -101,3 +101,44 @@ impl Display for VerificationPreparationErrorType {
 }
 
 pub type VerificationPreparationError = VerifierError<VerificationPreparationErrorType>;
+
+/// Marco to test the signature of a data structure
+///
+/// Following paramters:
+/// - $fn: Name of the function to verify
+/// - $d: The structure
+/// - $n: The name of the structure (for the messages)
+macro_rules! verifiy_signature {
+    ($fn: ident, $d: ident, $n: expr) => {
+        fn $fn(dir: &VerificationDirectory, result: &mut VerificationResult) {
+            let setup_dir = dir.unwrap_setup();
+            let eg = match setup_dir.$d() {
+                Ok(p) => p,
+                Err(e) => {
+                    result.push_error(create_verification_error!(
+                        format!("{} cannot be read", $n),
+                        e
+                    ));
+                    return;
+                }
+            };
+            match eg.as_ref().verifiy_signature(&direct_trust_path()) {
+                Ok(t) => {
+                    if !t {
+                        result.push_failure(create_verification_failure!(format!(
+                            "Wrong signature for {}",
+                            $n
+                        )))
+                    }
+                }
+                Err(e) => {
+                    result.push_error(create_verification_error!(
+                        format!("Error testing signature of {}", $n),
+                        e
+                    ));
+                }
+            }
+        }
+    };
+}
+pub(crate) use verifiy_signature;
