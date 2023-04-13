@@ -60,7 +60,7 @@ mod test {
 
     fn get_verifier_dir() -> VerificationDirectory {
         let location = Path::new(".").join("datasets").join("dataset-setup1");
-        VerificationDirectory::new(VerificationPeriod::Setup, &location)
+        VerificationDirectory::new(&VerificationPeriod::Setup, &location)
     }
 
     #[test]

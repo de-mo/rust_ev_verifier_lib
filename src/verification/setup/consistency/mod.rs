@@ -10,10 +10,11 @@ pub mod v308_election_event_id_consistency;
 pub mod v312_total_voters_consistency;
 
 use super::super::{
-    meta_data::VerificationMetaDataList, verification::Verification, VerificationSuite,
+    meta_data::VerificationMetaDataList, verification::Verification,
+    verification_suite::VerificationList,
 };
 
-pub fn get_verifications(metadata_list: &VerificationMetaDataList) -> VerificationSuite {
+pub fn get_verifications(metadata_list: &VerificationMetaDataList) -> VerificationList {
     let mut res = vec![];
     res.push(
         Verification::new(

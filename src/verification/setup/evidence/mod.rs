@@ -4,9 +4,9 @@ pub mod v503_key_generation_schnorr_proofs;
 
 use crate::verification::meta_data::VerificationMetaDataList;
 
-use super::super::{verification::Verification, VerificationSuite};
+use super::super::{verification::Verification, verification_suite::VerificationList};
 
-pub fn get_verifications(metadata_list: &VerificationMetaDataList) -> VerificationSuite {
+pub fn get_verifications(metadata_list: &VerificationMetaDataList) -> VerificationList {
     let mut res = vec![];
     res.push(
         Verification::new(

@@ -4,8 +4,9 @@ use super::error::{create_verifier_error, VerifierError};
 use crate::{
     file_structure::VerificationDirectory,
     verification::{
-        meta_data::VerificationMetaDataList, VerificationPeriod, VerificationSuiteTrait,
-        VerificationsForPeriod,
+        meta_data::{VerificationMetaDataList, VerificationMetaDataListTrait},
+        verification_suite::VerificationSuite,
+        VerificationPeriod,
     },
 };
 use log::{info, warn};
@@ -20,8 +21,7 @@ use std::{
 /// The runner can run only once. The runner has to be reseted to restart.
 pub struct Runner {
     path: PathBuf,
-    period: VerificationPeriod,
-    verifications: VerificationsForPeriod,
+    verifications: VerificationSuite,
     start_time: Option<SystemTime>,
     duration: Option<Duration>,
 }
@@ -33,27 +33,34 @@ impl Runner {
     /// period ist the verification period
     pub fn new(
         path: &Path,
-        period: VerificationPeriod,
+        period: &VerificationPeriod,
         metadata: &VerificationMetaDataList,
+        exclusion: &Option<Vec<String>>,
     ) -> Runner {
         Runner {
             path: path.to_path_buf(),
-            period,
-            verifications: VerificationsForPeriod::new(period, metadata),
+            verifications: VerificationSuite::new(period, metadata, exclusion),
             start_time: None,
             duration: None,
         }
     }
 
     /// Reset the verifications
-    pub fn reset(&mut self, metadata: &VerificationMetaDataList) {
+    pub fn reset(&mut self, metadata_list: &VerificationMetaDataList) {
         self.start_time = None;
         self.duration = None;
-        self.verifications = VerificationsForPeriod::new(self.period, metadata)
+        self.verifications = VerificationSuite::new(
+            self.period(),
+            metadata_list,
+            &Some(self.verifications.exclusion().clone()),
+        )
     }
 
     /// Run all tests sequentially
-    pub fn run_all_sequential(&mut self, exclusion: &Vec<&String>) -> Option<RunnerError> {
+    pub fn run_all_sequential(
+        &mut self,
+        metadata_list: &VerificationMetaDataList,
+    ) -> Option<RunnerError> {
         if self.is_running() {
             return Some(create_verifier_error!(
                 RunnerErrorType::RunError,
@@ -69,24 +76,24 @@ impl Runner {
         self.start_time = Some(SystemTime::now());
         info!(
             "Start all verifications ({} verifications; {} excluded)",
-            self.verifications.len_with_exclusion(exclusion),
-            self.verifications.len_excluded(exclusion)
+            self.verifications.len(),
+            self.verifications.len_excluded()
         );
-        let directory = VerificationDirectory::new(self.period, &self.path);
-        for v in self.verifications.value_mut().iter_mut() {
-            if !exclusion.contains(&&v.meta_data.id) {
-                v.run(&directory);
-            } else {
-                warn!(
-                    "Verification {} ({}) skipped",
-                    v.meta_data.name, v.meta_data.id
-                )
-            }
+        for id in self.verifications.exclusion().iter() {
+            warn!(
+                "Verification {} ({}) skipped",
+                metadata_list.meta_data_from_id(id).unwrap().name,
+                id
+            )
+        }
+        let directory = VerificationDirectory::new(self.period(), &self.path);
+        for v in self.verifications.verifications_mut().iter_mut() {
+            v.run(&directory);
         }
         self.duration = Some(self.start_time.unwrap().elapsed().unwrap());
         info!(
             "{} verifications run (duration: {}s)",
-            self.verifications.len_with_exclusion(exclusion),
+            self.verifications.len(),
             self.duration.unwrap().as_secs_f32()
         );
         None
@@ -102,6 +109,10 @@ impl Runner {
 
     pub fn can_be_started(&self) -> bool {
         self.start_time.is_none()
+    }
+
+    pub fn period(&self) -> &VerificationPeriod {
+        self.verifications.period()
     }
 }
 

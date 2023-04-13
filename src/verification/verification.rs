@@ -242,7 +242,7 @@ mod test {
         assert!(verif.has_errors().is_none());
         assert!(verif.has_failures().is_none());
         verif.run(&VerificationDirectory::new(
-            VerificationPeriod::Setup,
+            &VerificationPeriod::Setup,
             &Path::new("."),
         ));
         assert_eq!(verif.status, VerificationStatus::Finished);
@@ -271,7 +271,7 @@ mod test {
         assert!(verif.has_errors().is_none());
         assert!(verif.has_failures().is_none());
         verif.run(&VerificationDirectory::new(
-            VerificationPeriod::Setup,
+            &VerificationPeriod::Setup,
             &Path::new("."),
         ));
         assert_eq!(verif.status, VerificationStatus::Finished);
@@ -301,7 +301,7 @@ mod test {
         assert!(verif.has_errors().is_none());
         assert!(verif.has_failures().is_none());
         verif.run(&VerificationDirectory::new(
-            VerificationPeriod::Setup,
+            &VerificationPeriod::Setup,
             &Path::new("."),
         ));
         assert_eq!(verif.status, VerificationStatus::Finished);

@@ -7,10 +7,10 @@ use crate::{
 use super::super::{
     error::{create_verification_failure, VerificationFailureType},
     verification::{Verification, VerificationResult},
-    VerificationSuite,
+    verification_suite::VerificationList,
 };
 
-pub fn get_verifications(metadata_list: &VerificationMetaDataList) -> VerificationSuite {
+pub fn get_verifications(metadata_list: &VerificationMetaDataList) -> VerificationList {
     let mut res = vec![];
     res.push(Verification::new("s400", fn_verification_400, metadata_list).unwrap());
     res
@@ -109,7 +109,7 @@ mod test {
 
     fn get_verifier_dir() -> VerificationDirectory {
         let location = Path::new(".").join("datasets").join("dataset-setup1");
-        VerificationDirectory::new(VerificationPeriod::Setup, &location)
+        VerificationDirectory::new(&VerificationPeriod::Setup, &location)
     }
 
     #[test]

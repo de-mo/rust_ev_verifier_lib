@@ -96,26 +96,32 @@ pub fn execute_command() {
         Some(("setup", setup_matches)) => {
             init_logger(LevelFilter::Debug, true);
             info!("Start Verifier for setup");
-            execute_runner(VerificationPeriod::Setup, &setup_matches);
+            execute_runner(&VerificationPeriod::Setup, &setup_matches);
         }
         Some(("tally", tally_matches)) => {
             init_logger(LevelFilter::Debug, true);
             info!("Start Verifier for tally");
-            execute_runner(VerificationPeriod::Tally, &tally_matches);
+            execute_runner(&VerificationPeriod::Tally, &tally_matches);
         }
         _ => unreachable!(), // If all subcommands are defined above, anything else is unreachable
     }
     info!("Verifier finished");
 }
 
-fn execute_runner(period: VerificationPeriod, matches: &ArgMatches) {
+fn execute_runner(period: &VerificationPeriod, matches: &ArgMatches) {
     let metadata = VerificationMetaDataList::load().unwrap();
     let dir = matches.get_one::<String>("dir").unwrap();
     let path = Path::new(dir);
-    let mut exclusions: Vec<&String> = vec![];
-    if matches.contains_id("exclude") {
-        exclusions = matches.get_many("exclude").unwrap().collect();
-    }
-    let mut runner = Runner::new(path, period, &metadata);
-    runner.run_all_sequential(&exclusions);
+    let exclusion: Option<Vec<String>> = match matches.contains_id("exclude") {
+        false => None,
+        true => Some(
+            matches
+                .get_many("exclude")
+                .unwrap()
+                .map(|e: &String| e.to_string())
+                .collect(),
+        ),
+    };
+    let mut runner = Runner::new(path, period, &metadata, &exclusion);
+    runner.run_all_sequential(&metadata);
 }

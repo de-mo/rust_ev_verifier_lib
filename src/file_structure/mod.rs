@@ -42,7 +42,7 @@ pub trait GetFileNameTrait {
 
 impl VerificationDirectory {
     /// Create a new VerificationDirectory
-    pub fn new(period: VerificationPeriod, location: &Path) -> Self {
+    pub fn new(period: &VerificationPeriod, location: &Path) -> Self {
         match period {
             VerificationPeriod::Setup => VerificationDirectory {
                 setup: SetupDirectory::new(location),

@@ -33,7 +33,7 @@ pub trait VerificationMetaDataListTrait: Sized {
     fn id_list(&self) -> Vec<String>;
 
     // Get the list of ids for the given period
-    fn id_list_for_period(&self, period: VerificationPeriod) -> Vec<String>;
+    fn id_list_for_period(&self, period: &VerificationPeriod) -> Vec<String>;
 }
 
 /// Metadata of a verification
@@ -87,9 +87,9 @@ impl VerificationMetaDataListTrait for VerificationMetaDataList {
         self.iter().map(|e| e.id.clone()).collect::<Vec<String>>()
     }
 
-    fn id_list_for_period(&self, period: VerificationPeriod) -> Vec<String> {
+    fn id_list_for_period(&self, period: &VerificationPeriod) -> Vec<String> {
         self.iter()
-            .filter(|e| e.period == period)
+            .filter(|e| &e.period == period)
             .map(|e| e.id.clone())
             .collect::<Vec<String>>()
     }

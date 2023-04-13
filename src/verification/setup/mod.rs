@@ -5,11 +5,11 @@ pub mod consistency;
 pub mod evidence;
 pub mod integrity;
 
-use super::{meta_data::VerificationMetaDataList, VerificationSuite};
+use super::{meta_data::VerificationMetaDataList, verification_suite::VerificationList};
 
 /// Collect the verifications of the submodules
-pub fn get_verifications(metadata_list: &VerificationMetaDataList) -> VerificationSuite {
-    let mut res: VerificationSuite = vec![];
+pub fn get_verifications(metadata_list: &VerificationMetaDataList) -> VerificationList {
+    let mut res: VerificationList = vec![];
     res.append(&mut authenticity::get_verifications(metadata_list));
     res.append(&mut completness::get_verifications(metadata_list));
     res.append(&mut consistency::get_verifications(metadata_list));
