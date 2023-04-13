@@ -21,8 +21,8 @@ impl<'a> From<&'a ECH0110> for HashableMessage<'a> {
 }
 
 impl<'a> VerifiySignatureTrait<'a> for ECH0110 {
-    fn get_context_data(&self) -> &'static str {
-        "eCH 0110"
+    fn get_context_data(&self) -> Vec<HashableMessage<'a>> {
+        vec![HashableMessage::from("eCH 0110")]
     }
 
     fn get_certificate_authority(&self) -> CertificateAuthority {

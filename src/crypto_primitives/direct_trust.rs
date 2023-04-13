@@ -92,6 +92,18 @@ impl Display for DirectTrustErrorType {
 
 pub type DirectTrustError = VerifierError<DirectTrustErrorType>;
 
+impl CertificateAuthority {
+    pub fn get_ca_cc(node: &usize) -> Option<Self> {
+        match node {
+            1 => Some(Self::ControlComponent1),
+            2 => Some(Self::ControlComponent2),
+            3 => Some(Self::ControlComponent3),
+            4 => Some(Self::ControlComponent4),
+            _ => None,
+        }
+    }
+}
+
 impl From<&CertificateAuthority> for String {
     fn from(value: &CertificateAuthority) -> Self {
         match value {

@@ -39,8 +39,8 @@ impl<'a> From<&'a EncryptionParametersPayload> for HashableMessage<'a> {
 }
 
 impl<'a> VerifiySignatureTrait<'a> for EncryptionParametersPayload {
-    fn get_context_data(&self) -> &'static str {
-        "encryption parameters"
+    fn get_context_data(&'a self) -> Vec<HashableMessage<'a>> {
+        vec![HashableMessage::from("encryption parameters")]
     }
 
     fn get_certificate_authority(&self) -> CertificateAuthority {

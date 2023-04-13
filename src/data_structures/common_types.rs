@@ -54,6 +54,15 @@ pub struct ProofUnderline {
     pub z: BigUint,
 }
 
+impl<'a> From<&'a ProofUnderline> for HashableMessage<'a> {
+    fn from(value: &'a ProofUnderline) -> Self {
+        let mut elts = vec![];
+        elts.push(Self::from(&(value.e)));
+        elts.push(Self::from(&(value.z)));
+        Self::from(elts)
+    }
+}
+
 /// A proof (e,z) where the keys are e and z in json
 #[derive(Deserialize, Debug, Clone)]
 pub struct Proof {

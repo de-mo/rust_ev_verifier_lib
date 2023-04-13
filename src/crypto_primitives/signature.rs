@@ -20,10 +20,13 @@ where
     HashableMessage<'a>: From<&'a Self> + From<&'a str>,
 {
     /// Get the context data of the object according to the specifications
-    fn get_context_data(&self) -> &'static str;
+    fn get_context_data(&'a self) -> Vec<HashableMessage<'a>>;
 
     /// Get the context data of the object according to the context data
     fn get_context_hashable(&'a self) -> HashableMessage {
+        if self.get_context_data().len() == 1 {
+            return self.get_context_data()[0].clone();
+        }
         HashableMessage::from(self.get_context_data())
     }
 

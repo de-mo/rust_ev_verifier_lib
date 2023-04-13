@@ -21,8 +21,8 @@ impl<'a> From<&'a EVotingDecrypt> for HashableMessage<'a> {
 }
 
 impl<'a> VerifiySignatureTrait<'a> for EVotingDecrypt {
-    fn get_context_data(&self) -> &'static str {
-        "evoting decrypt"
+    fn get_context_data(&self) -> Vec<HashableMessage<'a>> {
+        vec![HashableMessage::from("evoting decrypt")]
     }
 
     fn get_certificate_authority(&self) -> CertificateAuthority {

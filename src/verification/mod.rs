@@ -1,15 +1,25 @@
 //! Module implementing all the verifications
 
-use std::fmt::Display;
-
-use crate::error::{create_result_with_error, create_verifier_error, VerifierError};
-
 pub mod error;
 pub mod meta_data;
 pub mod setup;
 pub mod tally;
 pub mod verification;
 pub mod verification_suite;
+
+use self::{
+    error::{
+        create_verification_error, create_verification_failure, VerificationErrorType,
+        VerificationFailureType,
+    },
+    verification::VerificationResult,
+};
+use crate::{
+    constants::direct_trust_path,
+    crypto_primitives::{hashing::HashableMessage, signature::VerifiySignatureTrait},
+    error::{create_result_with_error, create_verifier_error, VerifierError},
+};
+use std::fmt::Display;
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
 pub enum VerificationCategory {
@@ -31,6 +41,30 @@ pub enum VerificationStatus {
 pub enum VerificationPeriod {
     Setup,
     Tally,
+}
+
+/// Verify the signatue for a given object implementing [VerifiySignatureTrait]
+fn verify_signature_for_object<'a, T>(obj: &'a T, result: &mut VerificationResult, name: &str)
+where
+    T: VerifiySignatureTrait<'a>,
+    HashableMessage<'a>: From<&'a T>,
+{
+    match obj.verifiy_signature(&direct_trust_path()) {
+        Ok(t) => {
+            if !t {
+                result.push_failure(create_verification_failure!(format!(
+                    "Wrong signature for {}",
+                    name
+                )))
+            }
+        }
+        Err(e) => {
+            result.push_error(create_verification_error!(
+                format!("Error testing signature of {}", name),
+                e
+            ));
+        }
+    }
 }
 
 impl TryFrom<&str> for VerificationPeriod {
@@ -101,44 +135,3 @@ impl Display for VerificationPreparationErrorType {
 }
 
 pub type VerificationPreparationError = VerifierError<VerificationPreparationErrorType>;
-
-/// Marco to test the signature of a data structure
-///
-/// Following paramters:
-/// - $fn: Name of the function to verify
-/// - $d: The structure
-/// - $n: The name of the structure (for the messages)
-macro_rules! verifiy_signature {
-    ($fn: ident, $d: ident, $n: expr) => {
-        fn $fn(dir: &VerificationDirectory, result: &mut VerificationResult) {
-            let setup_dir = dir.unwrap_setup();
-            let eg = match setup_dir.$d() {
-                Ok(p) => p,
-                Err(e) => {
-                    result.push_error(create_verification_error!(
-                        format!("{} cannot be read", $n),
-                        e
-                    ));
-                    return;
-                }
-            };
-            match eg.as_ref().verifiy_signature(&direct_trust_path()) {
-                Ok(t) => {
-                    if !t {
-                        result.push_failure(create_verification_failure!(format!(
-                            "Wrong signature for {}",
-                            $n
-                        )))
-                    }
-                }
-                Err(e) => {
-                    result.push_error(create_verification_error!(
-                        format!("Error testing signature of {}", $n),
-                        e
-                    ));
-                }
-            }
-        }
-    };
-}
-pub(crate) use verifiy_signature;

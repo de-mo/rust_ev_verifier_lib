@@ -53,8 +53,8 @@ impl<'a> From<&'a ElectionEventConfiguration> for HashableMessage<'a> {
 }
 
 impl<'a> VerifiySignatureTrait<'a> for ElectionEventConfiguration {
-    fn get_context_data(&self) -> &'static str {
-        "configuration"
+    fn get_context_data(&self) -> Vec<HashableMessage<'a>> {
+        vec![HashableMessage::from("configuration")]
     }
 
     fn get_certificate_authority(&self) -> CertificateAuthority {
