@@ -4,7 +4,7 @@ use super::super::{
 };
 use crate::{
     crypto_primitives::{
-        byte_array::ByteArray, direct_trust::CertificateAuthority, hashing::RecursiveHashable,
+        byte_array::ByteArray, direct_trust::CertificateAuthority, hashing::HashableMessage,
         signature::VerifiySignatureTrait,
     },
     error::{create_result_with_error, create_verifier_error, VerifierError},
@@ -46,15 +46,15 @@ impl DataStructureTrait for ElectionEventConfiguration {
     }
 }
 
-impl From<&ElectionEventConfiguration> for RecursiveHashable {
+impl<'a> From<&'a ElectionEventConfiguration> for HashableMessage<'a> {
     fn from(_: &ElectionEventConfiguration) -> Self {
         todo!()
     }
 }
 
-impl VerifiySignatureTrait<'_> for ElectionEventConfiguration {
-    fn get_context_data(&self) -> RecursiveHashable {
-        RecursiveHashable::from(&"configuration".to_string())
+impl<'a> VerifiySignatureTrait<'a> for ElectionEventConfiguration {
+    fn get_context_data(&self) -> &'static str {
+        "configuration"
     }
 
     fn get_certificate_authority(&self) -> CertificateAuthority {

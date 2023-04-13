@@ -1,4 +1,4 @@
-use super::{hashing::RecursiveHashable, num_bigint::Operations};
+use super::{hashing::HashableMessage, num_bigint::Operations};
 use crate::data_structures::common_types::{EncryptionGroup, Proof};
 use num_bigint::BigUint;
 use std::iter::zip;
@@ -17,25 +17,25 @@ pub fn verify_schnorr(
     i_aux: &Vec<String>,
 ) -> bool {
     let x = compute_phi_schnorr(eg, &schnorr.z);
-    let f = RecursiveHashable::from(&vec![&eg.p, &eg.q, &eg.g]);
+    let f = HashableMessage::from(eg);
     // e in Z_q => modulo q
     // x, y in G_q => modulo p
     let c_prime = x.mod_multiply(
         &y.mod_exponentiate(&schnorr.e.mod_negate(&eg.q), &eg.p),
         &eg.p,
     );
-    let mut l: Vec<RecursiveHashable> = vec![];
-    l.push(RecursiveHashable::from(&"SchnorrProof".to_string()));
+    let mut l: Vec<HashableMessage> = vec![];
+    l.push(HashableMessage::from("SchnorrProof"));
     if !i_aux.is_empty() {
-        l.push(RecursiveHashable::from(i_aux));
+        l.push(HashableMessage::from(i_aux));
     }
-    let h_aux = RecursiveHashable::Composite(l);
-    let mut l_final: Vec<RecursiveHashable> = vec![];
+    let h_aux = HashableMessage::Composite(l);
+    let mut l_final: Vec<HashableMessage> = vec![];
     l_final.push(f);
-    l_final.push(RecursiveHashable::from(y));
-    l_final.push(RecursiveHashable::from(&c_prime));
+    l_final.push(HashableMessage::from(y));
+    l_final.push(HashableMessage::from(&c_prime));
     l_final.push(h_aux);
-    let e_prime = RecursiveHashable::from(&l_final)
+    let e_prime = HashableMessage::from(&l_final)
         .recursive_hash()
         .into_biguint();
     e_prime == schnorr.e
@@ -60,11 +60,12 @@ pub fn verify_exponentiation(
     i_aux: &Vec<String>,
 ) -> bool {
     let xs = compute_phi_exponentiation(eg, &proof.z, gs);
-    let f = RecursiveHashable::from(&vec![
-        RecursiveHashable::from(&eg.p),
-        RecursiveHashable::from(&eg.q),
-        RecursiveHashable::from(gs),
-    ]);
+    let f_list = vec![
+        HashableMessage::from(&eg.p),
+        HashableMessage::from(&eg.q),
+        HashableMessage::from(gs),
+    ];
+    let f = HashableMessage::from(f_list);
     let c_prime_s: Vec<BigUint> = zip(&xs, ys)
         .map(|(x, y)| {
             x.mod_multiply(
@@ -73,18 +74,18 @@ pub fn verify_exponentiation(
             )
         })
         .collect();
-    let mut l: Vec<RecursiveHashable> = vec![];
-    l.push(RecursiveHashable::from(&"ExponentiationProof".to_string()));
+    let mut l: Vec<HashableMessage> = vec![];
+    l.push(HashableMessage::from("ExponentiationProof"));
     if !i_aux.is_empty() {
-        l.push(RecursiveHashable::from(i_aux));
+        l.push(HashableMessage::from(i_aux));
     }
-    let h_aux = RecursiveHashable::from(&l);
-    let mut l_final: Vec<RecursiveHashable> = vec![];
+    let h_aux = HashableMessage::from(&l);
+    let mut l_final: Vec<HashableMessage> = vec![];
     l_final.push(f);
-    l_final.push(RecursiveHashable::from(ys));
-    l_final.push(RecursiveHashable::from(&c_prime_s));
+    l_final.push(HashableMessage::from(ys));
+    l_final.push(HashableMessage::from(&c_prime_s));
     l_final.push(h_aux);
-    let e_prime = RecursiveHashable::from(&l_final)
+    let e_prime = HashableMessage::from(&l_final)
         .recursive_hash()
         .into_biguint();
     e_prime == proof.e

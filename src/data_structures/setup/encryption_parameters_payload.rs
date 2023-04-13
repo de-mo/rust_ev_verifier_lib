@@ -5,12 +5,11 @@ use super::super::{
 };
 use crate::{
     crypto_primitives::{
-        byte_array::ByteArray, direct_trust::CertificateAuthority, hashing::RecursiveHashable,
+        byte_array::ByteArray, direct_trust::CertificateAuthority, hashing::HashableMessage,
         signature::VerifiySignatureTrait,
     },
     error::{create_verifier_error, VerifierError},
 };
-use num_bigint::BigUint;
 use serde::Deserialize;
 
 #[derive(Deserialize, Debug, Clone)]
@@ -24,24 +23,24 @@ pub struct EncryptionParametersPayload {
 
 implement_trait_data_structure!(EncryptionParametersPayload);
 
-impl<'a> From<&EncryptionParametersPayload> for RecursiveHashable {
-    fn from(value: &EncryptionParametersPayload) -> Self {
+impl<'a> From<&'a EncryptionParametersPayload> for HashableMessage<'a> {
+    fn from(value: &'a EncryptionParametersPayload) -> Self {
         let mut elts = vec![];
         elts.push(Self::from(&value.encryption_group));
         elts.push(Self::from(&value.seed));
-        let sp_hash: Vec<BigUint> = value
+        let sp_hash: Vec<HashableMessage> = value
             .small_primes
             .iter()
-            .map(|p| BigUint::from(*p))
+            .map(|p| HashableMessage::from(p))
             .collect();
-        elts.push(Self::from(&sp_hash));
-        Self::from(&elts)
+        elts.push(Self::from(sp_hash));
+        Self::from(elts)
     }
 }
 
-impl VerifiySignatureTrait<'_> for EncryptionParametersPayload {
-    fn get_context_data(&self) -> RecursiveHashable {
-        RecursiveHashable::from(&"encryption parameters".to_string())
+impl<'a> VerifiySignatureTrait<'a> for EncryptionParametersPayload {
+    fn get_context_data(&self) -> &'static str {
+        "encryption parameters"
     }
 
     fn get_certificate_authority(&self) -> CertificateAuthority {

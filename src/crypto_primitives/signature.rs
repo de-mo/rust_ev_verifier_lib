@@ -4,7 +4,7 @@
 use std::fmt::Display;
 use std::path::Path;
 
-use super::{byte_array::ByteArray, hashing::RecursiveHashable};
+use super::{byte_array::ByteArray, hashing::HashableMessage};
 use super::{
     direct_trust::{CertificateAuthority, DirectTrust},
     openssl_wrapper::signature::verify,
@@ -13,14 +13,19 @@ use crate::error::{create_result_with_error, create_verifier_error, VerifierErro
 
 /// Trait that must be implemented for each object implementing a signature to be verified
 ///
-/// [RecursiveHasable] has to implement the trait From<&...>
+/// [HashableMessage] has to implement the trait From<&...>
 pub trait VerifiySignatureTrait<'a>
 where
     Self: 'a,
-    RecursiveHashable: From<&'a Self>,
+    HashableMessage<'a>: From<&'a Self> + From<&'a str>,
 {
     /// Get the context data of the object according to the specifications
-    fn get_context_data(&self) -> RecursiveHashable;
+    fn get_context_data(&self) -> &'static str;
+
+    /// Get the context data of the object according to the context data
+    fn get_context_hashable(&'a self) -> HashableMessage {
+        HashableMessage::from(self.get_context_data())
+    }
 
     /// Get the Certificate Authority to the specifications
     fn get_certificate_authority(&self) -> CertificateAuthority;
@@ -49,8 +54,8 @@ where
         })?;
         verify(
             pkey.as_ref(),
-            &RecursiveHashable::from(self),
-            &self.get_context_data(),
+            &HashableMessage::from(self),
+            &self.get_context_hashable(),
             &self.get_signature(),
         )
         .map_err(|e| create_verifier_error!(SignatureErrorType::Validation, "Error verfying", e))

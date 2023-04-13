@@ -1,6 +1,6 @@
 use super::super::{error::DeserializeError, DataStructureTrait};
 use crate::crypto_primitives::{
-    byte_array::ByteArray, direct_trust::CertificateAuthority, hashing::RecursiveHashable,
+    byte_array::ByteArray, direct_trust::CertificateAuthority, hashing::HashableMessage,
     signature::VerifiySignatureTrait,
 };
 use roxmltree::Document;
@@ -14,15 +14,15 @@ impl DataStructureTrait for ECH0110 {
     }
 }
 
-impl From<&ECH0110> for RecursiveHashable {
-    fn from(_: &ECH0110) -> Self {
+impl<'a> From<&'a ECH0110> for HashableMessage<'a> {
+    fn from(_: &'a ECH0110) -> Self {
         todo!()
     }
 }
 
-impl VerifiySignatureTrait<'_> for ECH0110 {
-    fn get_context_data(&self) -> RecursiveHashable {
-        RecursiveHashable::from(&"evoting decrypt".to_string())
+impl<'a> VerifiySignatureTrait<'a> for ECH0110 {
+    fn get_context_data(&self) -> &'static str {
+        "eCH 0110"
     }
 
     fn get_certificate_authority(&self) -> CertificateAuthority {

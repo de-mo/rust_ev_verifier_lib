@@ -2,7 +2,7 @@
 
 use super::{super::byte_array::ByteArray, OpensslError, OpensslErrorType};
 use crate::{
-    crypto_primitives::hashing::RecursiveHashable,
+    crypto_primitives::hashing::HashableMessage,
     error::{create_verifier_error, VerifierError},
 };
 use openssl::{
@@ -20,8 +20,8 @@ use openssl::{
 /// The trailer field number is 1, which represents the trailer field with value 0xbc, in accordance with the same RFC.
 pub fn verify(
     pkey: &PKeyRef<Public>,
-    message: &RecursiveHashable,
-    additional_context: &RecursiveHashable,
+    message: &HashableMessage,
+    additional_context: &HashableMessage,
     signature: &ByteArray,
 ) -> Result<bool, OpensslError> {
     // With the next two lines, it is sure that the certificate is recognized as SRA certificate from openssl
@@ -60,8 +60,8 @@ pub fn verify(
                 e
             )
         })?;
-    let hash_vec: Vec<RecursiveHashable> = vec![message.to_owned(), additional_context.to_owned()];
-    let h = RecursiveHashable::from(&hash_vec).recursive_hash();
+    let hash_vec: Vec<HashableMessage> = vec![message.to_owned(), additional_context.to_owned()];
+    let h = HashableMessage::from(&hash_vec).recursive_hash();
     verifier
         .verify_oneshot(&signature.to_bytes(), &h.to_bytes())
         .map_err(|e| {
