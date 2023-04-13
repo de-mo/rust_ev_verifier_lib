@@ -136,14 +136,14 @@ impl<'a> VerificationSuite<'a> {
 mod test {
     use super::*;
 
-    const EXPECTED_IMPL_SETUP_VERIF: usize = 18;
+    const EXPECTED_IMPL_SETUP_VERIF: usize = 19;
     const IMPL_SETUP_TESTS: &[&str] = &[
-        "s100", "s200", "s203", "s300", "s301", "s302", "s303", "s304", "s305", "s306", "s307",
-        "s308", "s312", "s400", "s500", "s501", "s502", "s503",
+        "s100", "s200", "s202", "s203", "s300", "s301", "s302", "s303", "s304", "s305", "s306",
+        "s307", "s308", "s312", "s400", "s500", "s501", "s502", "s503",
     ];
     const MISSING_SETUP_TESTS: &[&str] = &[
-        "s201", "s202", "s204", "s205", "s206", "s207", "s309", "s310", "s311", "s313", "s314",
-        "s504", "s505",
+        "s201", "s204", "s205", "s206", "s207", "s309", "s310", "s311", "s313", "s314", "s504",
+        "s505",
     ];
 
     const EXPECTED_IMPL_TALLY_VERIF: usize = 0;

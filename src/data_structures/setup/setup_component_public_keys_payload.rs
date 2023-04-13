@@ -7,7 +7,13 @@ use super::{
     },
     control_component_public_keys_payload::ControlComponentPublicKeys,
 };
-use crate::error::{create_verifier_error, VerifierError};
+use crate::{
+    crypto_primitives::{
+        byte_array::ByteArray, direct_trust::CertificateAuthority, hashing::HashableMessage,
+        signature::VerifiySignatureTrait,
+    },
+    error::{create_verifier_error, VerifierError},
+};
 use num_bigint::BigUint;
 use serde::Deserialize;
 
@@ -22,6 +28,33 @@ pub struct SetupComponentPublicKeysPayload {
 
 implement_trait_data_structure!(SetupComponentPublicKeysPayload);
 
+impl<'a> From<&'a SetupComponentPublicKeysPayload> for HashableMessage<'a> {
+    fn from(value: &'a SetupComponentPublicKeysPayload) -> Self {
+        let mut elts = vec![];
+        elts.push(Self::from(&value.encryption_group));
+        elts.push(Self::from(&value.setup_component_public_keys));
+        Self::from(elts)
+    }
+}
+
+impl<'a> VerifiySignatureTrait<'a> for SetupComponentPublicKeysPayload {
+    fn get_context_data(&'a self) -> Vec<HashableMessage<'a>> {
+        vec![
+            HashableMessage::from("public keys"),
+            HashableMessage::from("setup"),
+            HashableMessage::from(&self.election_event_id),
+        ]
+    }
+
+    fn get_certificate_authority(&self) -> CertificateAuthority {
+        CertificateAuthority::SdmConfig
+    }
+
+    fn get_signature(&self) -> ByteArray {
+        self.signature.get_signature()
+    }
+}
+
 #[derive(Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct SetupComponentPublicKeys {
@@ -33,6 +66,28 @@ pub struct SetupComponentPublicKeys {
     pub election_public_key: Vec<BigUint>,
     #[serde(deserialize_with = "deserialize_seq_string_hex_to_seq_bigunit")]
     pub choice_return_codes_encryption_public_key: Vec<BigUint>,
+}
+
+impl<'a> From<&'a SetupComponentPublicKeys> for HashableMessage<'a> {
+    fn from(value: &'a SetupComponentPublicKeys) -> Self {
+        let mut elts = vec![];
+        let cc: Vec<HashableMessage> = value
+            .combined_control_component_public_keys
+            .iter()
+            .map(|e| Self::from(e))
+            .collect();
+        elts.push(Self::from(cc));
+        elts.push(Self::from(&value.electoral_board_public_key));
+        let el_sp: Vec<HashableMessage> = value
+            .electoral_board_schnorr_proofs
+            .iter()
+            .map(|e| Self::from(e))
+            .collect();
+        elts.push(Self::from(el_sp));
+        elts.push(Self::from(&value.election_public_key));
+        elts.push(Self::from(&value.choice_return_codes_encryption_public_key));
+        Self::from(elts)
+    }
 }
 
 #[cfg(test)]
