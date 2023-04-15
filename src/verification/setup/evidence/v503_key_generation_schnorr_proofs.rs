@@ -1,15 +1,17 @@
-use std::iter::zip;
+use std::{iter::zip, result};
+
+use num_bigint::BigUint;
 
 use super::super::super::{
     error::{
         create_verification_error, create_verification_failure, VerificationErrorType,
-        VerificationFailureType,
+        VerificationFailure, VerificationFailureType,
     },
     verification::VerificationResult,
 };
 use crate::{
     crypto_primitives::zero_knowledge_proof::verify_schnorr,
-    data_structures::common_types::Proof,
+    data_structures::common_types::{EncryptionGroup, Proof},
     error::{create_verifier_error, VerifierError},
     file_structure::VerificationDirectory,
 };
@@ -60,24 +62,22 @@ pub(super) fn fn_verification(dir: &VerificationDirectory, result: &mut Verifica
             "GenKeysCCR".to_string(),
             j.to_string(),
         ];
-        for (i, (pk_ccr_j_i, pi_pk_ccr_j_i)) in zip(
-            combined_cc_pk.ccrj_choice_return_codes_encryption_public_key,
-            combined_cc_pk.ccrj_schnorr_proofs,
-        )
-        .enumerate()
-        {
-            if !verify_schnorr(
-                &eg.encryption_group,
-                &Proof::from(&pi_pk_ccr_j_i),
-                &pk_ccr_j_i,
-                &i_aux_ccr_j,
-            ) {
-                result.push_failure(create_verification_failure!(format!(
-                    "VerifSchnorrCCRji: Verifiy CCR_j Schnorrproof not ok at pos {} for cc {}",
-                    i, j
-                )))
-            }
-        }
+        let proofs: Vec<Proof> = combined_cc_pk
+            .ccrj_schnorr_proofs
+            .iter()
+            .map(|e| Proof::from(e))
+            .collect();
+
+        let mut res = run_verify_schnorr_proofs(
+            &eg.encryption_group,
+            &combined_cc_pk.ccrj_choice_return_codes_encryption_public_key,
+            &proofs,
+            &i_aux_ccr_j,
+            "VerifSchnorrCCRji",
+            "CCR_j",
+            &Some(j),
+        );
+        result.append(&mut res);
 
         // CCMj Schnorr Proofs
         let i_aux_ccm_j = vec![
@@ -85,24 +85,22 @@ pub(super) fn fn_verification(dir: &VerificationDirectory, result: &mut Verifica
             "SetupTallyCCM".to_string(),
             j.to_string(),
         ];
-        for (i, (el_pk_j_i, pi_el_pk_j_i)) in zip(
-            combined_cc_pk.ccmj_election_public_key,
-            combined_cc_pk.ccmj_schnorr_proofs,
-        )
-        .enumerate()
-        {
-            if !verify_schnorr(
-                &eg.encryption_group,
-                &Proof::from(&pi_el_pk_j_i),
-                &el_pk_j_i,
-                &i_aux_ccm_j,
-            ) {
-                result.push_failure(create_verification_failure!(format!(
-                    "VerifSchnorrCCMji: Verifiy CCM_j Schnorrproof not ok at pos {} for cc {}",
-                    i, j
-                )))
-            }
-        }
+        let proofs: Vec<Proof> = combined_cc_pk
+            .ccmj_schnorr_proofs
+            .iter()
+            .map(|e| Proof::from(e))
+            .collect();
+
+        let mut res = run_verify_schnorr_proofs(
+            &eg.encryption_group,
+            &combined_cc_pk.ccmj_election_public_key,
+            &proofs,
+            &i_aux_ccm_j,
+            "VerifSchnorrCCMji",
+            "CCM_j",
+            &Some(j),
+        );
+        result.append(&mut res);
     }
 
     // EB proofs
@@ -110,28 +108,74 @@ pub(super) fn fn_verification(dir: &VerificationDirectory, result: &mut Verifica
         ee_context.election_event_context.election_event_id.clone(),
         "SetupTallyEB".to_string(),
     ];
-    for (i, (eb_pk_i, pi_eb_i)) in zip(
-        setup_ppk
+    let proofs: Vec<Proof> = setup_ppk
+        .setup_component_public_keys
+        .electoral_board_schnorr_proofs
+        .iter()
+        .map(|e| Proof::from(e))
+        .collect();
+    let mut res = run_verify_schnorr_proofs(
+        &eg.encryption_group,
+        &setup_ppk
             .setup_component_public_keys
             .electoral_board_public_key,
-        setup_ppk
-            .setup_component_public_keys
-            .electoral_board_schnorr_proofs,
-    )
-    .enumerate()
-    {
-        if !verify_schnorr(
-            &eg.encryption_group,
-            &Proof::from(&pi_eb_i),
-            &eb_pk_i,
-            &i_aux_eb,
-        ) {
-            result.push_failure(create_verification_failure!(format!(
-                "VerifSchnorrCCRji: Verifiy Electoral board Schnorr proofs not ok at pos {}",
-                i
-            )))
+        &proofs,
+        &i_aux_eb,
+        "VerifSchnorrELi",
+        "Electoral board",
+        &None,
+    );
+    result.append(&mut res);
+}
+
+fn run_verify_schnorr_proofs(
+    eg: &EncryptionGroup,
+    pks: &Vec<BigUint>,
+    pis: &Vec<Proof>,
+    i_aux: &Vec<String>,
+    test_name: &str,
+    proof_name: &str,
+    node: &Option<usize>,
+) -> VerificationResult {
+    let mut res = VerificationResult::new();
+    if pks.len() != pis.len() {
+        res.push_error(create_verification_error!(format!(
+            "The length of pks and pis is not the same for {proof_name}"
+        )));
+    } else {
+        for (i, (pk, pi)) in zip(pks, pis).enumerate() {
+            let verif_res =
+                run_verify_schnorr_proof(eg, pi, &pk, &i_aux, test_name, proof_name, i, node);
+            if verif_res.is_some() {
+                res.push_failure(verif_res.unwrap());
+            }
         }
     }
+    res
+}
+
+fn run_verify_schnorr_proof(
+    eg: &EncryptionGroup,
+    schnorr: &Proof,
+    y: &BigUint,
+    i_aux: &Vec<String>,
+    test_name: &str,
+    proof_name: &str,
+    pos: usize,
+    node: &Option<usize>,
+) -> Option<VerificationFailure> {
+    println!("Run {} at pos {} for cc {:?}", test_name, pos, node);
+    if !verify_schnorr(eg, schnorr, y, i_aux) {
+        let mut text = format!(
+            "{}: Verifiy {} Schnorr proofs not ok at pos {}",
+            test_name, proof_name, pos
+        );
+        if node.is_some() {
+            text = format!("{} for node {}", text, node.unwrap());
+        }
+        return Some(create_verification_failure!(text));
+    }
+    None
 }
 
 #[cfg(test)]
