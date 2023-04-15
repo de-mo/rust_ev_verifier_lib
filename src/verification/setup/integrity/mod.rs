@@ -1,6 +1,10 @@
 use crate::{
     error::{create_verifier_error, VerifierError},
-    file_structure::{setup_directory::VCSDirectory, VerificationDirectory},
+    file_structure::{
+        setup_directory::VCSDirectory,
+        setup_directory::{CollectDataSetupDirTrait, CollectDataVCSDirTrait},
+        VerificationDirectory,
+    },
     verification::meta_data::VerificationMetaDataList,
 };
 

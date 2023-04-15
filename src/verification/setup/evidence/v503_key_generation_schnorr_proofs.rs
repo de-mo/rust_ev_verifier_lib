@@ -1,7 +1,3 @@
-use std::iter::zip;
-
-use num_bigint::BigUint;
-
 use super::super::super::{
     error::{
         create_verification_error, create_verification_failure, VerificationErrorType,
@@ -13,8 +9,10 @@ use crate::{
     crypto_primitives::zero_knowledge_proof::verify_schnorr,
     data_structures::common_types::{EncryptionGroup, Proof},
     error::{create_verifier_error, VerifierError},
-    file_structure::VerificationDirectory,
+    file_structure::{setup_directory::CollectDataSetupDirTrait, VerificationDirectory},
 };
+use num_bigint::BigUint;
+use std::iter::zip;
 
 pub(super) fn fn_verification(dir: &VerificationDirectory, result: &mut VerificationResult) {
     let setup_dir = dir.unwrap_setup();

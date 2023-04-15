@@ -46,6 +46,45 @@ pub struct VCSDirectory {
     pub control_component_code_shares_payload_group: FileGroup,
 }
 
+/// Trait to collect the data
+///
+/// The trait is thought to permit mock tests
+pub trait CollectDataSetupDirTrait {
+    fn encryption_parameters_payload(
+        &self,
+    ) -> Result<Box<EncryptionParametersPayload>, FileStructureError>;
+    fn setup_component_public_keys_payload(
+        &self,
+    ) -> Result<Box<SetupComponentPublicKeysPayload>, FileStructureError>;
+
+    fn election_event_context_payload(
+        &self,
+    ) -> Result<Box<ElectionEventContextPayload>, FileStructureError>;
+    fn election_event_configuration(
+        &self,
+    ) -> Result<Box<ElectionEventConfiguration>, FileStructureError>;
+
+    fn control_component_public_keys_payload_iter(
+        &self,
+    ) -> ControlComponentPublicKeysPayloadReadIter;
+}
+
+/// Trait to collect the data
+///
+/// The trait is thought to permit mock tests
+pub trait CollectDataVCSDirTrait {
+    fn setup_component_tally_data_payload(
+        &self,
+    ) -> Result<Box<SetupComponentTallyDataPayload>, FileStructureError>;
+    fn setup_component_verification_data_payload_iter(
+        &self,
+    ) -> SetupComponentVerificationDataPayloadReadIter;
+
+    fn control_component_code_shares_payload_iter(
+        &self,
+    ) -> ControlComponentCodeSharesPayloadReadIter;
+}
+
 impl_iterator_over_data_payload!(
     ControlComponentPublicKeysPayload,
     control_component_public_keys_payload,
@@ -117,8 +156,10 @@ impl SetupDirectory {
     pub fn vcs_directories_iter(&self) -> Iter<VCSDirectory> {
         self.vcs_directories.iter()
     }
+}
 
-    pub fn encryption_parameters_payload(
+impl CollectDataSetupDirTrait for SetupDirectory {
+    fn encryption_parameters_payload(
         &self,
     ) -> Result<Box<EncryptionParametersPayload>, FileStructureError> {
         self.encryption_parameters_payload_file
@@ -126,7 +167,7 @@ impl SetupDirectory {
             .map(|d| Box::new(d.encryption_parameters_payload().unwrap().clone()))
     }
 
-    pub fn setup_component_public_keys_payload(
+    fn setup_component_public_keys_payload(
         &self,
     ) -> Result<Box<SetupComponentPublicKeysPayload>, FileStructureError> {
         self.setup_component_public_keys_payload_file
@@ -134,7 +175,7 @@ impl SetupDirectory {
             .map(|d| Box::new(d.setup_component_public_keys_payload().unwrap().clone()))
     }
 
-    pub fn election_event_context_payload(
+    fn election_event_context_payload(
         &self,
     ) -> Result<Box<ElectionEventContextPayload>, FileStructureError> {
         self.election_event_context_payload_file
@@ -142,7 +183,7 @@ impl SetupDirectory {
             .map(|d| Box::new(d.election_event_context_payload().unwrap().clone()))
     }
 
-    pub fn election_event_configuration(
+    fn election_event_configuration(
         &self,
     ) -> Result<Box<ElectionEventConfiguration>, FileStructureError> {
         self.election_event_configuration_file
@@ -150,7 +191,7 @@ impl SetupDirectory {
             .map(|d| Box::new(d.election_event_configuration().unwrap().clone()))
     }
 
-    pub fn control_component_public_keys_payload_iter(
+    fn control_component_public_keys_payload_iter(
         &self,
     ) -> ControlComponentPublicKeysPayloadReadIter {
         FileGroupIter::new(&self.control_component_public_keys_payload_group)
@@ -189,8 +230,10 @@ impl VCSDirectory {
             .unwrap()
             .to_string()
     }
+}
 
-    pub fn setup_component_tally_data_payload(
+impl CollectDataVCSDirTrait for VCSDirectory {
+    fn setup_component_tally_data_payload(
         &self,
     ) -> Result<Box<SetupComponentTallyDataPayload>, FileStructureError> {
         self.setup_component_tally_data_payload_file
@@ -198,13 +241,13 @@ impl VCSDirectory {
             .map(|d| Box::new(d.setup_component_tally_data_payload().unwrap().clone()))
     }
 
-    pub fn setup_component_verification_data_payload_iter(
+    fn setup_component_verification_data_payload_iter(
         &self,
     ) -> SetupComponentVerificationDataPayloadReadIter {
         FileGroupIter::new(&self.setup_component_verification_data_payload_group)
     }
 
-    pub fn control_component_code_shares_payload_iter(
+    fn control_component_code_shares_payload_iter(
         &self,
     ) -> ControlComponentCodeSharesPayloadReadIter {
         FileGroupIter::new(&self.control_component_code_shares_payload_group)

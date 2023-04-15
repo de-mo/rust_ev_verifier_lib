@@ -6,7 +6,7 @@ use super::super::{
 };
 use crate::{
     error::{create_verifier_error, VerifierError},
-    file_structure::VerificationDirectory,
+    file_structure::{setup_directory::CollectDataSetupDirTrait, VerificationDirectory},
     verification::meta_data::VerificationMetaDataList,
 };
 

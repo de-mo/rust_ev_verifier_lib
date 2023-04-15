@@ -1,7 +1,7 @@
-use crate::file_structure::VerificationDirectory;
 use crate::{
     crypto_primitives::num_bigint::{Constants, Operations},
     error::{create_verifier_error, VerifierError},
+    file_structure::{setup_directory::CollectDataSetupDirTrait, VerificationDirectory},
 };
 use num_bigint::BigUint;
 

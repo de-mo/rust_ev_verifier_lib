@@ -1,16 +1,3 @@
-use std::iter::zip;
-
-use crate::{
-    data_structures::{
-        setup::control_component_public_keys_payload::ControlComponentPublicKeys,
-        VerifierSetupDataTrait,
-    },
-    error::{create_verifier_error, VerifierError},
-    file_structure::setup_directory::SetupDirectory,
-};
-
-use crate::file_structure::VerificationDirectory;
-
 use super::super::super::{
     error::{
         create_verification_error, create_verification_failure, VerificationErrorType,
@@ -18,6 +5,18 @@ use super::super::super::{
     },
     verification::VerificationResult,
 };
+use crate::{
+    data_structures::{
+        setup::control_component_public_keys_payload::ControlComponentPublicKeys,
+        VerifierSetupDataTrait,
+    },
+    error::{create_verifier_error, VerifierError},
+    file_structure::{
+        setup_directory::{CollectDataSetupDirTrait, SetupDirectory},
+        VerificationDirectory,
+    },
+};
+use std::iter::zip;
 
 fn validate_ccm_and_ccr_schorr_proofs(
     setup_dir: &SetupDirectory,

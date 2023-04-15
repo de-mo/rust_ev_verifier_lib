@@ -7,7 +7,7 @@ use super::super::super::{
 };
 use crate::{
     error::{create_verifier_error, VerifierError},
-    file_structure::VerificationDirectory,
+    file_structure::{setup_directory::CollectDataSetupDirTrait, VerificationDirectory},
 };
 
 pub(super) fn fn_verification(dir: &VerificationDirectory, result: &mut VerificationResult) {

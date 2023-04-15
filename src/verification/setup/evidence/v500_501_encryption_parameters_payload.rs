@@ -9,7 +9,7 @@ use crate::{
     constants::MAXIMUM_NUMBER_OF_VOTING_OPTIONS,
     crypto_primitives::elgamal::{get_encryption_parameters, get_small_prime_group_members},
     error::{create_verifier_error, VerifierError},
-    file_structure::VerificationDirectory,
+    file_structure::{setup_directory::CollectDataSetupDirTrait, VerificationDirectory},
 };
 
 pub(super) fn fn_verification_500(dir: &VerificationDirectory, result: &mut VerificationResult) {

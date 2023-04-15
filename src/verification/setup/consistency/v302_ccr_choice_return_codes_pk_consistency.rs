@@ -1,20 +1,20 @@
-use crate::{
-    data_structures::{
-        setup::control_component_public_keys_payload::ControlComponentPublicKeys,
-        VerifierSetupDataTrait,
-    },
-    error::{create_verifier_error, VerifierError},
-    file_structure::setup_directory::SetupDirectory,
-};
-
-use crate::file_structure::VerificationDirectory;
-
 use super::super::super::{
     error::{
         create_verification_error, create_verification_failure, VerificationErrorType,
         VerificationFailureType,
     },
     verification::VerificationResult,
+};
+use crate::{
+    data_structures::{
+        setup::control_component_public_keys_payload::ControlComponentPublicKeys,
+        VerifierSetupDataTrait,
+    },
+    error::{create_verifier_error, VerifierError},
+    file_structure::{
+        setup_directory::{CollectDataSetupDirTrait, SetupDirectory},
+        VerificationDirectory,
+    },
 };
 
 fn validate_cc_ccr_enc_pk(

@@ -1,10 +1,3 @@
-use crate::file_structure::VerificationDirectory;
-use crate::{
-    crypto_primitives::num_bigint::{Constants, Operations},
-    error::{create_verifier_error, VerifierError},
-};
-use num_bigint::BigUint;
-
 use super::super::super::{
     error::{
         create_verification_error, create_verification_failure, VerificationErrorType,
@@ -12,6 +5,12 @@ use super::super::super::{
     },
     verification::VerificationResult,
 };
+use crate::{
+    crypto_primitives::num_bigint::{Constants, Operations},
+    error::{create_verifier_error, VerifierError},
+    file_structure::{setup_directory::CollectDataSetupDirTrait, VerificationDirectory},
+};
+use num_bigint::BigUint;
 
 pub(super) fn fn_verification(dir: &VerificationDirectory, result: &mut VerificationResult) {
     let setup_dir = dir.unwrap_setup();

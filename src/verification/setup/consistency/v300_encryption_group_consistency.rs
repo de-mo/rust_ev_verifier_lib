@@ -8,7 +8,11 @@ use super::super::super::{
 use crate::{
     data_structures::common_types::EncryptionGroup,
     error::{create_verifier_error, VerifierError},
-    file_structure::{setup_directory::VCSDirectory, VerificationDirectory},
+    file_structure::{
+        setup_directory::VCSDirectory,
+        setup_directory::{CollectDataSetupDirTrait, CollectDataVCSDirTrait},
+        VerificationDirectory,
+    },
 };
 
 fn test_encryption_group(

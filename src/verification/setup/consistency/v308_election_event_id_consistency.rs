@@ -7,7 +7,11 @@ use super::super::super::{
 };
 use crate::{
     error::{create_verifier_error, VerifierError},
-    file_structure::{setup_directory::VCSDirectory, VerificationDirectory},
+    file_structure::{
+        setup_directory::VCSDirectory,
+        setup_directory::{CollectDataSetupDirTrait, CollectDataVCSDirTrait},
+        VerificationDirectory,
+    },
 };
 
 fn test_election_event_id(
