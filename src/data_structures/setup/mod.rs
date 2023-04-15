@@ -21,7 +21,7 @@ use self::{
     setup_component_tally_data_payload::SetupComponentTallyDataPayload,
     setup_component_verification_data_payload::SetupComponentVerificationDataPayload,
 };
-use super::{error::DeserializeError, DataStructureTrait, VerifierDataTrait};
+use super::{error::DeserializeError, DataStructureTrait, VerifierSetupDataTrait};
 use enum_kinds::EnumKind;
 
 /// Types of the setup directory
@@ -97,7 +97,7 @@ impl VerifierSetupDataType {
     }
 }
 
-impl VerifierDataTrait for VerifierSetupData {
+impl VerifierSetupDataTrait for VerifierSetupData {
     fn encryption_parameters_payload(&self) -> Option<&EncryptionParametersPayload> {
         if let VerifierSetupData::EncryptionParametersPayload(d) = self {
             return Some(d);

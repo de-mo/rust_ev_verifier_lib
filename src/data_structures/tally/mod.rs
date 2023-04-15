@@ -9,7 +9,7 @@ use self::{
     tally_component_shuffle_payload::TallyComponentShufflePayload,
     tally_component_votes_payload::TallyComponentVotesPayload,
 };
-use super::{error::DeserializeError, DataStructureTrait, VerifierDataTrait};
+use super::{error::DeserializeError, DataStructureTrait, VerifierTallyDataTrait};
 use crate::file_structure::FileType;
 use enum_kinds::EnumKind;
 
@@ -62,7 +62,7 @@ impl VerifierTallyDataType {
     }
 }
 
-impl VerifierDataTrait for VerifierTallyData {
+impl VerifierTallyDataTrait for VerifierTallyData {
     fn e_voting_decrypt(&self) -> Option<&EVotingDecrypt> {
         if let VerifierTallyData::EVotingDecrypt(d) = self {
             return Some(d);

@@ -51,8 +51,8 @@ macro_rules! create_verifier_data_type {
 }
 pub(crate) use create_verifier_data_type;
 
-/// Trait implementing the collection of the specific data type from the enum object
-pub trait VerifierDataTrait {
+/// Trait implementing the collection of the specific setup data type from the enum object
+pub trait VerifierSetupDataTrait {
     /// Get the EncryptionParametersPayload is the enum is from correct type. Else give None
     fn encryption_parameters_payload(&self) -> Option<&EncryptionParametersPayload> {
         None
@@ -80,6 +80,10 @@ pub trait VerifierDataTrait {
     fn election_event_configuration(&self) -> Option<&ElectionEventConfiguration> {
         None
     }
+}
+
+/// Trait implementing the collection of the specific tally data type from the enum object
+pub trait VerifierTallyDataTrait {
     fn e_voting_decrypt(&self) -> Option<&EVotingDecrypt> {
         None
     }
@@ -152,7 +156,7 @@ macro_rules! implement_trait_data_structure {
 }
 use implement_trait_data_structure;
 
-impl VerifierDataTrait for VerifierData {
+impl VerifierSetupDataTrait for VerifierData {
     fn encryption_parameters_payload(&self) -> Option<&EncryptionParametersPayload> {
         match self {
             VerifierData::Setup(d) => d.encryption_parameters_payload(),
@@ -210,7 +214,9 @@ impl VerifierDataTrait for VerifierData {
             VerifierData::Tally(_) => None,
         }
     }
+}
 
+impl VerifierTallyDataTrait for VerifierData {
     fn e_voting_decrypt(&self) -> Option<&EVotingDecrypt> {
         match self {
             VerifierData::Setup(_) => None,

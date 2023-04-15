@@ -1,4 +1,4 @@
-use std::{iter::zip, result};
+use std::iter::zip;
 
 use num_bigint::BigUint;
 

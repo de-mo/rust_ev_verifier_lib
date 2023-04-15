@@ -86,7 +86,7 @@ impl File {
 mod test {
     use super::*;
     use crate::data_structures::{
-        setup::VerifierSetupDataType, VerifierDataTrait, VerifierDataType,
+        setup::VerifierSetupDataType, VerifierDataType, VerifierSetupDataTrait,
     };
     use std::path::{Path, PathBuf};
 

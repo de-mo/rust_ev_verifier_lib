@@ -18,7 +18,7 @@ use crate::{
             setup_component_verification_data_payload::SetupComponentVerificationDataPayload,
             VerifierSetupDataType,
         },
-        VerifierDataTrait, VerifierDataType,
+        VerifierDataType, VerifierSetupDataTrait,
     },
 };
 use std::{

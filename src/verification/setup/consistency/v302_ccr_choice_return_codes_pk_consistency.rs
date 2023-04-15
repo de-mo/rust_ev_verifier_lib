@@ -1,6 +1,7 @@
 use crate::{
     data_structures::{
-        setup::control_component_public_keys_payload::ControlComponentPublicKeys, VerifierDataTrait,
+        setup::control_component_public_keys_payload::ControlComponentPublicKeys,
+        VerifierSetupDataTrait,
     },
     error::{create_verifier_error, VerifierError},
     file_structure::setup_directory::SetupDirectory,
