@@ -1,6 +1,6 @@
 use super::{
     file::{create_file, File},
-    file_group::{impl_iterator_payload, FileGroup, FileGroupIter},
+    file_group::{impl_iterator_over_data_payload, FileGroup, FileGroupIter},
     FileStructureError,
 };
 use crate::{
@@ -46,21 +46,21 @@ pub struct VCSDirectory {
     pub control_component_code_shares_payload_group: FileGroup,
 }
 
-impl_iterator_payload!(
+impl_iterator_over_data_payload!(
     ControlComponentPublicKeysPayload,
     control_component_public_keys_payload,
     ControlComponentPublicKeysPayloadRead,
     ControlComponentPublicKeysPayloadReadIter
 );
 
-impl_iterator_payload!(
+impl_iterator_over_data_payload!(
     SetupComponentVerificationDataPayload,
     setup_component_verification_data_payload,
     SetupComponentVerificationDataPayloadRead,
     SetupComponentVerificationDataPayloadReadIter
 );
 
-impl_iterator_payload!(
+impl_iterator_over_data_payload!(
     ControlComponentCodeSharesPayload,
     control_component_code_shares_payload,
     ControlComponentCodeSharesPayloadRead,

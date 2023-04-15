@@ -46,8 +46,26 @@ impl<'a, T> FileGroupIter<'a, T> {
     }
 }
 
-macro_rules! impl_iterator_payload {
-    ($p: ty, $f: ident, $pread: ident, $preaditer: ident) => {
+/// Macro implementing an iterator over the data covered by the
+/// FileGroup
+///
+/// parameters:
+/// - $p: The struct as result
+/// - $fct: The function of the trati [VerifierDataTrait] to get the data
+/// - $pread: The result of reading data $p from the file
+/// - $preaditer: The iterator name over $pread
+///
+/// Example:
+/// ```rust
+/// impl_iterator_over_data_payload!(
+///     ControlComponentPublicKeysPayload,
+///     control_component_public_keys_payload,
+///     ControlComponentPublicKeysPayloadRead,
+///     ControlComponentPublicKeysPayloadReadIter
+/// );
+/// ```
+macro_rules! impl_iterator_over_data_payload {
+    ($p: ty, $fct: ident, $pread: ident, $preaditer: ident) => {
         type $pread = Result<Box<$p>, FileStructureError>;
         type $preaditer<'a> = FileGroupIter<'a, $pread>;
         impl Iterator for $preaditer<'_> {
@@ -63,7 +81,7 @@ macro_rules! impl_iterator_payload {
                             Some(*i),
                         )
                         .get_data()
-                        .map(|d| Box::new(d.$f().unwrap().clone())),
+                        .map(|d| Box::new(d.$fct().unwrap().clone())),
                     )),
                     None => None,
                 }
@@ -71,7 +89,7 @@ macro_rules! impl_iterator_payload {
         }
     };
 }
-pub(crate) use impl_iterator_payload;
+pub(crate) use impl_iterator_over_data_payload;
 
 impl FileGroup {
     pub fn new(location: &Path, data_type: VerifierDataType) -> Self {
