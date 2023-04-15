@@ -1,7 +1,7 @@
 use super::super::{
     common_types::{EncryptionGroup, SignatureJson},
     error::{DeserializeError, DeserializeErrorType},
-    implement_trait_data_structure, DataStructureTrait,
+    implement_trait_verifier_data_decode, VerifierDataDecode,
 };
 use crate::error::{create_verifier_error, VerifierError};
 use serde::Deserialize;
@@ -14,7 +14,7 @@ pub struct ElectionEventContextPayload {
     pub signature: SignatureJson,
 }
 
-implement_trait_data_structure!(ElectionEventContextPayload);
+implement_trait_verifier_data_decode!(ElectionEventContextPayload);
 
 #[derive(Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]

@@ -1,7 +1,7 @@
 use super::super::{
     common_types::{EncryptionGroup, SignatureJson},
     error::{DeserializeError, DeserializeErrorType},
-    implement_trait_data_structure, DataStructureTrait,
+    implement_trait_verifier_data_decode, VerifierDataDecode,
 };
 use crate::error::{create_verifier_error, VerifierError};
 use serde::Deserialize;
@@ -19,7 +19,7 @@ pub struct TallyComponentVotesPayload {
     pub signature: SignatureJson,
 }
 
-implement_trait_data_structure!(TallyComponentVotesPayload);
+implement_trait_verifier_data_decode!(TallyComponentVotesPayload);
 
 #[cfg(test)]
 mod test {

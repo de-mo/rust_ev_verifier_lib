@@ -101,8 +101,8 @@ pub trait VerifierTallyDataTrait {
     }
 }
 
-/// A trait defining the necessary function for the Data Structures
-pub trait DataStructureTrait: Sized {
+/// A trait defining the necessary function to decode to the Verifier Data
+pub trait VerifierDataDecode: Sized {
     fn from_string(s: &String, t: &FileType) -> Result<Self, DeserializeError> {
         match t {
             FileType::Json => Self::from_json(s),
@@ -132,16 +132,12 @@ pub trait DataStructureTrait: Sized {
             "from_roxmltree not implemented"
         )
     }
-
-    fn to_encryption_parameters_payload(&self) -> Option<&EncryptionParametersPayload> {
-        None
-    }
 }
 
 /// Macro to automatically implement the DataStructureTrait for a type
-macro_rules! implement_trait_data_structure {
+macro_rules! implement_trait_verifier_data_decode {
     ($s: ty) => {
-        impl DataStructureTrait for $s {
+        impl VerifierDataDecode for $s {
             fn from_json(s: &String) -> Result<Self, DeserializeError> {
                 serde_json::from_str(s).map_err(|e| {
                     create_verifier_error!(
@@ -154,7 +150,7 @@ macro_rules! implement_trait_data_structure {
         }
     };
 }
-use implement_trait_data_structure;
+use implement_trait_verifier_data_decode;
 
 impl VerifierSetupDataTrait for VerifierData {
     fn encryption_parameters_payload(&self) -> Option<&EncryptionParametersPayload> {

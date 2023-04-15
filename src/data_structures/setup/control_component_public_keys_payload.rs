@@ -2,7 +2,7 @@ use super::super::{
     common_types::{EncryptionGroup, ProofUnderline, SignatureJson},
     deserialize_seq_string_hex_to_seq_bigunit,
     error::{DeserializeError, DeserializeErrorType},
-    implement_trait_data_structure, DataStructureTrait,
+    implement_trait_verifier_data_decode, VerifierDataDecode,
 };
 use crate::{
     crypto_primitives::{
@@ -23,7 +23,7 @@ pub struct ControlComponentPublicKeysPayload {
     pub signature: SignatureJson,
 }
 
-implement_trait_data_structure!(ControlComponentPublicKeysPayload);
+implement_trait_verifier_data_decode!(ControlComponentPublicKeysPayload);
 
 impl<'a> From<&'a ControlComponentPublicKeysPayload> for HashableMessage<'a> {
     fn from(value: &'a ControlComponentPublicKeysPayload) -> Self {

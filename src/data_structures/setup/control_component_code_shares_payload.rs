@@ -2,7 +2,7 @@ use super::super::{
     common_types::{EncryptionGroup, ExponentiatedEncryptedElement, Proof, SignatureJson},
     deserialize_seq_string_hex_to_seq_bigunit,
     error::{DeserializeError, DeserializeErrorType},
-    implement_trait_data_structure, DataStructureTrait,
+    implement_trait_verifier_data_decode, VerifierDataDecode,
 };
 use crate::error::{create_verifier_error, VerifierError};
 use num_bigint::BigUint;
@@ -10,7 +10,7 @@ use serde::Deserialize;
 
 pub type ControlComponentCodeSharesPayload = Vec<ControlComponentCodeSharesPayloadInner>;
 
-implement_trait_data_structure!(ControlComponentCodeSharesPayload);
+implement_trait_verifier_data_decode!(ControlComponentCodeSharesPayload);
 
 #[derive(Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]

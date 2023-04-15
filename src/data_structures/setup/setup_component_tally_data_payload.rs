@@ -2,7 +2,7 @@ use super::super::{
     common_types::{EncryptionGroup, SignatureJson},
     deserialize_seq_seq_string_hex_to_seq_seq_bigunit,
     error::{DeserializeError, DeserializeErrorType},
-    implement_trait_data_structure, DataStructureTrait,
+    implement_trait_verifier_data_decode, VerifierDataDecode,
 };
 use crate::error::{create_verifier_error, VerifierError};
 use num_bigint::BigUint;
@@ -21,7 +21,7 @@ pub struct SetupComponentTallyDataPayload {
     pub signature: SignatureJson,
 }
 
-implement_trait_data_structure!(SetupComponentTallyDataPayload);
+implement_trait_verifier_data_decode!(SetupComponentTallyDataPayload);
 
 #[cfg(test)]
 mod test {

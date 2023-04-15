@@ -1,4 +1,4 @@
-use super::super::{error::DeserializeError, DataStructureTrait};
+use super::super::{error::DeserializeError, VerifierDataDecode};
 use crate::crypto_primitives::{
     byte_array::ByteArray, direct_trust::CertificateAuthority, hashing::HashableMessage,
     signature::VerifiySignatureTrait,
@@ -8,7 +8,7 @@ use roxmltree::Document;
 #[derive(Debug, Clone)]
 pub struct ECH0110 {}
 
-impl DataStructureTrait for ECH0110 {
+impl VerifierDataDecode for ECH0110 {
     fn from_roxmltree<'a>(_: &'a Document<'a>) -> Result<Self, DeserializeError> {
         Ok(ECH0110 {})
     }

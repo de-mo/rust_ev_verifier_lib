@@ -3,7 +3,7 @@ use super::{
         common_types::{EncryptionGroup, ProofUnderline, SignatureJson},
         deserialize_seq_string_hex_to_seq_bigunit,
         error::{DeserializeError, DeserializeErrorType},
-        implement_trait_data_structure, DataStructureTrait,
+        implement_trait_verifier_data_decode, VerifierDataDecode,
     },
     control_component_public_keys_payload::ControlComponentPublicKeys,
 };
@@ -26,7 +26,7 @@ pub struct SetupComponentPublicKeysPayload {
     pub signature: SignatureJson,
 }
 
-implement_trait_data_structure!(SetupComponentPublicKeysPayload);
+implement_trait_verifier_data_decode!(SetupComponentPublicKeysPayload);
 
 impl<'a> From<&'a SetupComponentPublicKeysPayload> for HashableMessage<'a> {
     fn from(value: &'a SetupComponentPublicKeysPayload) -> Self {

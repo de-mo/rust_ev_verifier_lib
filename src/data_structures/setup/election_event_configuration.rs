@@ -1,6 +1,6 @@
 use super::super::{
     error::{DeserializeError, DeserializeErrorType},
-    DataStructureTrait,
+    VerifierDataDecode,
 };
 use crate::{
     crypto_primitives::{
@@ -16,7 +16,7 @@ pub struct ElectionEventConfiguration {
     pub voter_total: usize,
 }
 
-impl DataStructureTrait for ElectionEventConfiguration {
+impl VerifierDataDecode for ElectionEventConfiguration {
     fn from_roxmltree<'a>(doc: &'a Document<'a>) -> Result<Self, DeserializeError> {
         let node = match doc.descendants().find(|e| e.has_tag_name("voterTotal")) {
             Some(n) => n,

@@ -1,7 +1,7 @@
 use super::super::{
     common_types::{EncryptionGroup, SignatureJson},
     error::{DeserializeError, DeserializeErrorType},
-    implement_trait_data_structure, DataStructureTrait,
+    implement_trait_verifier_data_decode, VerifierDataDecode,
 };
 use crate::{
     crypto_primitives::{
@@ -21,7 +21,7 @@ pub struct EncryptionParametersPayload {
     pub signature: SignatureJson,
 }
 
-implement_trait_data_structure!(EncryptionParametersPayload);
+implement_trait_verifier_data_decode!(EncryptionParametersPayload);
 
 impl<'a> From<&'a EncryptionParametersPayload> for HashableMessage<'a> {
     fn from(value: &'a EncryptionParametersPayload) -> Self {

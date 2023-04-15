@@ -21,7 +21,7 @@ use self::{
     setup_component_tally_data_payload::SetupComponentTallyDataPayload,
     setup_component_verification_data_payload::SetupComponentVerificationDataPayload,
 };
-use super::{error::DeserializeError, DataStructureTrait, VerifierSetupDataTrait};
+use super::{error::DeserializeError, VerifierDataDecode, VerifierSetupDataTrait};
 use enum_kinds::EnumKind;
 
 /// Types of the setup directory
