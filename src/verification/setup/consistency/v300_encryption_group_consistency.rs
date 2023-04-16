@@ -181,16 +181,23 @@ pub(super) fn fn_verification<
 
 #[cfg(test)]
 mod test {
+    use num_bigint::BigUint;
+
     use super::{
         super::super::super::{verification::VerificationResultTrait, VerificationPeriod},
         *,
     };
-    use crate::file_structure::VerificationDirectory;
+    use crate::file_structure::{mock::MockVerificationDirectory, VerificationDirectory};
     use std::path::Path;
 
     fn get_verifier_dir() -> VerificationDirectory {
         let location = Path::new(".").join("datasets").join("dataset-setup1");
         VerificationDirectory::new(&VerificationPeriod::Setup, &location)
+    }
+
+    fn get_mock_verifier_dir() -> MockVerificationDirectory {
+        let location = Path::new(".").join("datasets").join("dataset-setup1");
+        MockVerificationDirectory::new(&VerificationPeriod::Setup, &location)
     }
 
     #[test]
@@ -199,5 +206,24 @@ mod test {
         let mut result = VerificationResult::new();
         fn_verification(&dir, &mut result);
         assert!(result.is_ok().unwrap());
+    }
+
+    #[test]
+    fn test_wrong() {
+        let mut result = VerificationResult::new();
+        let mut mock_dir = get_mock_verifier_dir();
+        fn_verification(&mock_dir, &mut result);
+        assert!(result.is_ok().unwrap());
+        let mut eec = mock_dir
+            .unwrap_setup()
+            .election_event_context_payload()
+            .unwrap();
+        eec.encryption_group.p = BigUint::from(1234usize);
+        mock_dir
+            .unwrap_setup_mut()
+            .mock_election_event_context_payload(&Ok(&eec));
+        fn_verification(&mock_dir, &mut result);
+        println!("{:?}", result.failures());
+        assert!(result.has_failures().unwrap());
     }
 }

@@ -267,3 +267,84 @@ mod test {
             .exists());
     }
 }
+
+#[cfg(any(test, doc))]
+pub mod mock {
+    //! Module defining mocking structure for [VerificationDirectory]
+    //!
+    //! Example of usage:
+    //! ```rust
+    //!    let mut mock_dir = MockVerificationDirectory::new(&VerificationPeriod::Setup, &location);
+    //!    // Collect the correct data
+    //!    let mut eec = mock_dir
+    //!        .unwrap_setup()
+    //!        .election_event_context_payload()
+    //!        .unwrap();
+    //!    // Change the data
+    //!    eec.encryption_group.p = BigUint::from(1234usize);
+    //!    // Mock the dir with the faked data
+    //!    mock_dir
+    //!        .unwrap_setup_mut()
+    //!        .mock_election_event_context_payload(&Ok(&eec));
+    //!    // Test the verification that should generate failures
+    //!    fn_verification(&mock_dir, &mut result);
+    //! ```
+    use super::setup_directory::mock::{MockSetupDirectory, MockVCSDirectory};
+    use super::tally_directory::mock::{MockBBDirectory, MockTallyDirectory};
+    use super::*;
+
+    /// Mock for [VerificationDirectory]
+    pub struct MockVerificationDirectory {
+        setup: MockSetupDirectory,
+        tally: Option<MockTallyDirectory>,
+    }
+
+    impl
+        VerificationDirectoryTrait<
+            MockBBDirectory,
+            MockVCSDirectory,
+            MockSetupDirectory,
+            MockTallyDirectory,
+        > for MockVerificationDirectory
+    {
+        fn unwrap_setup(&self) -> &MockSetupDirectory {
+            &self.setup
+        }
+
+        fn unwrap_tally(&self) -> &MockTallyDirectory {
+            match &self.tally {
+                Some(t) => t,
+                None => panic!("called `unwrap_tally()` on a `Setup` value"),
+            }
+        }
+    }
+
+    impl MockVerificationDirectory {
+        /// Create a new [MockVerificationDirectory]
+        pub fn new(period: &VerificationPeriod, location: &Path) -> Self {
+            match period {
+                VerificationPeriod::Setup => MockVerificationDirectory {
+                    setup: MockSetupDirectory::new(location),
+                    tally: None,
+                },
+                VerificationPeriod::Tally => MockVerificationDirectory {
+                    setup: MockSetupDirectory::new(location),
+                    tally: Some(MockTallyDirectory::new(location)),
+                },
+            }
+        }
+
+        /// Unwrap [MockSetupDirectory] as mutable
+        pub fn unwrap_setup_mut(&mut self) -> &mut MockSetupDirectory {
+            &mut self.setup
+        }
+
+        /// Unwrap [TallyDirectory] as mutable
+        pub fn unwrap_tally_mut(&mut self) -> &mut MockTallyDirectory {
+            match &mut self.tally {
+                Some(t) => t,
+                None => panic!("called `unwrap_tally()` on a `Setup` value"),
+            }
+        }
+    }
+}

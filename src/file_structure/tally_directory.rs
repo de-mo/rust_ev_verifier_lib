@@ -134,3 +134,129 @@ impl BBDirectory {
         self.location.as_path()
     }
 }
+
+#[cfg(any(test, doc))]
+pub mod mock {
+    //! Module defining mocking structure for [VCSDirectory] and [SetupDirectory]
+    //!
+    //! The mocks read the correct data from the file. It is possible to change any data
+    //! with the functions mock_
+    use super::*;
+
+    /// Mock for [BBDirectory]
+    pub struct MockBBDirectory {
+        dir: BBDirectory,
+        mock_tally_component_votes_payload_file: Option<File>,
+        mock_tally_component_shuffle_payload_file: Option<File>,
+        mock_get_name: Option<String>,
+    }
+
+    /// Mock for [TallyDirectory]
+    pub struct MockTallyDirectory {
+        dir: TallyDirectory,
+        mock_e_voting_decrypt_file: Option<File>,
+        mock_ech_0110_file: Option<File>,
+        mock_ech_0222_file: Option<File>,
+        bb_directories: Vec<MockBBDirectory>,
+    }
+
+    impl BBDirectoryTrait for MockBBDirectory {
+        fn tally_component_votes_payload_file(&self) -> &File {
+            match &self.mock_tally_component_votes_payload_file {
+                Some(e) => e,
+                None => self.dir.tally_component_votes_payload_file(),
+            }
+        }
+
+        fn tally_component_shuffle_payload_file(&self) -> &File {
+            match &self.mock_tally_component_shuffle_payload_file {
+                Some(e) => e,
+                None => self.dir.tally_component_shuffle_payload_file(),
+            }
+        }
+        fn get_name(&self) -> String {
+            match &self.mock_get_name {
+                Some(e) => e.clone(),
+                None => self.dir.get_name(),
+            }
+        }
+    }
+
+    impl TallyDirectoryTrait<MockBBDirectory> for MockTallyDirectory {
+        fn e_voting_decrypt_file(&self) -> &File {
+            match &self.mock_e_voting_decrypt_file {
+                Some(e) => e,
+                None => self.dir.e_voting_decrypt_file(),
+            }
+        }
+
+        fn ech_0110_file(&self) -> &File {
+            match &self.mock_ech_0110_file {
+                Some(e) => e,
+                None => self.dir.ech_0110_file(),
+            }
+        }
+
+        fn ech_0222_file(&self) -> &File {
+            match &self.mock_ech_0222_file {
+                Some(e) => e,
+                None => self.dir.ech_0222_file(),
+            }
+        }
+
+        fn bb_directories(&self) -> &Vec<MockBBDirectory> {
+            &self.bb_directories
+        }
+    }
+
+    impl MockBBDirectory {
+        pub fn new(location: &Path) -> Self {
+            MockBBDirectory {
+                dir: BBDirectory::new(location),
+                mock_tally_component_shuffle_payload_file: None,
+                mock_tally_component_votes_payload_file: None,
+                mock_get_name: None,
+            }
+        }
+        pub fn mock_tally_component_shuffle_payload_file(&mut self, data: &File) {
+            self.mock_tally_component_shuffle_payload_file = Some(data.clone());
+        }
+        pub fn mock_tally_component_votes_payload_file(&mut self, data: &File) {
+            self.mock_tally_component_votes_payload_file = Some(data.clone());
+        }
+        pub fn mock_get_name(&mut self, data: &str) {
+            self.mock_get_name = Some(data.to_string())
+        }
+    }
+
+    impl MockTallyDirectory {
+        pub fn new(data_location: &Path) -> Self {
+            let tally_dir = TallyDirectory::new(data_location);
+            let bb_dirs: Vec<MockBBDirectory> = tally_dir
+                .bb_directories
+                .iter()
+                .map(|d| MockBBDirectory::new(&d.location))
+                .collect();
+            MockTallyDirectory {
+                dir: tally_dir,
+                mock_e_voting_decrypt_file: None,
+                mock_ech_0110_file: None,
+                mock_ech_0222_file: None,
+                bb_directories: bb_dirs,
+            }
+        }
+        pub fn bb_directories_mut(&mut self) -> Vec<&mut MockBBDirectory> {
+            self.bb_directories.iter_mut().collect()
+        }
+
+        pub fn mock_e_voting_decrypt_file(&mut self, data: &File) {
+            self.mock_e_voting_decrypt_file = Some(data.clone());
+        }
+        pub fn mock_ech_0110_file(&mut self, data: &File) {
+            self.mock_ech_0110_file = Some(data.clone());
+        }
+        pub fn mock_ech_0222_file(&mut self, data: &File) {
+            self.mock_ech_0222_file = Some(data.clone());
+        }
+    }
+}

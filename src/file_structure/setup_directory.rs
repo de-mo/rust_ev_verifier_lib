@@ -123,6 +123,7 @@ impl_iterator_over_data_payload!(
 );
 
 impl SetupDirectory {
+    /// New [SetupDirectory]
     pub fn new(data_location: &Path) -> Self {
         let location = data_location.join(SETUP_DIR_NAME);
         let mut res = Self {
@@ -165,6 +166,7 @@ impl SetupDirectory {
         res
     }
 
+    /// Get location
     pub fn get_location(&self) -> &Path {
         self.location.as_path()
     }
@@ -229,6 +231,7 @@ impl SetupDirectoryTrait<VCSDirectory> for SetupDirectory {
 }
 
 impl VCSDirectory {
+    /// New [VCSDirectory]
     pub fn new(location: &Path) -> Self {
         Self {
             location: location.to_path_buf(),
@@ -248,6 +251,7 @@ impl VCSDirectory {
         }
     }
 
+    /// Get location
     pub fn get_location(&self) -> &Path {
         self.location.as_path()
     }
@@ -347,6 +351,354 @@ mod test {
         for (i, p) in dir.setup_component_verification_data_payload_iter() {
             assert!(p.is_ok());
             assert_eq!(usize::from(p.unwrap().chunk_id), i)
+        }
+    }
+}
+
+#[cfg(any(test, doc))]
+pub mod mock {
+    //! Module defining mocking structure for [VCSDirectory] and [SetupDirectory]
+    //!
+    //! The mocks read the correct data from the file. It is possible to change any data
+    //! with the functions mock_
+    use super::*;
+    use crate::error::{create_result_with_error, create_verifier_error, VerifierError};
+
+    /// Mock for [VCSDirectory]
+    pub struct MockVCSDirectory {
+        dir: VCSDirectory,
+        mock_setup_component_tally_data_payload_file: Option<File>,
+        mock_setup_component_verification_data_payload_group: Option<FileGroup>,
+        mock_control_component_code_shares_payload_group: Option<FileGroup>,
+        mock_setup_component_tally_data_payload:
+            Option<Result<Box<SetupComponentTallyDataPayload>, FileStructureError>>,
+        mock_setup_component_verification_data_payloads:
+            Option<Vec<SetupComponentVerificationDataPayload>>,
+        mock_control_component_code_shares_payloads: Option<Vec<ControlComponentCodeSharesPayload>>,
+        mock_get_name: Option<String>,
+    }
+
+    /// Mock for [SetupDirectory]
+    pub struct MockSetupDirectory {
+        dir: SetupDirectory,
+        mock_encryption_parameters_payload_file: Option<File>,
+        mock_setup_component_public_keys_payload_file: Option<File>,
+        mock_election_event_context_payload_file: Option<File>,
+        mock_election_event_configuration_file: Option<File>,
+        mock_control_component_public_keys_payload_group: Option<FileGroup>,
+        mock_encryption_parameters_payload:
+            Option<Result<Box<EncryptionParametersPayload>, FileStructureError>>,
+        mock_setup_component_public_keys_payload:
+            Option<Result<Box<SetupComponentPublicKeysPayload>, FileStructureError>>,
+        mock_election_event_context_payload:
+            Option<Result<Box<ElectionEventContextPayload>, FileStructureError>>,
+        mock_election_event_configuration:
+            Option<Result<Box<ElectionEventConfiguration>, FileStructureError>>,
+        mock_control_component_public_keys_payloads: Option<Vec<ControlComponentPublicKeysPayload>>,
+        vcs_directories: Vec<MockVCSDirectory>,
+    }
+
+    impl VCSDirectoryTrait for MockVCSDirectory {
+        fn setup_component_tally_data_payload_file(&self) -> &File {
+            match &self.mock_setup_component_tally_data_payload_file {
+                Some(e) => e,
+                None => self.dir.setup_component_tally_data_payload_file(),
+            }
+        }
+        fn setup_component_verification_data_payload_group(&self) -> &FileGroup {
+            match &self.mock_setup_component_verification_data_payload_group {
+                Some(e) => e,
+                None => self.dir.setup_component_verification_data_payload_group(),
+            }
+        }
+        fn control_component_code_shares_payload_group(&self) -> &FileGroup {
+            match &self.mock_control_component_code_shares_payload_group {
+                Some(e) => e,
+                None => self.dir.control_component_code_shares_payload_group(),
+            }
+        }
+        fn setup_component_tally_data_payload(
+            &self,
+        ) -> Result<Box<SetupComponentTallyDataPayload>, FileStructureError> {
+            match &self.mock_setup_component_tally_data_payload {
+                Some(e) => match e {
+                    Ok(b) => Ok(Box::new(*b.clone())),
+                    Err(r) => create_result_with_error!(r.kind().clone(), r.message()),
+                },
+                None => self.dir.setup_component_tally_data_payload(),
+            }
+        }
+        fn setup_component_verification_data_payload_iter(
+            &self,
+        ) -> SetupComponentVerificationDataPayloadReadIter {
+            match &self.mock_setup_component_verification_data_payloads {
+                Some(e) => todo!(),
+                None => self.dir.setup_component_verification_data_payload_iter(),
+            }
+        }
+
+        fn control_component_code_shares_payload_iter(
+            &self,
+        ) -> ControlComponentCodeSharesPayloadReadIter {
+            match &self.mock_control_component_code_shares_payloads {
+                Some(e) => todo!(),
+                None => self.dir.control_component_code_shares_payload_iter(),
+            }
+        }
+        fn get_name(&self) -> String {
+            match &self.mock_get_name {
+                Some(e) => e.clone(),
+                None => self.dir.get_name(),
+            }
+        }
+    }
+
+    impl SetupDirectoryTrait<MockVCSDirectory> for MockSetupDirectory {
+        fn encryption_parameters_payload_file(&self) -> &File {
+            match &self.mock_encryption_parameters_payload_file {
+                Some(e) => e,
+                None => self.dir.encryption_parameters_payload_file(),
+            }
+        }
+
+        fn setup_component_public_keys_payload_file(&self) -> &File {
+            match &self.mock_setup_component_public_keys_payload_file {
+                Some(e) => e,
+                None => self.dir.setup_component_public_keys_payload_file(),
+            }
+        }
+
+        fn election_event_context_payload_file(&self) -> &File {
+            match &self.mock_election_event_context_payload_file {
+                Some(e) => e,
+                None => self.dir.election_event_context_payload_file(),
+            }
+        }
+
+        fn election_event_configuration_file(&self) -> &File {
+            match &self.mock_election_event_configuration_file {
+                Some(e) => e,
+                None => self.dir.election_event_configuration_file(),
+            }
+        }
+
+        fn control_component_public_keys_payload_group(&self) -> &FileGroup {
+            match &self.mock_control_component_public_keys_payload_group {
+                Some(e) => e,
+                None => self.dir.control_component_public_keys_payload_group(),
+            }
+        }
+
+        fn vcs_directories(&self) -> &Vec<MockVCSDirectory> {
+            &self.vcs_directories
+        }
+
+        fn encryption_parameters_payload(
+            &self,
+        ) -> Result<Box<EncryptionParametersPayload>, FileStructureError> {
+            match &self.mock_encryption_parameters_payload {
+                Some(e) => match e {
+                    Ok(b) => Ok(Box::new(*b.clone())),
+                    Err(r) => create_result_with_error!(r.kind().clone(), r.message()),
+                },
+                None => self.dir.encryption_parameters_payload(),
+            }
+        }
+
+        fn setup_component_public_keys_payload(
+            &self,
+        ) -> Result<Box<SetupComponentPublicKeysPayload>, FileStructureError> {
+            match &self.mock_setup_component_public_keys_payload {
+                Some(e) => match e {
+                    Ok(b) => Ok(Box::new(*b.clone())),
+                    Err(r) => create_result_with_error!(r.kind().clone(), r.message()),
+                },
+                None => self.dir.setup_component_public_keys_payload(),
+            }
+        }
+
+        fn election_event_context_payload(
+            &self,
+        ) -> Result<Box<ElectionEventContextPayload>, FileStructureError> {
+            match &self.mock_election_event_context_payload {
+                Some(e) => match e {
+                    Ok(b) => Ok(Box::new(*b.clone())),
+                    Err(r) => create_result_with_error!(r.kind().clone(), r.message()),
+                },
+                None => self.dir.election_event_context_payload(),
+            }
+        }
+
+        fn election_event_configuration(
+            &self,
+        ) -> Result<Box<ElectionEventConfiguration>, FileStructureError> {
+            match &self.mock_election_event_configuration {
+                Some(e) => match e {
+                    Ok(b) => Ok(Box::new(*b.clone())),
+                    Err(r) => create_result_with_error!(r.kind().clone(), r.message()),
+                },
+                None => self.dir.election_event_configuration(),
+            }
+        }
+
+        fn control_component_public_keys_payload_iter(
+            &self,
+        ) -> ControlComponentPublicKeysPayloadReadIter {
+            match &self.mock_control_component_public_keys_payloads {
+                Some(e) => todo!(),
+                None => self.dir.control_component_public_keys_payload_iter(),
+            }
+        }
+    }
+
+    impl MockVCSDirectory {
+        /// New [MockVCSDirectory]
+        pub fn new(location: &Path) -> Self {
+            MockVCSDirectory {
+                dir: VCSDirectory::new(location),
+                mock_setup_component_tally_data_payload_file: None,
+                mock_setup_component_verification_data_payload_group: None,
+                mock_control_component_code_shares_payload_group: None,
+                mock_setup_component_tally_data_payload: None,
+                mock_setup_component_verification_data_payloads: None,
+                mock_control_component_code_shares_payloads: None,
+                mock_get_name: None,
+            }
+        }
+
+        pub fn mock_setup_component_tally_data_payload_file(&mut self, data: &File) {
+            self.mock_setup_component_tally_data_payload_file = Some(data.clone());
+        }
+        pub fn mock_setup_component_verification_data_payload_group(&mut self, data: &FileGroup) {
+            self.mock_setup_component_verification_data_payload_group = Some(data.clone());
+        }
+        pub fn mock_control_component_code_shares_payload_group(&mut self, data: &FileGroup) {
+            self.mock_control_component_code_shares_payload_group = Some(data.clone());
+        }
+        pub fn mock_setup_component_tally_data_payload(
+            &mut self,
+            data: &Result<&SetupComponentTallyDataPayload, FileStructureError>,
+        ) {
+            match data {
+                Ok(d) => {
+                    self.mock_setup_component_tally_data_payload =
+                        Some(Ok(Box::new(d.clone().to_owned())))
+                }
+                Err(e) => {
+                    self.mock_setup_component_tally_data_payload =
+                        Some(create_result_with_error!(e.kind().clone(), e.message()))
+                }
+            };
+        }
+        pub fn mock_get_name(&mut self, data: &str) {
+            self.mock_get_name = Some(data.to_string())
+        }
+    }
+
+    impl MockSetupDirectory {
+        /// New
+        pub fn new(data_location: &Path) -> Self {
+            let setup_dir = SetupDirectory::new(data_location);
+            let vcs_dirs: Vec<MockVCSDirectory> = setup_dir
+                .vcs_directories
+                .iter()
+                .map(|d| MockVCSDirectory::new(&d.location))
+                .collect();
+            MockSetupDirectory {
+                dir: setup_dir,
+                mock_encryption_parameters_payload_file: None,
+                mock_setup_component_public_keys_payload_file: None,
+                mock_election_event_context_payload_file: None,
+                mock_election_event_configuration_file: None,
+                mock_control_component_public_keys_payload_group: None,
+                mock_encryption_parameters_payload: None,
+                mock_setup_component_public_keys_payload: None,
+                mock_election_event_context_payload: None,
+                mock_election_event_configuration: None,
+                mock_control_component_public_keys_payloads: None,
+                vcs_directories: vcs_dirs,
+            }
+        }
+
+        /// Get the vcs_directories mutable in order to mock them
+        pub fn vcs_directories_mut(&mut self) -> Vec<&mut MockVCSDirectory> {
+            self.vcs_directories.iter_mut().collect()
+        }
+
+        pub fn mock_encryption_parameters_payload_file(&mut self, data: &File) {
+            self.mock_encryption_parameters_payload_file = Some(data.clone());
+        }
+        pub fn mock_setup_component_public_keys_payload_file(&mut self, data: &File) {
+            self.mock_setup_component_public_keys_payload_file = Some(data.clone());
+        }
+        pub fn mock_election_event_context_payload_file(&mut self, data: &File) {
+            self.mock_election_event_context_payload_file = Some(data.clone());
+        }
+        pub fn mock_election_event_configuration_file(&mut self, data: &File) {
+            self.mock_election_event_configuration_file = Some(data.clone());
+        }
+        pub fn mock_control_component_public_keys_payload_group(&mut self, data: &FileGroup) {
+            self.mock_control_component_public_keys_payload_group = Some(data.clone());
+        }
+        pub fn mock_encryption_parameters_payload(
+            &mut self,
+            data: &Result<&EncryptionParametersPayload, FileStructureError>,
+        ) {
+            match data {
+                Ok(d) => {
+                    self.mock_encryption_parameters_payload =
+                        Some(Ok(Box::new(d.clone().to_owned())))
+                }
+                Err(e) => {
+                    self.mock_encryption_parameters_payload =
+                        Some(create_result_with_error!(e.kind().clone(), e.message()))
+                }
+            };
+        }
+        pub fn mock_setup_component_public_keys_payload(
+            &mut self,
+            data: &Result<&SetupComponentPublicKeysPayload, FileStructureError>,
+        ) {
+            match data {
+                Ok(d) => {
+                    self.mock_setup_component_public_keys_payload =
+                        Some(Ok(Box::new(d.clone().to_owned())))
+                }
+                Err(e) => {
+                    self.mock_setup_component_public_keys_payload =
+                        Some(create_result_with_error!(e.kind().clone(), e.message()))
+                }
+            };
+        }
+        pub fn mock_election_event_context_payload(
+            &mut self,
+            data: &Result<&ElectionEventContextPayload, FileStructureError>,
+        ) {
+            match data {
+                Ok(d) => {
+                    self.mock_election_event_context_payload =
+                        Some(Ok(Box::new(d.clone().to_owned())))
+                }
+                Err(e) => {
+                    self.mock_election_event_context_payload =
+                        Some(create_result_with_error!(e.kind().clone(), e.message()))
+                }
+            };
+        }
+        pub fn mock_election_event_configuration(
+            &mut self,
+            data: &Result<&ElectionEventConfiguration, FileStructureError>,
+        ) {
+            match data {
+                Ok(d) => {
+                    self.mock_election_event_configuration =
+                        Some(Ok(Box::new(d.clone().to_owned())))
+                }
+                Err(e) => {
+                    self.mock_election_event_configuration =
+                        Some(create_result_with_error!(e.kind().clone(), e.message()))
+                }
+            };
         }
     }
 }
