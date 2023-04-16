@@ -24,32 +24,42 @@ use crate::{
 use std::{
     fs,
     path::{Path, PathBuf},
-    slice::Iter,
 };
 
 #[derive(Clone)]
 pub struct SetupDirectory {
     location: PathBuf,
-    pub encryption_parameters_payload_file: File,
-    pub setup_component_public_keys_payload_file: File,
-    pub election_event_context_payload_file: File,
-    pub election_event_configuration_file: File,
-    pub control_component_public_keys_payload_group: FileGroup,
-    pub vcs_directories: Box<Vec<VCSDirectory>>,
+    encryption_parameters_payload_file: File,
+    setup_component_public_keys_payload_file: File,
+    election_event_context_payload_file: File,
+    election_event_configuration_file: File,
+    control_component_public_keys_payload_group: FileGroup,
+    vcs_directories: Vec<VCSDirectory>,
 }
 
 #[derive(Clone)]
 pub struct VCSDirectory {
     location: PathBuf,
-    pub setup_component_tally_data_payload_file: File,
-    pub setup_component_verification_data_payload_group: FileGroup,
-    pub control_component_code_shares_payload_group: FileGroup,
+    setup_component_tally_data_payload_file: File,
+    setup_component_verification_data_payload_group: FileGroup,
+    control_component_code_shares_payload_group: FileGroup,
 }
 
-/// Trait to collect the data
+/// Trait to set the necessary functions for the struct [SetupDirectory] that
+/// are used during the tests
 ///
-/// The trait is thought to permit mock tests
-pub trait CollectDataSetupDirTrait {
+/// The trait is used as parameter of the verification functions to allow mock of
+/// test (negative tests)
+pub trait SetupDirectoryTrait<T>
+where
+    T: VCSDirectoryTrait,
+{
+    fn encryption_parameters_payload_file(&self) -> &File;
+    fn setup_component_public_keys_payload_file(&self) -> &File;
+    fn election_event_context_payload_file(&self) -> &File;
+    fn election_event_configuration_file(&self) -> &File;
+    fn control_component_public_keys_payload_group(&self) -> &FileGroup;
+    fn vcs_directories(&self) -> &Vec<T>;
     fn encryption_parameters_payload(
         &self,
     ) -> Result<Box<EncryptionParametersPayload>, FileStructureError>;
@@ -69,10 +79,15 @@ pub trait CollectDataSetupDirTrait {
     ) -> ControlComponentPublicKeysPayloadReadIter;
 }
 
-/// Trait to collect the data
+/// Trait to set the necessary functions for the struct [VCSDirectory] that
+/// are used during the tests
 ///
-/// The trait is thought to permit mock tests
-pub trait CollectDataVCSDirTrait {
+/// The trait is used as parameter of the verification functions to allow mock of
+/// test (negative tests)
+pub trait VCSDirectoryTrait {
+    fn setup_component_tally_data_payload_file(&self) -> &File;
+    fn setup_component_verification_data_payload_group(&self) -> &FileGroup;
+    fn control_component_code_shares_payload_group(&self) -> &FileGroup;
     fn setup_component_tally_data_payload(
         &self,
     ) -> Result<Box<SetupComponentTallyDataPayload>, FileStructureError>;
@@ -83,6 +98,7 @@ pub trait CollectDataVCSDirTrait {
     fn control_component_code_shares_payload_iter(
         &self,
     ) -> ControlComponentCodeSharesPayloadReadIter;
+    fn get_name(&self) -> String;
 }
 
 impl_iterator_over_data_payload!(
@@ -135,7 +151,7 @@ impl SetupDirectory {
                 &location,
                 create_verifier_data_type!(Setup, ControlComponentPublicKeysPayload),
             ),
-            vcs_directories: Box::new(vec![]),
+            vcs_directories: vec![],
         };
         let vcs_path = location.join(VCS_DIR_NAME);
         if vcs_path.is_dir() {
@@ -149,16 +165,30 @@ impl SetupDirectory {
         res
     }
 
-    pub fn get_location(&self) -> PathBuf {
-        self.location.to_path_buf()
-    }
-
-    pub fn vcs_directories_iter(&self) -> Iter<VCSDirectory> {
-        self.vcs_directories.iter()
+    pub fn get_location(&self) -> &Path {
+        self.location.as_path()
     }
 }
 
-impl CollectDataSetupDirTrait for SetupDirectory {
+impl SetupDirectoryTrait<VCSDirectory> for SetupDirectory {
+    fn encryption_parameters_payload_file(&self) -> &File {
+        &self.encryption_parameters_payload_file
+    }
+    fn setup_component_public_keys_payload_file(&self) -> &File {
+        &self.setup_component_public_keys_payload_file
+    }
+    fn election_event_context_payload_file(&self) -> &File {
+        &self.election_event_context_payload_file
+    }
+    fn election_event_configuration_file(&self) -> &File {
+        &self.election_event_configuration_file
+    }
+    fn control_component_public_keys_payload_group(&self) -> &FileGroup {
+        &self.control_component_public_keys_payload_group
+    }
+    fn vcs_directories(&self) -> &Vec<VCSDirectory> {
+        &self.vcs_directories
+    }
     fn encryption_parameters_payload(
         &self,
     ) -> Result<Box<EncryptionParametersPayload>, FileStructureError> {
@@ -218,21 +248,21 @@ impl VCSDirectory {
         }
     }
 
-    pub fn get_location(&self) -> PathBuf {
-        self.location.to_path_buf()
-    }
-
-    pub fn get_name(&self) -> String {
-        self.location
-            .file_name()
-            .unwrap()
-            .to_str()
-            .unwrap()
-            .to_string()
+    pub fn get_location(&self) -> &Path {
+        self.location.as_path()
     }
 }
 
-impl CollectDataVCSDirTrait for VCSDirectory {
+impl VCSDirectoryTrait for VCSDirectory {
+    fn setup_component_tally_data_payload_file(&self) -> &File {
+        &self.setup_component_tally_data_payload_file
+    }
+    fn setup_component_verification_data_payload_group(&self) -> &FileGroup {
+        &self.setup_component_verification_data_payload_group
+    }
+    fn control_component_code_shares_payload_group(&self) -> &FileGroup {
+        &self.control_component_code_shares_payload_group
+    }
     fn setup_component_tally_data_payload(
         &self,
     ) -> Result<Box<SetupComponentTallyDataPayload>, FileStructureError> {
@@ -251,6 +281,14 @@ impl CollectDataVCSDirTrait for VCSDirectory {
         &self,
     ) -> ControlComponentCodeSharesPayloadReadIter {
         FileGroupIter::new(&self.control_component_code_shares_payload_group)
+    }
+    fn get_name(&self) -> String {
+        self.location
+            .file_name()
+            .unwrap()
+            .to_str()
+            .unwrap()
+            .to_string()
     }
 }
 
@@ -286,7 +324,7 @@ mod test {
             "eb98875b06c841529632cb8edd585f32",
             "37d2f678ee21425b997ba1dc50ae2c91",
         ];
-        for (i, d) in dir.vcs_directories_iter().enumerate() {
+        for (i, d) in dir.vcs_directories().iter().enumerate() {
             assert_eq!(d.get_location(), vcs_location.join(expected[i]))
         }
     }

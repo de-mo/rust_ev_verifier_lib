@@ -6,7 +6,11 @@ use super::super::{
 };
 use crate::{
     error::{create_verifier_error, VerifierError},
-    file_structure::{setup_directory::CollectDataSetupDirTrait, VerificationDirectory},
+    file_structure::{
+        setup_directory::{SetupDirectoryTrait, VCSDirectoryTrait},
+        tally_directory::{BBDirectoryTrait, TallyDirectoryTrait},
+        VerificationDirectoryTrait,
+    },
     verification::meta_data::VerificationMetaDataList,
 };
 
@@ -18,7 +22,15 @@ pub fn get_verifications(metadata_list: &VerificationMetaDataList) -> Verificati
     res
 }
 
-fn fn_verification_200(dir: &VerificationDirectory, result: &mut VerificationResult) {
+fn fn_verification_200<
+    B: BBDirectoryTrait,
+    V: VCSDirectoryTrait,
+    S: SetupDirectoryTrait<V>,
+    T: TallyDirectoryTrait<B>,
+>(
+    dir: &dyn VerificationDirectoryTrait<B, V, S, T>,
+    result: &mut VerificationResult,
+) {
     let setup_dir = dir.unwrap_setup();
     let eg = match setup_dir.encryption_parameters_payload() {
         Ok(p) => p,
@@ -33,7 +45,15 @@ fn fn_verification_200(dir: &VerificationDirectory, result: &mut VerificationRes
     verify_signature_for_object(eg.as_ref(), result, "encryption_parameters_payload")
 }
 
-fn fn_verification_202(dir: &VerificationDirectory, result: &mut VerificationResult) {
+fn fn_verification_202<
+    B: BBDirectoryTrait,
+    V: VCSDirectoryTrait,
+    S: SetupDirectoryTrait<V>,
+    T: TallyDirectoryTrait<B>,
+>(
+    dir: &dyn VerificationDirectoryTrait<B, V, S, T>,
+    result: &mut VerificationResult,
+) {
     let setup_dir = dir.unwrap_setup();
     let eg = match setup_dir.setup_component_public_keys_payload() {
         Ok(p) => p,
@@ -48,7 +68,15 @@ fn fn_verification_202(dir: &VerificationDirectory, result: &mut VerificationRes
     verify_signature_for_object(eg.as_ref(), result, "setup_component_public_keys_payload")
 }
 
-fn fn_verification_203(dir: &VerificationDirectory, result: &mut VerificationResult) {
+fn fn_verification_203<
+    B: BBDirectoryTrait,
+    V: VCSDirectoryTrait,
+    S: SetupDirectoryTrait<V>,
+    T: TallyDirectoryTrait<B>,
+>(
+    dir: &dyn VerificationDirectoryTrait<B, V, S, T>,
+    result: &mut VerificationResult,
+) {
     let setup_dir = dir.unwrap_setup();
     for (i, cc) in setup_dir.control_component_public_keys_payload_iter() {
         match cc {
@@ -67,10 +95,11 @@ fn fn_verification_203(dir: &VerificationDirectory, result: &mut VerificationRes
 
 #[cfg(test)]
 mod test {
-    use crate::verification::VerificationPeriod;
-
-    use super::super::super::verification::VerificationResultTrait;
-    use super::*;
+    use super::{
+        super::super::{verification::VerificationResultTrait, VerificationPeriod},
+        *,
+    };
+    use crate::file_structure::VerificationDirectory;
     use std::path::Path;
 
     fn get_verifier_dir() -> VerificationDirectory {

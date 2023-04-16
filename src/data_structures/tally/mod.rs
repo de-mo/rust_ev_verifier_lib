@@ -36,7 +36,7 @@ impl VerifierTallyDataType {
 
     /// Read from String as json or xml
     ///
-    /// All the types have to oimplement the trait [DataStructureTrait]
+    /// All the types have to implement the trait [VerifierDataDecode]
     pub fn verifier_data_from_file(
         &self,
         s: &String,

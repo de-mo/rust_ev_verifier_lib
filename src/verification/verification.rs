@@ -6,13 +6,23 @@ use super::{
 };
 use crate::{
     error::{create_result_with_error, create_verifier_error, VerifierError},
-    file_structure::VerificationDirectory,
+    file_structure::{
+        setup_directory::{SetupDirectory, SetupDirectoryTrait, VCSDirectory, VCSDirectoryTrait},
+        tally_directory::{BBDirectory, BBDirectoryTrait, TallyDirectory, TallyDirectoryTrait},
+        VerificationDirectory, VerificationDirectoryTrait,
+    },
 };
 use log::{info, warn};
 use std::time::{Duration, SystemTime};
 
 /// Struct representing a verification
-pub struct Verification<'a> {
+pub struct Verification<'a, B, V, S, T>
+where
+    V: VCSDirectoryTrait,
+    B: BBDirectoryTrait,
+    S: SetupDirectoryTrait<V>,
+    T: TallyDirectoryTrait<B>,
+{
     /// Id of the verification
     pub id: String,
     /// Metadata of the verification
@@ -20,7 +30,8 @@ pub struct Verification<'a> {
     /// The meta data is a reference to the metadata list loaded from json
     pub meta_data: &'a VerificationMetaData,
     status: VerificationStatus,
-    verification_fn: Box<dyn Fn(&VerificationDirectory, &mut VerificationResult)>,
+    verification_fn:
+        Box<dyn Fn(&dyn VerificationDirectoryTrait<B, V, S, T>, &mut VerificationResult)>,
     duration: Option<Duration>,
     result: Box<VerificationResult>,
 }
@@ -56,13 +67,21 @@ pub trait VerificationResultTrait {
     fn failures(&self) -> &Vec<VerificationFailure>;
 }
 
-impl<'a> Verification<'a> {
+impl<'a> Verification<'a, BBDirectory, VCSDirectory, SetupDirectory, TallyDirectory> {
     /// Create a new verification.
     ///
     /// The input are the metadata and the explicit function of the verification. The function
     /// must have the following form:
     /// ```rust
-    /// fn verification_function(dir: &VerificationDirectory, result: &mut VerificationResult)
+    /// fn verification_function<
+    ///     B: BBDirectoryTrait,
+    ///     V: VCSDirectoryTrait,
+    ///     S: SetupDirectoryTrait<V>,
+    ///     T: TallyDirectoryTrait<B>,
+    /// >(
+    ///     dir: &dyn VerificationDirectoryTrait<B, V, S, T>,
+    ///     result: &mut VerificationResult,
+    /// )
     /// {
     ///     ...
     /// }
@@ -70,10 +89,20 @@ impl<'a> Verification<'a> {
     ///
     /// The directory contains the directory where the folder setup and tally are located. The result
     /// has to be changed according to the results of the verification (pushing errors and/or failures).
-    /// The function is called by the method rust of the Verification
+    /// The function is called by the method rust of the Verification.
+    ///
+    /// All the helpers functions have also to be defined with traits and not with the structs
     pub fn new(
         id: &str,
-        verification_fn: impl Fn(&VerificationDirectory, &mut VerificationResult) + 'static,
+        verification_fn: impl Fn(
+                &dyn VerificationDirectoryTrait<
+                    BBDirectory,
+                    VCSDirectory,
+                    SetupDirectory,
+                    TallyDirectory,
+                >,
+                &mut VerificationResult,
+            ) + 'static,
         metadata_list: &'a VerificationMetaDataList,
     ) -> Result<Self, VerificationPreparationError> {
         let meta_data = match metadata_list.meta_data_from_id(id) {
@@ -191,7 +220,9 @@ impl VerificationResultTrait for VerificationResult {
     }
 }
 
-impl<'a> VerificationResultTrait for Verification<'a> {
+impl<'a> VerificationResultTrait
+    for Verification<'a, BBDirectory, VCSDirectory, SetupDirectory, TallyDirectory>
+{
     fn is_ok(&self) -> Option<bool> {
         match self.status {
             VerificationStatus::Stopped => None,
@@ -237,7 +268,16 @@ mod test {
 
     #[test]
     fn run_ok() {
-        fn ok(_: &VerificationDirectory, _: &mut VerificationResult) {}
+        fn ok(
+            _: &dyn VerificationDirectoryTrait<
+                BBDirectory,
+                VCSDirectory,
+                SetupDirectory,
+                TallyDirectory,
+            >,
+            _: &mut VerificationResult,
+        ) {
+        }
         let md_list = VerificationMetaDataList::load().unwrap();
         let mut verif = Verification::new("s100", ok, &md_list).unwrap();
         assert_eq!(verif.status, VerificationStatus::Stopped);
@@ -256,7 +296,15 @@ mod test {
 
     #[test]
     fn run_error() {
-        fn error(_: &VerificationDirectory, result: &mut VerificationResult) {
+        fn error(
+            _: &dyn VerificationDirectoryTrait<
+                BBDirectory,
+                VCSDirectory,
+                SetupDirectory,
+                TallyDirectory,
+            >,
+            result: &mut VerificationResult,
+        ) {
             result.push_error(create_verifier_error!(VerificationErrorType::Error, "toto"));
             result.push_error(create_verifier_error!(
                 VerificationErrorType::Error,
@@ -287,7 +335,15 @@ mod test {
 
     #[test]
     fn run_failure() {
-        fn failure(_: &VerificationDirectory, result: &mut VerificationResult) {
+        fn failure(
+            _: &dyn VerificationDirectoryTrait<
+                BBDirectory,
+                VCSDirectory,
+                SetupDirectory,
+                TallyDirectory,
+            >,
+            result: &mut VerificationResult,
+        ) {
             result.push_failure(create_verifier_error!(
                 VerificationFailureType::Failure,
                 "toto"

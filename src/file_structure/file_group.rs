@@ -51,7 +51,7 @@ impl<'a, T> FileGroupIter<'a, T> {
 ///
 /// parameters:
 /// - $p: The struct as result
-/// - $fct: The function of the trati [VerifierDataTrait] to get the data
+/// - $fct: The function to get the data (defined in the trait associated to the Dir object)
 /// - $pread: The result of reading data $p from the file
 /// - $preaditer: The iterator name over $pread
 ///

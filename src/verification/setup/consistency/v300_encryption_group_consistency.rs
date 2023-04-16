@@ -9,9 +9,9 @@ use crate::{
     data_structures::common_types::EncryptionGroup,
     error::{create_verifier_error, VerifierError},
     file_structure::{
-        setup_directory::VCSDirectory,
-        setup_directory::{CollectDataSetupDirTrait, CollectDataVCSDirTrait},
-        VerificationDirectory,
+        setup_directory::{SetupDirectoryTrait, VCSDirectoryTrait},
+        tally_directory::{BBDirectoryTrait, TallyDirectoryTrait},
+        VerificationDirectoryTrait,
     },
 };
 
@@ -41,8 +41,8 @@ fn test_encryption_group(
     }
 }
 
-fn test_encryption_group_for_vcs_dir(
-    dir: &VCSDirectory,
+fn test_encryption_group_for_vcs_dir<V: VCSDirectoryTrait>(
+    dir: &V,
     eg: &EncryptionGroup,
     result: &mut VerificationResult,
 ) {
@@ -112,7 +112,15 @@ fn test_encryption_group_for_vcs_dir(
     }
 }
 
-pub(super) fn fn_verification(dir: &VerificationDirectory, result: &mut VerificationResult) {
+pub(super) fn fn_verification<
+    B: BBDirectoryTrait,
+    V: VCSDirectoryTrait,
+    S: SetupDirectoryTrait<V>,
+    T: TallyDirectoryTrait<B>,
+>(
+    dir: &dyn VerificationDirectoryTrait<B, V, S, T>,
+    result: &mut VerificationResult,
+) {
     let setup_dir = dir.unwrap_setup();
     let eg = match setup_dir.encryption_parameters_payload() {
         Ok(p) => p.encryption_group,
@@ -166,17 +174,18 @@ pub(super) fn fn_verification(dir: &VerificationDirectory, result: &mut Verifica
             )
         }
     }
-    for vcs in setup_dir.vcs_directories_iter() {
+    for vcs in setup_dir.vcs_directories().iter() {
         test_encryption_group_for_vcs_dir(vcs, &eg, result);
     }
 }
 
 #[cfg(test)]
 mod test {
-    use crate::verification::VerificationPeriod;
-
-    use super::super::super::super::verification::VerificationResultTrait;
-    use super::*;
+    use super::{
+        super::super::super::{verification::VerificationResultTrait, VerificationPeriod},
+        *,
+    };
+    use crate::file_structure::VerificationDirectory;
     use std::path::Path;
 
     fn get_verifier_dir() -> VerificationDirectory {

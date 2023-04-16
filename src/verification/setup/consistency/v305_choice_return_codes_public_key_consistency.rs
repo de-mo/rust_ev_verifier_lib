@@ -8,11 +8,23 @@ use super::super::super::{
 use crate::{
     crypto_primitives::num_bigint::{Constants, Operations},
     error::{create_verifier_error, VerifierError},
-    file_structure::{setup_directory::CollectDataSetupDirTrait, VerificationDirectory},
+    file_structure::{
+        setup_directory::{SetupDirectoryTrait, VCSDirectoryTrait},
+        tally_directory::{BBDirectoryTrait, TallyDirectoryTrait},
+        VerificationDirectoryTrait,
+    },
 };
 use num_bigint::BigUint;
 
-pub(super) fn fn_verification(dir: &VerificationDirectory, result: &mut VerificationResult) {
+pub(super) fn fn_verification<
+    B: BBDirectoryTrait,
+    V: VCSDirectoryTrait,
+    S: SetupDirectoryTrait<V>,
+    T: TallyDirectoryTrait<B>,
+>(
+    dir: &dyn VerificationDirectoryTrait<B, V, S, T>,
+    result: &mut VerificationResult,
+) {
     let setup_dir = dir.unwrap_setup();
     let eg_p = match setup_dir.encryption_parameters_payload() {
         Ok(o) => o.encryption_group.p,
@@ -57,10 +69,11 @@ pub(super) fn fn_verification(dir: &VerificationDirectory, result: &mut Verifica
 
 #[cfg(test)]
 mod test {
-    use crate::verification::VerificationPeriod;
-
-    use super::super::super::super::verification::VerificationResultTrait;
-    use super::*;
+    use super::{
+        super::super::super::{verification::VerificationResultTrait, VerificationPeriod},
+        *,
+    };
+    use crate::file_structure::VerificationDirectory;
     use std::path::Path;
 
     fn get_verifier_dir() -> VerificationDirectory {

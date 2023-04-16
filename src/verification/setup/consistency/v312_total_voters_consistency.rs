@@ -7,10 +7,22 @@ use super::super::super::{
 };
 use crate::{
     error::{create_verifier_error, VerifierError},
-    file_structure::{setup_directory::CollectDataSetupDirTrait, VerificationDirectory},
+    file_structure::{
+        setup_directory::{SetupDirectoryTrait, VCSDirectoryTrait},
+        tally_directory::{BBDirectoryTrait, TallyDirectoryTrait},
+        VerificationDirectoryTrait,
+    },
 };
 
-pub(super) fn fn_verification(dir: &VerificationDirectory, result: &mut VerificationResult) {
+pub(super) fn fn_verification<
+    B: BBDirectoryTrait,
+    V: VCSDirectoryTrait,
+    S: SetupDirectoryTrait<V>,
+    T: TallyDirectoryTrait<B>,
+>(
+    dir: &dyn VerificationDirectoryTrait<B, V, S, T>,
+    result: &mut VerificationResult,
+) {
     let setup_dir = dir.unwrap_setup();
     let vcs_contexts = match setup_dir.election_event_context_payload() {
         Ok(o) => o.election_event_context.verification_card_set_contexts,
@@ -47,10 +59,11 @@ pub(super) fn fn_verification(dir: &VerificationDirectory, result: &mut Verifica
 
 #[cfg(test)]
 mod test {
-    use crate::verification::VerificationPeriod;
-
-    use super::super::super::super::verification::VerificationResultTrait;
-    use super::*;
+    use super::{
+        super::super::super::{verification::VerificationResultTrait, VerificationPeriod},
+        *,
+    };
+    use crate::file_structure::VerificationDirectory;
     use std::path::Path;
 
     fn get_verifier_dir() -> VerificationDirectory {

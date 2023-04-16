@@ -1,3 +1,6 @@
+//! Module implementing the structure of files and directories
+//! to collect data for the verifications
+//!
 pub mod file;
 pub mod file_group;
 pub mod setup_directory;
@@ -13,6 +16,11 @@ use crate::{
 use setup_directory::SetupDirectory;
 use std::{fmt::Display, path::Path};
 use tally_directory::TallyDirectory;
+
+use self::{
+    setup_directory::{SetupDirectoryTrait, VCSDirectory, VCSDirectoryTrait},
+    tally_directory::{BBDirectory, BBDirectoryTrait, TallyDirectoryTrait},
+};
 
 /// Type represending a VerificationDirectory
 pub struct VerificationDirectory {
@@ -40,6 +48,47 @@ pub trait GetFileNameTrait {
     }
 }
 
+/// Trait to set the necessary functions for the struct [VerificationDirectory] that
+/// are used during the tests
+///
+/// The trait is used as parameter of the verification functions to allow mock of
+/// test (negative tests)
+///
+/// The verification functions should only defined with the traits as follow
+/// ```rust
+/// fn fn_verification<
+///     B: BBDirectoryTrait,
+///     V: VCSDirectoryTrait,
+///     S: SetupDirectoryTrait<V>,
+///     T: TallyDirectoryTrait<B>,
+/// >(
+///     dir: &dyn VerificationDirectoryTrait<B, V, S, T>,
+///     result: &mut VerificationResult,
+/// ) {
+///     ...
+/// }
+/// ```
+///
+/// All the helpers functions have also to be defined with traits and not with the structs. Then it
+/// is possible to mock the data
+pub trait VerificationDirectoryTrait<B, V, S, T>
+where
+    V: VCSDirectoryTrait,
+    B: BBDirectoryTrait,
+    S: SetupDirectoryTrait<V>,
+    T: TallyDirectoryTrait<B>,
+{
+    /// Unwrap setup and give a reference to S
+    ///
+    /// panic if type is tally
+    fn unwrap_setup(&self) -> &S;
+
+    /// Unwrap tally and give a reference to S
+    ///
+    /// panic if type is seup
+    fn unwrap_tally(&self) -> &T;
+}
+
 impl VerificationDirectory {
     /// Create a new VerificationDirectory
     pub fn new(period: &VerificationPeriod, location: &Path) -> Self {
@@ -64,18 +113,22 @@ impl VerificationDirectory {
     pub fn is_tally(&self) -> bool {
         !self.is_setup()
     }
+}
 
+impl VerificationDirectoryTrait<BBDirectory, VCSDirectory, SetupDirectory, TallyDirectory>
+    for VerificationDirectory
+{
     /// Unwrap setup and give a reference to S
     ///
     /// panic if type is tally
-    pub fn unwrap_setup(&self) -> &SetupDirectory {
+    fn unwrap_setup(&self) -> &SetupDirectory {
         &self.setup
     }
 
     /// Unwrap tally and give a reference to S
     ///
     /// panic if type is seup
-    pub fn unwrap_tally(&self) -> &TallyDirectory {
+    fn unwrap_tally(&self) -> &TallyDirectory {
         match &self.tally {
             Some(t) => t,
             None => panic!("called `unwrap_tally()` on a `Setup` value"),

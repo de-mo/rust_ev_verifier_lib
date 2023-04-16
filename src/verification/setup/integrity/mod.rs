@@ -1,9 +1,9 @@
 use crate::{
     error::{create_verifier_error, VerifierError},
     file_structure::{
-        setup_directory::VCSDirectory,
-        setup_directory::{CollectDataSetupDirTrait, CollectDataVCSDirTrait},
-        VerificationDirectory,
+        setup_directory::{SetupDirectoryTrait, VCSDirectoryTrait},
+        tally_directory::{BBDirectoryTrait, TallyDirectoryTrait},
+        VerificationDirectoryTrait,
     },
     verification::meta_data::VerificationMetaDataList,
 };
@@ -20,7 +20,7 @@ pub fn get_verifications(metadata_list: &VerificationMetaDataList) -> Verificati
     res
 }
 
-fn validate_vcs_dir(dir: &VCSDirectory, result: &mut VerificationResult) {
+fn validate_vcs_dir<V: VCSDirectoryTrait>(dir: &V, result: &mut VerificationResult) {
     match dir.setup_component_tally_data_payload() {
         Ok(_) => (),
         Err(e) => result.push_failure(create_verification_failure!(
@@ -57,7 +57,15 @@ fn validate_vcs_dir(dir: &VCSDirectory, result: &mut VerificationResult) {
     }
 }
 
-fn fn_verification_400(dir: &VerificationDirectory, result: &mut VerificationResult) {
+fn fn_verification_400<
+    B: BBDirectoryTrait,
+    V: VCSDirectoryTrait,
+    S: SetupDirectoryTrait<V>,
+    T: TallyDirectoryTrait<B>,
+>(
+    dir: &dyn VerificationDirectoryTrait<B, V, S, T>,
+    result: &mut VerificationResult,
+) {
     let setup_dir = dir.unwrap_setup();
     match setup_dir.encryption_parameters_payload() {
         Ok(_) => (),
@@ -98,17 +106,18 @@ fn fn_verification_400(dir: &VerificationDirectory, result: &mut VerificationRes
             ))
         }
     }
-    for d in setup_dir.vcs_directories_iter() {
+    for d in setup_dir.vcs_directories().iter() {
         validate_vcs_dir(d, result);
     }
 }
 
 #[cfg(test)]
 mod test {
-
-    use super::super::super::verification::VerificationResultTrait;
-    use super::*;
-    use crate::verification::VerificationPeriod;
+    use super::{
+        super::super::{verification::VerificationResultTrait, VerificationPeriod},
+        *,
+    };
+    use crate::file_structure::VerificationDirectory;
     use std::path::Path;
 
     fn get_verifier_dir() -> VerificationDirectory {

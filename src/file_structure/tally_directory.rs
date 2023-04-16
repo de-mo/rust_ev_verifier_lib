@@ -11,17 +11,75 @@ use std::{
 #[derive(Clone)]
 pub struct TallyDirectory {
     location: PathBuf,
-    pub e_voting_decrypt_file: File,
-    pub ech_0110_file: File,
-    pub ech_0222_file: File,
-    pub bb_directories: Box<Vec<BBDirectory>>,
+    e_voting_decrypt_file: File,
+    ech_0110_file: File,
+    ech_0222_file: File,
+    bb_directories: Vec<BBDirectory>,
 }
 
 #[derive(Clone)]
 pub struct BBDirectory {
     location: PathBuf,
-    pub tally_component_votes_payload_file: File,
-    pub tally_component_shuffle_payload_file: File,
+    tally_component_votes_payload_file: File,
+    tally_component_shuffle_payload_file: File,
+}
+
+/// Trait to set the necessary functions for the struct [TallyDirectory] that
+/// are used during the tests
+///
+/// The trait is used as parameter of the verification functions to allow mock of
+/// test (negative tests)
+pub trait TallyDirectoryTrait<B>
+where
+    B: BBDirectoryTrait,
+{
+    fn e_voting_decrypt_file(&self) -> &File;
+    fn ech_0110_file(&self) -> &File;
+    fn ech_0222_file(&self) -> &File;
+    fn bb_directories(&self) -> &Vec<B>;
+}
+
+/// Trait to set the necessary functions for the struct [BBDirectory] that
+/// are used during the tests
+///
+/// The trait is used as parameter of the verification functions to allow mock of
+/// test (negative tests)
+pub trait BBDirectoryTrait {
+    fn tally_component_votes_payload_file(&self) -> &File;
+    fn tally_component_shuffle_payload_file(&self) -> &File;
+    fn get_name(&self) -> String;
+}
+
+impl TallyDirectoryTrait<BBDirectory> for TallyDirectory {
+    fn e_voting_decrypt_file(&self) -> &File {
+        &self.e_voting_decrypt_file
+    }
+    fn ech_0110_file(&self) -> &File {
+        &self.ech_0110_file
+    }
+    fn ech_0222_file(&self) -> &File {
+        &self.ech_0222_file
+    }
+    fn bb_directories(&self) -> &Vec<BBDirectory> {
+        &self.bb_directories
+    }
+}
+
+impl BBDirectoryTrait for BBDirectory {
+    fn tally_component_votes_payload_file(&self) -> &File {
+        &self.tally_component_votes_payload_file
+    }
+    fn tally_component_shuffle_payload_file(&self) -> &File {
+        &self.tally_component_shuffle_payload_file
+    }
+    fn get_name(&self) -> String {
+        self.location
+            .file_name()
+            .unwrap()
+            .to_str()
+            .unwrap()
+            .to_string()
+    }
 }
 
 impl TallyDirectory {
@@ -36,7 +94,7 @@ impl TallyDirectory {
             ),
             ech_0110_file: create_file!(location, Tally, VerifierTallyDataType::ECH0110),
             ech_0222_file: create_file!(location, Tally, VerifierTallyDataType::ECH0222),
-            bb_directories: Box::new(vec![]),
+            bb_directories: vec![],
         };
         let bb_path = location.join(BB_DIR_NAME);
         if bb_path.is_dir() {
@@ -50,8 +108,8 @@ impl TallyDirectory {
         res
     }
 
-    pub fn get_location(&self) -> PathBuf {
-        self.location.to_path_buf()
+    pub fn get_location(&self) -> &Path {
+        self.location.as_path()
     }
 }
 
@@ -72,16 +130,7 @@ impl BBDirectory {
         }
     }
 
-    pub fn get_location(&self) -> PathBuf {
-        self.location.to_path_buf()
-    }
-
-    pub fn get_name(&self) -> String {
-        self.location
-            .file_name()
-            .unwrap()
-            .to_str()
-            .unwrap()
-            .to_string()
+    pub fn get_location(&self) -> &Path {
+        self.location.as_path()
     }
 }

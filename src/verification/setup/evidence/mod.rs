@@ -2,9 +2,8 @@ pub mod v500_501_encryption_parameters_payload;
 pub mod v502_voting_options;
 pub mod v503_key_generation_schnorr_proofs;
 
-use crate::verification::meta_data::VerificationMetaDataList;
-
 use super::super::{verification::Verification, verification_suite::VerificationList};
+use crate::verification::meta_data::VerificationMetaDataList;
 
 pub fn get_verifications(metadata_list: &VerificationMetaDataList) -> VerificationList {
     let mut res = vec![];

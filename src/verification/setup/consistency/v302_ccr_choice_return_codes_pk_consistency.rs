@@ -12,19 +12,20 @@ use crate::{
     },
     error::{create_verifier_error, VerifierError},
     file_structure::{
-        setup_directory::{CollectDataSetupDirTrait, SetupDirectory},
-        VerificationDirectory,
+        setup_directory::{SetupDirectoryTrait, VCSDirectoryTrait},
+        tally_directory::{BBDirectoryTrait, TallyDirectoryTrait},
+        VerificationDirectoryTrait,
     },
 };
 
-fn validate_cc_ccr_enc_pk(
-    setup_dir: &SetupDirectory,
+fn validate_cc_ccr_enc_pk<V: VCSDirectoryTrait, S: SetupDirectoryTrait<V>>(
+    setup_dir: &S,
     setup: &ControlComponentPublicKeys,
     node_id: usize,
     result: &mut VerificationResult,
 ) {
     let f = setup_dir
-        .control_component_public_keys_payload_group
+        .control_component_public_keys_payload_group()
         .get_file_with_number(node_id);
     let cc_pk = match f
         .get_data()
@@ -52,7 +53,15 @@ fn validate_cc_ccr_enc_pk(
     }
 }
 
-pub(super) fn fn_verification(dir: &VerificationDirectory, result: &mut VerificationResult) {
+pub(super) fn fn_verification<
+    B: BBDirectoryTrait,
+    V: VCSDirectoryTrait,
+    S: SetupDirectoryTrait<V>,
+    T: TallyDirectoryTrait<B>,
+>(
+    dir: &dyn VerificationDirectoryTrait<B, V, S, T>,
+    result: &mut VerificationResult,
+) {
     let setup_dir = dir.unwrap_setup();
     let sc_pk = match setup_dir.setup_component_public_keys_payload() {
         Ok(o) => o,
@@ -74,10 +83,11 @@ pub(super) fn fn_verification(dir: &VerificationDirectory, result: &mut Verifica
 
 #[cfg(test)]
 mod test {
-    use crate::verification::VerificationPeriod;
-
-    use super::super::super::super::verification::VerificationResultTrait;
-    use super::*;
+    use super::{
+        super::super::super::{verification::VerificationResultTrait, VerificationPeriod},
+        *,
+    };
+    use crate::file_structure::VerificationDirectory;
     use std::path::Path;
 
     fn get_verifier_dir() -> VerificationDirectory {

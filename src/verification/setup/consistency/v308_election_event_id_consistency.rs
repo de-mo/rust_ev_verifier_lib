@@ -8,9 +8,9 @@ use super::super::super::{
 use crate::{
     error::{create_verifier_error, VerifierError},
     file_structure::{
-        setup_directory::VCSDirectory,
-        setup_directory::{CollectDataSetupDirTrait, CollectDataVCSDirTrait},
-        VerificationDirectory,
+        setup_directory::{SetupDirectoryTrait, VCSDirectoryTrait},
+        tally_directory::{BBDirectoryTrait, TallyDirectoryTrait},
+        VerificationDirectoryTrait,
     },
 };
 
@@ -28,7 +28,11 @@ fn test_election_event_id(
     }
 }
 
-fn test_ee_id_for_vcs_dir(dir: &VCSDirectory, expected: &String, result: &mut VerificationResult) {
+fn test_ee_id_for_vcs_dir<V: VCSDirectoryTrait>(
+    dir: &V,
+    expected: &String,
+    result: &mut VerificationResult,
+) {
     match dir.setup_component_tally_data_payload() {
         Ok(p) => test_election_event_id(
             &p.election_event_id,
@@ -95,7 +99,15 @@ fn test_ee_id_for_vcs_dir(dir: &VCSDirectory, expected: &String, result: &mut Ve
     }
 }
 
-pub(super) fn fn_verification(dir: &VerificationDirectory, result: &mut VerificationResult) {
+pub(super) fn fn_verification<
+    B: BBDirectoryTrait,
+    V: VCSDirectoryTrait,
+    S: SetupDirectoryTrait<V>,
+    T: TallyDirectoryTrait<B>,
+>(
+    dir: &dyn VerificationDirectoryTrait<B, V, S, T>,
+    result: &mut VerificationResult,
+) {
     let setup_dir = dir.unwrap_setup();
     let ee_id = match setup_dir.election_event_context_payload() {
         Ok(o) => o.election_event_context.election_event_id,
@@ -137,17 +149,18 @@ pub(super) fn fn_verification(dir: &VerificationDirectory, result: &mut Verifica
             )
         }
     }
-    for vcs in setup_dir.vcs_directories_iter() {
+    for vcs in setup_dir.vcs_directories().iter() {
         test_ee_id_for_vcs_dir(vcs, &ee_id, result);
     }
 }
 
 #[cfg(test)]
 mod test {
-    use crate::verification::VerificationPeriod;
-
-    use super::super::super::super::verification::VerificationResultTrait;
-    use super::*;
+    use super::{
+        super::super::super::{verification::VerificationResultTrait, VerificationPeriod},
+        *,
+    };
+    use crate::file_structure::VerificationDirectory;
     use std::path::Path;
 
     fn get_verifier_dir() -> VerificationDirectory {
