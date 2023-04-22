@@ -142,7 +142,7 @@ pub mod mock {
     //!
     //! The mocks read the correct data from the file. It is possible to change any data
     //! with the functions mock_
-    use super::*;
+    use super::{super::mock::wrap_file_group_getter, *};
 
     /// Mock for [BBDirectory]
     pub struct MockBBDirectory {
@@ -162,19 +162,17 @@ pub mod mock {
     }
 
     impl BBDirectoryTrait for MockBBDirectory {
-        fn tally_component_votes_payload_file(&self) -> &File {
-            match &self.mock_tally_component_votes_payload_file {
-                Some(e) => e,
-                None => self.dir.tally_component_votes_payload_file(),
-            }
-        }
+        wrap_file_group_getter!(
+            tally_component_votes_payload_file,
+            mock_tally_component_votes_payload_file,
+            File
+        );
+        wrap_file_group_getter!(
+            tally_component_shuffle_payload_file,
+            mock_tally_component_shuffle_payload_file,
+            File
+        );
 
-        fn tally_component_shuffle_payload_file(&self) -> &File {
-            match &self.mock_tally_component_shuffle_payload_file {
-                Some(e) => e,
-                None => self.dir.tally_component_shuffle_payload_file(),
-            }
-        }
         fn get_name(&self) -> String {
             match &self.mock_get_name {
                 Some(e) => e.clone(),
@@ -185,27 +183,9 @@ pub mod mock {
 
     impl TallyDirectoryTrait for MockTallyDirectory {
         type BBDirType = MockBBDirectory;
-
-        fn e_voting_decrypt_file(&self) -> &File {
-            match &self.mock_e_voting_decrypt_file {
-                Some(e) => e,
-                None => self.dir.e_voting_decrypt_file(),
-            }
-        }
-
-        fn ech_0110_file(&self) -> &File {
-            match &self.mock_ech_0110_file {
-                Some(e) => e,
-                None => self.dir.ech_0110_file(),
-            }
-        }
-
-        fn ech_0222_file(&self) -> &File {
-            match &self.mock_ech_0222_file {
-                Some(e) => e,
-                None => self.dir.ech_0222_file(),
-            }
-        }
+        wrap_file_group_getter!(e_voting_decrypt_file, mock_e_voting_decrypt_file, File);
+        wrap_file_group_getter!(ech_0110_file, mock_ech_0110_file, File);
+        wrap_file_group_getter!(ech_0222_file, mock_ech_0222_file, File);
 
         fn bb_directories(&self) -> &Vec<MockBBDirectory> {
             &self.bb_directories

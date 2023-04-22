@@ -332,4 +332,47 @@ pub mod mock {
             }
         }
     }
+
+    /// Macro to implement a function to the mock structures wrapping
+    /// the function of the existing object for getter of File or FileGroup.
+    /// If the value changed, then return the value, else return the original.
+    ///
+    /// Parameters:
+    /// - $fct: The name of the function
+    /// - $mock: The name of the mock structure field to get
+    /// - $out: Type of the output of the function
+    macro_rules! wrap_file_group_getter {
+        ($fct: ident, $mock: ident, $out: ty) => {
+            fn $fct(&self) -> &$out {
+                match &self.$mock {
+                    Some(e) => e,
+                    None => self.dir.$fct(),
+                }
+            }
+        };
+    }
+    pub(super) use wrap_file_group_getter;
+
+    /// Macro to implement a function to the mock structures wrapping
+    /// the function of the existing object for getter of payload.
+    /// If the value changed, then return the value, else return the original.
+    ///
+    /// Parameters:
+    /// - $fct: The name of the function
+    /// - $mock: The name of the mock structure field to get
+    /// - $payload: Type of the pyalod
+    macro_rules! wrap_payload_getter {
+        ($fct: ident, $mock: ident, $payload: ty) => {
+            fn $fct(&self) -> Result<Box<$payload>, FileStructureError> {
+                match &self.$mock {
+                    Some(e) => match e {
+                        Ok(b) => Ok(Box::new(*b.clone())),
+                        Err(r) => create_result_with_error!(r.kind().clone(), r.message()),
+                    },
+                    None => self.dir.$fct(),
+                }
+            }
+        };
+    }
+    pub(super) use wrap_payload_getter;
 }
