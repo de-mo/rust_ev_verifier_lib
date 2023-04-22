@@ -13,19 +13,19 @@ pub struct File {
 
 macro_rules! create_file {
     ($l: expr, $p: ident, $s: expr) => {
-        File::new(&$l, VerifierDataType::$p($s), None)
+        File::new(&$l, &VerifierDataType::$p($s), None)
     };
     ($l: expr, $p: ident, $s: expr, $n: expr) => {
-        File::new(&$l, VerifierDataType::$p($s), Some($n))
+        File::new(&$l, &VerifierDataType::$p($s), Some($n))
     };
 }
 pub(crate) use create_file;
 
 impl File {
-    pub fn new(location: &Path, data_type: VerifierDataType, file_nb: Option<usize>) -> Self {
+    pub fn new(location: &Path, data_type: &VerifierDataType, file_nb: Option<usize>) -> Self {
         File {
             path: location.join(data_type.get_file_name(file_nb)),
-            data_type,
+            data_type: data_type.clone(),
         }
     }
 
@@ -102,7 +102,7 @@ mod test {
         let location = get_location();
         let f = File::new(
             &location,
-            VerifierDataType::Setup(VerifierSetupDataType::EncryptionParametersPayload),
+            &VerifierDataType::Setup(VerifierSetupDataType::EncryptionParametersPayload),
             None,
         );
         assert!(f.exists());
@@ -142,7 +142,7 @@ mod test {
         let location = get_location().join("toto");
         let f = File::new(
             &location,
-            VerifierDataType::Setup(VerifierSetupDataType::EncryptionParametersPayload),
+            &VerifierDataType::Setup(VerifierSetupDataType::EncryptionParametersPayload),
             None,
         );
         assert!(!f.exists());
@@ -160,7 +160,7 @@ mod test {
         let location = get_location();
         let f = File::new(
             &location,
-            VerifierDataType::Setup(VerifierSetupDataType::ControlComponentPublicKeysPayload),
+            &VerifierDataType::Setup(VerifierSetupDataType::ControlComponentPublicKeysPayload),
             Some(2),
         );
         assert!(f.exists());
@@ -178,7 +178,7 @@ mod test {
         let location = get_location();
         let f = File::new(
             &location,
-            VerifierDataType::Setup(VerifierSetupDataType::ControlComponentPublicKeysPayload),
+            &VerifierDataType::Setup(VerifierSetupDataType::ControlComponentPublicKeysPayload),
             Some(6),
         );
         assert!(!f.exists());

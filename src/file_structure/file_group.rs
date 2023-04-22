@@ -1,17 +1,37 @@
-use super::file;
+//! Trait implementing group of files
 use super::{file::File, GetFileNameTrait};
 use crate::data_structures::VerifierDataType;
-use std::fs;
-use std::marker::PhantomData;
-use std::path::{Path, PathBuf};
-use std::slice::Iter;
+use std::{
+    fs,
+    marker::PhantomData,
+    path::{Path, PathBuf},
+};
 
+/// Trait for the possibility to mock the iteration over filegroup
 pub trait FileGroupIterTrait {
     type IterType;
     fn get_elt_at_index(&self, index: &usize) -> Option<Self::IterType>;
     fn is_index_valid(&self, index: &usize) -> bool;
 }
 
+/// File Group
+#[derive(Clone)]
+pub struct FileGroup {
+    /// location of the file group
+    location: PathBuf,
+    /// data_type. With the data_type it is possible to find the files in the location
+    data_type: VerifierDataType,
+    /// The numbers for which the files are defined
+    numbers: Vec<usize>,
+}
+
+pub struct FileGroupIter<T> {
+    pub file_group: FileGroup,
+    index: usize,
+    not_used: PhantomData<T>,
+}
+
+/// Implement iterator for all the [FileGroupIter] as generic type
 impl<T> Iterator for FileGroupIter<T>
 where
     Self: FileGroupIterTrait<IterType = T>,
@@ -30,26 +50,13 @@ where
     }
 }
 
-#[derive(Clone)]
-pub struct FileGroup {
-    location: PathBuf,
-    data_type: VerifierDataType,
-    numbers: Vec<usize>,
-}
-
-pub struct FileGroupIter<T> {
-    pub file_group: FileGroup,
-    index: usize,
-    not_used: PhantomData<T>,
-}
-
 impl FileGroupIterTrait for FileGroupIter<File> {
     type IterType = File;
     fn get_elt_at_index(&self, index: &usize) -> Option<Self::IterType> {
         match self.is_index_valid(index) {
             true => Some(File::new(
                 &self.file_group.location,
-                self.file_group.data_type.clone(),
+                &self.file_group.data_type,
                 Some(*index),
             )),
             false => None,
@@ -119,6 +126,7 @@ macro_rules! impl_iterator_over_data_payload {
 pub(crate) use impl_iterator_over_data_payload;
 
 impl FileGroup {
+    /// New [FileGroup]
     pub fn new(location: &Path, data_type: VerifierDataType) -> Self {
         let mut res = Self {
             location: location.to_path_buf(),
@@ -148,34 +156,42 @@ impl FileGroup {
         }
     }
 
-    pub fn get_location(&self) -> PathBuf {
-        self.location.to_path_buf()
+    /// Get the location
+    pub fn get_location(&self) -> &Path {
+        self.location.as_path()
     }
 
-    pub fn get_data_type(&self) -> VerifierDataType {
-        self.data_type.clone()
+    /// Get the data type
+    pub fn get_data_type(&self) -> &VerifierDataType {
+        &self.data_type
     }
 
+    /// Test if the location exist
     pub fn location_exists(&self) -> bool {
         self.location.is_dir()
     }
 
+    /// Test if the file group has elements, i.e. it exists files
     pub fn has_elements(&self) -> bool {
         !self.numbers.is_empty()
     }
 
+    /// Get the paths of the files
     pub fn get_paths(&self) -> Vec<PathBuf> {
         self.iter().map(|(_, f)| f.get_path()).collect()
     }
 
+    /// Get all the valid numbers of the files
     pub fn get_numbers(&self) -> &Vec<usize> {
         &self.numbers
     }
 
+    /// Get the file with the given number
     pub fn get_file_with_number(&self, number: usize) -> File {
-        File::new(&self.location, self.data_type.clone(), Some(number))
+        File::new(&self.location, &self.data_type, Some(number))
     }
 
+    /// Iterate over the files
     pub fn iter(&self) -> FileGroupIter<File> {
         FileGroupIter::new(self)
     }
