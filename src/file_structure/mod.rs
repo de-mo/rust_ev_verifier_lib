@@ -53,7 +53,7 @@ pub trait GetFileNameTrait {
 ///
 /// The verification functions should only defined with the traits as follow
 /// ```rust
-/// fn fn_verification<D: VerificationDirectoryTrait>(
+/// fn fn_verification<'a, D: VerificationDirectoryTrait>(
 ///    dir: &D,
 ///    result: &mut VerificationResult,
 /// ) {

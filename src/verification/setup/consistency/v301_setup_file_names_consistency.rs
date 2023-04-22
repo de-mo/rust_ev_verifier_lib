@@ -31,7 +31,8 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
     );
     let mut cc_group_numbers = setup_dir
         .control_component_public_keys_payload_group()
-        .get_numbers();
+        .get_numbers()
+        .clone();
     cc_group_numbers.sort();
     if cc_group_numbers != vec![1, 2, 3, 4] {
         result.push_failure(create_verification_failure!(format!(

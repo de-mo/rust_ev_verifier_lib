@@ -1,6 +1,6 @@
 use super::{
     file::{create_file, File},
-    file_group::{impl_iterator_over_data_payload, FileGroup, FileGroupIter},
+    file_group::{impl_iterator_over_data_payload, FileGroup, FileGroupIter, FileGroupIterTrait},
     FileStructureError,
 };
 use crate::{
@@ -75,7 +75,7 @@ pub trait SetupDirectoryTrait {
 
     fn control_component_public_keys_payload_iter(
         &self,
-    ) -> ControlComponentPublicKeysPayloadReadIter;
+    ) -> ControlComponentPublicKeysPayloadAsResultIter;
 }
 
 /// Trait to set the necessary functions for the struct [VCSDirectory] that
@@ -92,33 +92,33 @@ pub trait VCSDirectoryTrait {
     ) -> Result<Box<SetupComponentTallyDataPayload>, FileStructureError>;
     fn setup_component_verification_data_payload_iter(
         &self,
-    ) -> SetupComponentVerificationDataPayloadReadIter;
+    ) -> SetupComponentVerificationDataPayloadAsResultIter;
 
     fn control_component_code_shares_payload_iter(
         &self,
-    ) -> ControlComponentCodeSharesPayloadReadIter;
+    ) -> ControlComponentCodeSharesPayloadAsResultIter;
     fn get_name(&self) -> String;
 }
 
 impl_iterator_over_data_payload!(
     ControlComponentPublicKeysPayload,
     control_component_public_keys_payload,
-    ControlComponentPublicKeysPayloadRead,
-    ControlComponentPublicKeysPayloadReadIter
+    ControlComponentPublicKeysPayloadAsResult,
+    ControlComponentPublicKeysPayloadAsResultIter
 );
 
 impl_iterator_over_data_payload!(
     SetupComponentVerificationDataPayload,
     setup_component_verification_data_payload,
-    SetupComponentVerificationDataPayloadRead,
-    SetupComponentVerificationDataPayloadReadIter
+    SetupComponentVerificationDataPayloadAsResult,
+    SetupComponentVerificationDataPayloadAsResultIter
 );
 
 impl_iterator_over_data_payload!(
     ControlComponentCodeSharesPayload,
     control_component_code_shares_payload,
-    ControlComponentCodeSharesPayloadRead,
-    ControlComponentCodeSharesPayloadReadIter
+    ControlComponentCodeSharesPayloadAsResult,
+    ControlComponentCodeSharesPayloadAsResultIter
 );
 
 impl SetupDirectory {
@@ -226,7 +226,7 @@ impl SetupDirectoryTrait for SetupDirectory {
 
     fn control_component_public_keys_payload_iter(
         &self,
-    ) -> ControlComponentPublicKeysPayloadReadIter {
+    ) -> ControlComponentPublicKeysPayloadAsResultIter {
         FileGroupIter::new(&self.control_component_public_keys_payload_group)
     }
 }
@@ -278,13 +278,13 @@ impl VCSDirectoryTrait for VCSDirectory {
 
     fn setup_component_verification_data_payload_iter(
         &self,
-    ) -> SetupComponentVerificationDataPayloadReadIter {
+    ) -> SetupComponentVerificationDataPayloadAsResultIter {
         FileGroupIter::new(&self.setup_component_verification_data_payload_group)
     }
 
     fn control_component_code_shares_payload_iter(
         &self,
-    ) -> ControlComponentCodeSharesPayloadReadIter {
+    ) -> ControlComponentCodeSharesPayloadAsResultIter {
         FileGroupIter::new(&self.control_component_code_shares_payload_group)
     }
     fn get_name(&self) -> String {
@@ -428,7 +428,7 @@ pub mod mock {
 
         fn setup_component_verification_data_payload_iter(
             &self,
-        ) -> SetupComponentVerificationDataPayloadReadIter {
+        ) -> SetupComponentVerificationDataPayloadAsResultIter {
             match &self.mocked_setup_component_verification_data_payloads {
                 Some(e) => todo!(),
                 None => self.dir.setup_component_verification_data_payload_iter(),
@@ -437,7 +437,7 @@ pub mod mock {
 
         fn control_component_code_shares_payload_iter(
             &self,
-        ) -> ControlComponentCodeSharesPayloadReadIter {
+        ) -> ControlComponentCodeSharesPayloadAsResultIter {
             match &self.mocked_control_component_code_shares_payloads {
                 Some(e) => todo!(),
                 None => self.dir.control_component_code_shares_payload_iter(),
@@ -507,7 +507,7 @@ pub mod mock {
 
         fn control_component_public_keys_payload_iter(
             &self,
-        ) -> ControlComponentPublicKeysPayloadReadIter {
+        ) -> ControlComponentPublicKeysPayloadAsResultIter {
             match &self.mocked_control_component_public_keys_payloads {
                 Some(e) => todo!(),
                 None => self.dir.control_component_public_keys_payload_iter(),

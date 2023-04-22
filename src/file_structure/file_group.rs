@@ -1,9 +1,34 @@
+use super::file;
 use super::{file::File, GetFileNameTrait};
 use crate::data_structures::VerifierDataType;
 use std::fs;
 use std::marker::PhantomData;
 use std::path::{Path, PathBuf};
 use std::slice::Iter;
+
+pub trait FileGroupIterTrait {
+    type IterType;
+    fn get_elt_at_index(&self, index: &usize) -> Option<Self::IterType>;
+    fn is_index_valid(&self, index: &usize) -> bool;
+}
+
+impl<T> Iterator for FileGroupIter<T>
+where
+    Self: FileGroupIterTrait<IterType = T>,
+{
+    type Item = (usize, T);
+
+    fn next(&mut self) -> Option<Self::Item> {
+        match self.get_elt_at_index(&self.index) {
+            Some(elt) => {
+                let res = (self.index.clone(), elt);
+                self.index += 1;
+                Some(res)
+            }
+            None => None,
+        }
+    }
+}
 
 #[derive(Clone)]
 pub struct FileGroup {
@@ -12,35 +37,35 @@ pub struct FileGroup {
     numbers: Vec<usize>,
 }
 
-pub struct FileGroupIter<'a, T> {
-    pub file_group: &'a FileGroup,
-    pub iter: Iter<'a, usize>,
+pub struct FileGroupIter<T> {
+    pub file_group: FileGroup,
+    index: usize,
     not_used: PhantomData<T>,
 }
 
-impl Iterator for FileGroupIter<'_, File> {
-    type Item = (usize, File);
-
-    fn next(&mut self) -> Option<Self::Item> {
-        match self.iter.next() {
-            Some(i) => Some((
-                *i,
-                File::new(
-                    &self.file_group.location,
-                    self.file_group.data_type.clone(),
-                    Some(*i),
-                ),
+impl FileGroupIterTrait for FileGroupIter<File> {
+    type IterType = File;
+    fn get_elt_at_index(&self, index: &usize) -> Option<Self::IterType> {
+        match self.is_index_valid(index) {
+            true => Some(File::new(
+                &self.file_group.location,
+                self.file_group.data_type.clone(),
+                Some(*index),
             )),
-            None => None,
+            false => None,
         }
+    }
+
+    fn is_index_valid(&self, index: &usize) -> bool {
+        self.file_group.numbers.contains(index)
     }
 }
 
-impl<'a, T> FileGroupIter<'a, T> {
-    pub fn new(file_group: &'a FileGroup) -> Self {
+impl<T> FileGroupIter<T> {
+    pub fn new(file_group: &FileGroup) -> Self {
         FileGroupIter {
-            file_group,
-            iter: file_group.numbers.iter(),
+            file_group: file_group.clone(),
+            index: 0,
             not_used: PhantomData,
         }
     }
@@ -67,24 +92,26 @@ impl<'a, T> FileGroupIter<'a, T> {
 macro_rules! impl_iterator_over_data_payload {
     ($p: ty, $fct: ident, $pread: ident, $preaditer: ident) => {
         type $pread = Result<Box<$p>, FileStructureError>;
-        type $preaditer<'a> = FileGroupIter<'a, $pread>;
-        impl Iterator for $preaditer<'_> {
-            type Item = (usize, $pread);
-
-            fn next(&mut self) -> Option<Self::Item> {
-                match self.iter.next() {
-                    Some(i) => Some((
-                        *i,
+        type $preaditer = FileGroupIter<$pread>;
+        impl FileGroupIterTrait for $preaditer {
+            type IterType = $pread;
+            fn get_elt_at_index(&self, index: &usize) -> Option<Self::IterType> {
+                match self.is_index_valid(index) {
+                    true => Some(
                         File::new(
                             &self.file_group.get_location(),
                             self.file_group.get_data_type(),
-                            Some(*i),
+                            Some(*index),
                         )
                         .get_data()
                         .map(|d| Box::new(d.$fct().unwrap().clone())),
-                    )),
-                    None => None,
+                    ),
+                    false => None,
                 }
+            }
+
+            fn is_index_valid(&self, index: &usize) -> bool {
+                self.file_group.get_numbers().contains(index)
             }
         }
     };
@@ -141,8 +168,8 @@ impl FileGroup {
         self.iter().map(|(_, f)| f.get_path()).collect()
     }
 
-    pub fn get_numbers(&self) -> Vec<usize> {
-        self.numbers.clone()
+    pub fn get_numbers(&self) -> &Vec<usize> {
+        &self.numbers
     }
 
     pub fn get_file_with_number(&self, number: usize) -> File {
@@ -177,7 +204,7 @@ mod test {
         assert!(fg.location_exists());
         assert!(fg.has_elements());
         assert_eq!(fg.get_location(), location);
-        assert_eq!(fg.get_numbers(), [1, 2, 3, 4]);
+        assert_eq!(fg.get_numbers(), &[1, 2, 3, 4]);
         for (i, f) in fg.iter() {
             let name = format!("controlComponentPublicKeysPayload.{}.json", i);
             assert_eq!(f.get_path(), location.join(name));

@@ -71,7 +71,7 @@ fn fn_verification_100<D: VerificationDirectoryTrait>(dir: &D, result: &mut Veri
     if setup_dir
         .control_component_public_keys_payload_group()
         .get_numbers()
-        != vec![1, 2, 3, 4]
+        != &vec![1, 2, 3, 4]
     {
         result.push_failure(create_verification_failure!(format!(
             "control_component_public_keys_payload_group missing. only these parts are present: {:?}",
