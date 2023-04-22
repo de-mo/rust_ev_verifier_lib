@@ -17,10 +17,7 @@ use setup_directory::SetupDirectory;
 use std::{fmt::Display, path::Path};
 use tally_directory::TallyDirectory;
 
-use self::{
-    setup_directory::{SetupDirectoryTrait, VCSDirectory, VCSDirectoryTrait},
-    tally_directory::{BBDirectory, BBDirectoryTrait, TallyDirectoryTrait},
-};
+use self::{setup_directory::SetupDirectoryTrait, tally_directory::TallyDirectoryTrait};
 
 /// Type represending a VerificationDirectory
 pub struct VerificationDirectory {
@@ -56,37 +53,29 @@ pub trait GetFileNameTrait {
 ///
 /// The verification functions should only defined with the traits as follow
 /// ```rust
-/// fn fn_verification<
-///     B: BBDirectoryTrait,
-///     V: VCSDirectoryTrait,
-///     S: SetupDirectoryTrait<V>,
-///     T: TallyDirectoryTrait<B>,
-/// >(
-///     dir: &dyn VerificationDirectoryTrait<B, V, S, T>,
-///     result: &mut VerificationResult,
+/// fn fn_verification<D: VerificationDirectoryTrait>(
+///    dir: &D,
+///    result: &mut VerificationResult,
 /// ) {
 ///     ...
 /// }
 /// ```
 ///
-/// All the helpers functions have also to be defined with traits and not with the structs. Then it
-/// is possible to mock the data
-pub trait VerificationDirectoryTrait<B, V, S, T>
-where
-    V: VCSDirectoryTrait,
-    B: BBDirectoryTrait,
-    S: SetupDirectoryTrait<V>,
-    T: TallyDirectoryTrait<B>,
-{
+/// All the helpers functions called from `fn_verification` have also to take then traits as parameter
+/// and not the structs. Then it is possible to mock the data
+pub trait VerificationDirectoryTrait {
+    type SetupDirType: SetupDirectoryTrait;
+    type TallyDirType: TallyDirectoryTrait;
+
     /// Unwrap setup and give a reference to S
     ///
     /// panic if type is tally
-    fn unwrap_setup(&self) -> &S;
+    fn unwrap_setup(&self) -> &Self::SetupDirType;
 
     /// Unwrap tally and give a reference to S
     ///
     /// panic if type is seup
-    fn unwrap_tally(&self) -> &T;
+    fn unwrap_tally(&self) -> &Self::TallyDirType;
 }
 
 impl VerificationDirectory {
@@ -115,9 +104,10 @@ impl VerificationDirectory {
     }
 }
 
-impl VerificationDirectoryTrait<BBDirectory, VCSDirectory, SetupDirectory, TallyDirectory>
-    for VerificationDirectory
-{
+impl VerificationDirectoryTrait for VerificationDirectory {
+    type SetupDirType = SetupDirectory;
+    type TallyDirType = TallyDirectory;
+
     /// Unwrap setup and give a reference to S
     ///
     /// panic if type is tally
@@ -289,9 +279,9 @@ pub mod mock {
     //!    // Test the verification that should generate failures
     //!    fn_verification(&mock_dir, &mut result);
     //! ```
-    use super::setup_directory::mock::{MockSetupDirectory, MockVCSDirectory};
-    use super::tally_directory::mock::{MockBBDirectory, MockTallyDirectory};
-    use super::*;
+    use super::{
+        setup_directory::mock::MockSetupDirectory, tally_directory::mock::MockTallyDirectory, *,
+    };
 
     /// Mock for [VerificationDirectory]
     pub struct MockVerificationDirectory {
@@ -299,14 +289,9 @@ pub mod mock {
         tally: Option<MockTallyDirectory>,
     }
 
-    impl
-        VerificationDirectoryTrait<
-            MockBBDirectory,
-            MockVCSDirectory,
-            MockSetupDirectory,
-            MockTallyDirectory,
-        > for MockVerificationDirectory
-    {
+    impl VerificationDirectoryTrait for MockVerificationDirectory {
+        type SetupDirType = MockSetupDirectory;
+        type TallyDirType = MockTallyDirectory;
         fn unwrap_setup(&self) -> &MockSetupDirectory {
             &self.setup
         }

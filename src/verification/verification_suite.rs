@@ -1,9 +1,6 @@
 //! Module implementing the suite of verifications
 
-use crate::file_structure::{
-    setup_directory::{SetupDirectory, VCSDirectory},
-    tally_directory::{BBDirectory, TallyDirectory},
-};
+use crate::file_structure::VerificationDirectory;
 
 use super::{
     meta_data::{VerificationMetaDataList, VerificationMetaDataListTrait},
@@ -21,8 +18,7 @@ pub struct VerificationSuite<'a> {
 }
 
 /// List of verifications
-pub type VerificationList<'a> =
-    Vec<Verification<'a, BBDirectory, VCSDirectory, SetupDirectory, TallyDirectory>>;
+pub type VerificationList<'a> = Vec<Verification<'a, VerificationDirectory>>;
 
 impl<'a> VerificationSuite<'a> {
     /// Create a new suite
@@ -114,7 +110,7 @@ impl<'a> VerificationSuite<'a> {
     pub fn get_verifications_for_category(
         &self,
         category: VerificationCategory,
-    ) -> Vec<&Verification<'a, BBDirectory, VCSDirectory, SetupDirectory, TallyDirectory>> {
+    ) -> Vec<&Verification<'a, VerificationDirectory>> {
         self.list
             .iter()
             .filter(|e| e.meta_data.category == category)
@@ -133,10 +129,7 @@ impl<'a> VerificationSuite<'a> {
     /// Find a verification with id
     ///
     /// The excluded verifications are not searchable
-    pub fn find_by_id(
-        &self,
-        id: &str,
-    ) -> Option<&Verification<'a, BBDirectory, VCSDirectory, SetupDirectory, TallyDirectory>> {
+    pub fn find_by_id(&self, id: &str) -> Option<&Verification<'a, VerificationDirectory>> {
         self.list.iter().find(|&v| v.meta_data.id == id)
     }
 }

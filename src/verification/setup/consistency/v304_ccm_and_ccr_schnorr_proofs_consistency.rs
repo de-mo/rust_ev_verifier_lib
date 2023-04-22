@@ -11,15 +11,11 @@ use crate::{
         VerifierSetupDataTrait,
     },
     error::{create_verifier_error, VerifierError},
-    file_structure::{
-        setup_directory::{SetupDirectoryTrait, VCSDirectoryTrait},
-        tally_directory::{BBDirectoryTrait, TallyDirectoryTrait},
-        VerificationDirectoryTrait,
-    },
+    file_structure::{setup_directory::SetupDirectoryTrait, VerificationDirectoryTrait},
 };
 use std::iter::zip;
 
-fn validate_ccm_and_ccr_schorr_proofs<V: VCSDirectoryTrait, S: SetupDirectoryTrait<V>>(
+fn validate_ccm_and_ccr_schorr_proofs<S: SetupDirectoryTrait>(
     setup_dir: &S,
     setup: &ControlComponentPublicKeys,
     node_id: usize,
@@ -79,13 +75,8 @@ fn validate_ccm_and_ccr_schorr_proofs<V: VCSDirectoryTrait, S: SetupDirectoryTra
     }
 }
 
-pub(super) fn fn_verification<
-    B: BBDirectoryTrait,
-    V: VCSDirectoryTrait,
-    S: SetupDirectoryTrait<V>,
-    T: TallyDirectoryTrait<B>,
->(
-    dir: &dyn VerificationDirectoryTrait<B, V, S, T>,
+pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
+    dir: &D,
     result: &mut VerificationResult,
 ) {
     let setup_dir = dir.unwrap_setup();

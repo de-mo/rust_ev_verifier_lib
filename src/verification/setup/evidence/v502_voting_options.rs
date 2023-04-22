@@ -9,21 +9,12 @@ use crate::{
     constants::{MAXIMUM_NUMBER_OF_SELECTABLE_VOTING_OPTIONS, MAXIMUM_NUMBER_OF_VOTING_OPTIONS},
     crypto_primitives::num_bigint::Constants,
     error::{create_verifier_error, VerifierError},
-    file_structure::{
-        setup_directory::{SetupDirectoryTrait, VCSDirectoryTrait},
-        tally_directory::{BBDirectoryTrait, TallyDirectoryTrait},
-        VerificationDirectoryTrait,
-    },
+    file_structure::{setup_directory::SetupDirectoryTrait, VerificationDirectoryTrait},
 };
 use num_bigint::BigUint;
 
-pub(super) fn fn_verification<
-    B: BBDirectoryTrait,
-    V: VCSDirectoryTrait,
-    S: SetupDirectoryTrait<V>,
-    T: TallyDirectoryTrait<B>,
->(
-    dir: &dyn VerificationDirectoryTrait<B, V, S, T>,
+pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
+    dir: &D,
     result: &mut VerificationResult,
 ) {
     let setup_dir = dir.unwrap_setup();

@@ -29,14 +29,13 @@ pub struct BBDirectory {
 ///
 /// The trait is used as parameter of the verification functions to allow mock of
 /// test (negative tests)
-pub trait TallyDirectoryTrait<B>
-where
-    B: BBDirectoryTrait,
-{
+pub trait TallyDirectoryTrait {
+    type BBDirType: BBDirectoryTrait;
+
     fn e_voting_decrypt_file(&self) -> &File;
     fn ech_0110_file(&self) -> &File;
     fn ech_0222_file(&self) -> &File;
-    fn bb_directories(&self) -> &Vec<B>;
+    fn bb_directories(&self) -> &Vec<Self::BBDirType>;
 }
 
 /// Trait to set the necessary functions for the struct [BBDirectory] that
@@ -50,7 +49,9 @@ pub trait BBDirectoryTrait {
     fn get_name(&self) -> String;
 }
 
-impl TallyDirectoryTrait<BBDirectory> for TallyDirectory {
+impl TallyDirectoryTrait for TallyDirectory {
+    type BBDirType = BBDirectory;
+
     fn e_voting_decrypt_file(&self) -> &File {
         &self.e_voting_decrypt_file
     }
@@ -182,7 +183,9 @@ pub mod mock {
         }
     }
 
-    impl TallyDirectoryTrait<MockBBDirectory> for MockTallyDirectory {
+    impl TallyDirectoryTrait for MockTallyDirectory {
+        type BBDirType = MockBBDirectory;
+
         fn e_voting_decrypt_file(&self) -> &File {
             match &self.mock_e_voting_decrypt_file {
                 Some(e) => e,

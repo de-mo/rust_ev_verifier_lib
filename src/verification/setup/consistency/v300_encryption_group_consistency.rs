@@ -10,7 +10,6 @@ use crate::{
     error::{create_verifier_error, VerifierError},
     file_structure::{
         setup_directory::{SetupDirectoryTrait, VCSDirectoryTrait},
-        tally_directory::{BBDirectoryTrait, TallyDirectoryTrait},
         VerificationDirectoryTrait,
     },
 };
@@ -112,13 +111,8 @@ fn test_encryption_group_for_vcs_dir<V: VCSDirectoryTrait>(
     }
 }
 
-pub(super) fn fn_verification<
-    B: BBDirectoryTrait,
-    V: VCSDirectoryTrait,
-    S: SetupDirectoryTrait<V>,
-    T: TallyDirectoryTrait<B>,
->(
-    dir: &dyn VerificationDirectoryTrait<B, V, S, T>,
+pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
+    dir: &D,
     result: &mut VerificationResult,
 ) {
     let setup_dir = dir.unwrap_setup();

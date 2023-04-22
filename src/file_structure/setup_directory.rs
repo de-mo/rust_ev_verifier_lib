@@ -50,16 +50,15 @@ pub struct VCSDirectory {
 ///
 /// The trait is used as parameter of the verification functions to allow mock of
 /// test (negative tests)
-pub trait SetupDirectoryTrait<T>
-where
-    T: VCSDirectoryTrait,
-{
+pub trait SetupDirectoryTrait {
+    type VCSDirType: VCSDirectoryTrait;
+
     fn encryption_parameters_payload_file(&self) -> &File;
     fn setup_component_public_keys_payload_file(&self) -> &File;
     fn election_event_context_payload_file(&self) -> &File;
     fn election_event_configuration_file(&self) -> &File;
     fn control_component_public_keys_payload_group(&self) -> &FileGroup;
-    fn vcs_directories(&self) -> &Vec<T>;
+    fn vcs_directories(&self) -> &Vec<Self::VCSDirType>;
     fn encryption_parameters_payload(
         &self,
     ) -> Result<Box<EncryptionParametersPayload>, FileStructureError>;
@@ -172,7 +171,9 @@ impl SetupDirectory {
     }
 }
 
-impl SetupDirectoryTrait<VCSDirectory> for SetupDirectory {
+impl SetupDirectoryTrait for SetupDirectory {
+    type VCSDirType = VCSDirectory;
+
     fn encryption_parameters_payload_file(&self) -> &File {
         &self.encryption_parameters_payload_file
     }
@@ -453,7 +454,9 @@ pub mod mock {
         }
     }
 
-    impl SetupDirectoryTrait<MockVCSDirectory> for MockSetupDirectory {
+    impl SetupDirectoryTrait for MockSetupDirectory {
+        type VCSDirType = MockVCSDirectory;
+
         fn encryption_parameters_payload_file(&self) -> &File {
             match &self.mock_encryption_parameters_payload_file {
                 Some(e) => e,

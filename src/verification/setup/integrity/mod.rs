@@ -2,7 +2,6 @@ use crate::{
     error::{create_verifier_error, VerifierError},
     file_structure::{
         setup_directory::{SetupDirectoryTrait, VCSDirectoryTrait},
-        tally_directory::{BBDirectoryTrait, TallyDirectoryTrait},
         VerificationDirectoryTrait,
     },
     verification::meta_data::VerificationMetaDataList,
@@ -57,15 +56,7 @@ fn validate_vcs_dir<V: VCSDirectoryTrait>(dir: &V, result: &mut VerificationResu
     }
 }
 
-fn fn_verification_400<
-    B: BBDirectoryTrait,
-    V: VCSDirectoryTrait,
-    S: SetupDirectoryTrait<V>,
-    T: TallyDirectoryTrait<B>,
->(
-    dir: &dyn VerificationDirectoryTrait<B, V, S, T>,
-    result: &mut VerificationResult,
-) {
+fn fn_verification_400<D: VerificationDirectoryTrait>(dir: &D, result: &mut VerificationResult) {
     let setup_dir = dir.unwrap_setup();
     match setup_dir.encryption_parameters_payload() {
         Ok(_) => (),
