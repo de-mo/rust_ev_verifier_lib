@@ -333,13 +333,13 @@ pub mod mock {
         }
     }
 
-    /// Macro to implement a function to the mock structures wrapping
+    /// Macro to implement a function to the mocked structures wrapping
     /// the function of the existing object for getter of File or FileGroup.
-    /// If the value changed, then return the value, else return the original.
+    /// If the value is mocked, then return the mocked value, else return the original.
     ///
     /// Parameters:
     /// - $fct: The name of the function
-    /// - $mock: The name of the mock structure field to get
+    /// - $mock: The name of the mocked structure field to get
     /// - $out: Type of the output of the function
     macro_rules! wrap_file_group_getter {
         ($fct: ident, $mock: ident, $out: ty) => {
@@ -353,13 +353,13 @@ pub mod mock {
     }
     pub(super) use wrap_file_group_getter;
 
-    /// Macro to implement a function to the mock structures wrapping
+    /// Macro to implement a function to the mocked structures wrapping
     /// the function of the existing object for getter of payload.
-    /// If the value changed, then return the value, else return the original.
+    /// If the value is mocked, then return the mocked value, else return the original.
     ///
     /// Parameters:
     /// - $fct: The name of the function
-    /// - $mock: The name of the mock structure field to get
+    /// - $mock: The name of the mocked structure field to get
     /// - $payload: Type of the pyalod
     macro_rules! wrap_payload_getter {
         ($fct: ident, $mock: ident, $payload: ty) => {
@@ -375,4 +375,24 @@ pub mod mock {
         };
     }
     pub(super) use wrap_payload_getter;
+
+    /// Macro to implement a function to mock a payload
+    ///
+    /// Parameters:
+    /// - $fct: The name of the function
+    /// - $mock: The name of the mocked structure field to update
+    /// - $payload: Type of the payload
+    macro_rules! mock_payload {
+        ($fct: ident, $mock: ident, $payload: ty) => {
+            pub fn $fct(&mut self, data: &Result<&$payload, FileStructureError>) {
+                match data {
+                    Ok(d) => self.$mock = Some(Ok(Box::new(d.clone().to_owned()))),
+                    Err(e) => {
+                        self.$mock = Some(create_result_with_error!(e.kind().clone(), e.message()))
+                    }
+                };
+            }
+        };
+    }
+    pub(super) use mock_payload;
 }

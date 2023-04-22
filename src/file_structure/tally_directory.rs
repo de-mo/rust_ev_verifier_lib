@@ -147,34 +147,34 @@ pub mod mock {
     /// Mock for [BBDirectory]
     pub struct MockBBDirectory {
         dir: BBDirectory,
-        mock_tally_component_votes_payload_file: Option<File>,
-        mock_tally_component_shuffle_payload_file: Option<File>,
-        mock_get_name: Option<String>,
+        mocked_tally_component_votes_payload_file: Option<File>,
+        mocked_tally_component_shuffle_payload_file: Option<File>,
+        mocked_get_name: Option<String>,
     }
 
     /// Mock for [TallyDirectory]
     pub struct MockTallyDirectory {
         dir: TallyDirectory,
-        mock_e_voting_decrypt_file: Option<File>,
-        mock_ech_0110_file: Option<File>,
-        mock_ech_0222_file: Option<File>,
+        mocked_e_voting_decrypt_file: Option<File>,
+        mocked_ech_0110_file: Option<File>,
+        mocked_ech_0222_file: Option<File>,
         bb_directories: Vec<MockBBDirectory>,
     }
 
     impl BBDirectoryTrait for MockBBDirectory {
         wrap_file_group_getter!(
             tally_component_votes_payload_file,
-            mock_tally_component_votes_payload_file,
+            mocked_tally_component_votes_payload_file,
             File
         );
         wrap_file_group_getter!(
             tally_component_shuffle_payload_file,
-            mock_tally_component_shuffle_payload_file,
+            mocked_tally_component_shuffle_payload_file,
             File
         );
 
         fn get_name(&self) -> String {
-            match &self.mock_get_name {
+            match &self.mocked_get_name {
                 Some(e) => e.clone(),
                 None => self.dir.get_name(),
             }
@@ -183,9 +183,9 @@ pub mod mock {
 
     impl TallyDirectoryTrait for MockTallyDirectory {
         type BBDirType = MockBBDirectory;
-        wrap_file_group_getter!(e_voting_decrypt_file, mock_e_voting_decrypt_file, File);
-        wrap_file_group_getter!(ech_0110_file, mock_ech_0110_file, File);
-        wrap_file_group_getter!(ech_0222_file, mock_ech_0222_file, File);
+        wrap_file_group_getter!(e_voting_decrypt_file, mocked_e_voting_decrypt_file, File);
+        wrap_file_group_getter!(ech_0110_file, mocked_ech_0110_file, File);
+        wrap_file_group_getter!(ech_0222_file, mocked_ech_0222_file, File);
 
         fn bb_directories(&self) -> &Vec<MockBBDirectory> {
             &self.bb_directories
@@ -196,19 +196,19 @@ pub mod mock {
         pub fn new(location: &Path) -> Self {
             MockBBDirectory {
                 dir: BBDirectory::new(location),
-                mock_tally_component_shuffle_payload_file: None,
-                mock_tally_component_votes_payload_file: None,
-                mock_get_name: None,
+                mocked_tally_component_shuffle_payload_file: None,
+                mocked_tally_component_votes_payload_file: None,
+                mocked_get_name: None,
             }
         }
         pub fn mock_tally_component_shuffle_payload_file(&mut self, data: &File) {
-            self.mock_tally_component_shuffle_payload_file = Some(data.clone());
+            self.mocked_tally_component_shuffle_payload_file = Some(data.clone());
         }
         pub fn mock_tally_component_votes_payload_file(&mut self, data: &File) {
-            self.mock_tally_component_votes_payload_file = Some(data.clone());
+            self.mocked_tally_component_votes_payload_file = Some(data.clone());
         }
         pub fn mock_get_name(&mut self, data: &str) {
-            self.mock_get_name = Some(data.to_string())
+            self.mocked_get_name = Some(data.to_string())
         }
     }
 
@@ -222,9 +222,9 @@ pub mod mock {
                 .collect();
             MockTallyDirectory {
                 dir: tally_dir,
-                mock_e_voting_decrypt_file: None,
-                mock_ech_0110_file: None,
-                mock_ech_0222_file: None,
+                mocked_e_voting_decrypt_file: None,
+                mocked_ech_0110_file: None,
+                mocked_ech_0222_file: None,
                 bb_directories: bb_dirs,
             }
         }
@@ -233,13 +233,13 @@ pub mod mock {
         }
 
         pub fn mock_e_voting_decrypt_file(&mut self, data: &File) {
-            self.mock_e_voting_decrypt_file = Some(data.clone());
+            self.mocked_e_voting_decrypt_file = Some(data.clone());
         }
         pub fn mock_ech_0110_file(&mut self, data: &File) {
-            self.mock_ech_0110_file = Some(data.clone());
+            self.mocked_ech_0110_file = Some(data.clone());
         }
         pub fn mock_ech_0222_file(&mut self, data: &File) {
-            self.mock_ech_0222_file = Some(data.clone());
+            self.mocked_ech_0222_file = Some(data.clone());
         }
     }
 }
