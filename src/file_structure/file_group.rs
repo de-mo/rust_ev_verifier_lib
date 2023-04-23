@@ -10,6 +10,11 @@ use std::{
 /// Trait for the possibility to mock the iteration over filegroup
 pub trait FileGroupIterTrait<T>: Iterator<Item = (usize, T)> {
     fn current_elt(&self) -> Option<T>;
+    fn current_pos(&self) -> &usize;
+    fn current_index(&self) -> Option<&usize>;
+    fn is_over(&self) -> bool {
+        self.current_index().is_none()
+    }
 }
 
 /// File Group
@@ -55,6 +60,14 @@ impl FileGroupIterTrait<File> for FileGroupIter<File> {
     fn current_elt(&self) -> Option<File> {
         self.current_file()
     }
+
+    fn current_pos(&self) -> &usize {
+        self.current_pos_impl()
+    }
+
+    fn current_index(&self) -> Option<&usize> {
+        self.current_index_impl()
+    }
 }
 
 impl<T> FileGroupIter<T> {
@@ -68,21 +81,21 @@ impl<T> FileGroupIter<T> {
     }
 
     /// Get the current position
-    pub fn current_pos(&self) -> &usize {
+    pub fn current_pos_impl(&self) -> &usize {
         &self.pos
     }
 
     /// Get the current index
-    pub fn current_index(&self) -> Option<&usize> {
-        match self.current_pos() < &self.file_group.get_numbers().len() {
-            true => Some(&self.file_group.get_numbers()[*self.current_pos()]),
+    pub fn current_index_impl(&self) -> Option<&usize> {
+        match &self.pos < &self.file_group.get_numbers().len() {
+            true => Some(&self.file_group.get_numbers()[self.pos]),
             false => None,
         }
     }
 
     /// Get the current file
     pub fn current_file(&self) -> Option<File> {
-        match self.current_index() {
+        match self.current_index_impl() {
             Some(i) => Some(File::new(
                 &self.file_group.location,
                 &self.file_group.data_type,
@@ -90,11 +103,6 @@ impl<T> FileGroupIter<T> {
             )),
             None => None,
         }
-    }
-
-    /// Check if iterator is over
-    pub fn is_over(&self) -> bool {
-        self.current_index().is_none()
     }
 }
 
@@ -126,6 +134,13 @@ macro_rules! impl_iterator_over_data_payload {
                     Some(f) => Some(f.get_data().map(|d| Box::new(d.$fct().unwrap().clone()))),
                     None => None,
                 }
+            }
+            fn current_pos(&self) -> &usize {
+                self.current_pos_impl()
+            }
+
+            fn current_index(&self) -> Option<&usize> {
+                self.current_index_impl()
             }
         }
     };
@@ -272,7 +287,6 @@ mod test {
     }
 }
 
-/*
 #[cfg(any(test, doc))]
 pub mod mock {
     //! Module defining mocking structure [FileGroupTrait]
@@ -283,9 +297,9 @@ pub mod mock {
     use crate::error::{create_result_with_error, create_verifier_error, VerifierError};
     use std::collections::HashMap;
 
-    pub struct MockFileGroupIter<T> {
-        orig: FileGroupIter<T>,
-        mocked_data: HashMap<usize, T>,
+    pub struct MockFileGroupIter<'a, 'b, T> {
+        orig: &'a Box<dyn FileGroupIterTrait<T>>,
+        mocked_data: &'b HashMap<usize, T>,
     }
     /// Macro implementing an iterator over the data covered by the
     /// FileGroup
@@ -325,18 +339,21 @@ pub mod mock {
     }
     pub(super) use impl_iterator_over_data_payload_mock;
 
-    impl<T> MockFileGroupIter<T> {
-        fn new(fg_iter: &FileGroupIter<T>, mock_data: &HashMap<usize, T>) -> Self {
+    impl<'a, 'b, T> MockFileGroupIter<'a, 'b, T> {
+        pub fn new(
+            fg_iter: &'a Box<dyn FileGroupIterTrait<T>>,
+            mock_data: &'b HashMap<usize, T>,
+        ) -> Self {
             MockFileGroupIter {
-                orig: *fg_iter.clone(),
-                mocked_data: *mock_data.clone(),
+                orig: fg_iter,
+                mocked_data: mock_data,
             }
         }
 
-        fn orig(&self) -> &FileGroupIter<T> {
+        pub fn orig(&self) -> &Box<dyn FileGroupIterTrait<T>> {
             &self.orig
         }
-        fn mocked_data(&self) -> &HashMap<usize, T> {
+        pub fn mocked_data(&self) -> &HashMap<usize, T> {
             &self.mocked_data
         }
         pub fn current_pos(&self) -> &usize {
@@ -353,25 +370,21 @@ pub mod mock {
     }
 
     // Implement iterator for all the [FileGroupIter] as generic type
-    impl<T> Iterator for MockFileGroupIter<T>
+    impl<'a, 'b, T> Iterator for MockFileGroupIter<'a, 'b, T>
     where
-        Self: FileGroupIterTrait<IterType = T>,
+        Self: FileGroupIterTrait<T>,
     {
         type Item = (usize, T);
 
         fn next(&mut self) -> Option<Self::Item> {
-            match self.orig().next() {
-                true => None,
-                false => {
-                    let res = (
-                        self.current_index().unwrap().clone(),
-                        self.current_elt().unwrap(),
-                    );
-                    self.pos += 1;
+            match self.current_index() {
+                Some(i) => {
+                    let res = (*i, self.current_elt().unwrap());
+                    self.next();
                     Some(res)
                 }
+                None => None,
             }
         }
     }
 }
- */
