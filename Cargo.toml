@@ -1,6 +1,6 @@
 [package]
 name = "rust_verifier"
-description = "implementation of a Verifier for the E-Voting system of Swiss Post."
+description = "Implementation of a Verifier for the E-Voting system of Swiss Post."
 version = "0.0.1"
 edition = "2021"
 rust-version = "1.69"
