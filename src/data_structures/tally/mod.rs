@@ -1,4 +1,5 @@
 pub mod control_component_ballot_box_payload;
+pub mod control_component_shuffle_payload;
 pub mod e_voting_decrypt;
 pub mod ech_0110;
 pub mod ech_0222;
@@ -7,6 +8,7 @@ pub mod tally_component_votes_payload;
 
 use self::{
     control_component_ballot_box_payload::ControlComponentBallotBoxPayload,
+    control_component_shuffle_payload::ControlComponentShufflePayload,
     e_voting_decrypt::EVotingDecrypt, ech_0110::ECH0110, ech_0222::ECH0222,
     tally_component_shuffle_payload::TallyComponentShufflePayload,
     tally_component_votes_payload::TallyComponentVotesPayload,
@@ -24,6 +26,7 @@ pub enum VerifierTallyData {
     TallyComponentVotesPayload(TallyComponentVotesPayload),
     TallyComponentShufflePayload(TallyComponentShufflePayload),
     ControlComponentBallotBoxPayload(ControlComponentBallotBoxPayload),
+    ControlComponentShufflePayload(ControlComponentShufflePayload),
 }
 
 impl VerifierTallyDataType {
@@ -35,6 +38,7 @@ impl VerifierTallyDataType {
             Self::TallyComponentVotesPayload => FileType::Json,
             Self::TallyComponentShufflePayload => FileType::Json,
             Self::ControlComponentBallotBoxPayload => FileType::Json,
+            Self::ControlComponentShufflePayload => FileType::Json,
         }
     }
 
@@ -65,6 +69,10 @@ impl VerifierTallyDataType {
             VerifierTallyDataType::ControlComponentBallotBoxPayload => {
                 ControlComponentBallotBoxPayload::from_string(s, &self.get_file_type())
                     .map(|r| VerifierTallyData::ControlComponentBallotBoxPayload(r))
+            }
+            VerifierTallyDataType::ControlComponentShufflePayload => {
+                ControlComponentShufflePayload::from_string(s, &self.get_file_type())
+                    .map(|r| VerifierTallyData::ControlComponentShufflePayload(r))
             }
         }
     }
@@ -105,6 +113,12 @@ impl VerifierTallyDataTrait for VerifierTallyData {
     }
     fn control_component_ballot_box_payload(&self) -> Option<&ControlComponentBallotBoxPayload> {
         if let VerifierTallyData::ControlComponentBallotBoxPayload(d) = self {
+            return Some(d);
+        }
+        None
+    }
+    fn control_component_shuffle_payload(&self) -> Option<&ControlComponentShufflePayload> {
+        if let VerifierTallyData::ControlComponentShufflePayload(d) = self {
             return Some(d);
         }
         None

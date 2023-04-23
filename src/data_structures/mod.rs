@@ -20,6 +20,7 @@ use self::{
     },
     tally::{
         control_component_ballot_box_payload::ControlComponentBallotBoxPayload,
+        control_component_shuffle_payload::ControlComponentShufflePayload,
         e_voting_decrypt::EVotingDecrypt, ech_0110::ECH0110, ech_0222::ECH0222,
         tally_component_shuffle_payload::TallyComponentShufflePayload,
         tally_component_votes_payload::TallyComponentVotesPayload, VerifierTallyData,
@@ -108,6 +109,10 @@ pub trait VerifierTallyDataTrait {
         None
     }
     fn control_component_ballot_box_payload(&self) -> Option<&ControlComponentBallotBoxPayload> {
+        None
+    }
+
+    fn control_component_shuffle_payload(&self) -> Option<&ControlComponentShufflePayload> {
         None
     }
 }

@@ -1,11 +1,22 @@
 use super::{
     file::{create_file, File},
-    file_group::FileGroup,
+    file_group::{
+        add_type_for_file_group_iter_trait, impl_iterator_over_data_payload, FileGroup,
+        FileGroupIter, FileGroupIterTrait,
+    },
+    FileStructureError,
 };
 use crate::{
     constants::{BB_DIR_NAME, TALLY_DIR_NAME},
     data_structures::{
-        create_verifier_tally_data_type, tally::VerifierTallyDataType, VerifierDataType,
+        create_verifier_tally_data_type,
+        tally::{
+            control_component_ballot_box_payload::ControlComponentBallotBoxPayload,
+            control_component_shuffle_payload::ControlComponentShufflePayload,
+            tally_component_shuffle_payload::TallyComponentShufflePayload,
+            tally_component_votes_payload::TallyComponentVotesPayload, VerifierTallyDataType,
+        },
+        VerifierDataType, VerifierTallyDataTrait,
     },
 };
 use std::{
@@ -28,6 +39,7 @@ pub struct BBDirectory {
     tally_component_votes_payload_file: File,
     tally_component_shuffle_payload_file: File,
     control_component_ballot_box_payload_group: FileGroup,
+    control_component_shuffle_payload_group: FileGroup,
 }
 
 /// Trait to set the necessary functions for the struct [TallyDirectory] that
@@ -50,11 +62,47 @@ pub trait TallyDirectoryTrait {
 /// The trait is used as parameter of the verification functions to allow mock of
 /// test (negative tests)
 pub trait BBDirectoryTrait {
+    add_type_for_file_group_iter_trait!(
+        ControlComponentBallotBoxPayloadAsResultIterType,
+        ControlComponentBallotBoxPayloadAsResult
+    );
+    add_type_for_file_group_iter_trait!(
+        ControlComponentShufflePayloadloadAsResultIterType,
+        ControlComponentShufflePayloadloadAsResult
+    );
     fn tally_component_votes_payload_file(&self) -> &File;
     fn tally_component_shuffle_payload_file(&self) -> &File;
     fn control_component_ballot_box_payload_group(&self) -> &FileGroup;
+    fn control_component_shuffle_payload_group(&self) -> &FileGroup;
+    fn tally_component_votes_payload(
+        &self,
+    ) -> Result<Box<TallyComponentVotesPayload>, FileStructureError>;
+    fn tally_component_shuffle_payload(
+        &self,
+    ) -> Result<Box<TallyComponentShufflePayload>, FileStructureError>;
+    fn control_component_ballot_box_payload_iter(
+        &self,
+    ) -> Self::ControlComponentBallotBoxPayloadAsResultIterType;
+    fn control_component_shuffle_payload_iter(
+        &self,
+    ) -> Self::ControlComponentShufflePayloadloadAsResultIterType;
+
     fn get_name(&self) -> String;
 }
+
+impl_iterator_over_data_payload!(
+    ControlComponentBallotBoxPayload,
+    control_component_ballot_box_payload,
+    ControlComponentBallotBoxPayloadAsResult,
+    ControlComponentBallotBoxPayloadAsResultIter
+);
+
+impl_iterator_over_data_payload!(
+    ControlComponentShufflePayload,
+    control_component_shuffle_payload,
+    ControlComponentShufflePayloadloadAsResult,
+    ControlComponentShufflePayloadAsResultIter
+);
 
 impl TallyDirectoryTrait for TallyDirectory {
     type BBDirType = BBDirectory;
@@ -74,6 +122,10 @@ impl TallyDirectoryTrait for TallyDirectory {
 }
 
 impl BBDirectoryTrait for BBDirectory {
+    type ControlComponentBallotBoxPayloadAsResultIterType =
+        ControlComponentBallotBoxPayloadAsResultIter;
+    type ControlComponentShufflePayloadloadAsResultIterType =
+        ControlComponentShufflePayloadAsResultIter;
     fn tally_component_votes_payload_file(&self) -> &File {
         &self.tally_component_votes_payload_file
     }
@@ -83,6 +135,36 @@ impl BBDirectoryTrait for BBDirectory {
     fn control_component_ballot_box_payload_group(&self) -> &FileGroup {
         &self.control_component_ballot_box_payload_group
     }
+    fn control_component_shuffle_payload_group(&self) -> &FileGroup {
+        &self.control_component_shuffle_payload_group
+    }
+    fn tally_component_votes_payload(
+        &self,
+    ) -> Result<Box<TallyComponentVotesPayload>, FileStructureError> {
+        self.tally_component_votes_payload_file
+            .get_data()
+            .map(|d| Box::new(d.tally_component_votes_payload().unwrap().clone()))
+    }
+    fn tally_component_shuffle_payload(
+        &self,
+    ) -> Result<Box<TallyComponentShufflePayload>, FileStructureError> {
+        self.tally_component_shuffle_payload_file
+            .get_data()
+            .map(|d| Box::new(d.tally_component_shuffle_payload().unwrap().clone()))
+    }
+
+    fn control_component_ballot_box_payload_iter(
+        &self,
+    ) -> Self::ControlComponentBallotBoxPayloadAsResultIterType {
+        FileGroupIter::new(&self.control_component_ballot_box_payload_group)
+    }
+
+    fn control_component_shuffle_payload_iter(
+        &self,
+    ) -> Self::ControlComponentShufflePayloadloadAsResultIterType {
+        FileGroupIter::new(&self.control_component_shuffle_payload_group)
+    }
+
     fn get_name(&self) -> String {
         self.location
             .file_name()
@@ -142,6 +224,10 @@ impl BBDirectory {
                 &location,
                 create_verifier_tally_data_type!(Tally, ControlComponentBallotBoxPayload),
             ),
+            control_component_shuffle_payload_group: FileGroup::new(
+                &location,
+                create_verifier_tally_data_type!(Tally, ControlComponentShufflePayload),
+            ),
         }
     }
 
@@ -156,7 +242,14 @@ pub mod mock {
     //!
     //! The mocks read the correct data from the file. It is possible to change any data
     //! with the functions mock_
+    use super::super::file_group::mock::MockFileGroupIter;
     use super::{super::mock::wrap_file_group_getter, *};
+    use crate::error::{create_result_with_error, create_verifier_error, VerifierError};
+    use crate::file_structure::file_group::mock::{
+        impl_iterator_over_data_payload_mock, wrap_payload_iter,
+    };
+    use crate::file_structure::mock::wrap_payload_getter;
+    use std::collections::HashMap;
 
     /// Mock for [BBDirectory]
     pub struct MockBBDirectory {
@@ -164,6 +257,16 @@ pub mod mock {
         mocked_tally_component_votes_payload_file: Option<File>,
         mocked_tally_component_shuffle_payload_file: Option<File>,
         mocked_control_component_ballot_box_payload_group: Option<FileGroup>,
+        mocked_control_component_shuffle_payload_group: Option<FileGroup>,
+        mocked_tally_component_votes_payload:
+            Option<Result<Box<TallyComponentVotesPayload>, FileStructureError>>,
+        mocked_tally_component_shuffle_payload:
+            Option<Result<Box<TallyComponentShufflePayload>, FileStructureError>>,
+        mocked_control_component_ballot_box_payloads:
+            HashMap<usize, ControlComponentBallotBoxPayloadAsResult>,
+        mocked_control_component_shuffle_payloads:
+            HashMap<usize, ControlComponentShufflePayloadloadAsResult>,
+
         mocked_get_name: Option<String>,
     }
 
@@ -176,7 +279,25 @@ pub mod mock {
         bb_directories: Vec<MockBBDirectory>,
     }
 
+    impl_iterator_over_data_payload_mock!(
+        ControlComponentBallotBoxPayload,
+        ControlComponentBallotBoxPayloadAsResult,
+        ControlComponentBallotBoxPayloadAsResultIter,
+        MockControlComponentBallotBoxPayloadAsResultIter
+    );
+
+    impl_iterator_over_data_payload_mock!(
+        ControlComponentShufflePayload,
+        ControlComponentShufflePayloadAsResult,
+        ControlComponentShufflePayloadAsResultIter,
+        MockControlComponentShufflePayloadAsResultIter
+    );
+
     impl BBDirectoryTrait for MockBBDirectory {
+        type ControlComponentBallotBoxPayloadAsResultIterType =
+            MockControlComponentBallotBoxPayloadAsResultIter;
+        type ControlComponentShufflePayloadloadAsResultIterType =
+            MockControlComponentShufflePayloadAsResultIter;
         wrap_file_group_getter!(
             tally_component_votes_payload_file,
             mocked_tally_component_votes_payload_file,
@@ -191,6 +312,33 @@ pub mod mock {
             control_component_ballot_box_payload_group,
             mocked_control_component_ballot_box_payload_group,
             FileGroup
+        );
+        wrap_file_group_getter!(
+            control_component_shuffle_payload_group,
+            mocked_control_component_shuffle_payload_group,
+            FileGroup
+        );
+        wrap_payload_getter!(
+            tally_component_votes_payload,
+            mocked_tally_component_votes_payload,
+            TallyComponentVotesPayload
+        );
+        wrap_payload_getter!(
+            tally_component_shuffle_payload,
+            mocked_tally_component_shuffle_payload,
+            TallyComponentShufflePayload
+        );
+        wrap_payload_iter!(
+            control_component_ballot_box_payload_iter,
+            ControlComponentBallotBoxPayloadAsResultIterType,
+            MockControlComponentBallotBoxPayloadAsResultIter,
+            mocked_control_component_ballot_box_payloads
+        );
+        wrap_payload_iter!(
+            control_component_shuffle_payload_iter,
+            ControlComponentShufflePayloadloadAsResultIterType,
+            MockControlComponentShufflePayloadAsResultIter,
+            mocked_control_component_shuffle_payloads
         );
 
         fn get_name(&self) -> String {
@@ -219,6 +367,11 @@ pub mod mock {
                 mocked_tally_component_shuffle_payload_file: None,
                 mocked_tally_component_votes_payload_file: None,
                 mocked_control_component_ballot_box_payload_group: None,
+                mocked_control_component_shuffle_payload_group: None,
+                mocked_tally_component_votes_payload: None,
+                mocked_tally_component_shuffle_payload: None,
+                mocked_control_component_ballot_box_payloads: HashMap::new(),
+                mocked_control_component_shuffle_payloads: HashMap::new(),
                 mocked_get_name: None,
             }
         }
@@ -230,6 +383,9 @@ pub mod mock {
         }
         pub fn mock_control_component_ballot_box_payload_group(&mut self, data: &FileGroup) {
             self.mocked_control_component_ballot_box_payload_group = Some(data.clone());
+        }
+        pub fn mock_control_component_shuffle_payload_group(&mut self, data: &FileGroup) {
+            self.mocked_control_component_shuffle_payload_group = Some(data.clone());
         }
         pub fn mock_get_name(&mut self, data: &str) {
             self.mocked_get_name = Some(data.to_string())

@@ -153,6 +153,7 @@ impl GetFileNameTrait for VerifierTallyDataType {
             Self::TallyComponentVotesPayload => "tallyComponentVotesPayload.json",
             Self::TallyComponentShufflePayload => "TallyComponentShufflePayload.json",
             Self::ControlComponentBallotBoxPayload => "controlComponentBallotBoxPayload_{}.json",
+            Self::ControlComponentShufflePayload => "controlComponentShufflePayload_{}.json",
         };
         s.to_string()
     }
