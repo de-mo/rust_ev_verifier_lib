@@ -55,8 +55,8 @@ pub fn jacobi(a: &BigUint, n: &BigUint) -> Result<i8, NumberTheoryError> {
     let mut t = 1i8;
     while temp_a != BigUint::zero() {
         while &temp_a % 2u8 == BigUint::zero() {
-            temp_a = temp_a.clone() / 2u8;
-            let r = temp_n.clone() % 8u8;
+            temp_a = &temp_a / 2u8;
+            let r = &temp_n % 8u8;
             if r == BigUint::three() || r == BigUint::five() {
                 t = -t
             }
