@@ -265,6 +265,12 @@ impl VerifierTallyDataTrait for VerifierData {
             VerifierData::Tally(d) => d.control_component_ballot_box_payload(),
         }
     }
+    fn control_component_shuffle_payload(&self) -> Option<&ControlComponentShufflePayload> {
+        match self {
+            VerifierData::Setup(_) => None,
+            VerifierData::Tally(d) => d.control_component_shuffle_payload(),
+        }
+    }
 }
 
 impl VerifierDataType {
@@ -274,7 +280,9 @@ impl VerifierDataType {
             VerifierDataType::Setup(t) => {
                 t.verifier_data_from_file(s).map(|r| VerifierData::Setup(r))
             }
-            VerifierDataType::Tally(_) => todo!(),
+            VerifierDataType::Tally(t) => {
+                t.verifier_data_from_file(s).map(|r| VerifierData::Tally(r))
+            }
         }
     }
 }

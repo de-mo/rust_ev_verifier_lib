@@ -148,11 +148,11 @@ mod test {
         "s505",
     ];
 
-    const EXPECTED_IMPL_TALLY_VERIF: usize = 1;
-    const IMPL_TALLY_TESTS: &[&str] = &["t100"];
+    const EXPECTED_IMPL_TALLY_VERIF: usize = 2;
+    const IMPL_TALLY_TESTS: &[&str] = &["t100", "t400"];
     const MISSING_TALLY_TESTS: &[&str] = &[
         "t200", "t201", "t202", "t203", "t204", "t205", "t206", "t300", "t301", "t302", "t303",
-        "t304", "t305", "t306", "t307", "t308", "t309", "t310", "t400", "t500", "t501",
+        "t304", "t305", "t306", "t307", "t308", "t309", "t310", "t500", "t501",
     ];
 
     #[test]
