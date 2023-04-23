@@ -148,7 +148,7 @@ impl GetFileNameTrait for VerifierTallyDataType {
     fn get_raw_file_name(&self) -> String {
         let s = match self {
             Self::ECH0110 => "eCH-0110_*.xml",
-            Self::EVotingDecrypt => "evoting_decrypt_*.xml",
+            Self::EVotingDecrypt => "evoting-decrypt_*.xml",
             Self::ECH0222 => "eCH-0222_*.xml",
             Self::TallyComponentVotesPayload => "tallyComponentVotesPayload.json",
             Self::TallyComponentShufflePayload => "TallyComponentShufflePayload.json",
@@ -163,7 +163,7 @@ impl GetFileNameTrait for VerifierDataType {
     fn get_raw_file_name(&self) -> String {
         match self {
             VerifierDataType::Setup(t) => t.get_raw_file_name(),
-            VerifierDataType::Tally(_) => todo!(),
+            VerifierDataType::Tally(t) => t.get_raw_file_name(),
         }
     }
 }
@@ -223,6 +223,29 @@ mod test {
         assert!(path2
             .join(
                 VerifierDataType::Setup(VerifierSetupDataType::SetupComponentTallyDataPayload)
+                    .get_file_name(None)
+            )
+            .exists());
+    }
+
+    #[test]
+    fn test_tally_files_exist() {
+        let path = Path::new(".")
+            .join("datasets")
+            .join("dataset1")
+            .join("tally");
+        let path2 = path
+            .join("ballot_boxes")
+            .join("9a19164550794441b25f7f744f2e91fb");
+        assert!(path2
+            .join(
+                VerifierDataType::Tally(VerifierTallyDataType::TallyComponentVotesPayload)
+                    .get_file_name(None)
+            )
+            .exists());
+        assert!(path2
+            .join(
+                VerifierDataType::Tally(VerifierTallyDataType::TallyComponentShufflePayload)
                     .get_file_name(None)
             )
             .exists());

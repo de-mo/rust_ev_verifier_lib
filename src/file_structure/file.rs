@@ -1,9 +1,9 @@
+use super::{FileStructureError, FileStructureErrorType, GetFileNameTrait};
 use crate::data_structures::{VerifierData, VerifierDataType};
+use crate::error::{create_result_with_error, create_verifier_error, VerifierError};
+use glob::glob;
 use std::fs;
 use std::path::{Path, PathBuf};
-
-use super::{FileStructureError, FileStructureErrorType, GetFileNameTrait};
-use crate::error::{create_result_with_error, create_verifier_error, VerifierError};
 
 #[derive(Clone)]
 pub struct File {
@@ -23,8 +23,19 @@ pub(crate) use create_file;
 
 impl File {
     pub fn new(location: &Path, data_type: &VerifierDataType, file_nb: Option<usize>) -> Self {
+        let name = data_type.get_file_name(file_nb);
+        let mut path = location.join(&name);
+        if (&name).contains("*") {
+            let entries = glob(path.as_os_str().to_str().unwrap());
+            if entries.is_ok() {
+                let p = entries.unwrap().last();
+                if p.is_some() {
+                    path = location.join(&p.unwrap().unwrap().file_name().unwrap());
+                };
+            }
+        }
         File {
-            path: location.join(data_type.get_file_name(file_nb)),
+            path,
             data_type: data_type.clone(),
         }
     }
@@ -86,7 +97,8 @@ impl File {
 mod test {
     use super::*;
     use crate::data_structures::{
-        setup::VerifierSetupDataType, VerifierDataType, VerifierSetupDataTrait,
+        setup::VerifierSetupDataType, tally::VerifierTallyDataType, VerifierDataType,
+        VerifierSetupDataTrait,
     };
     use std::path::{Path, PathBuf};
 
@@ -171,6 +183,22 @@ mod test {
         );
         let data = f.get_data().unwrap();
         assert!(data.is_setup());
+    }
+
+    #[test]
+    fn test_file_with_astrerix() {
+        let location = Path::new(".")
+            .join("datasets")
+            .join("dataset1")
+            .join("tally");
+        let f = File::new(
+            &location,
+            &VerifierDataType::Tally(VerifierTallyDataType::ECH0110),
+            None,
+        );
+        assert!(f.exists());
+        assert_eq!(f.get_location(), location);
+        assert_eq!(f.get_path(), location.join("eCH-0110_Post_E2E_DEV.xml"));
     }
 
     #[test]
