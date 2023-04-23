@@ -193,6 +193,11 @@ impl FileGroup {
         self.location.as_path()
     }
 
+    /// Get the name of the file group
+    pub fn get_file_name(&self) -> String {
+        self.data_type.get_raw_file_name()
+    }
+
     /// Get the data type
     pub fn get_data_type(&self) -> &VerifierDataType {
         &self.data_type

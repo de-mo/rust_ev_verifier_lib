@@ -8,6 +8,7 @@ pub mod v306_election_pk_consistency;
 pub mod v307_primes_mapping_table_consistency;
 pub mod v308_election_event_id_consistency;
 pub mod v312_total_voters_consistency;
+pub mod v314_chunk_consistency;
 
 use super::super::{
     meta_data::VerificationMetaDataList, verification::Verification,
@@ -92,6 +93,14 @@ pub fn get_verifications(metadata_list: &VerificationMetaDataList) -> Verificati
         Verification::new(
             "s312",
             v312_total_voters_consistency::fn_verification,
+            metadata_list,
+        )
+        .unwrap(),
+    );
+    res.push(
+        Verification::new(
+            "s314",
+            v314_chunk_consistency::fn_verification,
             metadata_list,
         )
         .unwrap(),
