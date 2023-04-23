@@ -1,7 +1,12 @@
-use super::file::{create_file, File};
+use super::{
+    file::{create_file, File},
+    file_group::FileGroup,
+};
 use crate::{
     constants::{BB_DIR_NAME, TALLY_DIR_NAME},
-    data_structures::{tally::VerifierTallyDataType, VerifierDataType},
+    data_structures::{
+        create_verifier_tally_data_type, tally::VerifierTallyDataType, VerifierDataType,
+    },
 };
 use std::{
     fs,
@@ -22,6 +27,7 @@ pub struct BBDirectory {
     location: PathBuf,
     tally_component_votes_payload_file: File,
     tally_component_shuffle_payload_file: File,
+    control_component_ballot_box_payload_group: FileGroup,
 }
 
 /// Trait to set the necessary functions for the struct [TallyDirectory] that
@@ -46,6 +52,7 @@ pub trait TallyDirectoryTrait {
 pub trait BBDirectoryTrait {
     fn tally_component_votes_payload_file(&self) -> &File;
     fn tally_component_shuffle_payload_file(&self) -> &File;
+    fn control_component_ballot_box_payload_group(&self) -> &FileGroup;
     fn get_name(&self) -> String;
 }
 
@@ -72,6 +79,9 @@ impl BBDirectoryTrait for BBDirectory {
     }
     fn tally_component_shuffle_payload_file(&self) -> &File {
         &self.tally_component_shuffle_payload_file
+    }
+    fn control_component_ballot_box_payload_group(&self) -> &FileGroup {
+        &self.control_component_ballot_box_payload_group
     }
     fn get_name(&self) -> String {
         self.location
@@ -128,6 +138,10 @@ impl BBDirectory {
                 Tally,
                 VerifierTallyDataType::TallyComponentShufflePayload
             ),
+            control_component_ballot_box_payload_group: FileGroup::new(
+                &location,
+                create_verifier_tally_data_type!(Tally, ControlComponentBallotBoxPayload),
+            ),
         }
     }
 
@@ -149,6 +163,7 @@ pub mod mock {
         dir: BBDirectory,
         mocked_tally_component_votes_payload_file: Option<File>,
         mocked_tally_component_shuffle_payload_file: Option<File>,
+        mocked_control_component_ballot_box_payload_group: Option<FileGroup>,
         mocked_get_name: Option<String>,
     }
 
@@ -171,6 +186,11 @@ pub mod mock {
             tally_component_shuffle_payload_file,
             mocked_tally_component_shuffle_payload_file,
             File
+        );
+        wrap_file_group_getter!(
+            control_component_ballot_box_payload_group,
+            mocked_control_component_ballot_box_payload_group,
+            FileGroup
         );
 
         fn get_name(&self) -> String {
@@ -198,6 +218,7 @@ pub mod mock {
                 dir: BBDirectory::new(location),
                 mocked_tally_component_shuffle_payload_file: None,
                 mocked_tally_component_votes_payload_file: None,
+                mocked_control_component_ballot_box_payload_group: None,
                 mocked_get_name: None,
             }
         }
@@ -206,6 +227,9 @@ pub mod mock {
         }
         pub fn mock_tally_component_votes_payload_file(&mut self, data: &File) {
             self.mocked_tally_component_votes_payload_file = Some(data.clone());
+        }
+        pub fn mock_control_component_ballot_box_payload_group(&mut self, data: &FileGroup) {
+            self.mocked_control_component_ballot_box_payload_group = Some(data.clone());
         }
         pub fn mock_get_name(&mut self, data: &str) {
             self.mocked_get_name = Some(data.to_string())

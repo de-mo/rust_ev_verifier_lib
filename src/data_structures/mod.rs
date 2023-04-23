@@ -19,6 +19,7 @@ use self::{
         VerifierSetupData, VerifierSetupDataType,
     },
     tally::{
+        control_component_ballot_box_payload::ControlComponentBallotBoxPayload,
         e_voting_decrypt::EVotingDecrypt, ech_0110::ECH0110, ech_0222::ECH0222,
         tally_component_shuffle_payload::TallyComponentShufflePayload,
         tally_component_votes_payload::TallyComponentVotesPayload, VerifierTallyData,
@@ -44,12 +45,19 @@ pub type VerifierData = SetupOrTally<VerifierSetupData, VerifierTallyData>;
 /// The type VerifierDataType implement an option between [VerifierSetupDataType] and [VerifierTallyDataType]
 pub type VerifierDataType = SetupOrTally<VerifierSetupDataType, VerifierTallyDataType>;
 
-macro_rules! create_verifier_data_type {
+macro_rules! create_verifier_setup_data_type {
     ($p: ident, $s: ident) => {
         VerifierDataType::$p(VerifierSetupDataType::$s)
     };
 }
-pub(crate) use create_verifier_data_type;
+pub(crate) use create_verifier_setup_data_type;
+
+macro_rules! create_verifier_tally_data_type {
+    ($p: ident, $s: ident) => {
+        VerifierDataType::$p(VerifierTallyDataType::$s)
+    };
+}
+pub(crate) use create_verifier_tally_data_type;
 
 /// Trait implementing the collection of the specific setup data type from the enum object
 pub trait VerifierSetupDataTrait {
@@ -97,6 +105,9 @@ pub trait VerifierTallyDataTrait {
         None
     }
     fn tally_component_shuffle_payload(&self) -> Option<&TallyComponentShufflePayload> {
+        None
+    }
+    fn control_component_ballot_box_payload(&self) -> Option<&ControlComponentBallotBoxPayload> {
         None
     }
 }
@@ -241,6 +252,12 @@ impl VerifierTallyDataTrait for VerifierData {
         match self {
             VerifierData::Setup(_) => None,
             VerifierData::Tally(d) => d.tally_component_shuffle_payload(),
+        }
+    }
+    fn control_component_ballot_box_payload(&self) -> Option<&ControlComponentBallotBoxPayload> {
+        match self {
+            VerifierData::Setup(_) => None,
+            VerifierData::Tally(d) => d.control_component_ballot_box_payload(),
         }
     }
 }

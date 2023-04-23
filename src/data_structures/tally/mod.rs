@@ -1,3 +1,4 @@
+pub mod control_component_ballot_box_payload;
 pub mod e_voting_decrypt;
 pub mod ech_0110;
 pub mod ech_0222;
@@ -5,6 +6,7 @@ pub mod tally_component_shuffle_payload;
 pub mod tally_component_votes_payload;
 
 use self::{
+    control_component_ballot_box_payload::ControlComponentBallotBoxPayload,
     e_voting_decrypt::EVotingDecrypt, ech_0110::ECH0110, ech_0222::ECH0222,
     tally_component_shuffle_payload::TallyComponentShufflePayload,
     tally_component_votes_payload::TallyComponentVotesPayload,
@@ -21,6 +23,7 @@ pub enum VerifierTallyData {
     ECH0222(ECH0222),
     TallyComponentVotesPayload(TallyComponentVotesPayload),
     TallyComponentShufflePayload(TallyComponentShufflePayload),
+    ControlComponentBallotBoxPayload(ControlComponentBallotBoxPayload),
 }
 
 impl VerifierTallyDataType {
@@ -31,6 +34,7 @@ impl VerifierTallyDataType {
             Self::ECH0222 => FileType::Xml,
             Self::TallyComponentVotesPayload => FileType::Json,
             Self::TallyComponentShufflePayload => FileType::Json,
+            Self::ControlComponentBallotBoxPayload => FileType::Json,
         }
     }
 
@@ -57,6 +61,10 @@ impl VerifierTallyDataType {
             VerifierTallyDataType::TallyComponentShufflePayload => {
                 TallyComponentShufflePayload::from_string(s, &self.get_file_type())
                     .map(|r| VerifierTallyData::TallyComponentShufflePayload(r))
+            }
+            VerifierTallyDataType::ControlComponentBallotBoxPayload => {
+                ControlComponentBallotBoxPayload::from_string(s, &self.get_file_type())
+                    .map(|r| VerifierTallyData::ControlComponentBallotBoxPayload(r))
             }
         }
     }
@@ -91,6 +99,12 @@ impl VerifierTallyDataTrait for VerifierTallyData {
     }
     fn tally_component_shuffle_payload(&self) -> Option<&TallyComponentShufflePayload> {
         if let VerifierTallyData::TallyComponentShufflePayload(d) = self {
+            return Some(d);
+        }
+        None
+    }
+    fn control_component_ballot_box_payload(&self) -> Option<&ControlComponentBallotBoxPayload> {
+        if let VerifierTallyData::ControlComponentBallotBoxPayload(d) = self {
             return Some(d);
         }
         None

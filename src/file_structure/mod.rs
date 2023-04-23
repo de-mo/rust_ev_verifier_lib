@@ -152,6 +152,7 @@ impl GetFileNameTrait for VerifierTallyDataType {
             Self::ECH0222 => "eCH-0222_*.xml",
             Self::TallyComponentVotesPayload => "tallyComponentVotesPayload.json",
             Self::TallyComponentShufflePayload => "TallyComponentShufflePayload.json",
+            Self::ControlComponentBallotBoxPayload => "controlComponentBallotBoxPayload_{}.json",
         };
         s.to_string()
     }

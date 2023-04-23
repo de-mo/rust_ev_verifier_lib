@@ -9,7 +9,7 @@ use super::{
 use crate::{
     constants::{SETUP_DIR_NAME, VCS_DIR_NAME},
     data_structures::{
-        create_verifier_data_type,
+        create_verifier_setup_data_type,
         setup::{
             control_component_code_shares_payload::ControlComponentCodeSharesPayload,
             control_component_public_keys_payload::ControlComponentPublicKeysPayload,
@@ -165,7 +165,7 @@ impl SetupDirectory {
             ),
             control_component_public_keys_payload_group: FileGroup::new(
                 &location,
-                create_verifier_data_type!(Setup, ControlComponentPublicKeysPayload),
+                create_verifier_setup_data_type!(Setup, ControlComponentPublicKeysPayload),
             ),
             vcs_directories: vec![],
         };
@@ -261,11 +261,11 @@ impl VCSDirectory {
             ),
             setup_component_verification_data_payload_group: FileGroup::new(
                 &location,
-                create_verifier_data_type!(Setup, SetupComponentVerificationDataPayload),
+                create_verifier_setup_data_type!(Setup, SetupComponentVerificationDataPayload),
             ),
             control_component_code_shares_payload_group: FileGroup::new(
                 &location,
-                create_verifier_data_type!(Setup, ControlComponentCodeSharesPayload),
+                create_verifier_setup_data_type!(Setup, ControlComponentCodeSharesPayload),
             ),
         }
     }
