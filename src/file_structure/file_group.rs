@@ -28,6 +28,7 @@ pub struct FileGroup {
     indexes: Vec<usize>,
 }
 
+#[derive(Clone)]
 pub struct FileGroupIter<T> {
     pub file_group: FileGroup,
     pos: usize,
@@ -290,72 +291,99 @@ mod test {
 #[cfg(any(test, doc))]
 pub mod mock {
     //! Module defining mocking structure [FileGroupTrait]
-    use super::{
-        super::mock::{mock_payload, wrap_file_group_getter, wrap_payload_getter},
-        *,
-    };
-    use crate::error::{create_result_with_error, create_verifier_error, VerifierError};
+    use super::*;
     use std::collections::HashMap;
 
-    pub struct MockFileGroupIter<'a, 'b, T> {
-        orig: &'a Box<dyn FileGroupIterTrait<T>>,
-        mocked_data: &'b HashMap<usize, T>,
+    #[derive(Clone)]
+    pub struct MockFileGroupIter<T, I: FileGroupIterTrait<T>> {
+        orig: I,
+        mocked_data: HashMap<usize, T>,
     }
     /// Macro implementing an iterator over the data covered by the
     /// FileGroup
     ///
     /// parameters:
-    /// - $p: The struct as result
-    /// - $fct: The function to get the data (defined in the trait associated to the Dir object)
+    /// - $p: The struct
     /// - $pread: The result of reading data $p from the file
     /// - $preaditer: The iterator name over $pread
+    /// - $mockpreaditer: The mocked iterator name over $pread
     ///
     /// Example:
     /// ```rust
-    /// impl_iterator_over_data_payload!(
+    /// impl_iterator_over_data_payload_mock!(
     ///     ControlComponentPublicKeysPayload,
-    ///     control_component_public_keys_payload,
-    ///     ControlComponentPublicKeysPayloadRead,
-    ///     ControlComponentPublicKeysPayloadReadIter
+    ///     ControlComponentPublicKeysPayloadAsResult,
+    ///     ControlComponentPublicKeysPayloadAsResultIter,
+    ///     MockControlComponentPublicKeysPayloadAsResultIter
     /// );
     /// ```
     macro_rules! impl_iterator_over_data_payload_mock {
-        ($p: ty, $fct: ident, $pread: ident, $preaditer: ident) => {
+        ($p: ty, $pread: ident, $preaditer: ident,$mockpreaditer: ident) => {
             type $pread = Result<Box<$p>, FileStructureError>;
-            type $preaditer = MockFileGroupIter<$pread>;
-            impl FileGroupIterTrait for $preaditer {
-                type IterType = $pread;
-                fn current_elt(&self) -> Option<Self::IterType> {
+            type $mockpreaditer = MockFileGroupIter<$pread, $preaditer>;
+            impl FileGroupIterTrait<$pread> for $mockpreaditer {
+                fn current_elt(&self) -> Option<$pread> {
                     match self.current_index() {
-                        Some(i) => match self.mock_data().get(i) {
-                            Some(elt) => Some(elt),
-                            None => Some(self.orig().current_elt()),
+                        Some(i) => match self.mocked_data().get(i) {
+                            Some(data) => match data {
+                                Ok(d) => Some(Ok(d.clone().to_owned())),
+                                Err(e) => {
+                                    Some(create_result_with_error!(e.kind().clone(), e.message()))
+                                }
+                            },
+                            None => match self.orig().current_elt().unwrap() {
+                                Ok(d) => Some(Ok((d.clone().to_owned()))),
+                                Err(e) => {
+                                    Some(create_result_with_error!(e.kind().clone(), e.message()))
+                                }
+                            },
                         },
                         None => None,
                     }
                 }
+
+                fn current_pos(&self) -> &usize {
+                    self.orig().current_pos()
+                }
+
+                fn current_index(&self) -> Option<&usize> {
+                    self.orig().current_index()
+                }
             }
         };
     }
-    pub(super) use impl_iterator_over_data_payload_mock;
+    pub(in super::super) use impl_iterator_over_data_payload_mock;
 
-    impl<'a, 'b, T> MockFileGroupIter<'a, 'b, T> {
-        pub fn new(
-            fg_iter: &'a Box<dyn FileGroupIterTrait<T>>,
-            mock_data: &'b HashMap<usize, T>,
-        ) -> Self {
+    impl<T, I: FileGroupIterTrait<T>> MockFileGroupIter<T, I> {
+        /// New [MockFileGroupIter]
+        ///
+        /// fg_iter is the original iterator and mock_data contains the mocked data
+        ///
+        /// During the iteration, the data of the mocked data will be return if the index exists in the hashmap,
+        /// else the original data will be returned
+        pub fn new(fg_iter: I, mock_data: HashMap<usize, T>) -> Self {
             MockFileGroupIter {
                 orig: fg_iter,
                 mocked_data: mock_data,
             }
         }
 
-        pub fn orig(&self) -> &Box<dyn FileGroupIterTrait<T>> {
+        /// Get the original iterator
+        pub fn orig(&self) -> &I {
             &self.orig
         }
+
+        /// Get the original iterator as mutable
+        pub fn orig_mut(&mut self) -> &mut I {
+            &mut self.orig
+        }
+
+        /// Get the mocked data
         pub fn mocked_data(&self) -> &HashMap<usize, T> {
             &self.mocked_data
         }
+
+        ///
         pub fn current_pos(&self) -> &usize {
             self.orig.current_pos()
         }
@@ -370,7 +398,7 @@ pub mod mock {
     }
 
     // Implement iterator for all the [FileGroupIter] as generic type
-    impl<'a, 'b, T> Iterator for MockFileGroupIter<'a, 'b, T>
+    impl<'a, 'b, T, I: FileGroupIterTrait<T>> Iterator for MockFileGroupIter<T, I>
     where
         Self: FileGroupIterTrait<T>,
     {
@@ -380,11 +408,69 @@ pub mod mock {
             match self.current_index() {
                 Some(i) => {
                     let res = (*i, self.current_elt().unwrap());
-                    self.next();
+                    self.orig_mut().next();
                     Some(res)
                 }
                 None => None,
             }
         }
     }
+
+    /// Macro to implement a function to the mocked structures wrapping the iterator
+    /// If some of the values are mocked, then return the mocked value, else return the original.
+    ///
+    /// Parameters:
+    /// - $fct: The name of the function
+    /// - $itertype: The type of the iterator in the trait
+    /// - $iter: The iter obkect to be created
+    /// - $mock: The name of the hashmap containintg the mocked data
+    ///
+    /// Example:
+    /// ```rust
+    /// wrap_payload_iter!(
+    ///     control_component_public_keys_payload_iter,
+    ///     ControlComponentPublicKeysPayloadAsResultIterType,
+    ///     MockControlComponentPublicKeysPayloadAsResultIter,
+    ///     mocked_control_component_public_keys_payloads
+    /// );
+    /// ```
+    macro_rules! wrap_payload_iter {
+        ($fct: ident, $itertype: ident, $iter: ident, $mock: ident) => {
+            fn $fct(&self) -> Self::$itertype {
+                let mut hash_map = HashMap::new();
+                for (i, elt) in self.$mock.iter() {
+                    hash_map.insert(
+                        i.to_owned(),
+                        match elt {
+                            Ok(d) => Ok(d.clone().to_owned()),
+                            Err(e) => create_result_with_error!(e.kind().clone(), e.message()),
+                        },
+                    );
+                }
+                $iter::new(self.dir.$fct(), hash_map)
+            }
+        };
+    }
+    pub(in super::super) use wrap_payload_iter;
+
+    /// Macro to implement a function to mock an iterator
+    ///
+    /// Parameters:
+    /// - $fct: The name of the function
+    /// - $mock: The name of the mocked structure field to update
+    /// - $payload: Type of the payload
+    macro_rules! mock_payload_iter {
+        ($fct: ident, $mock: ident, $payload: ty) => {
+            pub fn $fct(&mut self, index: usize, data: &Result<&$payload, FileStructureError>) {
+                self.$mock.insert(
+                    index,
+                    match data {
+                        Ok(d) => Ok(Box::new(d.clone().to_owned())),
+                        Err(e) => create_result_with_error!(e.kind().clone(), e.message()),
+                    },
+                );
+            }
+        };
+    }
+    pub(in super::super) use mock_payload_iter;
 }

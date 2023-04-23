@@ -385,7 +385,13 @@ pub mod mock {
     //!
     //! The mocks read the correct data from the file. It is possible to change any data
     //! with the functions mock_
+    use std::collections::HashMap;
+
     use super::{
+        super::file_group::mock::{
+            impl_iterator_over_data_payload_mock, mock_payload_iter, wrap_payload_iter,
+            MockFileGroupIter,
+        },
         super::mock::{mock_payload, wrap_file_group_getter, wrap_payload_getter},
         *,
     };
@@ -400,11 +406,25 @@ pub mod mock {
         mocked_setup_component_tally_data_payload:
             Option<Result<Box<SetupComponentTallyDataPayload>, FileStructureError>>,
         mocked_setup_component_verification_data_payloads:
-            Option<Vec<SetupComponentVerificationDataPayloadAsResult>>,
+            HashMap<usize, SetupComponentVerificationDataPayloadAsResult>,
         mocked_control_component_code_shares_payloads:
-            Option<Vec<ControlComponentCodeSharesPayloadAsResult>>,
+            HashMap<usize, ControlComponentCodeSharesPayloadAsResult>,
         mocked_get_name: Option<String>,
     }
+
+    impl_iterator_over_data_payload_mock!(
+        SetupComponentVerificationDataPayload,
+        SetupComponentVerificationDataPayloadAsResult,
+        SetupComponentVerificationDataPayloadAsResultIter,
+        MockSetupComponentVerificationDataPayloadAsResultIter
+    );
+
+    impl_iterator_over_data_payload_mock!(
+        ControlComponentCodeSharesPayload,
+        ControlComponentCodeSharesPayloadAsResult,
+        ControlComponentCodeSharesPayloadAsResultIter,
+        MockControlComponentCodeSharesPayloadAsResultIter
+    );
 
     /// Mock for [SetupDirectory]
     pub struct MockSetupDirectory {
@@ -423,15 +443,22 @@ pub mod mock {
         mocked_election_event_configuration:
             Option<Result<Box<ElectionEventConfiguration>, FileStructureError>>,
         mocked_control_component_public_keys_payloads:
-            Option<Vec<ControlComponentPublicKeysPayloadAsResult>>,
+            HashMap<usize, ControlComponentPublicKeysPayloadAsResult>,
         vcs_directories: Vec<MockVCSDirectory>,
     }
 
+    impl_iterator_over_data_payload_mock!(
+        ControlComponentPublicKeysPayload,
+        ControlComponentPublicKeysPayloadAsResult,
+        ControlComponentPublicKeysPayloadAsResultIter,
+        MockControlComponentPublicKeysPayloadAsResultIter
+    );
+
     impl VCSDirectoryTrait for MockVCSDirectory {
         type SetupComponentVerificationDataPayloadAsResultIterType =
-            SetupComponentVerificationDataPayloadAsResultIter;
+            MockSetupComponentVerificationDataPayloadAsResultIter;
         type ControlComponentCodeSharesPayloadAsResultIterType =
-            ControlComponentCodeSharesPayloadAsResultIter;
+            MockControlComponentCodeSharesPayloadAsResultIter;
 
         wrap_file_group_getter!(
             setup_component_tally_data_payload_file,
@@ -454,23 +481,20 @@ pub mod mock {
             SetupComponentTallyDataPayload
         );
 
-        fn setup_component_verification_data_payload_iter(
-            &self,
-        ) -> SetupComponentVerificationDataPayloadAsResultIter {
-            match &self.mocked_setup_component_verification_data_payloads {
-                Some(e) => todo!(),
-                None => self.dir.setup_component_verification_data_payload_iter(),
-            }
-        }
+        wrap_payload_iter!(
+            setup_component_verification_data_payload_iter,
+            SetupComponentVerificationDataPayloadAsResultIterType,
+            MockSetupComponentVerificationDataPayloadAsResultIter,
+            mocked_setup_component_verification_data_payloads
+        );
 
-        fn control_component_code_shares_payload_iter(
-            &self,
-        ) -> ControlComponentCodeSharesPayloadAsResultIter {
-            match &self.mocked_control_component_code_shares_payloads {
-                Some(e) => todo!(),
-                None => self.dir.control_component_code_shares_payload_iter(),
-            }
-        }
+        wrap_payload_iter!(
+            control_component_code_shares_payload_iter,
+            ControlComponentCodeSharesPayloadAsResultIterType,
+            MockControlComponentCodeSharesPayloadAsResultIter,
+            mocked_control_component_code_shares_payloads
+        );
+
         fn get_name(&self) -> String {
             match &self.mocked_get_name {
                 Some(e) => e.clone(),
@@ -482,7 +506,7 @@ pub mod mock {
     impl SetupDirectoryTrait for MockSetupDirectory {
         type VCSDirType = MockVCSDirectory;
         type ControlComponentPublicKeysPayloadAsResultIterType =
-            ControlComponentPublicKeysPayloadAsResultIter;
+            MockControlComponentPublicKeysPayloadAsResultIter;
 
         wrap_file_group_getter!(
             encryption_parameters_payload_file,
@@ -535,14 +559,12 @@ pub mod mock {
             ElectionEventConfiguration
         );
 
-        fn control_component_public_keys_payload_iter(
-            &self,
-        ) -> ControlComponentPublicKeysPayloadAsResultIter {
-            match &self.mocked_control_component_public_keys_payloads {
-                Some(e) => todo!(),
-                None => self.dir.control_component_public_keys_payload_iter(),
-            }
-        }
+        wrap_payload_iter!(
+            control_component_public_keys_payload_iter,
+            ControlComponentPublicKeysPayloadAsResultIterType,
+            MockControlComponentPublicKeysPayloadAsResultIter,
+            mocked_control_component_public_keys_payloads
+        );
     }
 
     impl MockVCSDirectory {
@@ -554,8 +576,8 @@ pub mod mock {
                 mocked_setup_component_verification_data_payload_group: None,
                 mocked_control_component_code_shares_payload_group: None,
                 mocked_setup_component_tally_data_payload: None,
-                mocked_setup_component_verification_data_payloads: None,
-                mocked_control_component_code_shares_payloads: None,
+                mocked_setup_component_verification_data_payloads: HashMap::new(),
+                mocked_control_component_code_shares_payloads: HashMap::new(),
                 mocked_get_name: None,
             }
         }
@@ -574,6 +596,19 @@ pub mod mock {
             mocked_setup_component_tally_data_payload,
             SetupComponentTallyDataPayload
         );
+
+        mock_payload_iter!(
+            mock_setup_component_verification_data_payloads,
+            mocked_setup_component_verification_data_payloads,
+            SetupComponentVerificationDataPayload
+        );
+
+        mock_payload_iter!(
+            mock_control_component_code_shares_payloads,
+            mocked_control_component_code_shares_payloads,
+            ControlComponentCodeSharesPayload
+        );
+
         pub fn mock_get_name(&mut self, data: &str) {
             self.mocked_get_name = Some(data.to_string())
         }
@@ -599,7 +634,7 @@ pub mod mock {
                 mocked_setup_component_public_keys_payload: None,
                 mocked_election_event_context_payload: None,
                 mocked_election_event_configuration: None,
-                mocked_control_component_public_keys_payloads: None,
+                mocked_control_component_public_keys_payloads: HashMap::new(),
                 vcs_directories: vcs_dirs,
             }
         }
@@ -644,6 +679,12 @@ pub mod mock {
             mock_election_event_configuration,
             mocked_election_event_configuration,
             ElectionEventConfiguration
+        );
+
+        mock_payload_iter!(
+            mock_control_component_public_keys_payloads,
+            mocked_control_component_public_keys_payloads,
+            ControlComponentPublicKeysPayload
         );
     }
 }

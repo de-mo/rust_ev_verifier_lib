@@ -14,7 +14,7 @@ use crate::{
     },
 };
 
-fn test_encryption_group(
+fn verify_encryption_group(
     eg: &EncryptionGroup,
     expected: &EncryptionGroup,
     name: &str,
@@ -40,13 +40,13 @@ fn test_encryption_group(
     }
 }
 
-fn test_encryption_group_for_vcs_dir<V: VCSDirectoryTrait>(
+fn verify_encryption_group_for_vcs_dir<V: VCSDirectoryTrait>(
     dir: &V,
     eg: &EncryptionGroup,
     result: &mut VerificationResult,
 ) {
     match dir.setup_component_tally_data_payload() {
-        Ok(p) => test_encryption_group(
+        Ok(p) => verify_encryption_group(
             &p.encryption_group,
             &eg,
             &format!("{}/setup_component_tally_data_payload", dir.get_name()),
@@ -72,7 +72,7 @@ fn test_encryption_group_for_vcs_dir<V: VCSDirectoryTrait>(
             ))
         } else {
             for p in f.unwrap().iter() {
-                test_encryption_group(
+                verify_encryption_group(
                     &p.encryption_group,
                     &eg,
                     &format!(
@@ -97,7 +97,7 @@ fn test_encryption_group_for_vcs_dir<V: VCSDirectoryTrait>(
                 f.unwrap_err()
             ))
         } else {
-            test_encryption_group(
+            verify_encryption_group(
                 &f.unwrap().encryption_group,
                 &eg,
                 &format!(
@@ -127,7 +127,7 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
         }
     };
     match setup_dir.election_event_context_payload() {
-        Ok(p) => test_encryption_group(
+        Ok(p) => verify_encryption_group(
             &p.encryption_group,
             &eg,
             "election_event_context_payload",
@@ -139,7 +139,7 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
         )),
     }
     match setup_dir.setup_component_public_keys_payload() {
-        Ok(p) => test_encryption_group(
+        Ok(p) => verify_encryption_group(
             &p.encryption_group,
             &eg,
             "setup_component_public_keys_payload",
@@ -160,7 +160,7 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
                 f.unwrap_err()
             ))
         } else {
-            test_encryption_group(
+            verify_encryption_group(
                 &f.unwrap().encryption_group,
                 &eg,
                 &format!("control_component_public_keys_payload.{}", i),
@@ -169,7 +169,7 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
         }
     }
     for vcs in setup_dir.vcs_directories().iter() {
-        test_encryption_group_for_vcs_dir(vcs, &eg, result);
+        verify_encryption_group_for_vcs_dir(vcs, &eg, result);
     }
 }
 
@@ -181,7 +181,10 @@ mod test {
         super::super::super::{verification::VerificationResultTrait, VerificationPeriod},
         *,
     };
-    use crate::file_structure::{mock::MockVerificationDirectory, VerificationDirectory};
+    use crate::{
+        data_structures::VerifierSetupDataTrait,
+        file_structure::{mock::MockVerificationDirectory, VerificationDirectory},
+    };
     use std::path::Path;
 
     fn get_verifier_dir() -> VerificationDirectory {
@@ -203,7 +206,42 @@ mod test {
     }
 
     #[test]
-    fn test_wrong() {
+    fn test_verify_encryption_group() {
+        let eg_expected = EncryptionGroup {
+            p: BigUint::from(10usize),
+            q: BigUint::from(15usize),
+            g: BigUint::from(3usize),
+        };
+        let mut result = VerificationResult::new();
+        let eg = EncryptionGroup {
+            p: BigUint::from(10usize),
+            q: BigUint::from(15usize),
+            g: BigUint::from(3usize),
+        };
+        verify_encryption_group(&eg, &eg_expected, "toto", &mut result);
+        assert!(result.is_ok().unwrap());
+        let mut result = VerificationResult::new();
+        let eg = EncryptionGroup {
+            p: BigUint::from(11usize),
+            q: BigUint::from(15usize),
+            g: BigUint::from(3usize),
+        };
+        verify_encryption_group(&eg, &eg_expected, "toto", &mut result);
+        assert!(!result.has_errors().unwrap());
+        assert_eq!(result.failures().len(), 1);
+        let mut result = VerificationResult::new();
+        let eg = EncryptionGroup {
+            p: BigUint::from(11usize),
+            q: BigUint::from(16usize),
+            g: BigUint::from(4usize),
+        };
+        verify_encryption_group(&eg, &eg_expected, "toto", &mut result);
+        assert!(!result.has_errors().unwrap());
+        assert_eq!(result.failures().len(), 3)
+    }
+
+    #[test]
+    fn test_wrong_election_event_context() {
         let mut result = VerificationResult::new();
         let mut mock_dir = get_mock_verifier_dir();
         fn_verification(&mock_dir, &mut result);
@@ -217,7 +255,26 @@ mod test {
             .unwrap_setup_mut()
             .mock_election_event_context_payload(&Ok(&eec));
         fn_verification(&mock_dir, &mut result);
-        println!("{:?}", result.failures());
+        assert!(result.has_failures().unwrap());
+    }
+
+    #[test]
+    fn test_wrong_control_component_public_keys() {
+        let mut result = VerificationResult::new();
+        let mut mock_dir = get_mock_verifier_dir();
+        let mut cc_pk = mock_dir
+            .unwrap_setup()
+            .control_component_public_keys_payload_group()
+            .get_file_with_number(2)
+            .get_data()
+            .map(|d| Box::new(d.control_component_public_keys_payload().unwrap().clone()))
+            .unwrap();
+        cc_pk.encryption_group.p = BigUint::from(1234usize);
+        cc_pk.encryption_group.q = BigUint::from(1234usize);
+        mock_dir
+            .unwrap_setup_mut()
+            .mock_control_component_public_keys_payloads(2, &Ok(&cc_pk));
+        fn_verification(&mock_dir, &mut result);
         assert!(result.has_failures().unwrap());
     }
 }

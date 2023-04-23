@@ -385,11 +385,9 @@ pub mod mock {
     macro_rules! mock_payload {
         ($fct: ident, $mock: ident, $payload: ty) => {
             pub fn $fct(&mut self, data: &Result<&$payload, FileStructureError>) {
-                match data {
-                    Ok(d) => self.$mock = Some(Ok(Box::new(d.clone().to_owned()))),
-                    Err(e) => {
-                        self.$mock = Some(create_result_with_error!(e.kind().clone(), e.message()))
-                    }
+                self.$mock = match data {
+                    Ok(d) => Some(Ok(Box::new(d.clone().to_owned()))),
+                    Err(e) => Some(create_result_with_error!(e.kind().clone(), e.message())),
                 };
             }
         };
