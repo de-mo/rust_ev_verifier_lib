@@ -3,7 +3,7 @@ name = "rust_verifier"
 description = "Implementation of a Verifier for the E-Voting system of Swiss Post."
 version = "0.0.1"
 edition = "2021"
-rust-version = "1.69"
+rust-version = "1.68"
 license = "Apache-2.0"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
