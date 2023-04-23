@@ -8,10 +8,8 @@ use std::{
 };
 
 /// Trait for the possibility to mock the iteration over filegroup
-pub trait FileGroupIterTrait {
-    type IterType;
-    fn get_elt_at_index(&self, index: &usize) -> Option<Self::IterType>;
-    fn is_index_valid(&self, index: &usize) -> bool;
+pub trait FileGroupIterTrait<T>: Iterator<Item = (usize, T)> {
+    fn current_elt(&self) -> Option<T>;
 }
 
 /// File Group
@@ -22,59 +20,81 @@ pub struct FileGroup {
     /// data_type. With the data_type it is possible to find the files in the location
     data_type: VerifierDataType,
     /// The numbers for which the files are defined
-    numbers: Vec<usize>,
+    indexes: Vec<usize>,
 }
 
 pub struct FileGroupIter<T> {
     pub file_group: FileGroup,
-    index: usize,
+    pos: usize,
     not_used: PhantomData<T>,
 }
 
 /// Implement iterator for all the [FileGroupIter] as generic type
 impl<T> Iterator for FileGroupIter<T>
 where
-    Self: FileGroupIterTrait<IterType = T>,
+    Self: FileGroupIterTrait<T>,
 {
     type Item = (usize, T);
 
     fn next(&mut self) -> Option<Self::Item> {
-        match self.get_elt_at_index(&self.index) {
-            Some(elt) => {
-                let res = (self.index.clone(), elt);
-                self.index += 1;
+        match self.is_over() {
+            true => None,
+            false => {
+                let res = (
+                    self.current_index().unwrap().clone(),
+                    self.current_elt().unwrap(),
+                );
+                self.pos += 1;
                 Some(res)
             }
-            None => None,
         }
     }
 }
 
-impl FileGroupIterTrait for FileGroupIter<File> {
-    type IterType = File;
-    fn get_elt_at_index(&self, index: &usize) -> Option<Self::IterType> {
-        match self.is_index_valid(index) {
-            true => Some(File::new(
-                &self.file_group.location,
-                &self.file_group.data_type,
-                Some(*index),
-            )),
-            false => None,
-        }
-    }
-
-    fn is_index_valid(&self, index: &usize) -> bool {
-        self.file_group.numbers.contains(index)
+impl FileGroupIterTrait<File> for FileGroupIter<File> {
+    fn current_elt(&self) -> Option<File> {
+        self.current_file()
     }
 }
 
 impl<T> FileGroupIter<T> {
+    /// Create a new [FileGroupIter<T>]
     pub fn new(file_group: &FileGroup) -> Self {
         FileGroupIter {
             file_group: file_group.clone(),
-            index: 0,
+            pos: 0,
             not_used: PhantomData,
         }
+    }
+
+    /// Get the current position
+    pub fn current_pos(&self) -> &usize {
+        &self.pos
+    }
+
+    /// Get the current index
+    pub fn current_index(&self) -> Option<&usize> {
+        match self.current_pos() < &self.file_group.get_numbers().len() {
+            true => Some(&self.file_group.get_numbers()[*self.current_pos()]),
+            false => None,
+        }
+    }
+
+    /// Get the current file
+    pub fn current_file(&self) -> Option<File> {
+        match self.current_index() {
+            Some(i) => Some(File::new(
+                &self.file_group.location,
+                &self.file_group.data_type,
+                Some(*i),
+            )),
+            None => None,
+        }
+    }
+
+    /// Check if iterator is over
+    pub fn is_over(&self) -> bool {
+        self.current_index().is_none()
     }
 }
 
@@ -92,38 +112,34 @@ impl<T> FileGroupIter<T> {
 /// impl_iterator_over_data_payload!(
 ///     ControlComponentPublicKeysPayload,
 ///     control_component_public_keys_payload,
-///     ControlComponentPublicKeysPayloadRead,
-///     ControlComponentPublicKeysPayloadReadIter
+///     ControlComponentPublicKeysPayloadAsResult,
+///     ControlComponentPublicKeysPayloadAsResultIter
 /// );
 /// ```
 macro_rules! impl_iterator_over_data_payload {
     ($p: ty, $fct: ident, $pread: ident, $preaditer: ident) => {
         type $pread = Result<Box<$p>, FileStructureError>;
         type $preaditer = FileGroupIter<$pread>;
-        impl FileGroupIterTrait for $preaditer {
-            type IterType = $pread;
-            fn get_elt_at_index(&self, index: &usize) -> Option<Self::IterType> {
-                match self.is_index_valid(index) {
-                    true => Some(
-                        File::new(
-                            &self.file_group.get_location(),
-                            self.file_group.get_data_type(),
-                            Some(*index),
-                        )
-                        .get_data()
-                        .map(|d| Box::new(d.$fct().unwrap().clone())),
-                    ),
-                    false => None,
+        impl FileGroupIterTrait<$pread> for $preaditer {
+            fn current_elt(&self) -> Option<$pread> {
+                match self.current_file() {
+                    Some(f) => Some(f.get_data().map(|d| Box::new(d.$fct().unwrap().clone()))),
+                    None => None,
                 }
-            }
-
-            fn is_index_valid(&self, index: &usize) -> bool {
-                self.file_group.get_numbers().contains(index)
             }
         }
     };
 }
-pub(crate) use impl_iterator_over_data_payload;
+pub(super) use impl_iterator_over_data_payload;
+
+/// Macro implementing adding a type to a directory to
+/// iterate over a filegroup resulting a specific element type
+macro_rules! add_type_for_file_group_iter_trait {
+    ($t: ident, $res: ident) => {
+        type $t: FileGroupIterTrait<$res>;
+    };
+}
+pub(super) use add_type_for_file_group_iter_trait;
 
 impl FileGroup {
     /// New [FileGroup]
@@ -131,7 +147,7 @@ impl FileGroup {
         let mut res = Self {
             location: location.to_path_buf(),
             data_type,
-            numbers: vec![],
+            indexes: vec![],
         };
         res.set_numbers();
         res
@@ -148,11 +164,11 @@ impl FileGroup {
                     .replace(matching_splitted[1], "")
                     .parse::<usize>();
                 match tmp {
-                    Ok(i) => self.numbers.push(i),
+                    Ok(i) => self.indexes.push(i),
                     Err(_) => (),
                 }
             }
-            self.numbers.sort()
+            self.indexes.sort()
         }
     }
 
@@ -173,7 +189,7 @@ impl FileGroup {
 
     /// Test if the file group has elements, i.e. it exists files
     pub fn has_elements(&self) -> bool {
-        !self.numbers.is_empty()
+        !self.indexes.is_empty()
     }
 
     /// Get the paths of the files
@@ -183,7 +199,7 @@ impl FileGroup {
 
     /// Get all the valid numbers of the files
     pub fn get_numbers(&self) -> &Vec<usize> {
-        &self.numbers
+        &self.indexes
     }
 
     /// Get the file with the given number
@@ -255,3 +271,107 @@ mod test {
         assert!(fg.iter().next().is_none());
     }
 }
+
+/*
+#[cfg(any(test, doc))]
+pub mod mock {
+    //! Module defining mocking structure [FileGroupTrait]
+    use super::{
+        super::mock::{mock_payload, wrap_file_group_getter, wrap_payload_getter},
+        *,
+    };
+    use crate::error::{create_result_with_error, create_verifier_error, VerifierError};
+    use std::collections::HashMap;
+
+    pub struct MockFileGroupIter<T> {
+        orig: FileGroupIter<T>,
+        mocked_data: HashMap<usize, T>,
+    }
+    /// Macro implementing an iterator over the data covered by the
+    /// FileGroup
+    ///
+    /// parameters:
+    /// - $p: The struct as result
+    /// - $fct: The function to get the data (defined in the trait associated to the Dir object)
+    /// - $pread: The result of reading data $p from the file
+    /// - $preaditer: The iterator name over $pread
+    ///
+    /// Example:
+    /// ```rust
+    /// impl_iterator_over_data_payload!(
+    ///     ControlComponentPublicKeysPayload,
+    ///     control_component_public_keys_payload,
+    ///     ControlComponentPublicKeysPayloadRead,
+    ///     ControlComponentPublicKeysPayloadReadIter
+    /// );
+    /// ```
+    macro_rules! impl_iterator_over_data_payload_mock {
+        ($p: ty, $fct: ident, $pread: ident, $preaditer: ident) => {
+            type $pread = Result<Box<$p>, FileStructureError>;
+            type $preaditer = MockFileGroupIter<$pread>;
+            impl FileGroupIterTrait for $preaditer {
+                type IterType = $pread;
+                fn current_elt(&self) -> Option<Self::IterType> {
+                    match self.current_index() {
+                        Some(i) => match self.mock_data().get(i) {
+                            Some(elt) => Some(elt),
+                            None => Some(self.orig().current_elt()),
+                        },
+                        None => None,
+                    }
+                }
+            }
+        };
+    }
+    pub(super) use impl_iterator_over_data_payload_mock;
+
+    impl<T> MockFileGroupIter<T> {
+        fn new(fg_iter: &FileGroupIter<T>, mock_data: &HashMap<usize, T>) -> Self {
+            MockFileGroupIter {
+                orig: *fg_iter.clone(),
+                mocked_data: *mock_data.clone(),
+            }
+        }
+
+        fn orig(&self) -> &FileGroupIter<T> {
+            &self.orig
+        }
+        fn mocked_data(&self) -> &HashMap<usize, T> {
+            &self.mocked_data
+        }
+        pub fn current_pos(&self) -> &usize {
+            self.orig.current_pos()
+        }
+
+        pub fn current_index(&self) -> Option<&usize> {
+            self.orig.current_index()
+        }
+
+        pub fn is_over(&self) -> bool {
+            self.orig.is_over()
+        }
+    }
+
+    // Implement iterator for all the [FileGroupIter] as generic type
+    impl<T> Iterator for MockFileGroupIter<T>
+    where
+        Self: FileGroupIterTrait<IterType = T>,
+    {
+        type Item = (usize, T);
+
+        fn next(&mut self) -> Option<Self::Item> {
+            match self.orig().next() {
+                true => None,
+                false => {
+                    let res = (
+                        self.current_index().unwrap().clone(),
+                        self.current_elt().unwrap(),
+                    );
+                    self.pos += 1;
+                    Some(res)
+                }
+            }
+        }
+    }
+}
+ */

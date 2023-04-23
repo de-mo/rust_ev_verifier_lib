@@ -1,6 +1,9 @@
 use super::{
     file::{create_file, File},
-    file_group::{impl_iterator_over_data_payload, FileGroup, FileGroupIter, FileGroupIterTrait},
+    file_group::{
+        add_type_for_file_group_iter_trait, impl_iterator_over_data_payload, FileGroup,
+        FileGroupIter, FileGroupIterTrait,
+    },
     FileStructureError,
 };
 use crate::{
@@ -52,6 +55,10 @@ pub struct VCSDirectory {
 /// test (negative tests)
 pub trait SetupDirectoryTrait {
     type VCSDirType: VCSDirectoryTrait;
+    add_type_for_file_group_iter_trait!(
+        ControlComponentPublicKeysPayloadAsResultIterType,
+        ControlComponentPublicKeysPayloadAsResult
+    );
 
     fn encryption_parameters_payload_file(&self) -> &File;
     fn setup_component_public_keys_payload_file(&self) -> &File;
@@ -75,7 +82,7 @@ pub trait SetupDirectoryTrait {
 
     fn control_component_public_keys_payload_iter(
         &self,
-    ) -> ControlComponentPublicKeysPayloadAsResultIter;
+    ) -> Self::ControlComponentPublicKeysPayloadAsResultIterType;
 }
 
 /// Trait to set the necessary functions for the struct [VCSDirectory] that
@@ -84,6 +91,15 @@ pub trait SetupDirectoryTrait {
 /// The trait is used as parameter of the verification functions to allow mock of
 /// test (negative tests)
 pub trait VCSDirectoryTrait {
+    add_type_for_file_group_iter_trait!(
+        SetupComponentVerificationDataPayloadAsResultIterType,
+        SetupComponentVerificationDataPayloadAsResult
+    );
+    add_type_for_file_group_iter_trait!(
+        ControlComponentCodeSharesPayloadAsResultIterType,
+        ControlComponentCodeSharesPayloadAsResult
+    );
+
     fn setup_component_tally_data_payload_file(&self) -> &File;
     fn setup_component_verification_data_payload_group(&self) -> &FileGroup;
     fn control_component_code_shares_payload_group(&self) -> &FileGroup;
@@ -92,11 +108,11 @@ pub trait VCSDirectoryTrait {
     ) -> Result<Box<SetupComponentTallyDataPayload>, FileStructureError>;
     fn setup_component_verification_data_payload_iter(
         &self,
-    ) -> SetupComponentVerificationDataPayloadAsResultIter;
+    ) -> Self::SetupComponentVerificationDataPayloadAsResultIterType;
 
     fn control_component_code_shares_payload_iter(
         &self,
-    ) -> ControlComponentCodeSharesPayloadAsResultIter;
+    ) -> Self::ControlComponentCodeSharesPayloadAsResultIterType;
     fn get_name(&self) -> String;
 }
 
@@ -173,6 +189,8 @@ impl SetupDirectory {
 
 impl SetupDirectoryTrait for SetupDirectory {
     type VCSDirType = VCSDirectory;
+    type ControlComponentPublicKeysPayloadAsResultIterType =
+        ControlComponentPublicKeysPayloadAsResultIter;
 
     fn encryption_parameters_payload_file(&self) -> &File {
         &self.encryption_parameters_payload_file
@@ -226,7 +244,7 @@ impl SetupDirectoryTrait for SetupDirectory {
 
     fn control_component_public_keys_payload_iter(
         &self,
-    ) -> ControlComponentPublicKeysPayloadAsResultIter {
+    ) -> Self::ControlComponentPublicKeysPayloadAsResultIterType {
         FileGroupIter::new(&self.control_component_public_keys_payload_group)
     }
 }
@@ -259,6 +277,11 @@ impl VCSDirectory {
 }
 
 impl VCSDirectoryTrait for VCSDirectory {
+    type SetupComponentVerificationDataPayloadAsResultIterType =
+        SetupComponentVerificationDataPayloadAsResultIter;
+    type ControlComponentCodeSharesPayloadAsResultIterType =
+        ControlComponentCodeSharesPayloadAsResultIter;
+
     fn setup_component_tally_data_payload_file(&self) -> &File {
         &self.setup_component_tally_data_payload_file
     }
@@ -278,13 +301,13 @@ impl VCSDirectoryTrait for VCSDirectory {
 
     fn setup_component_verification_data_payload_iter(
         &self,
-    ) -> SetupComponentVerificationDataPayloadAsResultIter {
+    ) -> Self::SetupComponentVerificationDataPayloadAsResultIterType {
         FileGroupIter::new(&self.setup_component_verification_data_payload_group)
     }
 
     fn control_component_code_shares_payload_iter(
         &self,
-    ) -> ControlComponentCodeSharesPayloadAsResultIter {
+    ) -> Self::ControlComponentCodeSharesPayloadAsResultIterType {
         FileGroupIter::new(&self.control_component_code_shares_payload_group)
     }
     fn get_name(&self) -> String {
@@ -377,9 +400,9 @@ pub mod mock {
         mocked_setup_component_tally_data_payload:
             Option<Result<Box<SetupComponentTallyDataPayload>, FileStructureError>>,
         mocked_setup_component_verification_data_payloads:
-            Option<Vec<SetupComponentVerificationDataPayload>>,
+            Option<Vec<SetupComponentVerificationDataPayloadAsResult>>,
         mocked_control_component_code_shares_payloads:
-            Option<Vec<ControlComponentCodeSharesPayload>>,
+            Option<Vec<ControlComponentCodeSharesPayloadAsResult>>,
         mocked_get_name: Option<String>,
     }
 
@@ -400,11 +423,16 @@ pub mod mock {
         mocked_election_event_configuration:
             Option<Result<Box<ElectionEventConfiguration>, FileStructureError>>,
         mocked_control_component_public_keys_payloads:
-            Option<Vec<ControlComponentPublicKeysPayload>>,
+            Option<Vec<ControlComponentPublicKeysPayloadAsResult>>,
         vcs_directories: Vec<MockVCSDirectory>,
     }
 
     impl VCSDirectoryTrait for MockVCSDirectory {
+        type SetupComponentVerificationDataPayloadAsResultIterType =
+            SetupComponentVerificationDataPayloadAsResultIter;
+        type ControlComponentCodeSharesPayloadAsResultIterType =
+            ControlComponentCodeSharesPayloadAsResultIter;
+
         wrap_file_group_getter!(
             setup_component_tally_data_payload_file,
             mocked_setup_component_tally_data_payload_file,
@@ -453,6 +481,8 @@ pub mod mock {
 
     impl SetupDirectoryTrait for MockSetupDirectory {
         type VCSDirType = MockVCSDirectory;
+        type ControlComponentPublicKeysPayloadAsResultIterType =
+            ControlComponentPublicKeysPayloadAsResultIter;
 
         wrap_file_group_getter!(
             encryption_parameters_payload_file,
