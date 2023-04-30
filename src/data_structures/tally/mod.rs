@@ -14,7 +14,7 @@ use self::{
     tally_component_votes_payload::TallyComponentVotesPayload,
 };
 use super::{error::DeserializeError, VerifierDataDecode, VerifierTallyDataTrait};
-use crate::file_structure::FileType;
+use crate::file_structure::{file::File, FileReadMode, FileType};
 use enum_kinds::EnumKind;
 
 #[derive(Clone, EnumKind)]
@@ -42,37 +42,66 @@ impl VerifierTallyDataType {
         }
     }
 
+    pub fn get_file_read_mode(&self) -> FileReadMode {
+        match self {
+            Self::EVotingDecrypt => FileReadMode::Memory,
+            Self::ECH0110 => FileReadMode::Memory,
+            Self::ECH0222 => FileReadMode::Memory,
+            Self::TallyComponentVotesPayload => FileReadMode::Memory,
+            Self::TallyComponentShufflePayload => FileReadMode::Memory,
+            Self::ControlComponentBallotBoxPayload => FileReadMode::Memory,
+            Self::ControlComponentShufflePayload => FileReadMode::Memory,
+        }
+    }
+
     /// Read from String as json or xml
     ///
     /// All the types have to implement the trait [VerifierDataDecode]
-    pub fn verifier_data_from_file(
-        &self,
-        s: &String,
-    ) -> Result<VerifierTallyData, DeserializeError> {
+    pub fn verifier_data_from_file(&self, f: &File) -> Result<VerifierTallyData, DeserializeError> {
         match self {
             VerifierTallyDataType::EVotingDecrypt => {
-                EVotingDecrypt::from_string(s, &self.get_file_type())
+                EVotingDecrypt::from_file(f, &self.get_file_type(), &self.get_file_read_mode())
                     .map(|r| VerifierTallyData::EVotingDecrypt(r))
             }
-            VerifierTallyDataType::ECH0110 => ECH0110::from_string(s, &self.get_file_type())
-                .map(|r| VerifierTallyData::ECH0110(r)),
-            VerifierTallyDataType::ECH0222 => ECH0222::from_string(s, &self.get_file_type())
-                .map(|r| VerifierTallyData::ECH0222(r)),
+            VerifierTallyDataType::ECH0110 => {
+                ECH0110::from_file(f, &self.get_file_type(), &self.get_file_read_mode())
+                    .map(|r| VerifierTallyData::ECH0110(r))
+            }
+            VerifierTallyDataType::ECH0222 => {
+                ECH0222::from_file(f, &self.get_file_type(), &self.get_file_read_mode())
+                    .map(|r| VerifierTallyData::ECH0222(r))
+            }
             VerifierTallyDataType::TallyComponentVotesPayload => {
-                TallyComponentVotesPayload::from_string(s, &self.get_file_type())
-                    .map(|r| VerifierTallyData::TallyComponentVotesPayload(r))
+                TallyComponentVotesPayload::from_file(
+                    f,
+                    &self.get_file_type(),
+                    &self.get_file_read_mode(),
+                )
+                .map(|r| VerifierTallyData::TallyComponentVotesPayload(r))
             }
             VerifierTallyDataType::TallyComponentShufflePayload => {
-                TallyComponentShufflePayload::from_string(s, &self.get_file_type())
-                    .map(|r| VerifierTallyData::TallyComponentShufflePayload(r))
+                TallyComponentShufflePayload::from_file(
+                    f,
+                    &self.get_file_type(),
+                    &self.get_file_read_mode(),
+                )
+                .map(|r| VerifierTallyData::TallyComponentShufflePayload(r))
             }
             VerifierTallyDataType::ControlComponentBallotBoxPayload => {
-                ControlComponentBallotBoxPayload::from_string(s, &self.get_file_type())
-                    .map(|r| VerifierTallyData::ControlComponentBallotBoxPayload(r))
+                ControlComponentBallotBoxPayload::from_file(
+                    f,
+                    &self.get_file_type(),
+                    &self.get_file_read_mode(),
+                )
+                .map(|r| VerifierTallyData::ControlComponentBallotBoxPayload(r))
             }
             VerifierTallyDataType::ControlComponentShufflePayload => {
-                ControlComponentShufflePayload::from_string(s, &self.get_file_type())
-                    .map(|r| VerifierTallyData::ControlComponentShufflePayload(r))
+                ControlComponentShufflePayload::from_file(
+                    f,
+                    &self.get_file_type(),
+                    &self.get_file_read_mode(),
+                )
+                .map(|r| VerifierTallyData::ControlComponentShufflePayload(r))
             }
         }
     }

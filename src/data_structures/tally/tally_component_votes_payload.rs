@@ -1,7 +1,7 @@
 use super::super::{
     common_types::{EncryptionGroup, SignatureJson},
     error::{DeserializeError, DeserializeErrorType},
-    implement_trait_verifier_data_decode, VerifierDataDecode,
+    implement_trait_verifier_data_json_decode, VerifierDataDecode,
 };
 use crate::error::{create_verifier_error, VerifierError};
 use serde::Deserialize;
@@ -19,12 +19,11 @@ pub struct TallyComponentVotesPayload {
     pub signature: SignatureJson,
 }
 
-implement_trait_verifier_data_decode!(TallyComponentVotesPayload);
+implement_trait_verifier_data_json_decode!(TallyComponentVotesPayload);
 
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::file_structure::FileType;
     use std::fs;
     use std::path::Path;
 
@@ -38,7 +37,7 @@ mod test {
             .join("9a19164550794441b25f7f744f2e91fb")
             .join("tallyComponentVotesPayload.json");
         let json = fs::read_to_string(&path).unwrap();
-        let r_eec = TallyComponentVotesPayload::from_string(&json, &FileType::Json);
+        let r_eec = TallyComponentVotesPayload::from_json(&json);
         assert!(r_eec.is_ok())
     }
 }

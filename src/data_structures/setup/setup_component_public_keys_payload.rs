@@ -3,7 +3,7 @@ use super::{
         common_types::{EncryptionGroup, ProofUnderline, SignatureJson},
         deserialize_seq_string_hex_to_seq_bigunit,
         error::{DeserializeError, DeserializeErrorType},
-        implement_trait_verifier_data_decode, VerifierDataDecode,
+        implement_trait_verifier_data_json_decode, VerifierDataDecode,
     },
     control_component_public_keys_payload::ControlComponentPublicKeys,
 };
@@ -26,7 +26,7 @@ pub struct SetupComponentPublicKeysPayload {
     pub signature: SignatureJson,
 }
 
-implement_trait_verifier_data_decode!(SetupComponentPublicKeysPayload);
+implement_trait_verifier_data_json_decode!(SetupComponentPublicKeysPayload);
 
 impl<'a> From<&'a SetupComponentPublicKeysPayload> for HashableMessage<'a> {
     fn from(value: &'a SetupComponentPublicKeysPayload) -> Self {
@@ -93,7 +93,6 @@ impl<'a> From<&'a SetupComponentPublicKeys> for HashableMessage<'a> {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::file_structure::FileType;
     use std::fs;
     use std::path::Path;
 
@@ -105,7 +104,7 @@ mod test {
             .join("setup")
             .join("setupComponentPublicKeysPayload.json");
         let json = fs::read_to_string(&path).unwrap();
-        let r_eec = SetupComponentPublicKeysPayload::from_string(&json, &FileType::Json);
+        let r_eec = SetupComponentPublicKeysPayload::from_json(&json);
         assert!(r_eec.is_ok())
     }
 }

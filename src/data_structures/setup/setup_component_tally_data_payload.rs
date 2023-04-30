@@ -2,7 +2,7 @@ use super::super::{
     common_types::{EncryptionGroup, SignatureJson},
     deserialize_seq_seq_string_hex_to_seq_seq_bigunit,
     error::{DeserializeError, DeserializeErrorType},
-    implement_trait_verifier_data_decode, VerifierDataDecode,
+    implement_trait_verifier_data_json_decode, VerifierDataDecode,
 };
 use crate::error::{create_verifier_error, VerifierError};
 use num_bigint::BigUint;
@@ -21,12 +21,11 @@ pub struct SetupComponentTallyDataPayload {
     pub signature: SignatureJson,
 }
 
-implement_trait_verifier_data_decode!(SetupComponentTallyDataPayload);
+implement_trait_verifier_data_json_decode!(SetupComponentTallyDataPayload);
 
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::file_structure::FileType;
     use std::fs;
     use std::path::Path;
 
@@ -40,7 +39,7 @@ mod test {
             .join("7e8ce00c2c164c268c11cfa7066e3d9f")
             .join("setupComponentTallyDataPayload.json");
         let json = fs::read_to_string(&path).unwrap();
-        let r_eec = SetupComponentTallyDataPayload::from_string(&json, &FileType::Json);
+        let r_eec = SetupComponentTallyDataPayload::from_json(&json);
         assert!(r_eec.is_ok())
     }
 }

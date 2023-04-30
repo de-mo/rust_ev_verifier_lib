@@ -27,6 +27,7 @@ pub struct Verification<'a, D: VerificationDirectoryTrait> {
 
 /// Struct representing a result of the verification
 /// The verification can have many errors and/or many failures
+#[derive(Debug)]
 pub struct VerificationResult {
     errors: Vec<VerificationError>,
     failures: Vec<VerificationFailure>,

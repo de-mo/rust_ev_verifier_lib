@@ -73,17 +73,7 @@ impl File {
                 format!("File \"{}\" does not exists", self.to_str())
             );
         }
-        let s = match self.read_data() {
-            Ok(s) => s,
-            Err(e) => {
-                return create_result_with_error!(
-                    FileStructureErrorType::FileError,
-                    format!("Cannot read the content of the file \"{}\"", self.to_str()),
-                    e
-                )
-            }
-        };
-        self.data_type.verifier_data_from_json(&s).map_err(|e| {
+        self.data_type.verifier_data_from_file(&self).map_err(|e| {
             create_verifier_error!(
                 FileStructureErrorType::DataError,
                 format!("Content of the file \"{}\" is not valid", self.to_str()),

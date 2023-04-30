@@ -5,10 +5,7 @@ pub mod error;
 pub mod setup;
 pub mod tally;
 
-use std::{
-    io::{BufRead, BufReader},
-    path::Path,
-};
+use std::{io::BufRead, path::Path};
 
 use self::{
     error::{DeserializeError, DeserializeErrorType},
@@ -38,7 +35,7 @@ use crate::{
         num_bigint::Hexa,
     },
     error::{create_result_with_error, create_verifier_error, VerifierError},
-    file_structure::{file::File, FileType},
+    file_structure::{file::File, FileReadMode, FileType},
     setup_or_tally::SetupOrTally,
 };
 use num_bigint::BigUint;
@@ -129,9 +126,23 @@ pub trait VerifierTallyDataTrait {
 
 /// A trait defining the necessary function to decode to the Verifier Data
 pub trait VerifierDataDecode: Sized {
-    fn from_string(s: &String, t: &FileType) -> Result<Self, DeserializeError> {
+    fn from_file(f: &File, t: &FileType, mode: &FileReadMode) -> Result<Self, DeserializeError> {
+        match mode {
+            FileReadMode::Memory => Self::from_file_memory(f, t),
+            FileReadMode::Streaming => Self::from_file_stream(f, t),
+        }
+    }
+
+    fn from_file_memory(f: &File, t: &FileType) -> Result<Self, DeserializeError> {
+        let s = f.read_data().map_err(|e| {
+            create_verifier_error!(
+                DeserializeErrorType::FileError,
+                format!("Error reading data in file {}", f.to_str()),
+                e
+            )
+        })?;
         match t {
-            FileType::Json => Self::from_json(s),
+            FileType::Json => Self::from_json(&s),
             FileType::Xml => {
                 let doc = Document::parse(&s).map_err(|e| {
                     create_verifier_error!(
@@ -145,13 +156,13 @@ pub trait VerifierDataDecode: Sized {
         }
     }
 
-    fn from_file(p: &Path, t: &FileType) -> Result<Self, DeserializeError> {
+    fn from_file_stream(f: &File, t: &FileType) -> Result<Self, DeserializeError> {
         match t {
             FileType::Json => create_result_with_error!(
                 DeserializeErrorType::JSONError,
                 "from_file not implemented for JSON Files"
             ),
-            FileType::Xml => Self::from_xml_file(p),
+            FileType::Xml => Self::from_xml_file(&f.get_path()),
         }
     }
 
@@ -169,7 +180,7 @@ pub trait VerifierDataDecode: Sized {
         )
     }
 
-    fn from_xml_file(p: &Path) -> Result<Self, DeserializeError> {
+    fn from_xml_file(_: &Path) -> Result<Self, DeserializeError> {
         create_result_with_error!(
             DeserializeErrorType::JSONError,
             "from_xml_file not implemented"
@@ -178,7 +189,7 @@ pub trait VerifierDataDecode: Sized {
 }
 
 /// Macro to automatically implement the DataStructureTrait for a type
-macro_rules! implement_trait_verifier_data_decode {
+macro_rules! implement_trait_verifier_data_json_decode {
     ($s: ty) => {
         impl VerifierDataDecode for $s {
             fn from_json(s: &String) -> Result<Self, DeserializeError> {
@@ -193,7 +204,7 @@ macro_rules! implement_trait_verifier_data_decode {
         }
     };
 }
-use implement_trait_verifier_data_decode;
+use implement_trait_verifier_data_json_decode;
 
 impl VerifierSetupDataTrait for VerifierData {
     fn encryption_parameters_payload(&self) -> Option<&EncryptionParametersPayload> {
@@ -302,13 +313,13 @@ impl VerifierTallyDataTrait for VerifierData {
 
 impl VerifierDataType {
     /// Read VerifierDataType from a String as JSON
-    pub fn verifier_data_from_json(&self, s: &String) -> Result<VerifierData, DeserializeError> {
+    pub fn verifier_data_from_file(&self, f: &File) -> Result<VerifierData, DeserializeError> {
         match self {
             VerifierDataType::Setup(t) => {
-                t.verifier_data_from_file(s).map(|r| VerifierData::Setup(r))
+                t.verifier_data_from_file(f).map(|r| VerifierData::Setup(r))
             }
             VerifierDataType::Tally(t) => {
-                t.verifier_data_from_file(s).map(|r| VerifierData::Tally(r))
+                t.verifier_data_from_file(f).map(|r| VerifierData::Tally(r))
             }
         }
     }

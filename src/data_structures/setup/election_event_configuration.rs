@@ -1,5 +1,3 @@
-use std::path::PathBuf;
-
 use super::super::{
     error::{DeserializeError, DeserializeErrorType},
     xml_read_to_end_into_buffer, VerifierDataDecode,
@@ -17,6 +15,7 @@ use quick_xml::{
     Reader,
 };
 use serde::Deserialize;
+use std::path::PathBuf;
 
 #[derive(Debug, Clone)]
 pub struct ElectionEventConfiguration {
@@ -127,8 +126,7 @@ impl<'a> VerifiySignatureTrait<'a> for ElectionEventConfiguration {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::file_structure::FileType;
-    use std::{fs, path::Path};
+    use std::path::Path;
 
     #[test]
     fn read_data_set() {
@@ -137,7 +135,7 @@ mod test {
             .join("dataset-setup1")
             .join("setup")
             .join("configuration-anonymized.xml");
-        let config = ElectionEventConfiguration::from_file(&path, &FileType::Xml);
+        let config = ElectionEventConfiguration::from_xml_file(&path);
         assert!(config.is_ok());
         assert_eq!(config.unwrap().header.voter_total, 76);
     }

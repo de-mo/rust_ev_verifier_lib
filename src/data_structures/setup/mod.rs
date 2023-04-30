@@ -9,7 +9,7 @@ pub mod setup_component_public_keys_payload;
 pub mod setup_component_tally_data_payload;
 pub mod setup_component_verification_data_payload;
 
-use crate::file_structure::FileType;
+use crate::file_structure::{file::File, FileReadMode, FileType};
 
 use self::{
     control_component_code_shares_payload::ControlComponentCodeSharesPayload,
@@ -53,45 +53,87 @@ impl VerifierSetupDataType {
         }
     }
 
+    pub fn get_file_read_mode(&self) -> FileReadMode {
+        match self {
+            Self::EncryptionParametersPayload => FileReadMode::Memory,
+            Self::ElectionEventContextPayload => FileReadMode::Memory,
+            Self::SetupComponentPublicKeysPayload => FileReadMode::Memory,
+            Self::ControlComponentPublicKeysPayload => FileReadMode::Memory,
+            Self::SetupComponentVerificationDataPayload => FileReadMode::Memory,
+            Self::ControlComponentCodeSharesPayload => FileReadMode::Memory,
+            Self::SetupComponentTallyDataPayload => FileReadMode::Memory,
+            Self::ElectionEventConfiguration => FileReadMode::Streaming,
+        }
+    }
+
     /// Read from String as json or xml
     ///
     /// All the types have to oimplement the trait [VerifierDataDecode]
-    pub fn verifier_data_from_file(
-        &self,
-        s: &String,
-    ) -> Result<VerifierSetupData, DeserializeError> {
+    pub fn verifier_data_from_file(&self, f: &File) -> Result<VerifierSetupData, DeserializeError> {
         match self {
             VerifierSetupDataType::EncryptionParametersPayload => {
-                EncryptionParametersPayload::from_string(s, &self.get_file_type())
-                    .map(|r| VerifierSetupData::EncryptionParametersPayload(r))
+                EncryptionParametersPayload::from_file(
+                    f,
+                    &self.get_file_type(),
+                    &self.get_file_read_mode(),
+                )
+                .map(|r| VerifierSetupData::EncryptionParametersPayload(r))
             }
             VerifierSetupDataType::ElectionEventContextPayload => {
-                ElectionEventContextPayload::from_string(s, &self.get_file_type())
-                    .map(|r| VerifierSetupData::ElectionEventContextPayload(r))
+                ElectionEventContextPayload::from_file(
+                    f,
+                    &self.get_file_type(),
+                    &self.get_file_read_mode(),
+                )
+                .map(|r| VerifierSetupData::ElectionEventContextPayload(r))
             }
             VerifierSetupDataType::SetupComponentPublicKeysPayload => {
-                SetupComponentPublicKeysPayload::from_string(s, &self.get_file_type())
-                    .map(|r| VerifierSetupData::SetupComponentPublicKeysPayload(r))
+                SetupComponentPublicKeysPayload::from_file(
+                    f,
+                    &self.get_file_type(),
+                    &self.get_file_read_mode(),
+                )
+                .map(|r| VerifierSetupData::SetupComponentPublicKeysPayload(r))
             }
             VerifierSetupDataType::ControlComponentPublicKeysPayload => {
-                ControlComponentPublicKeysPayload::from_string(s, &self.get_file_type())
-                    .map(|r| VerifierSetupData::ControlComponentPublicKeysPayload(r))
+                ControlComponentPublicKeysPayload::from_file(
+                    f,
+                    &self.get_file_type(),
+                    &self.get_file_read_mode(),
+                )
+                .map(|r| VerifierSetupData::ControlComponentPublicKeysPayload(r))
             }
             VerifierSetupDataType::SetupComponentVerificationDataPayload => {
-                SetupComponentVerificationDataPayload::from_string(s, &self.get_file_type())
-                    .map(|r| VerifierSetupData::SetupComponentVerificationDataPayload(r))
+                SetupComponentVerificationDataPayload::from_file(
+                    f,
+                    &self.get_file_type(),
+                    &self.get_file_read_mode(),
+                )
+                .map(|r| VerifierSetupData::SetupComponentVerificationDataPayload(r))
             }
             VerifierSetupDataType::ControlComponentCodeSharesPayload => {
-                ControlComponentCodeSharesPayload::from_string(s, &self.get_file_type())
-                    .map(|r| VerifierSetupData::ControlComponentCodeSharesPayload(r))
+                ControlComponentCodeSharesPayload::from_file(
+                    f,
+                    &self.get_file_type(),
+                    &self.get_file_read_mode(),
+                )
+                .map(|r| VerifierSetupData::ControlComponentCodeSharesPayload(r))
             }
             VerifierSetupDataType::SetupComponentTallyDataPayload => {
-                SetupComponentTallyDataPayload::from_string(s, &self.get_file_type())
-                    .map(|r| VerifierSetupData::SetupComponentTallyDataPayload(r))
+                SetupComponentTallyDataPayload::from_file(
+                    f,
+                    &self.get_file_type(),
+                    &self.get_file_read_mode(),
+                )
+                .map(|r| VerifierSetupData::SetupComponentTallyDataPayload(r))
             }
             VerifierSetupDataType::ElectionEventConfiguration => {
-                ElectionEventConfiguration::from_string(s, &self.get_file_type())
-                    .map(|r| VerifierSetupData::ElectionEventConfiguration(r))
+                ElectionEventConfiguration::from_file(
+                    f,
+                    &self.get_file_type(),
+                    &self.get_file_read_mode(),
+                )
+                .map(|r| VerifierSetupData::ElectionEventConfiguration(r))
             }
         }
     }

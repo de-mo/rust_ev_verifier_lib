@@ -30,6 +30,11 @@ pub enum FileType {
     Xml,
 }
 
+pub enum FileReadMode {
+    Memory,
+    Streaming,
+}
+
 /// Trait defining functions to get the filename
 pub trait GetFileNameTrait {
     /// Get the file name as it is defiened

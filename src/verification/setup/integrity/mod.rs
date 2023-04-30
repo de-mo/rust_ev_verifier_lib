@@ -121,6 +121,7 @@ mod test {
         let dir = get_verifier_dir();
         let mut result = VerificationResult::new();
         fn_verification_400(&dir, &mut result);
+        println!("{:?}", result);
         assert!(result.is_ok().unwrap());
     }
 }

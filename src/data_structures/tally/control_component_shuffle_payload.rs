@@ -1,7 +1,7 @@
 use super::super::{
     common_types::{EncryptionGroup, ExponentiatedEncryptedElement, SignatureJson},
     error::{DeserializeError, DeserializeErrorType},
-    implement_trait_verifier_data_decode, VerifierDataDecode,
+    implement_trait_verifier_data_json_decode, VerifierDataDecode,
 };
 use super::tally_component_shuffle_payload::VerifiableShuffle;
 use crate::{
@@ -21,7 +21,7 @@ pub struct ControlComponentShufflePayload {
     pub verifiable_shuffle: VerifiableShuffle,
     pub signature: SignatureJson,
 }
-implement_trait_verifier_data_decode!(ControlComponentShufflePayload);
+implement_trait_verifier_data_json_decode!(ControlComponentShufflePayload);
 
 #[derive(Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -33,7 +33,6 @@ pub struct VerifiableDecryptions {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::file_structure::FileType;
     use std::fs;
     use std::path::Path;
 
@@ -47,7 +46,7 @@ mod test {
             .join("9a19164550794441b25f7f744f2e91fb")
             .join("controlComponentShufflePayload_1.json");
         let json = fs::read_to_string(&path).unwrap();
-        let r_eec = ControlComponentShufflePayload::from_string(&json, &FileType::Json);
+        let r_eec = ControlComponentShufflePayload::from_json(&json);
         println!("{:?}", r_eec.as_ref().err());
         assert!(r_eec.is_ok())
     }

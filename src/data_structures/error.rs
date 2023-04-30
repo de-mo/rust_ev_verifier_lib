@@ -5,6 +5,7 @@ use std::fmt::Display;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum DeserializeErrorType {
+    FileError,
     JSONError,
     XMLError,
 }
@@ -12,6 +13,7 @@ pub enum DeserializeErrorType {
 impl Display for DeserializeErrorType {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let s = match self {
+            Self::FileError => "File Error",
             Self::JSONError => "JSON error",
             Self::XMLError => "XML error",
         };

@@ -2,7 +2,7 @@ use super::super::{
     common_types::{EncryptionGroup, ExponentiatedEncryptedElement, SignatureJson},
     deserialize_seq_string_hex_to_seq_bigunit, deserialize_string_hex_to_bigunit,
     error::{DeserializeError, DeserializeErrorType},
-    implement_trait_verifier_data_decode, VerifierDataDecode,
+    implement_trait_verifier_data_json_decode, VerifierDataDecode,
 };
 use crate::{
     data_structures::common_types::DecryptionProof,
@@ -21,7 +21,7 @@ pub struct TallyComponentShufflePayload {
     pub verifiable_plaintext_decryption: VerifiablePlaintextDecryption,
     pub signature: SignatureJson,
 }
-implement_trait_verifier_data_decode!(TallyComponentShufflePayload);
+implement_trait_verifier_data_json_decode!(TallyComponentShufflePayload);
 
 #[derive(Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -108,7 +108,6 @@ pub struct DecryptedVote {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::file_structure::FileType;
     use std::fs;
     use std::path::Path;
 
@@ -122,7 +121,7 @@ mod test {
             .join("9a19164550794441b25f7f744f2e91fb")
             .join("tallyComponentShufflePayload.json");
         let json = fs::read_to_string(&path).unwrap();
-        let r_eec = TallyComponentShufflePayload::from_string(&json, &FileType::Json);
+        let r_eec = TallyComponentShufflePayload::from_json(&json);
         println!("{:?}", r_eec.as_ref().err());
         assert!(r_eec.is_ok())
     }

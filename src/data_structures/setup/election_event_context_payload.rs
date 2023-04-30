@@ -1,7 +1,7 @@
 use super::super::{
     common_types::{EncryptionGroup, SignatureJson},
     error::{DeserializeError, DeserializeErrorType},
-    implement_trait_verifier_data_decode, VerifierDataDecode,
+    implement_trait_verifier_data_json_decode, VerifierDataDecode,
 };
 use crate::error::{create_verifier_error, VerifierError};
 use serde::Deserialize;
@@ -14,7 +14,7 @@ pub struct ElectionEventContextPayload {
     pub signature: SignatureJson,
 }
 
-implement_trait_verifier_data_decode!(ElectionEventContextPayload);
+implement_trait_verifier_data_json_decode!(ElectionEventContextPayload);
 
 #[derive(Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -51,7 +51,6 @@ pub struct ElectionEventContext {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::file_structure::FileType;
     use std::fs;
     use std::path::Path;
 
@@ -63,7 +62,7 @@ mod test {
             .join("setup")
             .join("electionEventContextPayload.json");
         let json = fs::read_to_string(&path).unwrap();
-        let r_eec = ElectionEventContextPayload::from_string(&json, &FileType::Json);
+        let r_eec = ElectionEventContextPayload::from_json(&json);
         assert!(r_eec.is_ok())
     }
 }

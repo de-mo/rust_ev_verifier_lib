@@ -36,7 +36,6 @@ impl<'a> VerifiySignatureTrait<'a> for ECH0110 {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::file_structure::FileType;
     use std::{fs, path::Path};
 
     #[test]
@@ -47,7 +46,7 @@ mod test {
             .join("tally")
             .join("eCH-0110_Post_E2E_DEV.xml");
         let xml = fs::read_to_string(&path).unwrap();
-        let config = ECH0110::from_string(&xml, &FileType::Xml);
+        let config = ECH0110::from_roxmltree(&Document::parse(&xml).unwrap());
         assert!(config.is_ok())
     }
 }

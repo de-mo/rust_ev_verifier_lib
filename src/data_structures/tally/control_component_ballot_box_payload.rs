@@ -1,7 +1,7 @@
 use super::super::{
     common_types::{EncryptionGroup, ExponentiatedEncryptedElement, SignatureJson},
     error::{DeserializeError, DeserializeErrorType},
-    implement_trait_verifier_data_decode, VerifierDataDecode,
+    implement_trait_verifier_data_json_decode, VerifierDataDecode,
 };
 use crate::{
     data_structures::common_types::{DecryptionProof, Proof},
@@ -19,7 +19,7 @@ pub struct ControlComponentBallotBoxPayload {
     pub confirmed_encrypted_votes: Vec<ConfirmedEncryptedVote>,
     pub signature: SignatureJson,
 }
-implement_trait_verifier_data_decode!(ControlComponentBallotBoxPayload);
+implement_trait_verifier_data_json_decode!(ControlComponentBallotBoxPayload);
 
 #[derive(Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -43,7 +43,6 @@ pub struct ContextIds {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::file_structure::FileType;
     use std::fs;
     use std::path::Path;
 
@@ -57,7 +56,7 @@ mod test {
             .join("9a19164550794441b25f7f744f2e91fb")
             .join("controlComponentBallotBoxPayload_1.json");
         let json = fs::read_to_string(&path).unwrap();
-        let r_eec = ControlComponentBallotBoxPayload::from_string(&json, &FileType::Json);
+        let r_eec = ControlComponentBallotBoxPayload::from_json(&json);
         println!("{:?}", r_eec.as_ref().err());
         assert!(r_eec.is_ok())
     }

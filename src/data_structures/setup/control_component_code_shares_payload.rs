@@ -2,7 +2,7 @@ use super::super::{
     common_types::{EncryptionGroup, ExponentiatedEncryptedElement, Proof, SignatureJson},
     deserialize_seq_string_hex_to_seq_bigunit,
     error::{DeserializeError, DeserializeErrorType},
-    implement_trait_verifier_data_decode, VerifierDataDecode,
+    implement_trait_verifier_data_json_decode, VerifierDataDecode,
 };
 use crate::error::{create_verifier_error, VerifierError};
 use num_bigint::BigUint;
@@ -10,7 +10,7 @@ use serde::Deserialize;
 
 pub type ControlComponentCodeSharesPayload = Vec<ControlComponentCodeSharesPayloadInner>;
 
-implement_trait_verifier_data_decode!(ControlComponentCodeSharesPayload);
+implement_trait_verifier_data_json_decode!(ControlComponentCodeSharesPayload);
 
 #[derive(Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -41,7 +41,6 @@ pub struct ControlComponentCodeShares {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::file_structure::FileType;
     use std::fs;
     use std::path::Path;
 
@@ -55,7 +54,7 @@ mod test {
             .join("7e8ce00c2c164c268c11cfa7066e3d9f")
             .join("controlComponentCodeSharesPayload.0.json");
         let json = fs::read_to_string(&path).unwrap();
-        let r_eec = ControlComponentCodeSharesPayload::from_string(&json, &FileType::Json);
+        let r_eec = ControlComponentCodeSharesPayload::from_json(&json);
         assert!(r_eec.is_ok())
     }
 }
