@@ -123,6 +123,6 @@ mod test {
         assert!(metadata_res.is_ok());
         let metadata = metadata_res.unwrap();
         assert!(metadata.len() > 0);
-        assert!(metadata.meta_data_from_id("s100").is_some())
+        assert!(metadata.meta_data_from_id("01.01").is_some())
     }
 }

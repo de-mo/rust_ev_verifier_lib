@@ -12,13 +12,13 @@ use crate::{
 
 pub fn get_verifications(metadata_list: &VerificationMetaDataList) -> VerificationList {
     let mut res = vec![];
-    res.push(Verification::new("s200", fn_verification_200, metadata_list).unwrap());
-    res.push(Verification::new("s202", fn_verification_202, metadata_list).unwrap());
-    res.push(Verification::new("s203", fn_verification_203, metadata_list).unwrap());
+    res.push(Verification::new("02.01", fn_verification_0201, metadata_list).unwrap());
+    res.push(Verification::new("02.03", fn_verification_0203, metadata_list).unwrap());
+    res.push(Verification::new("02.04", fn_verification_0204, metadata_list).unwrap());
     res
 }
 
-fn fn_verification_200<D: VerificationDirectoryTrait>(dir: &D, result: &mut VerificationResult) {
+fn fn_verification_0201<D: VerificationDirectoryTrait>(dir: &D, result: &mut VerificationResult) {
     let setup_dir = dir.unwrap_setup();
     let eg = match setup_dir.encryption_parameters_payload() {
         Ok(p) => p,
@@ -33,7 +33,7 @@ fn fn_verification_200<D: VerificationDirectoryTrait>(dir: &D, result: &mut Veri
     verify_signature_for_object(eg.as_ref(), result, "encryption_parameters_payload")
 }
 
-fn fn_verification_202<D: VerificationDirectoryTrait>(dir: &D, result: &mut VerificationResult) {
+fn fn_verification_0203<D: VerificationDirectoryTrait>(dir: &D, result: &mut VerificationResult) {
     let setup_dir = dir.unwrap_setup();
     let eg = match setup_dir.setup_component_public_keys_payload() {
         Ok(p) => p,
@@ -48,7 +48,7 @@ fn fn_verification_202<D: VerificationDirectoryTrait>(dir: &D, result: &mut Veri
     verify_signature_for_object(eg.as_ref(), result, "setup_component_public_keys_payload")
 }
 
-fn fn_verification_203<D: VerificationDirectoryTrait>(dir: &D, result: &mut VerificationResult) {
+fn fn_verification_0204<D: VerificationDirectoryTrait>(dir: &D, result: &mut VerificationResult) {
     let setup_dir = dir.unwrap_setup();
     for (i, cc) in setup_dir.control_component_public_keys_payload_iter() {
         match cc {
@@ -83,7 +83,7 @@ mod test {
     fn test_200() {
         let dir = get_verifier_dir();
         let mut result = VerificationResult::new();
-        fn_verification_200(&dir, &mut result);
+        fn_verification_0201(&dir, &mut result);
         assert!(result.is_ok().unwrap());
     }
 
@@ -91,7 +91,7 @@ mod test {
     fn test_202() {
         let dir = get_verifier_dir();
         let mut result = VerificationResult::new();
-        fn_verification_202(&dir, &mut result);
+        fn_verification_0203(&dir, &mut result);
         assert!(result.is_ok().unwrap());
     }
 
@@ -99,7 +99,7 @@ mod test {
     fn test_203() {
         let dir = get_verifier_dir();
         let mut result = VerificationResult::new();
-        fn_verification_203(&dir, &mut result);
+        fn_verification_0204(&dir, &mut result);
         assert!(result.is_ok().unwrap());
     }
 }

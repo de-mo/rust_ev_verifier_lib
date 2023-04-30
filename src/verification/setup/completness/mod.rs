@@ -15,7 +15,7 @@ use super::super::{
 
 pub fn get_verifications(metadata_list: &VerificationMetaDataList) -> VerificationList {
     let mut res = vec![];
-    res.push(Verification::new("s100", fn_verification_100, metadata_list).unwrap());
+    res.push(Verification::new("01.01", fn_verification_0101, metadata_list).unwrap());
     res
 }
 
@@ -43,7 +43,7 @@ fn validate_vcs_dir<B: VCSDirectoryTrait>(dir: &B, result: &mut VerificationResu
     }
 }
 
-fn fn_verification_100<D: VerificationDirectoryTrait>(dir: &D, result: &mut VerificationResult) {
+fn fn_verification_0101<D: VerificationDirectoryTrait>(dir: &D, result: &mut VerificationResult) {
     let setup_dir = dir.unwrap_setup();
     if !setup_dir.encryption_parameters_payload_file().exists() {
         result.push_failure(create_verification_failure!(
@@ -103,7 +103,7 @@ mod test {
     fn test_ok() {
         let dir = get_verifier_dir();
         let mut result = VerificationResult::new();
-        fn_verification_100(&dir, &mut result);
+        fn_verification_0101(&dir, &mut result);
         assert!(result.is_ok().unwrap());
     }
 }

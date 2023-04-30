@@ -1,6 +1,6 @@
 [
     {
-        "id": "s100",
+        "id": "01.01",
         "name": "VerifySetupCompleteness",
         "algorithm": "Section 3.1",
         "period": "setup",
@@ -8,7 +8,7 @@
         "description": "The required elements for the setup verification, along with their path, are present"
     },
     {
-        "id": "s200",
+        "id": "02.01",
         "name": "VerifySignatureSetupComponentEncryptionParameters",
         "algorithm": "Verification 2.01",
         "period": "setup",
@@ -16,7 +16,7 @@
         "description": "The signature of EncryptionParametersPayload is valid"
     },
     {
-        "id": "s201",
+        "id": "02.02",
         "name": "VerifySignatureCantonConfig",
         "algorithm": "Verification 2.02",
         "period": "setup",
@@ -24,7 +24,7 @@
         "description": "The signature of ElectionEventConfiguration is valid"
     },
     {
-        "id": "s202",
+        "id": "02.03",
         "name": "VerifySignatureSetupComponentPublicKeys",
         "algorithm": "Verification 2.03",
         "period": "setup",
@@ -32,7 +32,7 @@
         "description": "The signature of SetupComponentPublicKeysPayload is valid"
     },
     {
-        "id": "s203",
+        "id": "02.04",
         "name": "VerifySignatureControlComponentPublicKeys",
         "algorithm": "Verification 2.04",
         "period": "setup",
@@ -40,7 +40,7 @@
         "description": "The signature of ControlComponentPublicKeysPayload is valid"
     },
     {
-        "id": "s204",
+        "id": "02.05",
         "name": "VerifySignatureSetupComponentVerificationData",
         "algorithm": "",
         "period": "setup",
@@ -48,7 +48,7 @@
         "description": ""
     },
     {
-        "id": "s205",
+        "id": "02.06",
         "name": "VerifySignatureControlComponentCodeShares",
         "algorithm": "",
         "period": "setup",
@@ -56,7 +56,7 @@
         "description": ""
     },
     {
-        "id": "s206",
+        "id": "02.07",
         "name": "VerifySignatureSetupComponentTallyData",
         "algorithm": "",
         "period": "setup",
@@ -64,7 +64,7 @@
         "description": ""
     },
     {
-        "id": "s207",
+        "id": "02.08",
         "name": "VerifySignatureElectionEventContext",
         "algorithm": "",
         "period": "setup",
@@ -72,7 +72,7 @@
         "description": ""
     },
     {
-        "id": "s300",
+        "id": "03.01",
         "name": "VerifyEncryptionGroupConsistency",
         "algorithm": "Verification 3.01",
         "period": "setup",
@@ -80,7 +80,7 @@
         "description": "All encryption group parameters are identical"
     },
     {
-        "id": "s301",
+        "id": "03.02",
         "name": "VerifySetupFileNamesConsistency",
         "algorithm": "",
         "period": "setup",
@@ -88,7 +88,7 @@
         "description": ""
     },
     {
-        "id": "s302",
+        "id": "03.03",
         "name": "VerifyCCrChoiceReturnCodesPublicKeyConsistency",
         "algorithm": "",
         "period": "setup",
@@ -96,7 +96,7 @@
         "description": ""
     },
     {
-        "id": "s303",
+        "id": "03.04",
         "name": "VerifyCCmElectionPublicKeyConsistency",
         "algorithm": "",
         "period": "setup",
@@ -104,7 +104,7 @@
         "description": ""
     },
     {
-        "id": "s304",
+        "id": "03.05",
         "name": "VerifyCcmAndCcrSchnorrProofsConsistency",
         "algorithm": "",
         "period": "setup",
@@ -112,7 +112,7 @@
         "description": ""
     },
     {
-        "id": "s305",
+        "id": "03.06",
         "name": "VerifyChoiceReturnCodesPublicKeyConsistency",
         "algorithm": "",
         "period": "setup",
@@ -120,7 +120,7 @@
         "description": ""
     },
     {
-        "id": "s306",
+        "id": "03.07",
         "name": "VerifyElectionPublicKeyConsistency",
         "algorithm": "",
         "period": "setup",
@@ -128,7 +128,7 @@
         "description": ""
     },
     {
-        "id": "s307",
+        "id": "03.08",
         "name": "VerifyPrimesMappingTableConsistency",
         "algorithm": "",
         "period": "setup",
@@ -136,7 +136,7 @@
         "description": ""
     },
     {
-        "id": "s308",
+        "id": "03.09",
         "name": "VerifyElectionEventIdConsistency",
         "algorithm": "",
         "period": "setup",
@@ -144,7 +144,7 @@
         "description": ""
     },
     {
-        "id": "s309",
+        "id": "03.10",
         "name": "VerifyVerificationCardSetIdsConsistency",
         "algorithm": "",
         "period": "setup",
@@ -152,7 +152,7 @@
         "description": ""
     },
     {
-        "id": "s310",
+        "id": "03.11",
         "name": "VerifyFileNameVerificationCardSetIdsConsistency",
         "algorithm": "",
         "period": "setup",
@@ -160,7 +160,7 @@
         "description": ""
     },
     {
-        "id": "s311",
+        "id": "03.12",
         "name": "VerifyVerificationCardIdsConsistency",
         "algorithm": "",
         "period": "setup",
@@ -168,7 +168,7 @@
         "description": ""
     },
     {
-        "id": "s312",
+        "id": "03.13",
         "name": "VerifyTotalVotersConsistency",
         "algorithm": "",
         "period": "setup",
@@ -176,7 +176,7 @@
         "description": ""
     },
     {
-        "id": "s313",
+        "id": "03.14",
         "name": "VerifyNodeIdsConsistency",
         "algorithm": "",
         "period": "setup",
@@ -184,7 +184,7 @@
         "description": ""
     },
     {
-        "id": "s314",
+        "id": "03.15",
         "name": "VerifyChunkConsistency",
         "algorithm": "",
         "period": "setup",
@@ -192,7 +192,7 @@
         "description": ""
     },
     {
-        "id": "s400",
+        "id": "04.01",
         "name": "VerifySetupIntegrity",
         "algorithm": "",
         "period": "setup",
@@ -200,7 +200,7 @@
         "description": ""
     },
     {
-        "id": "s500",
+        "id": "05.01",
         "name": "VerifyEncryptionParameters",
         "algorithm": "Verification 5.01",
         "period": "setup",
@@ -208,7 +208,7 @@
         "description": "The encryption group parameters cannot be regenerated from seed and are the same"
     },
     {
-        "id": "s501",
+        "id": "05.02",
         "name": "VerifySmallPrimeGroupMembers",
         "algorithm": "",
         "period": "setup",
@@ -216,7 +216,7 @@
         "description": ""
     },
     {
-        "id": "s502",
+        "id": "05.03",
         "name": "VerifyVotingOptions",
         "algorithm": "",
         "period": "setup",
@@ -224,7 +224,7 @@
         "description": ""
     },
     {
-        "id": "s503",
+        "id": "05.04",
         "name": "VerifyKeyGenerationSchnorrProofs",
         "algorithm": "",
         "period": "setup",
@@ -232,7 +232,7 @@
         "description": ""
     },
     {
-        "id": "s504",
+        "id": "05.21",
         "name": "VerifyEncryptedPCCExponentiationProofs",
         "algorithm": "",
         "period": "setup",
@@ -240,7 +240,7 @@
         "description": ""
     },
     {
-        "id": "s505",
+        "id": "05.22",
         "name": "VerifyEncryptedCKExponentiationProofs",
         "algorithm": "",
         "period": "setup",
@@ -248,7 +248,7 @@
         "description": ""
     },
     {
-        "id": "t100",
+        "id": "06.01",
         "name": "VerifySetupCompleteness",
         "algorithm": "",
         "period": "tally",
@@ -256,7 +256,7 @@
         "description": ""
     },
     {
-        "id": "t200",
+        "id": "07.01",
         "name": "VerifySignatureControlComponentBallotBox",
         "algorithm": "",
         "period": "tally",
@@ -264,7 +264,7 @@
         "description": ""
     },
     {
-        "id": "t201",
+        "id": "07.02",
         "name": "VerifySignatureControlComponentShuffle",
         "algorithm": "",
         "period": "tally",
@@ -272,7 +272,7 @@
         "description": ""
     },
     {
-        "id": "t202",
+        "id": "07.03",
         "name": "VerifySignatureTallyComponentShuffle",
         "algorithm": "",
         "period": "tally",
@@ -280,7 +280,7 @@
         "description": ""
     },
     {
-        "id": "t203",
+        "id": "07.04",
         "name": "VerifySignatureTallyComponentVotes",
         "algorithm": "",
         "period": "tally",
@@ -288,7 +288,7 @@
         "description": ""
     },
     {
-        "id": "t204",
+        "id": "07.05",
         "name": "VerifySignatureTallyComponentDecrypt",
         "algorithm": "",
         "period": "tally",
@@ -296,7 +296,7 @@
         "description": ""
     },
     {
-        "id": "t205",
+        "id": "07.06",
         "name": "VerifySignatureTallyComponentEch0110",
         "algorithm": "",
         "period": "tally",
@@ -304,7 +304,7 @@
         "description": ""
     },
     {
-        "id": "t206",
+        "id": "07.07",
         "name": "VerifySignatureTallyComponentEch0222",
         "algorithm": "",
         "period": "tally",
@@ -312,7 +312,7 @@
         "description": ""
     },
     {
-        "id": "t300",
+        "id": "08.01",
         "name": "VerifyConfirmedEncryptedVotesConsistency",
         "algorithm": "",
         "period": "tally",
@@ -320,7 +320,7 @@
         "description": ""
     },
     {
-        "id": "t301",
+        "id": "08.02",
         "name": "VerifyCiphertextsConsistency",
         "algorithm": "",
         "period": "tally",
@@ -328,7 +328,7 @@
         "description": ""
     },
     {
-        "id": "t302",
+        "id": "08.03",
         "name": "VerifyPlaintextsConsistency",
         "algorithm": "",
         "period": "tally",
@@ -336,7 +336,7 @@
         "description": ""
     },
     {
-        "id": "t303",
+        "id": "08.04",
         "name": "VerifyVerificationCardIdsConsistency",
         "algorithm": "",
         "period": "tally",
@@ -344,7 +344,7 @@
         "description": ""
     },
     {
-        "id": "t304",
+        "id": "08.05",
         "name": "VerifyBallotBoxIdsConsistency",
         "algorithm": "",
         "period": "tally",
@@ -352,7 +352,7 @@
         "description": ""
     },
     {
-        "id": "t305",
+        "id": "08.06",
         "name": "VerifyFileNameBallotBoxIdsConsistency",
         "algorithm": "",
         "period": "tally",
@@ -360,7 +360,7 @@
         "description": ""
     },
     {
-        "id": "t306",
+        "id": "08.07",
         "name": "VerifyNumberConfirmedEncryptedVotesConsistency",
         "algorithm": "",
         "period": "tally",
@@ -368,7 +368,7 @@
         "description": ""
     },
     {
-        "id": "t307",
+        "id": "08.08",
         "name": "VerifyElectionEventIdConsistency",
         "algorithm": "",
         "period": "tally",
@@ -376,7 +376,7 @@
         "description": ""
     },
     {
-        "id": "t308",
+        "id": "08.09",
         "name": "VerifyNodeIdsConsistency",
         "algorithm": "",
         "period": "tally",
@@ -384,7 +384,7 @@
         "description": ""
     },
     {
-        "id": "t309",
+        "id": "08.10",
         "name": "VerifyFileNameNodeIdsConsistency",
         "algorithm": "",
         "period": "tally",
@@ -392,7 +392,7 @@
         "description": ""
     },
     {
-        "id": "t310",
+        "id": "08.11",
         "name": "VerifyEncryptionGroupConsistency",
         "algorithm": "",
         "period": "tally",
@@ -400,7 +400,7 @@
         "description": ""
     },
     {
-        "id": "t400",
+        "id": "09.01",
         "name": "VerifySetupIntegrity",
         "algorithm": "",
         "period": "tally",
@@ -408,7 +408,7 @@
         "description": ""
     },
     {
-        "id": "t500",
+        "id": "10.01",
         "name": "VerifyOnlineControlComponents",
         "algorithm": "",
         "period": "tally",
@@ -416,7 +416,7 @@
         "description": ""
     },
     {
-        "id": "t501",
+        "id": "10.02",
         "name": "VerifyTallyControlComponent",
         "algorithm": "",
         "period": "tally",

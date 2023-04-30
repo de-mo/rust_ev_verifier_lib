@@ -246,7 +246,7 @@ mod test {
     fn run_ok() {
         fn ok(_: &VerificationDirectory, _: &mut VerificationResult) {}
         let md_list = VerificationMetaDataList::load().unwrap();
-        let mut verif = Verification::new("s100", ok, &md_list).unwrap();
+        let mut verif = Verification::new("01.01", ok, &md_list).unwrap();
         assert_eq!(verif.status, VerificationStatus::Stopped);
         assert!(verif.is_ok().is_none());
         assert!(verif.has_errors().is_none());
@@ -275,7 +275,7 @@ mod test {
             ));
         }
         let md_list = VerificationMetaDataList::load().unwrap();
-        let mut verif = Verification::new("s100", error, &md_list).unwrap();
+        let mut verif = Verification::new("01.01", error, &md_list).unwrap();
         assert_eq!(verif.status, VerificationStatus::Stopped);
         assert!(verif.is_ok().is_none());
         assert!(verif.has_errors().is_none());
@@ -305,7 +305,7 @@ mod test {
             ));
         }
         let md_list = VerificationMetaDataList::load().unwrap();
-        let mut verif = Verification::new("s100", failure, &md_list).unwrap();
+        let mut verif = Verification::new("01.01", failure, &md_list).unwrap();
         assert_eq!(verif.status, VerificationStatus::Stopped);
         assert!(verif.is_ok().is_none());
         assert!(verif.has_errors().is_none());

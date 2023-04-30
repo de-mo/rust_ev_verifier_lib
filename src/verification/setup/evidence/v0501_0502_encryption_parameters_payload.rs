@@ -12,7 +12,7 @@ use crate::{
     file_structure::{setup_directory::SetupDirectoryTrait, VerificationDirectoryTrait},
 };
 
-pub(super) fn fn_verification_500<D: VerificationDirectoryTrait>(
+pub(super) fn fn_verification_0501<D: VerificationDirectoryTrait>(
     dir: &D,
     result: &mut VerificationResult,
 ) {
@@ -48,7 +48,7 @@ pub(super) fn fn_verification_500<D: VerificationDirectoryTrait>(
     }
 }
 
-pub(super) fn fn_verification_501<D: VerificationDirectoryTrait>(
+pub(super) fn fn_verification_0502<D: VerificationDirectoryTrait>(
     dir: &D,
     result: &mut VerificationResult,
 ) {
@@ -110,7 +110,7 @@ mod test {
     fn test_500_ok() {
         let dir = get_verifier_dir();
         let mut result = VerificationResult::new();
-        fn_verification_500(&dir, &mut result);
+        fn_verification_0501(&dir, &mut result);
         assert!(result.is_ok().unwrap());
     }
 
@@ -118,7 +118,7 @@ mod test {
     fn test_501_ok() {
         let dir = get_verifier_dir();
         let mut result = VerificationResult::new();
-        fn_verification_501(&dir, &mut result);
+        fn_verification_0502(&dir, &mut result);
         assert!(result.is_ok().unwrap());
     }
 }

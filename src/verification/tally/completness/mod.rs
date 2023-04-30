@@ -15,7 +15,7 @@ use super::super::{
 
 pub fn get_verifications(metadata_list: &VerificationMetaDataList) -> VerificationList {
     let mut res = vec![];
-    res.push(Verification::new("t100", fn_verification_100, metadata_list).unwrap());
+    res.push(Verification::new("06.01", fn_verification_0601, metadata_list).unwrap());
     res
 }
 
@@ -45,7 +45,7 @@ fn validate_bb_dir<B: BBDirectoryTrait>(dir: &B, result: &mut VerificationResult
     }
 }
 
-fn fn_verification_100<D: VerificationDirectoryTrait>(dir: &D, result: &mut VerificationResult) {
+fn fn_verification_0601<D: VerificationDirectoryTrait>(dir: &D, result: &mut VerificationResult) {
     let tally_dir = dir.unwrap_tally();
     if !tally_dir.ech_0110_file().exists() {
         result.push_failure(create_verification_failure!("ech_0110 does not exist"))
@@ -81,7 +81,7 @@ mod test {
     fn test_ok() {
         let dir = get_verifier_dir();
         let mut result = VerificationResult::new();
-        fn_verification_100(&dir, &mut result);
+        fn_verification_0601(&dir, &mut result);
         assert!(result.is_ok().unwrap());
     }
 }

@@ -15,7 +15,7 @@ use super::super::{
 
 pub fn get_verifications(metadata_list: &VerificationMetaDataList) -> VerificationList {
     let mut res = vec![];
-    res.push(Verification::new("t400", fn_verification_400, metadata_list).unwrap());
+    res.push(Verification::new("09.01", fn_verification_0901, metadata_list).unwrap());
     res
 }
 
@@ -66,7 +66,7 @@ fn validate_bb_dir<B: BBDirectoryTrait>(dir: &B, result: &mut VerificationResult
     }
 }
 
-fn fn_verification_400<D: VerificationDirectoryTrait>(dir: &D, result: &mut VerificationResult) {
+fn fn_verification_0901<D: VerificationDirectoryTrait>(dir: &D, result: &mut VerificationResult) {
     let setup_dir = dir.unwrap_tally();
     for d in setup_dir.bb_directories().iter() {
         validate_bb_dir(d, result);
@@ -91,7 +91,7 @@ mod test {
     fn test_ok() {
         let dir = get_verifier_dir();
         let mut result = VerificationResult::new();
-        fn_verification_400(&dir, &mut result);
+        fn_verification_0901(&dir, &mut result);
         assert!(result.is_ok().unwrap());
     }
 }

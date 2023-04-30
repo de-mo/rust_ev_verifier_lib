@@ -140,18 +140,19 @@ mod test {
 
     const EXPECTED_IMPL_SETUP_VERIF: usize = 20;
     const IMPL_SETUP_TESTS: &[&str] = &[
-        "s100", "s200", "s202", "s203", "s300", "s301", "s302", "s303", "s304", "s305", "s306",
-        "s307", "s308", "s312", "s314", "s400", "s500", "s501", "s502", "s503",
+        "01.01", "02.01", "02.03", "02.04", "03.01", "03.02", "03.03", "03.04", "03.05", "03.06",
+        "03.07", "03.08", "03.09", "03.13", "03.15", "04.01", "05.01", "05.02", "05.03", "05.04",
     ];
     const MISSING_SETUP_TESTS: &[&str] = &[
-        "s201", "s204", "s205", "s206", "s207", "s309", "s310", "s311", "s313", "s504", "s505",
+        "02.02", "02.05", "02.06", "02.07", "02.08", "03.10", "03.11", "03.12", "03.14", "05.21",
+        "05.22",
     ];
 
     const EXPECTED_IMPL_TALLY_VERIF: usize = 2;
-    const IMPL_TALLY_TESTS: &[&str] = &["t100", "t400"];
+    const IMPL_TALLY_TESTS: &[&str] = &["06.01", "09.01"];
     const MISSING_TALLY_TESTS: &[&str] = &[
-        "t200", "t201", "t202", "t203", "t204", "t205", "t206", "t300", "t301", "t302", "t303",
-        "t304", "t305", "t306", "t307", "t308", "t309", "t310", "t500", "t501",
+        "07.01", "07.02", "07.03", "07.04", "07.05", "07.06", "07.07", "08.01", "08.02", "08.03",
+        "08.04", "08.05", "08.06", "08.07", "08.08", "08.09", "08.10", "08.11", "10.01", "10.02",
     ];
 
     #[test]
@@ -184,13 +185,13 @@ mod test {
         let verifs = VerificationSuite::new(
             &VerificationPeriod::Setup,
             &metadata_list,
-            &Some(vec!["s200".to_string(), "s500".to_string()]),
+            &Some(vec!["02.01".to_string(), "05.01".to_string()]),
         );
         assert_eq!(verifs.len(), EXPECTED_IMPL_SETUP_VERIF - 2);
         assert_eq!(verifs.len_excluded(), 2);
         assert_eq!(
             verifs.exclusion,
-            vec!["s200".to_string(), "s500".to_string()]
+            vec!["02.01".to_string(), "05.01".to_string()]
         );
         let verifs = VerificationSuite::new(
             &VerificationPeriod::Setup,
@@ -204,8 +205,8 @@ mod test {
             &VerificationPeriod::Setup,
             &metadata_list,
             &Some(vec![
-                "s200".to_string(),
-                "s500".to_string(),
+                "02.01".to_string(),
+                "05.01".to_string(),
                 "toto".to_string(),
             ]),
         );
@@ -213,7 +214,7 @@ mod test {
         assert_eq!(verifs.len_excluded(), 2);
         assert_eq!(
             verifs.exclusion,
-            vec!["s200".to_string(), "s500".to_string()]
+            vec!["02.01".to_string(), "05.01".to_string()]
         );
     }
 }
