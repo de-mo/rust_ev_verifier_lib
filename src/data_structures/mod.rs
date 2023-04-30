@@ -5,8 +5,6 @@ pub mod error;
 pub mod setup;
 pub mod tally;
 
-use std::{io::BufRead, path::Path};
-
 use self::{
     error::{DeserializeError, DeserializeErrorType},
     setup::{
@@ -32,6 +30,7 @@ use self::{
 use crate::{
     crypto_primitives::{
         byte_array::{ByteArray, Decode},
+        hashing::HashableMessage,
         num_bigint::Hexa,
     },
     error::{create_result_with_error, create_verifier_error, VerifierError},
@@ -46,6 +45,7 @@ use quick_xml::{
 };
 use roxmltree::Document;
 use serde::de::{Deserialize, Deserializer, Error};
+use std::{io::BufRead, path::Path};
 
 /// The type VerifierData implement an option between [VerifierSetupData] and [VerifierTallyData]
 pub type VerifierData = SetupOrTally<VerifierSetupData, VerifierTallyData>;
@@ -370,6 +370,20 @@ pub fn xml_read_to_end_into_buffer<R: BufRead>(
             }
             _ => {}
         }
+    }
+}
+
+pub fn hashable_no_value<'a>(t: &'a str) -> HashableMessage<'a> {
+    HashableMessage::from(format!("no {} value", t))
+}
+
+pub fn hashable_from_option<'a>(
+    opt: Option<HashableMessage<'a>>,
+    t: &'a str,
+) -> HashableMessage<'a> {
+    match opt {
+        Some(m) => m,
+        None => hashable_no_value(t),
     }
 }
 

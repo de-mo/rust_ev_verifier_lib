@@ -23,22 +23,24 @@ use num_bigint::BigUint;
 /// ```
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum HashableMessage<'a> {
-    ByteArray(&'a ByteArray),
-    Int(&'a BigUint),
-    USize(&'a usize),
-    String(&'a String),
-    Str(&'a str),
+    RByteArray(&'a ByteArray),
+    RInt(&'a BigUint),
+    RUSize(&'a usize),
+    RString(&'a String),
+    RStr(&'a str),
+    String(String),
     Composite(Vec<HashableMessage<'a>>),
 }
 
 impl<'a> HashableMessage<'a> {
     fn to_hashable_byte_array(&self) -> ByteArray {
         match self {
-            HashableMessage::ByteArray(b) => b.prepend_byte(0u8),
-            HashableMessage::Int(i) => ByteArray::from(*i).prepend_byte(1u8),
-            HashableMessage::USize(i) => ByteArray::from(*i).prepend_byte(1u8),
-            HashableMessage::String(s) => ByteArray::from(*s).prepend_byte(2u8),
-            HashableMessage::Str(s) => ByteArray::from(*s).prepend_byte(2u8),
+            HashableMessage::RByteArray(b) => b.prepend_byte(0u8),
+            HashableMessage::RInt(i) => ByteArray::from(*i).prepend_byte(1u8),
+            HashableMessage::RUSize(i) => ByteArray::from(*i).prepend_byte(1u8),
+            HashableMessage::RString(s) => ByteArray::from(*s).prepend_byte(2u8),
+            HashableMessage::String(s) => ByteArray::from(s).prepend_byte(2u8),
+            HashableMessage::RStr(s) => ByteArray::from(*s).prepend_byte(2u8),
             HashableMessage::Composite(c) => {
                 let mut res = ByteArray::from_bytes(b"\x03");
                 for e in c {
@@ -58,31 +60,37 @@ impl<'a> HashableMessage<'a> {
 
 impl<'a> From<&'a ByteArray> for HashableMessage<'a> {
     fn from(value: &'a ByteArray) -> Self {
-        HashableMessage::ByteArray(value)
+        HashableMessage::RByteArray(value)
     }
 }
 
 impl<'a> From<&'a BigUint> for HashableMessage<'a> {
     fn from(value: &'a BigUint) -> Self {
-        HashableMessage::Int(value)
+        HashableMessage::RInt(value)
     }
 }
 
 impl<'a> From<&'a usize> for HashableMessage<'a> {
     fn from(value: &'a usize) -> Self {
-        HashableMessage::USize(value)
+        HashableMessage::RUSize(value)
     }
 }
 
 impl<'a> From<&'a String> for HashableMessage<'a> {
     fn from(value: &'a String) -> Self {
-        HashableMessage::String(value)
+        HashableMessage::RString(value)
+    }
+}
+
+impl<'a> From<String> for HashableMessage<'a> {
+    fn from(value: String) -> Self {
+        HashableMessage::String(value.clone())
     }
 }
 
 impl<'a> From<&'a str> for HashableMessage<'a> {
     fn from(value: &'a str) -> Self {
-        HashableMessage::Str(value)
+        HashableMessage::RStr(value)
     }
 }
 

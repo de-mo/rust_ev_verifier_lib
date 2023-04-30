@@ -7,6 +7,7 @@ use crate::{
         byte_array::ByteArray, direct_trust::CertificateAuthority, hashing::HashableMessage,
         signature::VerifiySignatureTrait,
     },
+    data_structures::hashable_no_value,
     error::{create_result_with_error, create_verifier_error, VerifierError},
 };
 use quick_xml::{
@@ -15,7 +16,7 @@ use quick_xml::{
     Reader,
 };
 use serde::Deserialize;
-use std::path::PathBuf;
+use std::{collections::HashMap, path::PathBuf};
 
 #[derive(Debug, Clone)]
 pub struct ElectionEventConfiguration {
@@ -104,8 +105,34 @@ impl VerifierDataDecode for ElectionEventConfiguration {
 }
 
 impl<'a> From<&'a ElectionEventConfiguration> for HashableMessage<'a> {
-    fn from(_: &ElectionEventConfiguration) -> Self {
-        todo!()
+    fn from(config: &'a ElectionEventConfiguration) -> Self {
+        let mut elts = vec![];
+        elts.push(HashableMessage::from(&config.header));
+        Self::from(elts)
+    }
+}
+
+impl<'a> From<&'a ConfigHeader> for HashableMessage<'a> {
+    fn from(value: &'a ConfigHeader) -> Self {
+        let mut elts = vec![];
+        elts.push(Self::from(&value.file_date));
+        elts.push(Self::from(&value.voter_total));
+        elts.push(Self::from(&value.partial_delivery));
+        Self::from(elts)
+    }
+}
+
+impl<'a> From<&'a Option<PartialDelivery>> for HashableMessage<'a> {
+    fn from(value: &'a Option<PartialDelivery>) -> Self {
+        match value {
+            Some(v) => {
+                let mut elts = vec![];
+                elts.push(Self::from(&v.voter_from));
+                elts.push(Self::from(&v.voter_to));
+                Self::from(elts)
+            }
+            None => hashable_no_value("partialDelivery"),
+        }
     }
 }
 
