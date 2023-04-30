@@ -95,7 +95,7 @@ mod test {
     fn get_location() -> PathBuf {
         Path::new(".")
             .join("datasets")
-            .join("dataset-setup1")
+            .join("dataset1-setup-tally")
             .join("setup")
     }
 
@@ -179,7 +179,7 @@ mod test {
     fn test_file_with_astrerix() {
         let location = Path::new(".")
             .join("datasets")
-            .join("dataset1")
+            .join("dataset1-setup-tally")
             .join("tally");
         let f = File::new(
             &location,

@@ -202,7 +202,7 @@ mod test {
     fn test_setup_files_exist() {
         let path = Path::new(".")
             .join("datasets")
-            .join("dataset-setup1")
+            .join("dataset1-setup-tally")
             .join("setup");
         assert!(path
             .join(
@@ -224,7 +224,7 @@ mod test {
             .exists());
         let path2 = path
             .join("verification_card_sets")
-            .join("7e8ce00c2c164c268c11cfa7066e3d9f");
+            .join("681B3488DE4CD4AD7FCED14B7A654169");
         assert!(path2
             .join(
                 VerifierDataType::Setup(VerifierSetupDataType::SetupComponentTallyDataPayload)
@@ -237,11 +237,11 @@ mod test {
     fn test_tally_files_exist() {
         let path = Path::new(".")
             .join("datasets")
-            .join("dataset1")
+            .join("dataset1-setup-tally")
             .join("tally");
         let path2 = path
             .join("ballot_boxes")
-            .join("9a19164550794441b25f7f744f2e91fb");
+            .join("4AB4F95B8114C1DFEDB9586ADBFE36B3");
         assert!(path2
             .join(
                 VerifierDataType::Tally(VerifierTallyDataType::TallyComponentVotesPayload)
@@ -260,7 +260,7 @@ mod test {
     fn test_setup_groups_exist() {
         let path = Path::new(".")
             .join("datasets")
-            .join("dataset-setup1")
+            .join("dataset1-setup-tally")
             .join("setup");
         assert!(path
             .join(
@@ -270,7 +270,7 @@ mod test {
             .exists());
         let path2 = path
             .join("verification_card_sets")
-            .join("7e8ce00c2c164c268c11cfa7066e3d9f");
+            .join("3800FC91D8652090731C69F807565BEF");
         assert!(path2
             .join(
                 VerifierDataType::Setup(VerifierSetupDataType::ControlComponentCodeSharesPayload)

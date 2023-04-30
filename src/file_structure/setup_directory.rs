@@ -326,7 +326,7 @@ mod test {
     use std::path::{Path, PathBuf};
 
     fn get_location() -> PathBuf {
-        Path::new(".").join("datasets").join("dataset-setup1")
+        Path::new(".").join("datasets").join("dataset1-setup-tally")
     }
 
     #[test]
@@ -347,10 +347,10 @@ mod test {
             )
         }
         let expected = vec![
-            "7e8ce00c2c164c268c11cfa7066e3d9f",
-            "517e62879eb44ef8bc1292bcf0b5b787",
-            "eb98875b06c841529632cb8edd585f32",
-            "37d2f678ee21425b997ba1dc50ae2c91",
+            "A4C66F60561BE5EEFD017E5EF6650563",
+            "C165B503B8A3DDD99402EF4DC4267079",
+            "681B3488DE4CD4AD7FCED14B7A654169",
+            "3800FC91D8652090731C69F807565BEF",
         ];
         for (i, d) in dir.vcs_directories().iter().enumerate() {
             assert_eq!(d.get_location(), vcs_location.join(expected[i]))
@@ -362,7 +362,7 @@ mod test {
         let location = get_location()
             .join("setup")
             .join("verification_card_sets")
-            .join("7e8ce00c2c164c268c11cfa7066e3d9f");
+            .join("3800FC91D8652090731C69F807565BEF");
         let dir = VCSDirectory::new(&location);
         assert_eq!(dir.get_location(), location);
         assert!(dir.setup_component_tally_data_payload().is_ok());

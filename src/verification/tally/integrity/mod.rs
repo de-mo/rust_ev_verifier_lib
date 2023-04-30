@@ -83,7 +83,7 @@ mod test {
     use std::path::Path;
 
     fn get_verifier_dir() -> VerificationDirectory {
-        let location = Path::new(".").join("datasets").join("dataset1");
+        let location = Path::new(".").join("datasets").join("dataset1-setup-tally");
         VerificationDirectory::new(&VerificationPeriod::Tally, &location)
     }
 

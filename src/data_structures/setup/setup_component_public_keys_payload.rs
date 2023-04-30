@@ -100,7 +100,7 @@ mod test {
     fn read_data_set() {
         let path = Path::new(".")
             .join("datasets")
-            .join("dataset-setup1")
+            .join("dataset1-setup-tally")
             .join("setup")
             .join("setupComponentPublicKeysPayload.json");
         let json = fs::read_to_string(&path).unwrap();

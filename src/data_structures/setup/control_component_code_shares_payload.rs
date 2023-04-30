@@ -48,13 +48,14 @@ mod test {
     fn read_data_set() {
         let path = Path::new(".")
             .join("datasets")
-            .join("dataset-setup1")
+            .join("dataset1-setup-tally")
             .join("setup")
             .join("verification_card_sets")
-            .join("7e8ce00c2c164c268c11cfa7066e3d9f")
+            .join("681B3488DE4CD4AD7FCED14B7A654169")
             .join("controlComponentCodeSharesPayload.0.json");
         let json = fs::read_to_string(&path).unwrap();
         let r_eec = ControlComponentCodeSharesPayload::from_json(&json);
+        //println!("{:?}", r_eec);
         assert!(r_eec.is_ok())
     }
 }

@@ -243,7 +243,7 @@ mod test {
     fn get_location() -> PathBuf {
         Path::new(".")
             .join("datasets")
-            .join("dataset-setup1")
+            .join("dataset1-setup-tally")
             .join("setup")
     }
 

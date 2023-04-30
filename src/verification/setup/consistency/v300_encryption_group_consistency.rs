@@ -188,12 +188,12 @@ mod test {
     use std::path::Path;
 
     fn get_verifier_dir() -> VerificationDirectory {
-        let location = Path::new(".").join("datasets").join("dataset-setup1");
+        let location = Path::new(".").join("datasets").join("dataset1-setup-tally");
         VerificationDirectory::new(&VerificationPeriod::Setup, &location)
     }
 
     fn get_mock_verifier_dir() -> MockVerificationDirectory {
-        let location = Path::new(".").join("datasets").join("dataset-setup1");
+        let location = Path::new(".").join("datasets").join("dataset1-setup-tally");
         MockVerificationDirectory::new(&VerificationPeriod::Setup, &location)
     }
 

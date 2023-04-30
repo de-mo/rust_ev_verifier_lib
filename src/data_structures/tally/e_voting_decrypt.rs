@@ -42,7 +42,7 @@ mod test {
     fn read_data_set() {
         let path = Path::new(".")
             .join("datasets")
-            .join("dataset1")
+            .join("dataset1-setup-tally")
             .join("tally")
             .join("evoting-decrypt_Post_E2E_DEV.xml");
         let xml = fs::read_to_string(&path).unwrap();

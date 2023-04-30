@@ -159,11 +159,11 @@ mod test {
     fn read_data_set() {
         let path = Path::new(".")
             .join("datasets")
-            .join("dataset-setup1")
+            .join("dataset1-setup-tally")
             .join("setup")
             .join("configuration-anonymized.xml");
         let config = ElectionEventConfiguration::from_xml_file(&path);
         assert!(config.is_ok());
-        assert_eq!(config.unwrap().header.voter_total, 76);
+        assert_eq!(config.unwrap().header.voter_total, 43);
     }
 }

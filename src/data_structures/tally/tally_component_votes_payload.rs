@@ -31,10 +31,10 @@ mod test {
     fn read_data_set() {
         let path = Path::new(".")
             .join("datasets")
-            .join("dataset1")
+            .join("dataset1-setup-tally")
             .join("tally")
             .join("ballot_boxes")
-            .join("9a19164550794441b25f7f744f2e91fb")
+            .join("4AB4F95B8114C1DFEDB9586ADBFE36B3")
             .join("tallyComponentVotesPayload.json");
         let json = fs::read_to_string(&path).unwrap();
         let r_eec = TallyComponentVotesPayload::from_json(&json);

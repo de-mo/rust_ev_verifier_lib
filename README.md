@@ -4,8 +4,8 @@
 
 This application implements a Verifier for the E-Voting system of Swiss Post. It is based on the specifications of Swiss Post, according to the following document versions:
 
-- [Crypo-primitives](https://gitlab.com/swisspost-evoting/crypto-primitives/crypto-primitives), version 1.2.1.0
-- [Verifier](https://gitlab.com/swisspost-evoting/verifier/verifier), version 1.3.3.0
+- [Crypo-primitives](https://gitlab.com/swisspost-evoting/crypto-primitives/crypto-primitives), version 1.3.0
+- [Verifier](https://gitlab.com/swisspost-evoting/verifier/verifier), version 1.4.0
 
 The verifier ist implemented for the version 1.2.3 of the E-Voting system of Swiss Post
 
