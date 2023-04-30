@@ -5,6 +5,11 @@ pub mod error;
 pub mod setup;
 pub mod tally;
 
+use std::{
+    io::{BufRead, BufReader},
+    path::Path,
+};
+
 use self::{
     error::{DeserializeError, DeserializeErrorType},
     setup::{
@@ -33,10 +38,15 @@ use crate::{
         num_bigint::Hexa,
     },
     error::{create_result_with_error, create_verifier_error, VerifierError},
-    file_structure::FileType,
+    file_structure::{file::File, FileType},
     setup_or_tally::SetupOrTally,
 };
 use num_bigint::BigUint;
+use quick_xml::{
+    events::{BytesStart, Event},
+    reader::Reader,
+    Writer,
+};
 use roxmltree::Document;
 use serde::de::{Deserialize, Deserializer, Error};
 
@@ -135,6 +145,16 @@ pub trait VerifierDataDecode: Sized {
         }
     }
 
+    fn from_file(p: &Path, t: &FileType) -> Result<Self, DeserializeError> {
+        match t {
+            FileType::Json => create_result_with_error!(
+                DeserializeErrorType::JSONError,
+                "from_file not implemented for JSON Files"
+            ),
+            FileType::Xml => Self::from_xml_file(p),
+        }
+    }
+
     fn from_json(_: &String) -> Result<Self, DeserializeError> {
         create_result_with_error!(
             DeserializeErrorType::JSONError,
@@ -146,6 +166,13 @@ pub trait VerifierDataDecode: Sized {
         create_result_with_error!(
             DeserializeErrorType::JSONError,
             "from_roxmltree not implemented"
+        )
+    }
+
+    fn from_xml_file(p: &Path) -> Result<Self, DeserializeError> {
+        create_result_with_error!(
+            DeserializeErrorType::JSONError,
+            "from_xml_file not implemented"
         )
     }
 }
@@ -283,6 +310,54 @@ impl VerifierDataType {
             VerifierDataType::Tally(t) => {
                 t.verifier_data_from_file(s).map(|r| VerifierData::Tally(r))
             }
+        }
+    }
+}
+
+// reads from a start tag all the way to the corresponding end tag,
+// returns the bytes of the whole tag
+pub fn xml_read_to_end_into_buffer<R: BufRead>(
+    reader: &mut Reader<R>,
+    start_tag: &BytesStart,
+    junk_buf: &mut Vec<u8>,
+) -> Result<Vec<u8>, DeserializeError> {
+    let mut depth = 0;
+    let mut output_buf: Vec<u8> = Vec::new();
+    let mut w = Writer::new(&mut output_buf);
+    let tag_name = start_tag.name();
+    w.write_event(Event::Start(start_tag.clone()))
+        .map_err(|e| {
+            create_verifier_error!(
+                DeserializeErrorType::XMLError,
+                format!("Error writing event {:?} in writer", start_tag),
+                e
+            )
+        })?;
+    loop {
+        junk_buf.clear();
+        let event = reader.read_event_into(junk_buf).map_err(|e| {
+            create_verifier_error!(DeserializeErrorType::XMLError, "Error reading event", e)
+        })?;
+        w.write_event(&event).map_err(|e| {
+            create_verifier_error!(
+                DeserializeErrorType::XMLError,
+                format!("Error writing event {:?} in writer", event),
+                e
+            )
+        })?;
+
+        match event {
+            Event::Start(e) if e.name() == tag_name => depth += 1,
+            Event::End(e) if e.name() == tag_name => {
+                if depth == 0 {
+                    return Ok(output_buf);
+                }
+                depth -= 1;
+            }
+            Event::Eof => {
+                panic!("oh no")
+            }
+            _ => {}
         }
     }
 }

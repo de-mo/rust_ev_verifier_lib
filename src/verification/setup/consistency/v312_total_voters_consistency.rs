@@ -26,7 +26,7 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
         }
     };
     let total_voter = match setup_dir.election_event_configuration() {
-        Ok(o) => o.voter_total,
+        Ok(o) => o.header.voter_total,
         Err(e) => {
             result.push_error(create_verification_error!(
                 "Cannot extract election_event_context_payload",
