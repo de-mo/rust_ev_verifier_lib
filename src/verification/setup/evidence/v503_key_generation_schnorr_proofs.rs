@@ -144,11 +144,16 @@ fn run_verify_schnorr_proofs(
             "The length of pks and pis is not the same for {proof_name}"
         )));
     } else {
-        for (i, (pk, pi)) in zip(pks, pis).enumerate() {
-            let verif_res =
-                run_verify_schnorr_proof(eg, pi, &pk, &i_aux, test_name, proof_name, i, node);
-            if verif_res.is_some() {
-                res.push_failure(verif_res.unwrap());
+        let failures: Vec<Option<VerificationFailure>> = zip(pks, pis)
+            .enumerate()
+            .map(|(i, (pk, pi))| {
+                run_verify_schnorr_proof(eg, pi, &pk, &i_aux, test_name, proof_name, i, node)
+            })
+            .collect();
+        for o in failures {
+            match o {
+                Some(f) => res.push_failure(f),
+                None => (),
             }
         }
     }
