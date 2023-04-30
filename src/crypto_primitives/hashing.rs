@@ -140,6 +140,13 @@ impl<'a> From<&'a Vec<&'a BigUint>> for HashableMessage<'a> {
     }
 }
 
+impl<'a> From<&'a Vec<usize>> for HashableMessage<'a> {
+    fn from(value: &'a Vec<usize>) -> Self {
+        let l: Vec<HashableMessage> = value.iter().map(|n| HashableMessage::from(n)).collect();
+        HashableMessage::from(l)
+    }
+}
+
 #[cfg(test)]
 mod test {
     use super::super::num_bigint::Hexa;

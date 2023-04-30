@@ -6,7 +6,10 @@ use super::super::{
 };
 use crate::{
     error::{create_verifier_error, VerifierError},
-    file_structure::{setup_directory::SetupDirectoryTrait, VerificationDirectoryTrait},
+    file_structure::{
+        setup_directory::{SetupDirectoryTrait, VCSDirectoryTrait},
+        VerificationDirectoryTrait,
+    },
     verification::meta_data::VerificationMetaDataList,
 };
 
@@ -15,6 +18,7 @@ pub fn get_verifications(metadata_list: &VerificationMetaDataList) -> Verificati
     res.push(Verification::new("02.01", fn_verification_0201, metadata_list).unwrap());
     res.push(Verification::new("02.03", fn_verification_0203, metadata_list).unwrap());
     res.push(Verification::new("02.04", fn_verification_0204, metadata_list).unwrap());
+    res.push(Verification::new("02.05", fn_verification_0205, metadata_list).unwrap());
     res
 }
 
@@ -65,6 +69,26 @@ fn fn_verification_0204<D: VerificationDirectoryTrait>(dir: &D, result: &mut Ver
     }
 }
 
+fn fn_verification_0205<D: VerificationDirectoryTrait>(dir: &D, result: &mut VerificationResult) {
+    let setup_dir = dir.unwrap_setup();
+    for d in setup_dir.vcs_directories() {
+        match setup_dir.setup_component_public_keys_payload() {
+            Ok(p) => verify_signature_for_object(
+                p.as_ref(),
+                result,
+                &format!("{}/setup_component_public_keys_payload", d.get_name()),
+            ),
+            Err(e) => result.push_error(create_verification_error!(
+                format!(
+                    "Error reading {}/setup_component_public_keys_payload",
+                    d.get_name()
+                ),
+                e
+            )),
+        }
+    }
+}
+
 #[cfg(test)]
 mod test {
     use super::{
@@ -80,7 +104,7 @@ mod test {
     }
 
     #[test]
-    fn test_200() {
+    fn test_0201() {
         let dir = get_verifier_dir();
         let mut result = VerificationResult::new();
         fn_verification_0201(&dir, &mut result);
@@ -88,7 +112,7 @@ mod test {
     }
 
     #[test]
-    fn test_202() {
+    fn test_0203() {
         let dir = get_verifier_dir();
         let mut result = VerificationResult::new();
         fn_verification_0203(&dir, &mut result);
@@ -96,10 +120,18 @@ mod test {
     }
 
     #[test]
-    fn test_203() {
+    fn test_0204() {
         let dir = get_verifier_dir();
         let mut result = VerificationResult::new();
         fn_verification_0204(&dir, &mut result);
+        assert!(result.is_ok().unwrap());
+    }
+
+    #[test]
+    fn test_0205() {
+        let dir = get_verifier_dir();
+        let mut result = VerificationResult::new();
+        fn_verification_0205(&dir, &mut result);
         assert!(result.is_ok().unwrap());
     }
 }

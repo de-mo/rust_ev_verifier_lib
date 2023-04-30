@@ -5,7 +5,10 @@ use super::super::{
     implement_trait_verifier_data_json_decode, VerifierDataDecode,
 };
 use crate::{
-    crypto_primitives::byte_array::ByteArray,
+    crypto_primitives::{
+        byte_array::ByteArray, direct_trust::CertificateAuthority, hashing::HashableMessage,
+        signature::VerifiySignatureTrait,
+    },
     error::{create_verifier_error, VerifierError},
 };
 use num_bigint::BigUint;
@@ -50,6 +53,78 @@ pub struct CorrectnessInformationElt {
     pub number_of_selections: usize,
     pub number_of_voting_options: usize,
     pub list_of_write_in_options: Vec<usize>,
+}
+
+impl<'a> VerifiySignatureTrait<'a> for SetupComponentVerificationDataPayload {
+    fn get_context_data(&'a self) -> Vec<HashableMessage<'a>> {
+        vec![
+            HashableMessage::from("verification data"),
+            HashableMessage::from(&self.election_event_id),
+            HashableMessage::from(&self.verification_card_set_id),
+        ]
+    }
+
+    fn get_certificate_authority(&self) -> CertificateAuthority {
+        CertificateAuthority::SdmConfig
+    }
+
+    fn get_signature(&self) -> ByteArray {
+        self.signature.get_signature()
+    }
+}
+
+impl<'a> From<&'a SetupComponentVerificationDataPayload> for HashableMessage<'a> {
+    fn from(value: &'a SetupComponentVerificationDataPayload) -> Self {
+        let mut elts = vec![];
+        elts.push(Self::from(&value.election_event_id));
+        elts.push(Self::from(&value.verification_card_set_id));
+        elts.push(Self::from(&value.partial_choice_return_codes_allow_list));
+        elts.push(Self::from(&value.chunk_id));
+        elts.push(Self::from(&value.encryption_group));
+        let l: Vec<HashableMessage> = value
+            .setup_component_verification_data
+            .iter()
+            .map(|e| Self::from(e))
+            .collect();
+        elts.push(Self::from(l));
+        elts.push(Self::from(&value.combined_correctness_information));
+        Self::from(elts)
+    }
+}
+
+impl<'a> From<&'a SetupComponentVerificationData> for HashableMessage<'a> {
+    fn from(value: &'a SetupComponentVerificationData) -> Self {
+        let mut elts = vec![];
+        elts.push(Self::from(&value.verification_card_id));
+        elts.push(Self::from(&value.encrypted_hashed_squared_confirmation_key));
+        elts.push(Self::from(
+            &value.encrypted_hashed_squared_partial_choice_return_codes,
+        ));
+        elts.push(Self::from(&value.verification_card_public_key));
+        Self::from(elts)
+    }
+}
+
+impl<'a> From<&'a CombinedCorrectnessInformation> for HashableMessage<'a> {
+    fn from(value: &'a CombinedCorrectnessInformation) -> Self {
+        let l: Vec<HashableMessage> = value
+            .correctness_information_list
+            .iter()
+            .map(|e| Self::from(e))
+            .collect();
+        Self::from(l)
+    }
+}
+
+impl<'a> From<&'a CorrectnessInformationElt> for HashableMessage<'a> {
+    fn from(value: &'a CorrectnessInformationElt) -> Self {
+        let mut elts = vec![];
+        elts.push(Self::from(&value.correctness_id));
+        elts.push(Self::from(&value.number_of_selections));
+        elts.push(Self::from(&value.number_of_voting_options));
+        elts.push(Self::from(&value.list_of_write_in_options));
+        Self::from(elts)
+    }
 }
 
 #[cfg(test)]

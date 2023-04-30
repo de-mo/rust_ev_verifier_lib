@@ -91,6 +91,15 @@ pub struct DecryptionProof {
     pub z: Vec<BigUint>,
 }
 
+impl<'a> From<&'a DecryptionProof> for HashableMessage<'a> {
+    fn from(value: &'a DecryptionProof) -> Self {
+        let mut elts = vec![];
+        elts.push(Self::from(&(value.e)));
+        elts.push(Self::from(&(value.z)));
+        Self::from(elts)
+    }
+}
+
 /// A exponentieted encrypted element (gamman, phi)
 #[derive(Deserialize, Debug, Clone)]
 pub struct ExponentiatedEncryptedElement {
@@ -98,4 +107,13 @@ pub struct ExponentiatedEncryptedElement {
     pub gamma: BigUint,
     #[serde(deserialize_with = "deserialize_seq_string_hex_to_seq_bigunit")]
     pub phis: Vec<BigUint>,
+}
+
+impl<'a> From<&'a ExponentiatedEncryptedElement> for HashableMessage<'a> {
+    fn from(value: &'a ExponentiatedEncryptedElement) -> Self {
+        let mut elts = vec![];
+        elts.push(Self::from(&(value.gamma)));
+        elts.push(Self::from(&(value.phis)));
+        Self::from(elts)
+    }
 }
