@@ -12,6 +12,7 @@ use crate::{
     file_structure::{setup_directory::SetupDirectoryTrait, VerificationDirectoryTrait},
 };
 use num_bigint::BigUint;
+use rayon::prelude::*;
 use std::iter::zip;
 
 pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
@@ -146,6 +147,7 @@ fn run_verify_schnorr_proofs(
     } else {
         let failures: Vec<Option<VerificationFailure>> = zip(pks, pis)
             .enumerate()
+            .par_bridge()
             .map(|(i, (pk, pi))| {
                 run_verify_schnorr_proof(eg, pi, &pk, &i_aux, test_name, proof_name, i, node)
             })
