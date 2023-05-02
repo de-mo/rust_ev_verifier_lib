@@ -39,14 +39,14 @@ use std::{
 /// This type represents all possible errors that can occur within the
 /// verifier.
 #[derive(Debug)]
-pub struct VerifierError<K: Display + Debug> {
+pub struct VerifierError<K: Display + Debug + Sync + Send> {
     /// This `Box` allows us to keep the size of `Error` as small as possible. A
     /// larger `Error` type was substantially slower due to all the functions
     /// that pass around results.
     err: Box<VerifierErrorImpl<K>>,
 }
 
-impl<K: Display + Debug> VerifierError<K> {
+impl<K: Display + Debug + Sync + Send> VerifierError<K> {
     pub fn kind(&self) -> &K {
         &self.err.kind
     }
@@ -55,12 +55,12 @@ impl<K: Display + Debug> VerifierError<K> {
         &&self.err.message
     }
 
-    pub fn source(&self) -> &Option<Box<dyn Error + 'static>> {
+    pub fn source(&self) -> &Option<Box<dyn Error + Sync + Send + 'static>> {
         &self.err.source
     }
 }
 
-impl<K: Display + Debug> VerifierError<K> {
+impl<K: Display + Debug + Sync + Send> VerifierError<K> {
     fn __description(&self) -> String {
         let s: String = format!("Error \"{}\": {}", self.kind(), self.message());
         match &self.source() {
@@ -69,7 +69,11 @@ impl<K: Display + Debug> VerifierError<K> {
         }
     }
 
-    pub fn new(kind: K, source: Option<Box<dyn Error + 'static>>, msg: String) -> Self {
+    pub fn new(
+        kind: K,
+        source: Option<Box<dyn Error + Sync + Send + 'static>>,
+        msg: String,
+    ) -> Self {
         Self {
             err: Box::new(VerifierErrorImpl {
                 kind,
@@ -80,16 +84,16 @@ impl<K: Display + Debug> VerifierError<K> {
     }
 }
 
-impl<K: Display + Debug> fmt::Display for VerifierError<K> {
+impl<K: Display + Debug + Sync + Send> fmt::Display for VerifierError<K> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.__description())
     }
 }
 
 #[derive(Debug)]
-struct VerifierErrorImpl<K: Display + Debug> {
+struct VerifierErrorImpl<K: Display + Debug + Sync + Send> {
     kind: K,
-    source: Option<Box<dyn Error + 'static>>,
+    source: Option<Box<dyn Error + Sync + Send + 'static>>,
     message: String,
 }
 
@@ -126,7 +130,7 @@ impl Display for EmptyError {
 
 impl Error for EmptyError {}
 
-impl<K: Display + Debug> Error for VerifierError<K> {}
+impl<K: Display + Debug + Sync + Send> Error for VerifierError<K> {}
 
 #[cfg(test)]
 mod test {
@@ -169,7 +173,7 @@ mod test {
     fn test_error_new() {
         let e1 = VerifierError::new(
             TestErrorType::Toto,
-            Option::<Box<dyn Error + 'static>>::None,
+            Option::<Box<dyn Error + Sync + Send + 'static>>::None,
             "test".to_string(),
         );
         assert_eq!(e1.__description(), "Error \"toto\": test");
