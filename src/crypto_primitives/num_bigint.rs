@@ -36,6 +36,10 @@ pub trait Operations {
 
     /// Calculate the exponentiate modulo: self*other % modulus
     fn mod_multiply(&self, other: &Self, modulus: &Self) -> Self;
+
+    /// Calculate the inverse modulo: self^(-1) % modulus
+    /// Get the correct answer only if modulus is prime
+    fn mod_inverse(&self, modulus: &Self) -> Self;
 }
 
 /// Transformation from or to String in hexadecimal according to the specifications
@@ -130,6 +134,10 @@ impl Operations for BigUint {
 
     fn mod_multiply(&self, other: &Self, modulus: &Self) -> Self {
         (self * other) % modulus
+    }
+
+    fn mod_inverse(&self, modulus: &Self) -> Self {
+        self.mod_exponentiate(&(modulus - Self::two()), modulus)
     }
 }
 
@@ -252,6 +260,18 @@ mod test {
         assert_eq!(
             BigUint::from(12u8).mod_negate(&BigUint::from(10u32)),
             BigUint::from(8u32)
+        );
+    }
+
+    #[test]
+    fn test_mod_inverse() {
+        assert_eq!(
+            BigUint::from(3u16).mod_inverse(&BigUint::from(11u16)),
+            BigUint::from(4u16)
+        );
+        assert_eq!(
+            BigUint::from(10u16).mod_inverse(&BigUint::from(17u16)),
+            BigUint::from(12u16)
         );
     }
 }
