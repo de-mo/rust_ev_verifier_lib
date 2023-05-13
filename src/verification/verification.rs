@@ -55,6 +55,12 @@ pub trait VerificationResultTrait {
 
     /// All the failures
     fn failures(&self) -> &Vec<VerificationFailure>;
+
+    /// Mutable reference to the errors
+    fn errors_mut(&mut self) -> &mut Vec<VerificationError>;
+
+    /// Mutable reference to the failures
+    fn failures_mut(&mut self) -> &mut Vec<VerificationFailure>;
 }
 
 impl<'a> Verification<'a, VerificationDirectory> {
@@ -149,16 +155,6 @@ impl VerificationResult {
         }
     }
 
-    /// Mutable reference to the errors
-    fn errors_mut(&mut self) -> &mut Vec<VerificationError> {
-        &mut self.errors
-    }
-
-    /// Mutable reference to the failures
-    fn failures_mut(&mut self) -> &mut Vec<VerificationFailure> {
-        &mut self.failures
-    }
-
     /// Push a new error to the VerificationResult
     pub fn push_error(&mut self, e: VerificationError) {
         self.errors.push(e)
@@ -196,6 +192,14 @@ impl VerificationResultTrait for VerificationResult {
     fn failures(&self) -> &Vec<VerificationFailure> {
         &self.failures
     }
+
+    fn errors_mut(&mut self) -> &mut Vec<VerificationError> {
+        &mut self.errors
+    }
+
+    fn failures_mut(&mut self) -> &mut Vec<VerificationFailure> {
+        &mut self.failures
+    }
 }
 
 impl<'a> VerificationResultTrait for Verification<'a, VerificationDirectory> {
@@ -229,6 +233,14 @@ impl<'a> VerificationResultTrait for Verification<'a, VerificationDirectory> {
 
     fn failures(&self) -> &Vec<VerificationFailure> {
         self.result.failures()
+    }
+
+    fn errors_mut(&mut self) -> &mut Vec<VerificationError> {
+        self.result.errors_mut()
+    }
+
+    fn failures_mut(&mut self) -> &mut Vec<VerificationFailure> {
+        self.result.failures_mut()
     }
 }
 
