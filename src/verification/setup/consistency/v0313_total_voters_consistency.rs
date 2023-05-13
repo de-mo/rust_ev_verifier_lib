@@ -9,6 +9,7 @@ use crate::{
     error::{create_verifier_error, VerifierError},
     file_structure::{setup_directory::SetupDirectoryTrait, VerificationDirectoryTrait},
 };
+use log::debug;
 
 pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
     dir: &D,

@@ -13,6 +13,7 @@ use crate::{
     error::{create_verifier_error, VerifierError},
     file_structure::{setup_directory::SetupDirectoryTrait, VerificationDirectoryTrait},
 };
+use log::debug;
 
 fn validate_cc_ccm_pk<S: SetupDirectoryTrait>(
     setup_dir: &S,

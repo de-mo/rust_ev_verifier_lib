@@ -12,6 +12,7 @@ use crate::{
     },
     verification::meta_data::VerificationMetaDataList,
 };
+use log::debug;
 
 pub fn get_verifications(metadata_list: &VerificationMetaDataList) -> VerificationList {
     let mut res = vec![];
@@ -55,6 +56,7 @@ fn fn_verification_0203<D: VerificationDirectoryTrait>(dir: &D, result: &mut Ver
 fn fn_verification_0204<D: VerificationDirectoryTrait>(dir: &D, result: &mut VerificationResult) {
     let setup_dir = dir.unwrap_setup();
     for (i, cc) in setup_dir.control_component_public_keys_payload_iter() {
+        debug!("Verification 2.04 for cc {}", i);
         match cc {
             Ok(cc) => verify_signature_for_object(
                 cc.as_ref(),
@@ -72,6 +74,7 @@ fn fn_verification_0204<D: VerificationDirectoryTrait>(dir: &D, result: &mut Ver
 fn fn_verification_0205<D: VerificationDirectoryTrait>(dir: &D, result: &mut VerificationResult) {
     let setup_dir = dir.unwrap_setup();
     for d in setup_dir.vcs_directories() {
+        debug!("Verification 2.05 for vcs_dir {}", d.get_name());
         match setup_dir.setup_component_public_keys_payload() {
             Ok(p) => verify_signature_for_object(
                 p.as_ref(),

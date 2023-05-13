@@ -1,3 +1,8 @@
+use super::super::{
+    error::{create_verification_failure, VerificationFailureType},
+    verification::{Verification, VerificationResult},
+    verification_suite::VerificationList,
+};
 use crate::{
     error::{create_verifier_error, VerifierError},
     file_structure::{
@@ -6,12 +11,7 @@ use crate::{
     },
     verification::meta_data::VerificationMetaDataList,
 };
-
-use super::super::{
-    error::{create_verification_failure, VerificationFailureType},
-    verification::{Verification, VerificationResult},
-    verification_suite::VerificationList,
-};
+use log::debug;
 
 pub fn get_verifications(metadata_list: &VerificationMetaDataList) -> VerificationList {
     let mut res = vec![];

@@ -11,6 +11,7 @@ use crate::{
     error::{create_verifier_error, VerifierError},
     file_structure::{setup_directory::SetupDirectoryTrait, VerificationDirectoryTrait},
 };
+use log::debug;
 use num_bigint::BigUint;
 use rayon::prelude::*;
 use std::iter::zip;
@@ -172,7 +173,10 @@ fn run_verify_schnorr_proof(
     pos: usize,
     node: &Option<usize>,
 ) -> Option<VerificationFailure> {
-    println!("Run {} at pos {} for cc {:?}", test_name, pos, node);
+    debug!(
+        "Verification {} at pos {} for cc {:?}",
+        test_name, pos, node
+    );
     if !verify_schnorr(eg, schnorr, y, i_aux) {
         let mut text = format!(
             "{}: Verifiy {} Schnorr proofs not ok at pos {}",

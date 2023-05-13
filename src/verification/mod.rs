@@ -19,6 +19,7 @@ use crate::{
     crypto_primitives::{hashing::HashableMessage, signature::VerifiySignatureTrait},
     error::{create_result_with_error, create_verifier_error, VerifierError},
 };
+use log::debug;
 use std::fmt::Display;
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]

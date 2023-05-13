@@ -12,6 +12,7 @@ use crate::{
         VerificationDirectoryTrait,
     },
 };
+use log::debug;
 
 fn test_election_event_id(
     ee_id: &String,
@@ -48,44 +49,44 @@ fn test_ee_id_for_vcs_dir<V: VCSDirectoryTrait>(
         )),
     }
     for (i, f) in dir.control_component_code_shares_payload_iter() {
-        if f.is_err() {
-            result.push_error(create_verification_error!(
+        match f {
+            Err(e) => result.push_error(create_verification_error!(
                 format!(
                     "{}/control_component_code_shares_payload_.{} has wrong format",
                     dir.get_name(),
                     i
                 ),
-                f.unwrap_err()
-            ))
-        } else {
-            for p in f.unwrap().iter() {
-                test_election_event_id(
-                    &p.election_event_id,
-                    &expected,
-                    &format!(
-                        "{}/control_component_code_shares_payload.{}_chunk{}",
-                        dir.get_name(),
-                        i,
-                        p.chunk_id
-                    ),
-                    result,
-                )
+                e
+            )),
+            Ok(cc) => {
+                for p in cc.iter() {
+                    test_election_event_id(
+                        &p.election_event_id,
+                        &expected,
+                        &format!(
+                            "{}/control_component_code_shares_payload.{}_chunk{}",
+                            dir.get_name(),
+                            i,
+                            p.chunk_id
+                        ),
+                        result,
+                    )
+                }
             }
         }
     }
     for (i, f) in dir.setup_component_verification_data_payload_iter() {
-        if f.is_err() {
-            result.push_error(create_verification_error!(
+        match f {
+            Err(e) => result.push_error(create_verification_error!(
                 format!(
                     "{}/setup_component_verification_data_payload.{} has wrong format",
                     dir.get_name(),
                     i
                 ),
-                f.unwrap_err()
-            ))
-        } else {
-            test_election_event_id(
-                &f.unwrap().election_event_id,
+                e
+            )),
+            Ok(s) => test_election_event_id(
+                &s.election_event_id,
                 &expected,
                 &format!(
                     "{}/setup_component_verification_data_payload.{}",
@@ -93,7 +94,7 @@ fn test_ee_id_for_vcs_dir<V: VCSDirectoryTrait>(
                     dir.get_name()
                 ),
                 result,
-            )
+            ),
         }
     }
 }
@@ -126,21 +127,20 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
         )),
     }
     for (i, f) in setup_dir.control_component_public_keys_payload_iter() {
-        if f.is_err() {
-            result.push_error(create_verification_error!(
+        match f {
+            Err(e) => result.push_error(create_verification_error!(
                 format!(
                     "control_component_public_keys_payload.{} has wrong format",
                     i
                 ),
-                f.unwrap_err()
-            ))
-        } else {
-            test_election_event_id(
-                &f.unwrap().election_event_id,
+                e
+            )),
+            Ok(cc) => test_election_event_id(
+                &cc.election_event_id,
                 &ee_id,
                 &format!("control_component_public_keys_payload.{}", i),
                 result,
-            )
+            ),
         }
     }
     for vcs in setup_dir.vcs_directories().iter() {

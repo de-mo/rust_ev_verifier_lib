@@ -13,6 +13,7 @@ use crate::{
         VerificationDirectoryTrait,
     },
 };
+use log::debug;
 
 fn verify_encryption_group(
     eg: &EncryptionGroup,
@@ -61,44 +62,44 @@ fn verify_encryption_group_for_vcs_dir<V: VCSDirectoryTrait>(
         )),
     }
     for (i, f) in dir.control_component_code_shares_payload_iter() {
-        if f.is_err() {
-            result.push_error(create_verification_error!(
+        match f {
+            Err(e) => result.push_error(create_verification_error!(
                 format!(
                     "{}/control_component_code_shares_payload_.{} has wrong format",
                     dir.get_name(),
                     i
                 ),
-                f.unwrap_err()
-            ))
-        } else {
-            for p in f.unwrap().iter() {
-                verify_encryption_group(
-                    &p.encryption_group,
-                    &eg,
-                    &format!(
-                        "{}/control_component_code_shares_payload.{}_chunk{}",
-                        dir.get_name(),
-                        i,
-                        p.chunk_id
-                    ),
-                    result,
-                )
+                e
+            )),
+            Ok(cc) => {
+                for p in cc.iter() {
+                    verify_encryption_group(
+                        &p.encryption_group,
+                        &eg,
+                        &format!(
+                            "{}/control_component_code_shares_payload.{}_chunk{}",
+                            dir.get_name(),
+                            i,
+                            p.chunk_id
+                        ),
+                        result,
+                    )
+                }
             }
         }
     }
     for (i, f) in dir.setup_component_verification_data_payload_iter() {
-        if f.is_err() {
-            result.push_error(create_verification_error!(
+        match f {
+            Err(e) => result.push_error(create_verification_error!(
                 format!(
                     "{}/setup_component_verification_data_payload.{} has wrong format",
                     dir.get_name(),
                     i
                 ),
-                f.unwrap_err()
-            ))
-        } else {
-            verify_encryption_group(
-                &f.unwrap().encryption_group,
+                e
+            )),
+            Ok(s) => verify_encryption_group(
+                &s.encryption_group,
                 &eg,
                 &format!(
                     "{}/setup_component_verification_data_payload.{}",
@@ -106,7 +107,7 @@ fn verify_encryption_group_for_vcs_dir<V: VCSDirectoryTrait>(
                     dir.get_name()
                 ),
                 result,
-            )
+            ),
         }
     }
 }
@@ -151,21 +152,20 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
         )),
     }
     for (i, f) in setup_dir.control_component_public_keys_payload_iter() {
-        if f.is_err() {
-            result.push_error(create_verification_error!(
+        match f {
+            Err(e) => result.push_error(create_verification_error!(
                 format!(
                     "control_component_public_keys_payload.{} has wrong format",
                     i
                 ),
-                f.unwrap_err()
-            ))
-        } else {
-            verify_encryption_group(
-                &f.unwrap().encryption_group,
+                e
+            )),
+            Ok(cc) => verify_encryption_group(
+                &cc.encryption_group,
                 &eg,
                 &format!("control_component_public_keys_payload.{}", i),
                 result,
-            )
+            ),
         }
     }
     for vcs in setup_dir.vcs_directories().iter() {

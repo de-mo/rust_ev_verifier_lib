@@ -8,6 +8,7 @@ use crate::{
         file::File, setup_directory::SetupDirectoryTrait, VerificationDirectoryTrait,
     },
 };
+use log::debug;
 
 fn test_file_exists(file: &File, result: &mut VerificationResult) {
     if !file.exists() {

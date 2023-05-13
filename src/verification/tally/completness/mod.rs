@@ -12,6 +12,7 @@ use super::super::{
     verification::{Verification, VerificationResult},
     verification_suite::VerificationList,
 };
+use log::debug;
 
 pub fn get_verifications(metadata_list: &VerificationMetaDataList) -> VerificationList {
     let mut res = vec![];

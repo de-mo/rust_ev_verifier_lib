@@ -13,6 +13,7 @@ use crate::{
     error::{create_verifier_error, VerifierError},
     file_structure::{setup_directory::SetupDirectoryTrait, VerificationDirectoryTrait},
 };
+use log::debug;
 use std::iter::zip;
 
 fn validate_ccm_and_ccr_schorr_proofs<S: SetupDirectoryTrait>(

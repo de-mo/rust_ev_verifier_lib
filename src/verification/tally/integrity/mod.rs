@@ -12,6 +12,7 @@ use super::super::{
     verification::{Verification, VerificationResult},
     verification_suite::VerificationList,
 };
+use log::debug;
 
 pub fn get_verifications(metadata_list: &VerificationMetaDataList) -> VerificationList {
     let mut res = vec![];
@@ -41,27 +42,29 @@ fn validate_bb_dir<B: BBDirectoryTrait>(dir: &B, result: &mut VerificationResult
         )),
     }
     for (i, f) in dir.control_component_ballot_box_payload_iter() {
-        if f.is_err() {
-            result.push_failure(create_verification_failure!(
+        match f {
+            Err(e) => result.push_failure(create_verification_failure!(
                 format!(
                     "{}/control_component_ballot_box_payload_iter.{} has wrong format",
                     dir.get_name(),
                     i
                 ),
-                f.unwrap_err()
-            ))
+                e
+            )),
+            _ => (),
         }
     }
     for (i, f) in dir.control_component_shuffle_payload_iter() {
-        if f.is_err() {
-            result.push_failure(create_verification_failure!(
+        match f {
+            Err(e) => result.push_failure(create_verification_failure!(
                 format!(
                     "{}/control_component_shuffle_payload_iter.{} has wrong format",
                     dir.get_name(),
                     i
                 ),
-                f.unwrap_err()
-            ))
+                e
+            )),
+            _ => (),
         }
     }
 }

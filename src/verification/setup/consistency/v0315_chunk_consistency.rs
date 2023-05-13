@@ -13,6 +13,7 @@ use crate::{
         VerificationDirectoryTrait,
     },
 };
+use log::debug;
 
 fn verify_uninterrupted_monotonic_sequence(
     fg: &FileGroup,

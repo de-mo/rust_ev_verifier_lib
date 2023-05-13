@@ -12,6 +12,7 @@ use super::super::super::{
     },
     verification::VerificationResult,
 };
+use log::debug;
 
 pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
     dir: &D,

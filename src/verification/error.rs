@@ -5,23 +5,27 @@ use std::fmt::Display;
 
 /// Macro to create a verification error (with or without embedded error)
 macro_rules! create_verification_error {
-    ($m: expr) => {
+    ($m: expr) => {{
+        debug!("{}", format!("Error: {}", $m));
         create_verifier_error!(VerificationErrorType::Error, $m)
-    };
-    ($m: expr, $e: expr) => {
+    }};
+    ($m: expr, $e: expr) => {{
+        debug!("{}", format!("Error: {} with error {}", $m, &$e));
         create_verifier_error!(VerificationErrorType::Error, $m, $e)
-    };
+    }};
 }
 pub(crate) use create_verification_error;
 
 /// Macro to create a verification failure (with or without embedded error)
 macro_rules! create_verification_failure {
-    ($m: expr) => {
+    ($m: expr) => {{
+        debug!("{}", format!("Failure: {}", $m));
         create_verifier_error!(VerificationFailureType::Failure, $m)
-    };
-    ($m: expr, $e: expr) => {
+    }};
+    ($m: expr, $e: expr) => {{
+        debug!("{}", format!("Failure: {} with error {}", $m, &$e));
         create_verifier_error!(VerificationFailureType::Failure, $m, $e)
-    };
+    }};
 }
 pub(crate) use create_verification_failure;
 #[derive(Debug, Clone, PartialEq, Eq)]
