@@ -48,6 +48,27 @@ pub struct ElectionEventContext {
     pub verification_card_set_contexts: Vec<VerificationCardSetContext>,
 }
 
+impl VerificationCardSetContext {
+    pub fn number_of_voters(&self) -> usize {
+        self.number_of_voting_cards.clone()
+    }
+
+    pub fn number_of_voting_options(&self) -> usize {
+        self.primes_mapping_table.p_table.len()
+    }
+}
+
+impl ElectionEventContext {
+    pub fn find_verification_card_set_context<'a>(
+        &'a self,
+        vcs_id: &String,
+    ) -> Option<&'a VerificationCardSetContext> {
+        self.verification_card_set_contexts
+            .iter()
+            .find(|c| &c.verification_card_set_id == vcs_id)
+    }
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
