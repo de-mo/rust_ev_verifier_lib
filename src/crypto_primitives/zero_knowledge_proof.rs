@@ -21,7 +21,7 @@ pub fn verify_schnorr(
     // e in Z_q => modulo q
     // x, y in G_q => modulo p
     let c_prime = x.mod_multiply(
-        &y.mod_exponentiate(&schnorr.e.mod_negate(&eg.q), &eg.p),
+        &y.mod_exponentiate(&schnorr.e, &eg.p).mod_inverse(&eg.p),
         &eg.p,
     );
     let mut l: Vec<HashableMessage> = vec![];
@@ -69,7 +69,7 @@ pub fn verify_exponentiation(
     let c_prime_s: Vec<BigUint> = zip(&xs, ys)
         .map(|(x, y)| {
             x.mod_multiply(
-                &y.mod_exponentiate(&proof.e.mod_negate(&eg.q), &eg.p),
+                &y.mod_exponentiate(&proof.e, &eg.p).mod_inverse(&eg.p),
                 &eg.p,
             )
         })
