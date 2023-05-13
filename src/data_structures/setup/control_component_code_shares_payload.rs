@@ -18,7 +18,7 @@ pub struct ControlComponentCodeSharesPayloadInner {
     pub election_event_id: String,
     pub verification_card_set_id: String,
     pub chunk_id: usize,
-    pub control_component_code_shares: Vec<ControlComponentCodeShares>,
+    pub control_component_code_shares: Vec<ControlComponentCodeShare>,
     pub encryption_group: EncryptionGroup,
     pub node_id: usize,
     pub signature: SignatureJson,
@@ -26,7 +26,7 @@ pub struct ControlComponentCodeSharesPayloadInner {
 
 #[derive(Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
-pub struct ControlComponentCodeShares {
+pub struct ControlComponentCodeShare {
     pub verification_card_id: String,
     #[serde(deserialize_with = "deserialize_seq_string_hex_to_seq_bigunit")]
     pub voter_choice_return_code_generation_public_key: Vec<BigUint>,
