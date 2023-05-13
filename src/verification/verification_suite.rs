@@ -138,14 +138,14 @@ impl<'a> VerificationSuite<'a> {
 mod test {
     use super::*;
 
-    const EXPECTED_IMPL_SETUP_VERIF: usize = 21;
+    const EXPECTED_IMPL_SETUP_VERIF: usize = 22;
     const IMPL_SETUP_TESTS: &[&str] = &[
         "01.01", "02.01", "02.03", "02.04", "02.05", "03.01", "03.02", "03.03", "03.04", "03.05",
         "03.06", "03.07", "03.08", "03.09", "03.13", "03.15", "04.01", "05.01", "05.02", "05.03",
-        "05.04",
+        "05.04", "05.21",
     ];
     const MISSING_SETUP_TESTS: &[&str] = &[
-        "02.02", "02.06", "02.07", "02.08", "03.10", "03.11", "03.12", "03.14", "05.21", "05.22",
+        "02.02", "02.06", "02.07", "02.08", "03.10", "03.11", "03.12", "03.14", "05.22",
     ];
 
     const EXPECTED_IMPL_TALLY_VERIF: usize = 2;
