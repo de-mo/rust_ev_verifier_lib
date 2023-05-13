@@ -23,16 +23,34 @@ pub struct SetupComponentVerificationDataPayload {
     pub partial_choice_return_codes_allow_list: Vec<ByteArray>,
     pub chunk_id: usize,
     pub encryption_group: EncryptionGroup,
-    pub setup_component_verification_data: Vec<SetupComponentVerificationData>,
+    pub setup_component_verification_data: Vec<SetupComponentVerificationDataInner>,
     pub combined_correctness_information: CombinedCorrectnessInformation,
     pub signature: SignatureJson,
 }
 
 implement_trait_verifier_data_json_decode!(SetupComponentVerificationDataPayload);
 
+impl SetupComponentVerificationDataPayload {
+    pub fn find_setup_component_verification_data_inner<'a>(
+        &'a self,
+        vc_id: &String,
+    ) -> Option<&'a SetupComponentVerificationDataInner> {
+        self.setup_component_verification_data
+            .iter()
+            .find(|d| &d.verification_card_id == vc_id)
+    }
+
+    pub fn verification_card_ids<'a>(&'a self) -> Vec<&'a String> {
+        self.setup_component_verification_data
+            .iter()
+            .map(|d| &d.verification_card_id)
+            .collect()
+    }
+}
+
 #[derive(Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
-pub struct SetupComponentVerificationData {
+pub struct SetupComponentVerificationDataInner {
     pub verification_card_id: String,
     pub encrypted_hashed_squared_confirmation_key: ExponentiatedEncryptedElement,
     pub encrypted_hashed_squared_partial_choice_return_codes: ExponentiatedEncryptedElement,
@@ -92,8 +110,8 @@ impl<'a> From<&'a SetupComponentVerificationDataPayload> for HashableMessage<'a>
     }
 }
 
-impl<'a> From<&'a SetupComponentVerificationData> for HashableMessage<'a> {
-    fn from(value: &'a SetupComponentVerificationData) -> Self {
+impl<'a> From<&'a SetupComponentVerificationDataInner> for HashableMessage<'a> {
+    fn from(value: &'a SetupComponentVerificationDataInner) -> Self {
         let mut elts = vec![];
         elts.push(Self::from(&value.verification_card_id));
         elts.push(Self::from(&value.encrypted_hashed_squared_confirmation_key));
