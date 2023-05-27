@@ -4,7 +4,13 @@ use super::super::{
     error::{DeserializeError, DeserializeErrorType},
     implement_trait_verifier_data_json_decode, VerifierDataDecode,
 };
-use crate::error::{create_verifier_error, VerifierError};
+use crate::{
+    crypto_primitives::{
+        byte_array::ByteArray, direct_trust::CertificateAuthority, hashing::HashableMessage,
+        signature::VerifiySignatureTrait,
+    },
+    error::{create_verifier_error, VerifierError},
+};
 use num_bigint::BigUint;
 use serde::Deserialize;
 
@@ -36,6 +42,67 @@ pub struct ControlComponentCodeShare {
     pub encrypted_partial_choice_return_code_exponentiation_proof: Proof,
     pub exponentiated_encrypted_confirmation_key: ExponentiatedEncryptedElement,
     pub encrypted_confirmation_key_exponentiation_proof: Proof,
+}
+
+impl<'a> From<&'a ControlComponentCodeSharesPayloadInner> for HashableMessage<'a> {
+    fn from(value: &'a ControlComponentCodeSharesPayloadInner) -> Self {
+        let mut elts = vec![];
+        elts.push(Self::from(&value.election_event_id));
+        elts.push(Self::from(&value.verification_card_set_id));
+        elts.push(Self::from(&value.chunk_id));
+        elts.push(Self::from(&value.encryption_group));
+        let l: Vec<HashableMessage> = value
+            .control_component_code_shares
+            .iter()
+            .map(|e| Self::from(e))
+            .collect();
+        elts.push(Self::from(l));
+        elts.push(Self::from(&value.node_id));
+        Self::from(elts)
+    }
+}
+
+impl<'a> From<&'a ControlComponentCodeShare> for HashableMessage<'a> {
+    fn from(value: &'a ControlComponentCodeShare) -> Self {
+        let mut elts = vec![];
+        elts.push(Self::from(&value.verification_card_id));
+        elts.push(Self::from(
+            &value.voter_choice_return_code_generation_public_key,
+        ));
+        elts.push(Self::from(
+            &value.voter_vote_cast_return_code_generation_public_key,
+        ));
+        elts.push(Self::from(
+            &value.exponentiated_encrypted_partial_choice_return_codes,
+        ));
+        elts.push(Self::from(
+            &value.encrypted_partial_choice_return_code_exponentiation_proof,
+        ));
+        elts.push(Self::from(&value.exponentiated_encrypted_confirmation_key));
+        elts.push(Self::from(
+            &value.encrypted_confirmation_key_exponentiation_proof,
+        ));
+        Self::from(elts)
+    }
+}
+
+impl<'a> VerifiySignatureTrait<'a> for ControlComponentCodeSharesPayloadInner {
+    fn get_context_data(&'a self) -> Vec<HashableMessage<'a>> {
+        vec![
+            HashableMessage::from("encrypted code shares"),
+            HashableMessage::from(&self.node_id),
+            HashableMessage::from(&self.election_event_id),
+            HashableMessage::from(&self.verification_card_set_id),
+        ]
+    }
+
+    fn get_certificate_authority(&self) -> CertificateAuthority {
+        CertificateAuthority::get_ca_cc(&self.node_id).unwrap()
+    }
+
+    fn get_signature(&self) -> ByteArray {
+        self.signature.get_signature()
+    }
 }
 
 #[cfg(test)]

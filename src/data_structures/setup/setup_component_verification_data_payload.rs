@@ -1,6 +1,6 @@
 use super::super::{
     common_types::{EncryptionGroup, ExponentiatedEncryptedElement, SignatureJson},
-    deserialize_seq_string_64_to_seq_bytearray, deserialize_seq_string_hex_to_seq_bigunit,
+    deserialize_seq_string_hex_to_seq_bigunit,
     error::{DeserializeError, DeserializeErrorType},
     implement_trait_verifier_data_json_decode, VerifierDataDecode,
 };
@@ -19,8 +19,7 @@ use serde::Deserialize;
 pub struct SetupComponentVerificationDataPayload {
     pub election_event_id: String,
     pub verification_card_set_id: String,
-    #[serde(deserialize_with = "deserialize_seq_string_64_to_seq_bytearray")]
-    pub partial_choice_return_codes_allow_list: Vec<ByteArray>,
+    pub partial_choice_return_codes_allow_list: Vec<String>,
     pub chunk_id: usize,
     pub encryption_group: EncryptionGroup,
     pub setup_component_verification_data: Vec<SetupComponentVerificationDataInner>,

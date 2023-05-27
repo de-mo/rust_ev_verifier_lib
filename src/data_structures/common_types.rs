@@ -82,6 +82,15 @@ impl From<&ProofUnderline> for Proof {
     }
 }
 
+impl<'a> From<&'a Proof> for HashableMessage<'a> {
+    fn from(value: &'a Proof) -> Self {
+        let mut elts = vec![];
+        elts.push(Self::from(&(value.e)));
+        elts.push(Self::from(&(value.z)));
+        Self::from(elts)
+    }
+}
+
 /// A proof (e,z) where the keys are _e and _z in json
 #[derive(Deserialize, Debug, Clone)]
 pub struct DecryptionProof {
@@ -113,7 +122,9 @@ impl<'a> From<&'a ExponentiatedEncryptedElement> for HashableMessage<'a> {
     fn from(value: &'a ExponentiatedEncryptedElement) -> Self {
         let mut elts = vec![];
         elts.push(Self::from(&(value.gamma)));
-        elts.push(Self::from(&(value.phis)));
+        for p in value.phis.iter() {
+            elts.push(Self::from(p));
+        }
         Self::from(elts)
     }
 }

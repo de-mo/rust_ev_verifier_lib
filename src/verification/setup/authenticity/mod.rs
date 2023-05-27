@@ -20,6 +20,7 @@ pub fn get_verifications(metadata_list: &VerificationMetaDataList) -> Verificati
     res.push(Verification::new("02.03", fn_verification_0203, metadata_list).unwrap());
     res.push(Verification::new("02.04", fn_verification_0204, metadata_list).unwrap());
     res.push(Verification::new("02.05", fn_verification_0205, metadata_list).unwrap());
+    res.push(Verification::new("02.06", fn_verification_0206, metadata_list).unwrap());
     res
 }
 
@@ -75,19 +76,59 @@ fn fn_verification_0205<D: VerificationDirectoryTrait>(dir: &D, result: &mut Ver
     let setup_dir = dir.unwrap_setup();
     for d in setup_dir.vcs_directories() {
         debug!("Verification 2.05 for vcs_dir {}", d.get_name());
-        match setup_dir.setup_component_public_keys_payload() {
-            Ok(p) => verify_signature_for_object(
-                p.as_ref(),
-                result,
-                &format!("{}/setup_component_public_keys_payload", d.get_name()),
-            ),
-            Err(e) => result.push_error(create_verification_error!(
-                format!(
-                    "Error reading {}/setup_component_public_keys_payload",
-                    d.get_name()
+        for (i, ps) in d.setup_component_verification_data_payload_iter() {
+            match ps {
+                Ok(p) => verify_signature_for_object(
+                    p.as_ref(),
+                    result,
+                    &format!(
+                        "{}/setup_component_verification_data_payload_iter.{}.json",
+                        d.get_name(),
+                        i
+                    ),
                 ),
-                e
-            )),
+                Err(e) => result.push_error(create_verification_error!(
+                    format!(
+                        "{}/setup_component_verification_data_payload_iter.{}.json",
+                        d.get_name(),
+                        i
+                    ),
+                    e
+                )),
+            }
+        }
+    }
+}
+
+fn fn_verification_0206<D: VerificationDirectoryTrait>(dir: &D, result: &mut VerificationResult) {
+    let setup_dir = dir.unwrap_setup();
+    for d in setup_dir.vcs_directories() {
+        debug!("Verification 2.06 for vcs_dir {}", d.get_name());
+        for (i, rps) in d.control_component_code_shares_payload_iter() {
+            match rps {
+                Ok(ps) => {
+                    for p in ps.iter() {
+                        verify_signature_for_object(
+                            p,
+                            result,
+                            &format!(
+                                "{}/control_component_code_shares_payload.{}.json[{}]",
+                                d.get_name(),
+                                i,
+                                p.node_id
+                            ),
+                        )
+                    }
+                }
+                Err(e) => result.push_error(create_verification_error!(
+                    format!(
+                        "Error reading {}/control_component_code_shares_payload.{}.json",
+                        d.get_name(),
+                        i
+                    ),
+                    e
+                )),
+            }
         }
     }
 }
@@ -135,6 +176,16 @@ mod test {
         let dir = get_verifier_dir();
         let mut result = VerificationResult::new();
         fn_verification_0205(&dir, &mut result);
+        assert!(result.is_ok().unwrap());
+    }
+
+    #[test]
+    fn test_0206() {
+        let dir = get_verifier_dir();
+        let mut result = VerificationResult::new();
+        fn_verification_0206(&dir, &mut result);
+        println!("{:?}", result.errors());
+        println!("{:?}", result.failures());
         assert!(result.is_ok().unwrap());
     }
 }

@@ -427,6 +427,7 @@ where
     deserializer.deserialize_seq(Visitor)
 }
 
+#[allow(dead_code)]
 fn deserialize_seq_string_64_to_seq_bytearray<'de, D>(
     deserializer: D,
 ) -> Result<Vec<ByteArray>, D::Error>
