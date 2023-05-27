@@ -21,6 +21,7 @@ pub fn get_verifications(metadata_list: &VerificationMetaDataList) -> Verificati
     res.push(Verification::new("02.04", fn_verification_0204, metadata_list).unwrap());
     res.push(Verification::new("02.05", fn_verification_0205, metadata_list).unwrap());
     res.push(Verification::new("02.06", fn_verification_0206, metadata_list).unwrap());
+    res.push(Verification::new("02.07", fn_verification_0207, metadata_list).unwrap());
     res
 }
 
@@ -133,6 +134,24 @@ fn fn_verification_0206<D: VerificationDirectoryTrait>(dir: &D, result: &mut Ver
     }
 }
 
+fn fn_verification_0207<D: VerificationDirectoryTrait>(dir: &D, result: &mut VerificationResult) {
+    let setup_dir = dir.unwrap_setup();
+    for d in setup_dir.vcs_directories() {
+        debug!("Verification 2.07 for vcs_dir {}", d.get_name());
+        match d.setup_component_tally_data_payload() {
+            Ok(p) => verify_signature_for_object(
+                p.as_ref(),
+                result,
+                &format!("{}/setup_component_tally_data_payload.json", d.get_name(),),
+            ),
+            Err(e) => result.push_error(create_verification_error!(
+                format!("{}/setup_component_tally_data_payload.json", d.get_name(),),
+                e
+            )),
+        }
+    }
+}
+
 #[cfg(test)]
 mod test {
     use super::{
@@ -184,8 +203,14 @@ mod test {
         let dir = get_verifier_dir();
         let mut result = VerificationResult::new();
         fn_verification_0206(&dir, &mut result);
-        println!("{:?}", result.errors());
-        println!("{:?}", result.failures());
+        assert!(result.is_ok().unwrap());
+    }
+
+    #[test]
+    fn test_0207() {
+        let dir = get_verifier_dir();
+        let mut result = VerificationResult::new();
+        fn_verification_0207(&dir, &mut result);
         assert!(result.is_ok().unwrap());
     }
 }

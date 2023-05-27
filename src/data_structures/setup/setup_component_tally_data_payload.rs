@@ -4,7 +4,13 @@ use super::super::{
     error::{DeserializeError, DeserializeErrorType},
     implement_trait_verifier_data_json_decode, VerifierDataDecode,
 };
-use crate::error::{create_verifier_error, VerifierError};
+use crate::{
+    crypto_primitives::{
+        byte_array::ByteArray, direct_trust::CertificateAuthority, hashing::HashableMessage,
+        signature::VerifiySignatureTrait,
+    },
+    error::{create_verifier_error, VerifierError},
+};
 use num_bigint::BigUint;
 use serde::Deserialize;
 
@@ -22,6 +28,42 @@ pub struct SetupComponentTallyDataPayload {
 }
 
 implement_trait_verifier_data_json_decode!(SetupComponentTallyDataPayload);
+
+impl<'a> From<&'a SetupComponentTallyDataPayload> for HashableMessage<'a> {
+    fn from(value: &'a SetupComponentTallyDataPayload) -> Self {
+        let mut elts = vec![];
+        elts.push(Self::from(&value.election_event_id));
+        elts.push(Self::from(&value.verification_card_set_id));
+        elts.push(Self::from(&value.ballot_box_default_title));
+        elts.push(Self::from(&value.encryption_group));
+        elts.push(Self::from(&value.verification_card_ids));
+        let l: Vec<HashableMessage> = value
+            .verification_card_public_keys
+            .iter()
+            .map(|p| HashableMessage::from(p))
+            .collect();
+        elts.push(Self::from(l));
+        Self::from(elts)
+    }
+}
+
+impl<'a> VerifiySignatureTrait<'a> for SetupComponentTallyDataPayload {
+    fn get_context_data(&'a self) -> Vec<HashableMessage<'a>> {
+        vec![
+            HashableMessage::from("tally data"),
+            HashableMessage::from(&self.election_event_id),
+            HashableMessage::from(&self.verification_card_set_id),
+        ]
+    }
+
+    fn get_certificate_authority(&self) -> CertificateAuthority {
+        CertificateAuthority::SdmConfig
+    }
+
+    fn get_signature(&self) -> ByteArray {
+        self.signature.get_signature()
+    }
+}
 
 #[cfg(test)]
 mod test {
