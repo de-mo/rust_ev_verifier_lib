@@ -2,6 +2,7 @@
 //!
 
 use super::{byte_array::ByteArray, openssl_wrapper::hash::sha3_256};
+use chrono::NaiveDateTime;
 use num_bigint::BigUint;
 
 /// Enum to represent an element that is hashable
@@ -91,6 +92,23 @@ impl<'a> From<String> for HashableMessage<'a> {
 impl<'a> From<&'a str> for HashableMessage<'a> {
     fn from(value: &'a str) -> Self {
         HashableMessage::RStr(value)
+    }
+}
+
+impl<'a> From<&'a NaiveDateTime> for HashableMessage<'a> {
+    fn from(value: &'a NaiveDateTime) -> Self {
+        let s = value.format("%Y-%m-%dT%H:%M").to_string();
+        println!("s = {:?}", s);
+        HashableMessage::String(s)
+    }
+}
+
+impl<'a> From<bool> for HashableMessage<'a> {
+    fn from(value: bool) -> Self {
+        match value {
+            true => HashableMessage::String("true".to_string()),
+            false => HashableMessage::String("false".to_string()),
+        }
     }
 }
 
