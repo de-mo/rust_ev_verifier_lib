@@ -152,6 +152,21 @@ fn fn_verification_0207<D: VerificationDirectoryTrait>(dir: &D, result: &mut Ver
     }
 }
 
+fn fn_verification_0208<D: VerificationDirectoryTrait>(dir: &D, result: &mut VerificationResult) {
+    let setup_dir = dir.unwrap_setup();
+    let rp = match setup_dir.election_event_context_payload() {
+        Ok(p) => p,
+        Err(e) => {
+            result.push_error(create_verification_error!(
+                format!("{} cannot be read", "election_event_context_payload"),
+                e
+            ));
+            return;
+        }
+    };
+    verify_signature_for_object(rp.as_ref(), result, "election_event_context_payload")
+}
+
 #[cfg(test)]
 mod test {
     use super::{
@@ -211,6 +226,15 @@ mod test {
         let dir = get_verifier_dir();
         let mut result = VerificationResult::new();
         fn_verification_0207(&dir, &mut result);
+        assert!(result.is_ok().unwrap());
+    }
+
+    #[test]
+    #[ignore]
+    fn test_0208() {
+        let dir = get_verifier_dir();
+        let mut result = VerificationResult::new();
+        fn_verification_0208(&dir, &mut result);
         assert!(result.is_ok().unwrap());
     }
 }
