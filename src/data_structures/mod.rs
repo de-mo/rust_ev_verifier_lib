@@ -394,7 +394,7 @@ where
 {
     let buf = String::deserialize(deserializer)?;
 
-    BigUint::from_hexa_string(&buf).map_err(|e| Error::custom(e.message()))
+    BigUint::from_hexa_string(&buf).map_err(|e| Error::custom(e.to_string()))
 }
 
 fn deserialize_string_string_to_datetime<'de, D>(deserializer: D) -> Result<NaiveDateTime, D::Error>

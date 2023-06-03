@@ -3,10 +3,10 @@
 //! The extended functionalities are implemented using Trait that have to be
 //! used in the client modules
 
-use crate::error::{create_result_with_error, create_verifier_error, VerifierError};
 use num_bigint::{BigInt, BigUint, Sign};
 use num_traits::Num;
-use std::fmt::{Debug, Display};
+use std::fmt::Debug;
+use thiserror::Error;
 
 /// Trait to implement constant numbers
 pub trait Constants {
@@ -56,21 +56,17 @@ pub trait Hexa: Sized {
     fn to_hexa(&self) -> String;
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum BigUIntErrorType {
-    FromHexaError,
+#[derive(Error, Debug)]
+pub enum BigUIntError {
+    #[error("Error parsing {orig} in BigUInt in method {fnname}")]
+    ParseError { orig: String, fnname: String },
+    #[error("Error parsing {orig} in BigUInt in method {fnname} caused by {source}")]
+    ParseErrorWithSource {
+        orig: String,
+        fnname: String,
+        source: num_bigint::ParseBigIntError,
+    },
 }
-
-impl Display for BigUIntErrorType {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let s = match self {
-            Self::FromHexaError => "BigUint from Hexa",
-        };
-        write!(f, "{s}")
-    }
-}
-
-type BigUIntError = VerifierError<BigUIntErrorType>;
 
 /// Trait to calculate byte length
 pub trait ByteLength {
@@ -144,17 +140,17 @@ impl Operations for BigUint {
 impl Hexa for BigUint {
     fn from_hexa_string(s: &String) -> Result<Self, BigUIntError> {
         if !s.starts_with("0x") && !s.starts_with("0X") {
-            return create_result_with_error!(
-                BigUIntErrorType::FromHexaError,
-                format!("Malformed hexa string. Must start with \"0x\" {}", s)
-            );
+            return Err(BigUIntError::ParseError {
+                orig: s.clone(),
+                fnname: "from_hexa_string".to_string(),
+            });
         };
         <BigUint>::from_str_radix(&s[2..], 16).or_else(|e| {
-            create_result_with_error!(
-                BigUIntErrorType::FromHexaError,
-                format!("Cannot convert biguint from hexa {}", s),
-                e
-            )
+            Err(BigUIntError::ParseErrorWithSource {
+                orig: s.clone(),
+                fnname: "from_hexa_string".to_string(),
+                source: e,
+            })
         })
     }
 

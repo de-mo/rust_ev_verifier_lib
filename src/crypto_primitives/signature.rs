@@ -1,15 +1,14 @@
 //! Module to implement the signature and the verification of the signature of
 //! an object.
 
-use std::fmt::Display;
-use std::path::Path;
-
 use super::{byte_array::ByteArray, hashing::HashableMessage};
 use super::{
     direct_trust::{CertificateAuthority, DirectTrust},
-    openssl_wrapper::signature::verify,
+    openssl_wrapper::verify,
 };
 use crate::error::{create_result_with_error, create_verifier_error, VerifierError};
+use std::fmt::Display;
+use std::path::Path;
 
 /// Trait that must be implemented for each object implementing a signature to be verified
 ///

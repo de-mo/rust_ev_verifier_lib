@@ -1,7 +1,7 @@
 //! Module to implement hashing functions
 //!
 
-use super::{byte_array::ByteArray, openssl_wrapper::hash::sha3_256};
+use super::{byte_array::ByteArray, openssl_wrapper::sha3_256};
 use chrono::NaiveDateTime;
 use num_bigint::BigUint;
 

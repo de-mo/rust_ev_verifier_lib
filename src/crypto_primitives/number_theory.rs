@@ -1,20 +1,25 @@
 ///! Module that implement some functions of the number theory
 use super::num_bigint::Constants;
-use crate::error::{create_result_with_error, create_verifier_error, VerifierError};
 use num_bigint::BigUint;
 use num_bigint_dig::{
     prime::{probably_prime, probably_prime_miller_rabin},
     BigUint as BigUintDig,
 };
-use std::fmt::Display;
+use thiserror::Error;
 
 /// Validate if the number is a small prime according to the algorithm specified
 pub fn is_small_prime(n: usize) -> Result<bool, NumberTheoryError> {
     if n >= usize::pow(2, 31) {
-        return create_result_with_error!(NumberTheoryErrorType::NotInRange, "n is to big");
+        return Err(NumberTheoryError::OutOfRange {
+            msg: "to big. Must be less thant 2^31".to_string(),
+            n,
+        });
     };
     if n == 0 {
-        return create_result_with_error!(NumberTheoryErrorType::NotInRange, "n cannt be 0");
+        return Err(NumberTheoryError::OutOfRange {
+            msg: "must be greater than 0".to_string(),
+            n,
+        });
     };
     if n == 1 {
         return Ok(false);
@@ -48,7 +53,7 @@ pub fn is_small_prime(n: usize) -> Result<bool, NumberTheoryError> {
 /// Return an error if the given number n is not odd.
 pub fn jacobi(a: &BigUint, n: &BigUint) -> Result<i8, NumberTheoryError> {
     if n % 2u8 == BigUint::zero() {
-        return create_result_with_error!(NumberTheoryErrorType::NotOdd, "Denominator must be odd");
+        return Err(NumberTheoryError::DenominatorNotOdd(n.clone()));
     }
     let mut temp_a = a % n;
     let mut temp_n = n.to_owned();
@@ -87,23 +92,13 @@ pub fn miller_rabin_test(n: &BigUint, base: usize) -> bool {
     probably_prime_miller_rabin(&BigUintDig::new(n.to_u32_digits()), base, false)
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum NumberTheoryErrorType {
-    NotInRange,
-    NotOdd,
+#[derive(Error, Debug)]
+pub enum NumberTheoryError {
+    #[error("Out of range error for {n}: {msg}")]
+    OutOfRange { msg: String, n: usize },
+    #[error("Denominator {0} is not odd, but it must be.")]
+    DenominatorNotOdd(BigUint),
 }
-
-impl Display for NumberTheoryErrorType {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let s = match self {
-            Self::NotInRange => "Not in Range",
-            Self::NotOdd => "Not odo",
-        };
-        write!(f, "{s}")
-    }
-}
-
-type NumberTheoryError = VerifierError<NumberTheoryErrorType>;
 
 #[cfg(test)]
 mod test {

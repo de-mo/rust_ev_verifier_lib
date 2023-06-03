@@ -1,8 +1,11 @@
 //! Module implementing the direct trust
 
-use super::openssl_wrapper::certificate::{Keystore, SigningCertificate};
-use crate::error::{create_verifier_error, VerifierError};
-use std::{fmt::Display, fs, path::Path};
+use thiserror::Error;
+
+use super::openssl_wrapper::{
+    OpensslError, {Keystore, SigningCertificate},
+};
+use std::{fs, io, path::Path};
 
 const KEYSTORE_FILE_NAME: &str = "public_keys_keystore_verifier.p12";
 const PASSWORD_FILE_NAME: &str = "public_keys_keystore_verifier_pw.txt";
@@ -36,27 +39,14 @@ impl DirectTrust {
     ) -> Result<DirectTrust, DirectTrustError> {
         let file = location.join(KEYSTORE_FILE_NAME);
         let file_pwd = location.join(PASSWORD_FILE_NAME);
-        let pwd = fs::read_to_string(&file_pwd).map_err(|e| {
-            create_verifier_error!(
-                DirectTrustErrorType::Password,
-                format!("Error reading password file {}", &file_pwd.display()),
-                e
-            )
+        let pwd = fs::read_to_string(&file_pwd).map_err(|e| DirectTrustError::IO {
+            msg: format!("Error reading password file {}", &file_pwd.display()),
+            source: e,
         })?;
-        let ks = Keystore::read_keystore(&file, &pwd).map_err(|e| {
-            create_verifier_error!(
-                DirectTrustErrorType::Error,
-                format!("Error reading keystore {}", file.display()),
-                e
-            )
-        })?;
-        let cert = ks.get_certificate(&String::from(authority)).map_err(|e| {
-            create_verifier_error!(
-                DirectTrustErrorType::Error,
-                format!("Error reading certificate {}", String::from(authority)),
-                e
-            )
-        })?;
+        let ks = Keystore::read_keystore(&file, &pwd).map_err(|e| DirectTrustError::Keystore(e))?;
+        let cert = ks
+            .get_certificate(&String::from(authority))
+            .map_err(|e| DirectTrustError::Certificate(e))?;
         Ok(DirectTrust {
             authority: authority.clone(),
             cert: cert.to_owned(),
@@ -74,23 +64,15 @@ impl DirectTrust {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum DirectTrustErrorType {
-    Error,
-    Password,
+#[derive(Error, Debug)]
+pub enum DirectTrustError {
+    #[error("IO error caused by {source}: {msg}")]
+    IO { msg: String, source: io::Error },
+    #[error(transparent)]
+    Keystore(OpensslError),
+    #[error(transparent)]
+    Certificate(OpensslError),
 }
-
-impl Display for DirectTrustErrorType {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let s = match self {
-            Self::Error => "General Error",
-            Self::Password => "Password Error",
-        };
-        write!(f, "{s}")
-    }
-}
-
-pub type DirectTrustError = VerifierError<DirectTrustErrorType>;
 
 impl CertificateAuthority {
     pub fn get_ca_cc(node: &usize) -> Option<Self> {

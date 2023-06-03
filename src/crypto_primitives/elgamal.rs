@@ -6,14 +6,11 @@ use super::{
     number_theory::{
         is_probable_prime, is_quadratic_residue, is_small_prime, miller_rabin_test, SMALL_PRIMES,
     },
-    openssl_wrapper::hash::shake128,
+    openssl_wrapper::shake128,
 };
-use crate::{
-    data_structures::common_types::EncryptionGroup,
-    error::{create_result_with_error, create_verifier_error, VerifierError},
-};
+use crate::data_structures::common_types::EncryptionGroup;
 use num_bigint::BigUint;
-use std::fmt::Display;
+use thiserror::Error;
 
 // Get small prime group members according to the specifications
 pub fn get_small_prime_group_members(
@@ -30,10 +27,10 @@ pub fn get_small_prime_group_members(
         current += 2;
     }
     if res.len() != desired_number {
-        return create_result_with_error!(
-            ElgamalErrorType::TooFewSmallPrimeNumbers,
-            "Not the correct number of small primes"
-        );
+        return Err(ElgamalError::TooFewSmallPrimeNumbers {
+            expected: desired_number,
+            found: res.len(),
+        });
     }
     Ok(res)
 }
@@ -70,35 +67,26 @@ pub fn get_encryption_parameters(seed: &String) -> Result<EncryptionGroup, Elgam
     if is_quadratic_residue(&BigUint::two(), &p) {
         g = 2;
     }
-    match miller_rabin_test(&q_final, 64) && miller_rabin_test(&p, 64) {
-        true => Ok(EncryptionGroup {
-            p,
-            q: q_final,
-            g: BigUint::from(g),
-        }),
-        false => {
-            create_result_with_error!(ElgamalErrorType::NotPrime, "p or q is not probable prime")
-        }
+    match miller_rabin_test(&q_final, 64) {
+        true => match miller_rabin_test(&p, 64) {
+            true => Ok(EncryptionGroup {
+                p,
+                q: q_final,
+                g: BigUint::from(g),
+            }),
+            false => Err(ElgamalError::NotPrime("p".to_string(), p)),
+        },
+        false => Err(ElgamalError::NotPrime("q".to_string(), q)),
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum ElgamalErrorType {
-    TooFewSmallPrimeNumbers,
-    NotPrime,
+#[derive(Error, Debug)]
+pub enum ElgamalError {
+    #[error("To few number of small primes found. Expcted: {expected}, found: {found}")]
+    TooFewSmallPrimeNumbers { expected: usize, found: usize },
+    #[error("Number {0} with value {1} is not prime")]
+    NotPrime(String, BigUint),
 }
-
-impl Display for ElgamalErrorType {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let s = match self {
-            Self::TooFewSmallPrimeNumbers => "Too few small prime numbers",
-            Self::NotPrime => "Not Prime",
-        };
-        write!(f, "{s}")
-    }
-}
-
-type ElgamalError = VerifierError<ElgamalErrorType>;
 
 #[cfg(test)]
 mod test {

@@ -1,14 +1,12 @@
 //! This module implement the struct ByteArray that is used over the
 //! crate
 
-use crate::{
-    crypto_primitives::num_bigint::ByteLength,
-    error::{create_result_with_error, create_verifier_error, VerifierError},
-};
-use data_encoding::{BASE32, BASE64, HEXUPPER};
+use crate::crypto_primitives::num_bigint::ByteLength;
+use data_encoding::{DecodeError, BASE32, BASE64, HEXUPPER};
 use num_bigint::{BigUint, ToBigUint};
 use num_traits::Pow;
 use std::fmt::{Debug, Display};
+use thiserror::Error;
 
 /// ByteArray represent a byte of arrays
 #[derive(Clone, PartialEq, Eq)]
@@ -86,10 +84,10 @@ impl ByteArray {
     /// Cut the byte array to given bit length according to the specifications
     pub fn cut_bit_length(&self, n: usize) -> Result<ByteArray, ByteArrayError> {
         if n < 1 || n > 8 * self.len() {
-            return create_result_with_error!(
-                ByteArrayErrorType::CutToBitLengthIndexError,
-                "Index must be between 1 and 8*lenght byte array"
-            );
+            return Err(ByteArrayError::CutToBitLengthIndexError {
+                index: n,
+                ba: self.clone(),
+            });
         }
         let bs = self.to_bytes();
         println!("bs: {:?}", bs);
@@ -116,27 +114,17 @@ impl ByteArray {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum ByteArrayErrorType {
-    DecodeBase16Error,
-    DecodeBase32Error,
-    DecodeBase64Error,
-    CutToBitLengthIndexError,
+#[derive(Error, Debug)]
+pub enum ByteArrayError {
+    #[error("Error decoding {orig} in base {base} caused by {source}")]
+    DecodeError {
+        orig: String,
+        base: u8,
+        source: DecodeError,
+    },
+    #[error("Error in cut_bit_length for {ba}: the index {index} must be between 1 and 8*{}", ba.len())]
+    CutToBitLengthIndexError { index: usize, ba: ByteArray },
 }
-
-impl Display for ByteArrayErrorType {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let s = match self {
-            Self::DecodeBase16Error => "Decode base16 to byte array",
-            Self::DecodeBase32Error => "Decode base32 to byte array",
-            Self::DecodeBase64Error => "Decode base32 to byte array",
-            Self::CutToBitLengthIndexError => "Index in CutToBitLength",
-        };
-        write!(f, "{s}")
-    }
-}
-
-type ByteArrayError = VerifierError<ByteArrayErrorType>;
 
 impl Encode for ByteArray {
     fn base16_encode(&self) -> String {
@@ -156,12 +144,10 @@ impl Decode for ByteArray {
     fn base16_decode(s: &String) -> Result<Self, ByteArrayError> {
         HEXUPPER
             .decode(s.as_bytes())
-            .map_err(|e| {
-                create_verifier_error!(
-                    ByteArrayErrorType::DecodeBase16Error,
-                    format!("Cannot decode to byte array in base16 {}", s),
-                    e
-                )
+            .map_err(|e| ByteArrayError::DecodeError {
+                orig: s.to_string(),
+                base: 16,
+                source: e,
             })
             .map(|r| Self::from(&r))
     }
@@ -169,12 +155,10 @@ impl Decode for ByteArray {
     fn base32_decode(s: &String) -> Result<Self, ByteArrayError> {
         BASE32
             .decode(s.as_bytes())
-            .map_err(|e| {
-                create_verifier_error!(
-                    ByteArrayErrorType::DecodeBase16Error,
-                    format!("Cannot decode to byte array in base16 {}", s),
-                    e
-                )
+            .map_err(|e| ByteArrayError::DecodeError {
+                orig: s.to_string(),
+                base: 32,
+                source: e,
             })
             .map(|r| Self::from(&r))
     }
@@ -182,12 +166,10 @@ impl Decode for ByteArray {
     fn base64_decode(s: &String) -> Result<Self, ByteArrayError> {
         BASE64
             .decode(s.as_bytes())
-            .map_err(|e| {
-                create_verifier_error!(
-                    ByteArrayErrorType::DecodeBase16Error,
-                    format!("Cannot decode to byte array in base16 {}", s),
-                    e
-                )
+            .map_err(|e| ByteArrayError::DecodeError {
+                orig: s.to_string(),
+                base: 64,
+                source: e,
             })
             .map(|r| Self::from(&r))
     }
@@ -202,6 +184,12 @@ impl Default for ByteArray {
 impl Debug for ByteArray {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         self.inner.fmt(f)
+    }
+}
+
+impl Display for ByteArray {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.base16_encode())
     }
 }
 
