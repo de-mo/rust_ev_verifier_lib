@@ -15,7 +15,6 @@ serde_json = "1.0"
 openssl-sys = "0.9"
 openssl = "0.10"
 enum-kinds = "0.5"
-clap = { version = "4.1", features = ["derive"] }
 log = "0.4"
 log4rs = "1.2"
 num-bigint = "0.4"
@@ -26,4 +25,5 @@ glob = "0.3"
 quick-xml = { version = "0.28", features = ["serialize"] }
 rayon = "1.7"
 chrono = { version = "0.4", features = ["serde"]}
+structopt = "0.3.26"
 

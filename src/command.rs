@@ -4,8 +4,6 @@
 //! ```shell
 //! rust_verifier --help
 //! ```
-use std::path::Path;
-
 use super::runner::Runner;
 use crate::{
     constants::LOG_PATH,
@@ -14,51 +12,50 @@ use crate::{
         VerificationPeriod,
     },
 };
-use clap::{Arg, ArgAction, ArgMatches, Command};
 use log::{info, warn, LevelFilter};
 use log4rs::{
     append::{console::ConsoleAppender, file::FileAppender},
     config::{Appender, Config, Root},
     encode::pattern::PatternEncoder,
 };
+use std::path::PathBuf;
+use structopt::StructOpt;
 
-fn get_verifier_subcommand(
-    name: &'static str,
-    long_flag: &'static str,
-    about: &'static str,
-) -> Command {
-    Command::new(name)
-        .long_flag(long_flag)
-        .about(about)
-        .arg(
-            Arg::new("dir")
-                .short('d')
-                .long("dir")
-                .help("Directory where the data are stored")
-                .action(ArgAction::Set)
-                .required(true)
-                .num_args(1),
-        )
-        .arg(
-            Arg::new("exclude")
-                .long("exclude")
-                .help("Exclusion of verifications. Use the id of the verification. Many separated by blanks. E.g. --exclude 200 500")
-                .action(ArgAction::Set)
-                .num_args(1..),
-        )
+#[derive(Debug, PartialEq, StructOpt)]
+#[structopt()]
+struct VerifierSubCommand {
+    #[structopt(short, long, parse(from_os_str))]
+    /// Directory where the data are stored
+    /// The directory must contains the subdirectory setup and tally
+    dir: PathBuf,
+
+    #[structopt(long)]
+    /// Exclusion of verifications.
+    /// Use the id of the verification. Many separated by blanks. E.g. --exclude 02.02 05.05
+    exclude: Vec<String>,
 }
 
-fn get_command() -> ArgMatches {
-    Command::new("Verifier")
-        .about("Verifier for E-Voting System of Swiss Post")
-        .version("0.0.1")
-        .subcommand_required(false)
-        .arg_required_else_help(false)
-        .author("Denis Morel")
-        // Query subcommand
-        .subcommand(get_verifier_subcommand("setup", "setup", "Verifiy Setup"))
-        .subcommand(get_verifier_subcommand("tally", "tally", "Verifiy tally"))
-        .get_matches()
+#[derive(Debug, PartialEq, StructOpt)]
+#[structopt()]
+enum SubCommands {
+    #[structopt()]
+    /// Setup Verification
+    /// Verify the setup configuration
+    setup(VerifierSubCommand),
+
+    #[structopt()]
+    /// Tally Verification
+    /// Verify the tally configuration
+    tally(VerifierSubCommand),
+}
+
+#[derive(Debug, StructOpt)]
+#[structopt(name = "Verifier", version = "0.0.1", author = "Denis Morel")]
+/// E-Voting Verifier
+/// Verifier for E-Voting System of Swiss Post
+struct VerifiyCommand {
+    #[structopt(subcommand)]
+    sub: Option<SubCommands>,
 }
 
 /// Init the logger with or without stdout
@@ -86,42 +83,33 @@ fn init_logger(level: LevelFilter, with_stdout: bool) {
 }
 
 pub fn execute_command() {
-    let matches = get_command();
-    match matches.subcommand() {
+    let command = VerifiyCommand::from_args();
+    println!("command: {:?}", command);
+    match command.sub {
+        Some(cmd) => {
+            init_logger(LevelFilter::Debug, true);
+            match cmd {
+                SubCommands::setup(c) => {
+                    info!("Start Verifier for setup");
+                    execute_runner(&VerificationPeriod::Setup, &c);
+                }
+                SubCommands::tally(c) => {
+                    info!("Start Verifier for tally");
+                    execute_runner(&VerificationPeriod::Setup, &c);
+                }
+            };
+        }
         None => {
             init_logger(LevelFilter::Debug, false);
             info!("Start GUI Verifier");
             warn!("Not Implemented yet");
         }
-        Some(("setup", setup_matches)) => {
-            init_logger(LevelFilter::Debug, true);
-            info!("Start Verifier for setup");
-            execute_runner(&VerificationPeriod::Setup, &setup_matches);
-        }
-        Some(("tally", tally_matches)) => {
-            init_logger(LevelFilter::Debug, true);
-            info!("Start Verifier for tally");
-            execute_runner(&VerificationPeriod::Tally, &tally_matches);
-        }
-        _ => unreachable!(), // If all subcommands are defined above, anything else is unreachable
     }
     info!("Verifier finished");
 }
 
-fn execute_runner(period: &VerificationPeriod, matches: &ArgMatches) {
+fn execute_runner(period: &VerificationPeriod, cmd: &VerifierSubCommand) {
     let metadata = VerificationMetaDataList::load().unwrap();
-    let dir = matches.get_one::<String>("dir").unwrap();
-    let path = Path::new(dir);
-    let exclusion: Option<Vec<String>> = match matches.contains_id("exclude") {
-        false => None,
-        true => Some(
-            matches
-                .get_many("exclude")
-                .unwrap()
-                .map(|e: &String| e.to_string())
-                .collect(),
-        ),
-    };
-    let mut runner = Runner::new(path, period, &metadata, &exclusion);
+    let mut runner = Runner::new(&cmd.dir, period, &metadata, &cmd.exclude);
     runner.run_all_sequential(&metadata);
 }

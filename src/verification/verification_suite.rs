@@ -28,7 +28,7 @@ impl<'a> VerificationSuite<'a> {
     pub fn new(
         period: &VerificationPeriod,
         metadata_list: &'a VerificationMetaDataList,
-        exclusion: &Option<Vec<String>>,
+        exclusion: &Vec<String>,
     ) -> VerificationSuite<'a> {
         let mut all_verifs = match period {
             VerificationPeriod::Setup => get_verifications_setup(metadata_list),
@@ -36,15 +36,9 @@ impl<'a> VerificationSuite<'a> {
             VerificationPeriod::Tally => get_verifications_tally(metadata_list),
         };
         let all_ids: Vec<String> = all_verifs.iter().map(|v| v.id.clone()).collect();
-        let mut excl = match exclusion {
-            Some(e) => {
-                all_verifs.retain(|x| !exclusion.as_ref().unwrap().contains(&&x.id));
-                e.iter().map(|f| f.clone()).collect()
-            }
-            None => vec![],
-        };
+        all_verifs.retain(|x| !exclusion.contains(&&x.id));
+        let mut excl: Vec<String> = exclusion.iter().map(|f| f.clone()).collect();
         excl.retain(|s| all_ids.contains(s));
-        if exclusion.is_some() {}
         VerificationSuite {
             period: period.clone(),
             list: Box::new(all_verifs),
@@ -158,7 +152,7 @@ mod test {
     #[test]
     fn test_setup_verifications() {
         let metadata_list = VerificationMetaDataList::load().unwrap();
-        let verifs = VerificationSuite::new(&VerificationPeriod::Setup, &metadata_list, &None);
+        let verifs = VerificationSuite::new(&VerificationPeriod::Setup, &metadata_list, &vec![]);
         assert_eq!(verifs.len(), EXPECTED_IMPL_SETUP_VERIF);
         assert_eq!(verifs.collect_id(), IMPL_SETUP_TESTS);
         assert_eq!(
@@ -170,7 +164,7 @@ mod test {
     #[test]
     fn test_tally_verifications() {
         let metadata_list = VerificationMetaDataList::load().unwrap();
-        let verifs = VerificationSuite::new(&VerificationPeriod::Tally, &metadata_list, &None);
+        let verifs = VerificationSuite::new(&VerificationPeriod::Tally, &metadata_list, &vec![]);
         assert_eq!(verifs.len(), EXPECTED_IMPL_TALLY_VERIF);
         assert_eq!(verifs.collect_id(), IMPL_TALLY_TESTS);
         assert_eq!(
@@ -185,7 +179,7 @@ mod test {
         let verifs = VerificationSuite::new(
             &VerificationPeriod::Setup,
             &metadata_list,
-            &Some(vec!["02.01".to_string(), "05.01".to_string()]),
+            &vec!["02.01".to_string(), "05.01".to_string()],
         );
         assert_eq!(verifs.len(), EXPECTED_IMPL_SETUP_VERIF - 2);
         assert_eq!(verifs.len_excluded(), 2);
@@ -196,7 +190,7 @@ mod test {
         let verifs = VerificationSuite::new(
             &VerificationPeriod::Setup,
             &metadata_list,
-            &Some(vec!["toto".to_string()]),
+            &vec!["toto".to_string()],
         );
         assert_eq!(verifs.len(), EXPECTED_IMPL_SETUP_VERIF);
         assert_eq!(verifs.len_excluded(), 0);
@@ -204,11 +198,7 @@ mod test {
         let verifs = VerificationSuite::new(
             &VerificationPeriod::Setup,
             &metadata_list,
-            &Some(vec![
-                "02.01".to_string(),
-                "05.01".to_string(),
-                "toto".to_string(),
-            ]),
+            &vec!["02.01".to_string(), "05.01".to_string(), "toto".to_string()],
         );
         assert_eq!(verifs.len(), EXPECTED_IMPL_SETUP_VERIF - 2);
         assert_eq!(verifs.len_excluded(), 2);
