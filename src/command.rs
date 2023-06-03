@@ -41,12 +41,12 @@ enum SubCommands {
     #[structopt()]
     /// Setup Verification
     /// Verify the setup configuration
-    setup(VerifierSubCommand),
+    Setup(VerifierSubCommand),
 
     #[structopt()]
     /// Tally Verification
     /// Verify the tally configuration
-    tally(VerifierSubCommand),
+    Tally(VerifierSubCommand),
 }
 
 #[derive(Debug, StructOpt)]
@@ -89,11 +89,11 @@ pub fn execute_command() {
         Some(cmd) => {
             init_logger(LevelFilter::Debug, true);
             match cmd {
-                SubCommands::setup(c) => {
+                SubCommands::Setup(c) => {
                     info!("Start Verifier for setup");
                     execute_runner(&VerificationPeriod::Setup, &c);
                 }
-                SubCommands::tally(c) => {
+                SubCommands::Tally(c) => {
                     info!("Start Verifier for tally");
                     execute_runner(&VerificationPeriod::Setup, &c);
                 }
