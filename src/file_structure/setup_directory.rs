@@ -4,7 +4,6 @@ use super::{
         add_type_for_file_group_iter_trait, impl_iterator_over_data_payload, FileGroup,
         FileGroupIter, FileGroupIterTrait,
     },
-    FileStructureError,
 };
 use crate::{
     constants::{SETUP_DIR_NAME, VCS_DIR_NAME},
@@ -66,19 +65,13 @@ pub trait SetupDirectoryTrait {
     fn election_event_configuration_file(&self) -> &File;
     fn control_component_public_keys_payload_group(&self) -> &FileGroup;
     fn vcs_directories(&self) -> &Vec<Self::VCSDirType>;
-    fn encryption_parameters_payload(
-        &self,
-    ) -> Result<Box<EncryptionParametersPayload>, FileStructureError>;
+    fn encryption_parameters_payload(&self) -> anyhow::Result<Box<EncryptionParametersPayload>>;
     fn setup_component_public_keys_payload(
         &self,
-    ) -> Result<Box<SetupComponentPublicKeysPayload>, FileStructureError>;
+    ) -> anyhow::Result<Box<SetupComponentPublicKeysPayload>>;
 
-    fn election_event_context_payload(
-        &self,
-    ) -> Result<Box<ElectionEventContextPayload>, FileStructureError>;
-    fn election_event_configuration(
-        &self,
-    ) -> Result<Box<ElectionEventConfiguration>, FileStructureError>;
+    fn election_event_context_payload(&self) -> anyhow::Result<Box<ElectionEventContextPayload>>;
+    fn election_event_configuration(&self) -> anyhow::Result<Box<ElectionEventConfiguration>>;
 
     fn control_component_public_keys_payload_iter(
         &self,
@@ -105,7 +98,7 @@ pub trait VCSDirectoryTrait {
     fn control_component_code_shares_payload_group(&self) -> &FileGroup;
     fn setup_component_tally_data_payload(
         &self,
-    ) -> Result<Box<SetupComponentTallyDataPayload>, FileStructureError>;
+    ) -> anyhow::Result<Box<SetupComponentTallyDataPayload>>;
     fn setup_component_verification_data_payload_iter(
         &self,
     ) -> Self::SetupComponentVerificationDataPayloadAsResultIterType;
@@ -210,35 +203,33 @@ impl SetupDirectoryTrait for SetupDirectory {
     fn vcs_directories(&self) -> &Vec<VCSDirectory> {
         &self.vcs_directories
     }
-    fn encryption_parameters_payload(
-        &self,
-    ) -> Result<Box<EncryptionParametersPayload>, FileStructureError> {
+    fn encryption_parameters_payload(&self) -> anyhow::Result<Box<EncryptionParametersPayload>> {
         self.encryption_parameters_payload_file
             .get_data()
+            .map_err(|e| e.context("in encryption_parameters_payload"))
             .map(|d| Box::new(d.encryption_parameters_payload().unwrap().clone()))
     }
 
     fn setup_component_public_keys_payload(
         &self,
-    ) -> Result<Box<SetupComponentPublicKeysPayload>, FileStructureError> {
+    ) -> anyhow::Result<Box<SetupComponentPublicKeysPayload>> {
         self.setup_component_public_keys_payload_file
             .get_data()
+            .map_err(|e| e.context("in setup_component_public_keys_payload"))
             .map(|d| Box::new(d.setup_component_public_keys_payload().unwrap().clone()))
     }
 
-    fn election_event_context_payload(
-        &self,
-    ) -> Result<Box<ElectionEventContextPayload>, FileStructureError> {
+    fn election_event_context_payload(&self) -> anyhow::Result<Box<ElectionEventContextPayload>> {
         self.election_event_context_payload_file
             .get_data()
+            .map_err(|e| e.context("in election_event_context_payload"))
             .map(|d| Box::new(d.election_event_context_payload().unwrap().clone()))
     }
 
-    fn election_event_configuration(
-        &self,
-    ) -> Result<Box<ElectionEventConfiguration>, FileStructureError> {
+    fn election_event_configuration(&self) -> anyhow::Result<Box<ElectionEventConfiguration>> {
         self.election_event_configuration_file
             .get_data()
+            .map_err(|e| e.context("in election_event_configuration"))
             .map(|d| Box::new(d.election_event_configuration().unwrap().clone()))
     }
 
@@ -293,9 +284,10 @@ impl VCSDirectoryTrait for VCSDirectory {
     }
     fn setup_component_tally_data_payload(
         &self,
-    ) -> Result<Box<SetupComponentTallyDataPayload>, FileStructureError> {
+    ) -> anyhow::Result<Box<SetupComponentTallyDataPayload>> {
         self.setup_component_tally_data_payload_file
             .get_data()
+            .map_err(|e| e.context("in setup_component_tally_data_payload"))
             .map(|d| Box::new(d.setup_component_tally_data_payload().unwrap().clone()))
     }
 
@@ -395,7 +387,7 @@ pub mod mock {
         super::mock::{mock_payload, wrap_file_group_getter, wrap_payload_getter},
         *,
     };
-    use crate::error::{create_result_with_error, create_verifier_error, VerifierError};
+    use anyhow::anyhow;
 
     /// Mock for [VCSDirectory]
     pub struct MockVCSDirectory {
@@ -404,7 +396,7 @@ pub mod mock {
         mocked_setup_component_verification_data_payload_group: Option<FileGroup>,
         mocked_control_component_code_shares_payload_group: Option<FileGroup>,
         mocked_setup_component_tally_data_payload:
-            Option<Result<Box<SetupComponentTallyDataPayload>, FileStructureError>>,
+            Option<anyhow::Result<Box<SetupComponentTallyDataPayload>>>,
         mocked_setup_component_verification_data_payloads:
             HashMap<usize, SetupComponentVerificationDataPayloadAsResult>,
         mocked_control_component_code_shares_payloads:
@@ -435,13 +427,13 @@ pub mod mock {
         mocked_election_event_configuration_file: Option<File>,
         mocked_control_component_public_keys_payload_group: Option<FileGroup>,
         mocked_encryption_parameters_payload:
-            Option<Result<Box<EncryptionParametersPayload>, FileStructureError>>,
+            Option<anyhow::Result<Box<EncryptionParametersPayload>>>,
         mocked_setup_component_public_keys_payload:
-            Option<Result<Box<SetupComponentPublicKeysPayload>, FileStructureError>>,
+            Option<anyhow::Result<Box<SetupComponentPublicKeysPayload>>>,
         mocked_election_event_context_payload:
-            Option<Result<Box<ElectionEventContextPayload>, FileStructureError>>,
+            Option<anyhow::Result<Box<ElectionEventContextPayload>>>,
         mocked_election_event_configuration:
-            Option<Result<Box<ElectionEventConfiguration>, FileStructureError>>,
+            Option<anyhow::Result<Box<ElectionEventConfiguration>>>,
         mocked_control_component_public_keys_payloads:
             HashMap<usize, ControlComponentPublicKeysPayloadAsResult>,
         vcs_directories: Vec<MockVCSDirectory>,

@@ -1,18 +1,14 @@
-use super::super::super::{
-    error::{
-        create_verification_error, create_verification_failure, VerificationErrorType,
-        VerificationFailureType,
-    },
-    verification::VerificationResult,
+use super::super::super::result::{
+    create_verification_error, create_verification_failure, VerificationEvent, VerificationResult,
 };
 use crate::{
     data_structures::{
         setup::control_component_public_keys_payload::ControlComponentPublicKeys,
         VerifierSetupDataTrait,
     },
-    error::{create_verifier_error, VerifierError},
     file_structure::{setup_directory::SetupDirectoryTrait, VerificationDirectoryTrait},
 };
+use anyhow::anyhow;
 use log::debug;
 use std::iter::zip;
 
@@ -31,7 +27,7 @@ fn validate_ccm_and_ccr_schorr_proofs<S: SetupDirectoryTrait>(
     {
         Ok(d) => d.control_component_public_keys,
         Err(e) => {
-            result.push_error(create_verification_error!(
+            result.push(create_verification_error!(
                 format!("Cannot read data from file {}", f.to_str()),
                 e
             ));
@@ -39,17 +35,17 @@ fn validate_ccm_and_ccr_schorr_proofs<S: SetupDirectoryTrait>(
         }
     };
     if setup.ccmj_schnorr_proofs.len() != cc_pk.ccmj_schnorr_proofs.len() {
-        result.push_failure(create_verification_failure!(format!("The length of CCM public keys for control component {} are identical from both sources", node_id)));
+        result.push(create_verification_failure!(format!("The length of CCM public keys for control component {} are identical from both sources", node_id)));
     } else {
         for (i, (a, b)) in zip(&setup.ccmj_schnorr_proofs, &cc_pk.ccmj_schnorr_proofs).enumerate() {
             if a.e != b.e {
-                result.push_failure(create_verification_failure!(format!(
+                result.push(create_verification_failure!(format!(
             "The field e for Ccm Schor Proof is not the same at pos {} for control component {}", i,
             node_id
         )));
             }
             if a.z != b.z {
-                result.push_failure(create_verification_failure!(format!(
+                result.push(create_verification_failure!(format!(
             "The field z for Ccm Schor Proof is not the same at pos {} for control component {}", i,
             node_id
         )));
@@ -57,17 +53,17 @@ fn validate_ccm_and_ccr_schorr_proofs<S: SetupDirectoryTrait>(
         }
     }
     if setup.ccmj_schnorr_proofs.len() != cc_pk.ccmj_schnorr_proofs.len() {
-        result.push_failure(create_verification_failure!(format!("The length of CCM public keys for control component {} are identical from both sources", node_id)));
+        result.push(create_verification_failure!(format!("The length of CCM public keys for control component {} are identical from both sources", node_id)));
     } else {
         for (i, (a, b)) in zip(&setup.ccmj_schnorr_proofs, &cc_pk.ccmj_schnorr_proofs).enumerate() {
             if a.e != b.e {
-                result.push_failure(create_verification_failure!(format!(
+                result.push(create_verification_failure!(format!(
             "The field e for Ccm Schor Proof is not the same at pos {} for control component {}", i,
             node_id
         )));
             }
             if a.z != b.z {
-                result.push_failure(create_verification_failure!(format!(
+                result.push(create_verification_failure!(format!(
             "The field z for Ccm Schor Proof is not the same at pos {} for control component {}", i,
             node_id
         )));
@@ -84,7 +80,7 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
     let sc_pk = match setup_dir.setup_component_public_keys_payload() {
         Ok(o) => o,
         Err(e) => {
-            result.push_error(create_verification_error!(
+            result.push(create_verification_error!(
                 "Cannot extract setup_component_public_keys_payload",
                 e
             ));
@@ -102,7 +98,7 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
 #[cfg(test)]
 mod test {
     use super::{
-        super::super::super::{verification::VerificationResultTrait, VerificationPeriod},
+        super::super::super::{result::VerificationResultTrait, VerificationPeriod},
         *,
     };
     use crate::file_structure::VerificationDirectory;

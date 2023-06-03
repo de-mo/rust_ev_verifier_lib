@@ -3,7 +3,7 @@ pub mod v0503_voting_options;
 pub mod v0504_key_generation_schnorr_proofs;
 pub mod v0521_encrypted_pcc_exponentiation_proofs;
 
-use super::super::{verification::Verification, verification_suite::VerificationList};
+use super::super::{suite::VerificationList, verification::Verification};
 use crate::verification::meta_data::VerificationMetaDataList;
 
 pub fn get_verifications(metadata_list: &VerificationMetaDataList) -> VerificationList {

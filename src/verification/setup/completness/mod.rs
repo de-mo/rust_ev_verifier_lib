@@ -1,16 +1,16 @@
 use super::super::{
-    error::{create_verification_failure, VerificationFailureType},
-    verification::{Verification, VerificationResult},
-    verification_suite::VerificationList,
+    result::{create_verification_failure, VerificationEvent, VerificationResult},
+    suite::VerificationList,
+    verification::Verification,
 };
 use crate::{
-    error::{create_verifier_error, VerifierError},
     file_structure::{
         setup_directory::{SetupDirectoryTrait, VCSDirectoryTrait},
         VerificationDirectoryTrait,
     },
     verification::meta_data::VerificationMetaDataList,
 };
+use anyhow::anyhow;
 use log::debug;
 
 pub fn get_verifications(metadata_list: &VerificationMetaDataList) -> VerificationList {
@@ -21,7 +21,7 @@ pub fn get_verifications(metadata_list: &VerificationMetaDataList) -> Verificati
 
 fn validate_vcs_dir<B: VCSDirectoryTrait>(dir: &B, result: &mut VerificationResult) {
     if !dir.setup_component_tally_data_payload_file().exists() {
-        result.push_failure(create_verification_failure!(
+        result.push(create_verification_failure!(
             "setup_component_tally_data_payload does not exist"
         ))
     }
@@ -29,7 +29,7 @@ fn validate_vcs_dir<B: VCSDirectoryTrait>(dir: &B, result: &mut VerificationResu
         .setup_component_verification_data_payload_group()
         .has_elements()
     {
-        result.push_failure(create_verification_failure!(
+        result.push(create_verification_failure!(
             "setup_component_verification_data_payload does not exist"
         ))
     }
@@ -37,7 +37,7 @@ fn validate_vcs_dir<B: VCSDirectoryTrait>(dir: &B, result: &mut VerificationResu
         .control_component_code_shares_payload_group()
         .has_elements()
     {
-        result.push_failure(create_verification_failure!(
+        result.push(create_verification_failure!(
             "control_component_code_shares_payload does not exist"
         ))
     }
@@ -46,12 +46,12 @@ fn validate_vcs_dir<B: VCSDirectoryTrait>(dir: &B, result: &mut VerificationResu
 fn fn_verification_0101<D: VerificationDirectoryTrait>(dir: &D, result: &mut VerificationResult) {
     let setup_dir = dir.unwrap_setup();
     if !setup_dir.encryption_parameters_payload_file().exists() {
-        result.push_failure(create_verification_failure!(
+        result.push(create_verification_failure!(
             "encryption_parameters_payload does not exist"
         ))
     }
     if !setup_dir.election_event_context_payload_file().exists() {
-        result.push_failure(create_verification_failure!(
+        result.push(create_verification_failure!(
             "election_event_context_payload does not exist"
         ))
     }
@@ -59,12 +59,12 @@ fn fn_verification_0101<D: VerificationDirectoryTrait>(dir: &D, result: &mut Ver
         .setup_component_public_keys_payload_file()
         .exists()
     {
-        result.push_failure(create_verification_failure!(
+        result.push(create_verification_failure!(
             "setup_component_public_keys_payload_file does not exist"
         ))
     }
     if !setup_dir.election_event_configuration_file().exists() {
-        result.push_failure(create_verification_failure!(
+        result.push(create_verification_failure!(
             "setup_component_public_keys_payload_file does not exist"
         ))
     }
@@ -73,7 +73,7 @@ fn fn_verification_0101<D: VerificationDirectoryTrait>(dir: &D, result: &mut Ver
         .get_numbers()
         != &vec![1, 2, 3, 4]
     {
-        result.push_failure(create_verification_failure!(format!(
+        result.push(create_verification_failure!(format!(
             "control_component_public_keys_payload_group missing. only these parts are present: {:?}",
             setup_dir
                 .control_component_public_keys_payload_group()
@@ -88,7 +88,7 @@ fn fn_verification_0101<D: VerificationDirectoryTrait>(dir: &D, result: &mut Ver
 #[cfg(test)]
 mod test {
     use super::{
-        super::super::{verification::VerificationResultTrait, VerificationPeriod},
+        super::super::{result::VerificationResultTrait, VerificationPeriod},
         *,
     };
     use crate::file_structure::VerificationDirectory;

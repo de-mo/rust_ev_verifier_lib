@@ -1,17 +1,14 @@
 use super::super::{
     common_types::{EncryptionGroup, SignatureJson},
-    deserialize_string_string_to_datetime,
-    error::{DeserializeError, DeserializeErrorType},
-    implement_trait_verifier_data_json_decode, VerifierDataDecode,
+    deserialize_string_string_to_datetime, implement_trait_verifier_data_json_decode,
+    VerifierDataDecode,
 };
-use crate::{
-    crypto_primitives::{
-        byte_array::ByteArray, direct_trust::CertificateAuthority, hashing::HashableMessage,
-        signature::VerifiySignatureTrait,
-    },
-    error::{create_verifier_error, VerifierError},
+use crate::crypto_primitives::{
+    byte_array::ByteArray, direct_trust::CertificateAuthority, hashing::HashableMessage,
+    signature::VerifiySignatureTrait,
 };
-use chrono::{DateTime, FixedOffset, Local, NaiveDateTime, TimeZone};
+use anyhow::anyhow;
+use chrono::NaiveDateTime;
 use serde::Deserialize;
 
 #[derive(Deserialize, Debug, Clone)]

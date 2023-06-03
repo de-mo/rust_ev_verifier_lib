@@ -1,15 +1,12 @@
 use super::super::{
     common_types::{EncryptionGroup, SignatureJson},
-    error::{DeserializeError, DeserializeErrorType},
     implement_trait_verifier_data_json_decode, VerifierDataDecode,
 };
-use crate::{
-    crypto_primitives::{
-        byte_array::ByteArray, direct_trust::CertificateAuthority, hashing::HashableMessage,
-        signature::VerifiySignatureTrait,
-    },
-    error::{create_verifier_error, VerifierError},
+use crate::crypto_primitives::{
+    byte_array::ByteArray, direct_trust::CertificateAuthority, hashing::HashableMessage,
+    signature::VerifiySignatureTrait,
 };
+use anyhow::anyhow;
 use serde::Deserialize;
 
 #[derive(Deserialize, Debug, Clone)]

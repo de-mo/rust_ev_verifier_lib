@@ -5,7 +5,7 @@ pub mod consistency;
 pub mod evidence;
 pub mod integrity;
 
-use super::{meta_data::VerificationMetaDataList, verification_suite::VerificationList};
+use super::{meta_data::VerificationMetaDataList, suite::VerificationList};
 
 /// Collect the verifications of the submodules
 pub fn get_verifications(metadata_list: &VerificationMetaDataList) -> VerificationList {

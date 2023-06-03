@@ -1,18 +1,12 @@
-use super::super::super::{
-    error::{
-        create_verification_error, create_verification_failure, VerificationErrorType,
-        VerificationFailureType,
-    },
-    verification::VerificationResult,
+use super::super::super::result::{
+    create_verification_error, create_verification_failure, VerificationEvent, VerificationResult,
 };
-use crate::{
-    error::{create_verifier_error, VerifierError},
-    file_structure::{
-        file_group::FileGroup,
-        setup_directory::{SetupDirectoryTrait, VCSDirectoryTrait},
-        VerificationDirectoryTrait,
-    },
+use crate::file_structure::{
+    file_group::FileGroup,
+    setup_directory::{SetupDirectoryTrait, VCSDirectoryTrait},
+    VerificationDirectoryTrait,
 };
+use anyhow::anyhow;
 use log::debug;
 
 fn verify_uninterrupted_monotonic_sequence(
@@ -23,7 +17,7 @@ fn verify_uninterrupted_monotonic_sequence(
     let mut numbers = fg.get_numbers().clone();
     numbers.sort();
     if !fg.has_elements() && !(numbers[0] + numbers[numbers.len() - 1] != numbers.len()) {
-        result.push_failure(create_verification_failure!(format!(
+        result.push(create_verification_failure!(format!(
             "The sequence is not uniterrupted for files {} in directory {}",
             fg.get_file_name(),
             dir
@@ -51,14 +45,14 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
             match elt {
                 Ok(p) => {
                     if p.chunk_id != i {
-                        result.push_failure(create_verification_failure!(format!(
+                        result.push(create_verification_failure!(format!(
                             "The chunkID nr {} does not matches the chunkID in the file name in {} for setup_component_verification_data_payload",
                             i,
                             vcs.get_name()
                         )))
                     }
                 }
-                Err(e) => result.push_error(create_verification_error!(
+                Err(e) => result.push(create_verification_error!(
                     format!(
                     "Error getting setup_component_verification_data_payload for chunk {} in {}",
                     i,
@@ -73,7 +67,7 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
                 Ok(p) => {
                     for (j, e) in p.iter().enumerate() {
                         if e.chunk_id != i {
-                            result.push_failure(create_verification_failure!(format!(
+                            result.push(create_verification_failure!(format!(
                             "The chunkID nr {} does not matches the chunkID in the file name in {} for control_component_code_shares_payload at pos {}",
                             i,
                             vcs.get_name(), j
@@ -81,7 +75,7 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
                         }
                     }
                 }
-                Err(e) => result.push_error(create_verification_error!(
+                Err(e) => result.push(create_verification_error!(
                     format!(
                         "Error getting control_component_code_shares_payload for chunk {} in {}",
                         i,
@@ -97,7 +91,7 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
 #[cfg(test)]
 mod test {
     use super::{
-        super::super::super::{verification::VerificationResultTrait, VerificationPeriod},
+        super::super::super::{result::VerificationResultTrait, VerificationPeriod},
         *,
     };
     use crate::file_structure::VerificationDirectory;

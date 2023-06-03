@@ -1,16 +1,12 @@
-use super::super::super::{
-    error::{
-        create_verification_error, create_verification_failure, VerificationErrorType,
-        VerificationFailureType,
-    },
-    verification::VerificationResult,
+use super::super::super::result::{
+    create_verification_error, create_verification_failure, VerificationEvent, VerificationResult,
 };
 use crate::{
     constants::{MAXIMUM_NUMBER_OF_SELECTABLE_VOTING_OPTIONS, MAXIMUM_NUMBER_OF_VOTING_OPTIONS},
     crypto_primitives::num_bigint::Constants,
-    error::{create_verifier_error, VerifierError},
     file_structure::{setup_directory::SetupDirectoryTrait, VerificationDirectoryTrait},
 };
+use anyhow::anyhow;
 use log::debug;
 use num_bigint::BigUint;
 
@@ -22,7 +18,7 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
     let eg = match setup_dir.encryption_parameters_payload() {
         Ok(eg) => eg,
         Err(e) => {
-            result.push_error(create_verification_error!(
+            result.push(create_verification_error!(
                 "encryption_parameters_payload cannot be read",
                 e
             ));
@@ -32,7 +28,7 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
     let ee_context = match setup_dir.election_event_context_payload() {
         Ok(eg) => eg,
         Err(e) => {
-            result.push_error(create_verification_error!(
+            result.push(create_verification_error!(
                 "election_event_context_payload cannot be read",
                 e
             ));
@@ -61,7 +57,7 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
         .map(|e| e.clone())
         .collect();
     if p_prime != p_tilde {
-        result.push_failure(create_verification_failure!(
+        result.push(create_verification_failure!(
             "VerifA: prime group members and encoding voting options are not the same"
         ))
     }
@@ -72,7 +68,7 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
         verifb = &verifb * BigUint::from(eg.small_primes[i]);
     }
     if verifb >= eg.encryption_group.p {
-        result.push_failure(create_verification_failure!(
+        result.push(create_verification_failure!(
             "VerifB: The product of the phi last primes (the largest possible encoded vote) must be smaller than p"
         ))
     }
@@ -81,7 +77,7 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
 #[cfg(test)]
 mod test {
     use super::{
-        super::super::super::{verification::VerificationResultTrait, VerificationPeriod},
+        super::super::super::{result::VerificationResultTrait, VerificationPeriod},
         *,
     };
     use crate::file_structure::VerificationDirectory;

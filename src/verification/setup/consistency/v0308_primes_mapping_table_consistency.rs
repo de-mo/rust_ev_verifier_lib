@@ -1,14 +1,8 @@
-use super::super::super::{
-    error::{
-        create_verification_error, create_verification_failure, VerificationErrorType,
-        VerificationFailureType,
-    },
-    verification::VerificationResult,
+use super::super::super::result::{
+    create_verification_error, create_verification_failure, VerificationEvent, VerificationResult,
 };
-use crate::{
-    error::{create_verifier_error, VerifierError},
-    file_structure::{setup_directory::SetupDirectoryTrait, VerificationDirectoryTrait},
-};
+use crate::file_structure::{setup_directory::SetupDirectoryTrait, VerificationDirectoryTrait};
+use anyhow::anyhow;
 use log::debug;
 use std::collections::HashMap;
 
@@ -20,7 +14,7 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
     let ee_c_paylod = match setup_dir.election_event_context_payload() {
         Ok(o) => o,
         Err(e) => {
-            result.push_error(create_verification_error!(
+            result.push(create_verification_error!(
                 "Cannot extract election_event_context_payload",
                 e
             ));
@@ -37,7 +31,7 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
             match primes_hashmaps.get(&p_table.encoded_voting_option) {
                 Some(option) => {
                     if option != &p_table.actual_voting_option {
-                        result.push_failure(create_verification_failure!(format!(
+                        result.push(create_verification_failure!(format!(
                             "The prime {} encode two different voting options {} and {}",
                             p_table.encoded_voting_option, p_table.actual_voting_option, option
                         )));
@@ -57,7 +51,7 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
 #[cfg(test)]
 mod test {
     use super::{
-        super::super::super::{verification::VerificationResultTrait, VerificationPeriod},
+        super::super::super::{result::VerificationResultTrait, VerificationPeriod},
         *,
     };
     use crate::file_structure::VerificationDirectory;

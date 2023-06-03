@@ -1,17 +1,16 @@
 //! Module implementing the runner
 
-use super::error::{create_verifier_error, VerifierError};
 use crate::{
     file_structure::VerificationDirectory,
     verification::{
         meta_data::{VerificationMetaDataList, VerificationMetaDataListTrait},
-        verification_suite::VerificationSuite,
+        suite::VerificationSuite,
         VerificationPeriod,
     },
 };
+use anyhow::anyhow;
 use log::{info, warn};
 use std::{
-    fmt::Display,
     path::{Path, PathBuf},
     time::{Duration, SystemTime},
 };
@@ -60,18 +59,16 @@ impl<'a> Runner<'a> {
     pub fn run_all_sequential<'b: 'a>(
         &'b mut self,
         metadata_list: &'a VerificationMetaDataList,
-    ) -> Option<RunnerError> {
+    ) -> Option<anyhow::Error> {
         if self.is_running() {
-            return Some(create_verifier_error!(
-                RunnerErrorType::RunError,
+            return Some(anyhow!(format!(
                 "Runner is already running. Cannot be started"
-            ));
+            )));
         }
         if self.is_finished() {
-            return Some(create_verifier_error!(
-                RunnerErrorType::RunError,
-                "Runner has already run. Cannot be started before resetting it"
-            ));
+            return Some(anyhow!(format!(
+                "Runner is already running. Cannot be started before resetting it"
+            )));
         }
         self.start_time = Some(SystemTime::now());
         info!(
@@ -116,19 +113,3 @@ impl<'a> Runner<'a> {
         self.verifications.period()
     }
 }
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum RunnerErrorType {
-    RunError,
-}
-
-impl Display for RunnerErrorType {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let s = match self {
-            Self::RunError => "RunError",
-        };
-        write!(f, "{s}")
-    }
-}
-
-pub type RunnerError = VerifierError<RunnerErrorType>;

@@ -9,8 +9,6 @@ pub mod setup_component_public_keys_payload;
 pub mod setup_component_tally_data_payload;
 pub mod setup_component_verification_data_payload;
 
-use crate::file_structure::{file::File, FileReadMode, FileType};
-
 use self::{
     control_component_code_shares_payload::ControlComponentCodeSharesPayload,
     control_component_public_keys_payload::ControlComponentPublicKeysPayload,
@@ -21,7 +19,8 @@ use self::{
     setup_component_tally_data_payload::SetupComponentTallyDataPayload,
     setup_component_verification_data_payload::SetupComponentVerificationDataPayload,
 };
-use super::{error::DeserializeError, VerifierDataDecode, VerifierSetupDataTrait};
+use super::{VerifierDataDecode, VerifierSetupDataTrait};
+use crate::file_structure::{file::File, FileReadMode, FileType};
 use enum_kinds::EnumKind;
 
 /// Types of the setup directory
@@ -69,7 +68,7 @@ impl VerifierSetupDataType {
     /// Read from String as json or xml
     ///
     /// All the types have to oimplement the trait [VerifierDataDecode]
-    pub fn verifier_data_from_file(&self, f: &File) -> Result<VerifierSetupData, DeserializeError> {
+    pub fn verifier_data_from_file(&self, f: &File) -> anyhow::Result<VerifierSetupData> {
         match self {
             VerifierSetupDataType::EncryptionParametersPayload => {
                 EncryptionParametersPayload::from_file(

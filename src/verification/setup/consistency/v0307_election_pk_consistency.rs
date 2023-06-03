@@ -1,18 +1,13 @@
+use super::super::super::result::{
+    create_verification_error, create_verification_failure, VerificationEvent, VerificationResult,
+};
 use crate::{
     crypto_primitives::num_bigint::{Constants, Operations},
-    error::{create_verifier_error, VerifierError},
     file_structure::{setup_directory::SetupDirectoryTrait, VerificationDirectoryTrait},
 };
-use num_bigint::BigUint;
-
-use super::super::super::{
-    error::{
-        create_verification_error, create_verification_failure, VerificationErrorType,
-        VerificationFailureType,
-    },
-    verification::VerificationResult,
-};
+use anyhow::anyhow;
 use log::debug;
+use num_bigint::BigUint;
 
 pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
     dir: &D,
@@ -22,7 +17,7 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
     let eg_p = match setup_dir.encryption_parameters_payload() {
         Ok(o) => o.encryption_group.p,
         Err(e) => {
-            result.push_error(create_verification_error!(
+            result.push(create_verification_error!(
                 "Cannot extract encryption_parameters_payload",
                 e
             ));
@@ -32,7 +27,7 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
     let sc_pk = match setup_dir.setup_component_public_keys_payload() {
         Ok(o) => o,
         Err(e) => {
-            result.push_error(create_verification_error!(
+            result.push(create_verification_error!(
                 "Cannot extract setup_component_public_keys_payload",
                 e
             ));
@@ -54,7 +49,7 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
             &eg_p,
         );
         if &calculated_el_pk != el_pk_i {
-            result.push_failure(create_verification_failure!(format!(
+            result.push(create_verification_failure!(format!(
                 "The election public key EL_pk at {} is correctly combined",
                 i
             )));
@@ -65,7 +60,7 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
 #[cfg(test)]
 mod test {
     use super::{
-        super::super::super::{verification::VerificationResultTrait, VerificationPeriod},
+        super::super::super::{result::VerificationResultTrait, VerificationPeriod},
         *,
     };
     use crate::file_structure::VerificationDirectory;

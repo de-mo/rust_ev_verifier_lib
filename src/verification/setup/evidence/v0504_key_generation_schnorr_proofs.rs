@@ -1,16 +1,12 @@
-use super::super::super::{
-    error::{
-        create_verification_error, create_verification_failure, VerificationErrorType,
-        VerificationFailure, VerificationFailureType,
-    },
-    verification::VerificationResult,
+use super::super::super::result::{
+    create_verification_error, create_verification_failure, VerificationEvent, VerificationResult,
 };
 use crate::{
     crypto_primitives::zero_knowledge_proof::verify_schnorr,
     data_structures::common_types::{EncryptionGroup, Proof},
-    error::{create_verifier_error, VerifierError},
     file_structure::{setup_directory::SetupDirectoryTrait, VerificationDirectoryTrait},
 };
+use anyhow::anyhow;
 use log::debug;
 use num_bigint::BigUint;
 use rayon::prelude::*;
@@ -24,7 +20,7 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
     let eg = match setup_dir.encryption_parameters_payload() {
         Ok(eg) => eg,
         Err(e) => {
-            result.push_error(create_verification_error!(
+            result.push(create_verification_error!(
                 "encryption_parameters_payload cannot be read",
                 e
             ));
@@ -34,7 +30,7 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
     let ee_context = match setup_dir.election_event_context_payload() {
         Ok(eg) => eg,
         Err(e) => {
-            result.push_error(create_verification_error!(
+            result.push(create_verification_error!(
                 "election_event_context_payload cannot be read",
                 e
             ));
@@ -44,7 +40,7 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
     let setup_ppk = match setup_dir.setup_component_public_keys_payload() {
         Ok(eg) => eg,
         Err(e) => {
-            result.push_error(create_verification_error!(
+            result.push(create_verification_error!(
                 "setup_component_public_keys_payload cannot be read",
                 e
             ));
@@ -142,11 +138,11 @@ fn run_verify_schnorr_proofs(
 ) -> VerificationResult {
     let mut res = VerificationResult::new();
     if pks.len() != pis.len() {
-        res.push_error(create_verification_error!(format!(
+        res.push(create_verification_error!(format!(
             "The length of pks and pis is not the same for {proof_name}"
         )));
     } else {
-        let failures: Vec<Option<VerificationFailure>> = zip(pks, pis)
+        let failures: Vec<Option<VerificationEvent>> = zip(pks, pis)
             .enumerate()
             .par_bridge()
             .map(|(i, (pk, pi))| {
@@ -155,7 +151,7 @@ fn run_verify_schnorr_proofs(
             .collect();
         for o in failures {
             match o {
-                Some(f) => res.push_failure(f),
+                Some(f) => res.push(f),
                 None => (),
             }
         }
@@ -172,7 +168,7 @@ fn run_verify_schnorr_proof(
     proof_name: &str,
     pos: usize,
     node: &Option<usize>,
-) -> Option<VerificationFailure> {
+) -> Option<VerificationEvent> {
     debug!(
         "Verification {} at pos {} for cc {:?}",
         test_name, pos, node
@@ -193,7 +189,7 @@ fn run_verify_schnorr_proof(
 #[cfg(test)]
 mod test {
     use super::{
-        super::super::super::{verification::VerificationResultTrait, VerificationPeriod},
+        super::super::super::{result::VerificationResultTrait, VerificationPeriod},
         *,
     };
     use crate::file_structure::VerificationDirectory;

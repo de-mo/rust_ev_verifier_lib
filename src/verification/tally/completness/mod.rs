@@ -1,5 +1,4 @@
 use crate::{
-    error::{create_verifier_error, VerifierError},
     file_structure::{
         tally_directory::{BBDirectoryTrait, TallyDirectoryTrait},
         VerificationDirectoryTrait,
@@ -8,10 +7,11 @@ use crate::{
 };
 
 use super::super::{
-    error::{create_verification_failure, VerificationFailureType},
-    verification::{Verification, VerificationResult},
-    verification_suite::VerificationList,
+    result::{create_verification_failure, VerificationEvent, VerificationResult},
+    suite::VerificationList,
+    verification::Verification,
 };
+use anyhow::anyhow;
 use log::debug;
 
 pub fn get_verifications(metadata_list: &VerificationMetaDataList) -> VerificationList {
@@ -22,12 +22,12 @@ pub fn get_verifications(metadata_list: &VerificationMetaDataList) -> Verificati
 
 fn validate_bb_dir<B: BBDirectoryTrait>(dir: &B, result: &mut VerificationResult) {
     if !dir.tally_component_shuffle_payload_file().exists() {
-        result.push_failure(create_verification_failure!(
+        result.push(create_verification_failure!(
             "tally_component_shuffle_payload does not exist"
         ))
     }
     if !dir.tally_component_shuffle_payload_file().exists() {
-        result.push_failure(create_verification_failure!(
+        result.push(create_verification_failure!(
             "tally_component_shuffle_payload does not exist"
         ))
     }
@@ -35,12 +35,12 @@ fn validate_bb_dir<B: BBDirectoryTrait>(dir: &B, result: &mut VerificationResult
         .control_component_ballot_box_payload_group()
         .has_elements()
     {
-        result.push_failure(create_verification_failure!(
+        result.push(create_verification_failure!(
             "control_component_ballot_box_payload does not exist"
         ))
     }
     if !dir.control_component_shuffle_payload_group().has_elements() {
-        result.push_failure(create_verification_failure!(
+        result.push(create_verification_failure!(
             "control_component_shuffle_payload does not exist"
         ))
     }
@@ -49,13 +49,13 @@ fn validate_bb_dir<B: BBDirectoryTrait>(dir: &B, result: &mut VerificationResult
 fn fn_verification_0601<D: VerificationDirectoryTrait>(dir: &D, result: &mut VerificationResult) {
     let tally_dir = dir.unwrap_tally();
     if !tally_dir.ech_0110_file().exists() {
-        result.push_failure(create_verification_failure!("ech_0110 does not exist"))
+        result.push(create_verification_failure!("ech_0110 does not exist"))
     }
     if !tally_dir.ech_0222_file().exists() {
-        result.push_failure(create_verification_failure!("ech_0222 does not exist"))
+        result.push(create_verification_failure!("ech_0222 does not exist"))
     }
     if !tally_dir.e_voting_decrypt_file().exists() {
-        result.push_failure(create_verification_failure!(
+        result.push(create_verification_failure!(
             "e_voting_decrypt does not exist"
         ))
     }
@@ -67,7 +67,7 @@ fn fn_verification_0601<D: VerificationDirectoryTrait>(dir: &D, result: &mut Ver
 #[cfg(test)]
 mod test {
     use super::{
-        super::super::{verification::VerificationResultTrait, VerificationPeriod},
+        super::super::{result::VerificationResultTrait, VerificationPeriod},
         *,
     };
     use crate::file_structure::VerificationDirectory;

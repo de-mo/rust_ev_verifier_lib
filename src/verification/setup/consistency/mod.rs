@@ -11,8 +11,7 @@ pub mod v0313_total_voters_consistency;
 pub mod v0315_chunk_consistency;
 
 use super::super::{
-    meta_data::VerificationMetaDataList, verification::Verification,
-    verification_suite::VerificationList,
+    meta_data::VerificationMetaDataList, suite::VerificationList, verification::Verification,
 };
 
 pub fn get_verifications(metadata_list: &VerificationMetaDataList) -> VerificationList {

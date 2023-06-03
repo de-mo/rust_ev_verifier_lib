@@ -1,14 +1,8 @@
-use super::super::super::{
-    error::{
-        create_verification_error, create_verification_failure, VerificationErrorType,
-        VerificationFailureType,
-    },
-    verification::VerificationResult,
+use super::super::super::result::{
+    create_verification_error, create_verification_failure, VerificationEvent, VerificationResult,
 };
-use crate::{
-    error::{create_verifier_error, VerifierError},
-    file_structure::{setup_directory::SetupDirectoryTrait, VerificationDirectoryTrait},
-};
+use crate::file_structure::{setup_directory::SetupDirectoryTrait, VerificationDirectoryTrait};
+use anyhow::anyhow;
 use log::debug;
 
 pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
@@ -19,7 +13,7 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
     let vcs_contexts = match setup_dir.election_event_context_payload() {
         Ok(o) => o.election_event_context.verification_card_set_contexts,
         Err(e) => {
-            result.push_error(create_verification_error!(
+            result.push(create_verification_error!(
                 "Cannot extract election_event_context_payload",
                 e
             ));
@@ -29,7 +23,7 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
     let total_voter = match setup_dir.election_event_configuration() {
         Ok(o) => o.header.voter_total,
         Err(e) => {
-            result.push_error(create_verification_error!(
+            result.push(create_verification_error!(
                 "Cannot extract election_event_context_payload",
                 e
             ));
@@ -42,7 +36,7 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
             .map(|e| e.number_of_voting_cards)
             .sum::<usize>()
     {
-        result.push_failure(create_verification_failure!(format!(
+        result.push(create_verification_failure!(format!(
             "The sum of voting cards is not the same as total voters {}",
             total_voter
         )))
@@ -52,7 +46,7 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
 #[cfg(test)]
 mod test {
     use super::{
-        super::super::super::{verification::VerificationResultTrait, VerificationPeriod},
+        super::super::super::{result::VerificationResultTrait, VerificationPeriod},
         *,
     };
     use crate::file_structure::VerificationDirectory;

@@ -1,12 +1,10 @@
 //! Module to collect data structures of the verifier
 
 pub mod common_types;
-pub mod error;
 pub mod setup;
 pub mod tally;
 
 use self::{
-    error::{DeserializeError, DeserializeErrorType},
     setup::{
         control_component_code_shares_payload::ControlComponentCodeSharesPayload,
         control_component_public_keys_payload::ControlComponentPublicKeysPayload,
@@ -33,11 +31,11 @@ use crate::{
         hashing::HashableMessage,
         num_bigint::Hexa,
     },
-    error::{create_result_with_error, create_verifier_error, VerifierError},
     file_structure::{file::File, FileReadMode, FileType},
     setup_or_tally::SetupOrTally,
 };
-use chrono::{DateTime, FixedOffset, Local, NaiveDateTime};
+use anyhow::{anyhow, bail};
+use chrono::NaiveDateTime;
 use num_bigint::BigUint;
 use quick_xml::{
     events::{BytesStart, Event},
@@ -127,65 +125,47 @@ pub trait VerifierTallyDataTrait {
 
 /// A trait defining the necessary function to decode to the Verifier Data
 pub trait VerifierDataDecode: Sized {
-    fn from_file(f: &File, t: &FileType, mode: &FileReadMode) -> Result<Self, DeserializeError> {
+    fn from_file(f: &File, t: &FileType, mode: &FileReadMode) -> anyhow::Result<Self> {
         match mode {
             FileReadMode::Memory => Self::from_file_memory(f, t),
             FileReadMode::Streaming => Self::from_file_stream(f, t),
         }
     }
 
-    fn from_file_memory(f: &File, t: &FileType) -> Result<Self, DeserializeError> {
+    fn from_file_memory(f: &File, t: &FileType) -> anyhow::Result<Self> {
         let s = f.read_data().map_err(|e| {
-            create_verifier_error!(
-                DeserializeErrorType::FileError,
-                format!("Error reading data in file {}", f.to_str()),
-                e
-            )
+            anyhow!(e).context(format!("Error reading data in file {}", f.to_str()))
         })?;
         match t {
             FileType::Json => Self::from_json(&s),
             FileType::Xml => {
                 let doc = Document::parse(&s).map_err(|e| {
-                    create_verifier_error!(
-                        DeserializeErrorType::XMLError,
-                        "Cannot parse content of xml file",
-                        e
-                    )
+                    anyhow!(e).context(format!("Cannot parse content of xml file {}", f.to_str()))
                 })?;
                 Self::from_roxmltree(&doc)
             }
         }
     }
 
-    fn from_file_stream(f: &File, t: &FileType) -> Result<Self, DeserializeError> {
+    fn from_file_stream(f: &File, t: &FileType) -> anyhow::Result<Self> {
         match t {
-            FileType::Json => create_result_with_error!(
-                DeserializeErrorType::JSONError,
-                "from_file not implemented for JSON Files"
-            ),
+            FileType::Json => {
+                bail!(format!("from_file not implemented for JSON Files"))
+            }
             FileType::Xml => Self::from_xml_file(&f.get_path()),
         }
     }
 
-    fn from_json(_: &String) -> Result<Self, DeserializeError> {
-        create_result_with_error!(
-            DeserializeErrorType::JSONError,
-            "from_json not implemented now"
-        )
+    fn from_json(_: &String) -> anyhow::Result<Self> {
+        bail!(format!("from_json not implemented now"))
     }
 
-    fn from_roxmltree<'a>(_: &'a Document<'a>) -> Result<Self, DeserializeError> {
-        create_result_with_error!(
-            DeserializeErrorType::JSONError,
-            "from_roxmltree not implemented"
-        )
+    fn from_roxmltree<'a>(_: &'a Document<'a>) -> anyhow::Result<Self> {
+        bail!(format!("from_roxmltree not implemented now"))
     }
 
-    fn from_xml_file(_: &Path) -> Result<Self, DeserializeError> {
-        create_result_with_error!(
-            DeserializeErrorType::JSONError,
-            "from_xml_file not implemented"
-        )
+    fn from_xml_file(_: &Path) -> anyhow::Result<Self> {
+        bail!(format!("from_xml_file not implemented now"))
     }
 }
 
@@ -193,14 +173,9 @@ pub trait VerifierDataDecode: Sized {
 macro_rules! implement_trait_verifier_data_json_decode {
     ($s: ty) => {
         impl VerifierDataDecode for $s {
-            fn from_json(s: &String) -> Result<Self, DeserializeError> {
-                serde_json::from_str(s).map_err(|e| {
-                    create_verifier_error!(
-                        DeserializeErrorType::JSONError,
-                        format!("Cannot deserialize json"),
-                        e
-                    )
-                })
+            fn from_json(s: &String) -> anyhow::Result<Self> {
+                serde_json::from_str(s)
+                    .map_err(|e| anyhow!(e).context(format!("Cannot deserialize json")))
             }
         }
     };
@@ -314,14 +289,16 @@ impl VerifierTallyDataTrait for VerifierData {
 
 impl VerifierDataType {
     /// Read VerifierDataType from a String as JSON
-    pub fn verifier_data_from_file(&self, f: &File) -> Result<VerifierData, DeserializeError> {
+    pub fn verifier_data_from_file(&self, f: &File) -> anyhow::Result<VerifierData> {
         match self {
-            VerifierDataType::Setup(t) => {
-                t.verifier_data_from_file(f).map(|r| VerifierData::Setup(r))
-            }
-            VerifierDataType::Tally(t) => {
-                t.verifier_data_from_file(f).map(|r| VerifierData::Tally(r))
-            }
+            VerifierDataType::Setup(t) => t
+                .verifier_data_from_file(f)
+                .map_err(|e| e.context("in verifier_data_from_file"))
+                .map(|r| VerifierData::Setup(r)),
+            VerifierDataType::Tally(t) => t
+                .verifier_data_from_file(f)
+                .map_err(|e| e.context("in verifier_data_from_file"))
+                .map(|r| VerifierData::Tally(r)),
         }
     }
 }
@@ -332,30 +309,22 @@ pub fn xml_read_to_end_into_buffer<R: BufRead>(
     reader: &mut Reader<R>,
     start_tag: &BytesStart,
     junk_buf: &mut Vec<u8>,
-) -> Result<Vec<u8>, DeserializeError> {
+) -> anyhow::Result<Vec<u8>> {
     let mut depth = 0;
     let mut output_buf: Vec<u8> = Vec::new();
     let mut w = Writer::new(&mut output_buf);
     let tag_name = start_tag.name();
     w.write_event(Event::Start(start_tag.clone()))
         .map_err(|e| {
-            create_verifier_error!(
-                DeserializeErrorType::XMLError,
-                format!("Error writing event {:?} in writer", start_tag),
-                e
-            )
+            anyhow!(e).context(format!("Error writing event {:?} in writer", start_tag))
         })?;
     loop {
         junk_buf.clear();
-        let event = reader.read_event_into(junk_buf).map_err(|e| {
-            create_verifier_error!(DeserializeErrorType::XMLError, "Error reading event", e)
-        })?;
+        let event = reader
+            .read_event_into(junk_buf)
+            .map_err(|e| anyhow!(e).context("format!(Error reading event"))?;
         w.write_event(&event).map_err(|e| {
-            create_verifier_error!(
-                DeserializeErrorType::XMLError,
-                format!("Error writing event {:?} in writer", event),
-                e
-            )
+            anyhow!(e).context(format!("Error writing event {:?} in writer", event))
         })?;
 
         match event {

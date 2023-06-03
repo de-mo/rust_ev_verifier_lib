@@ -1,13 +1,10 @@
 use super::super::{
     common_types::{EncryptionGroup, ExponentiatedEncryptedElement, SignatureJson},
-    error::{DeserializeError, DeserializeErrorType},
     implement_trait_verifier_data_json_decode, VerifierDataDecode,
 };
 use super::tally_component_shuffle_payload::VerifiableShuffle;
-use crate::{
-    data_structures::common_types::DecryptionProof,
-    error::{create_verifier_error, VerifierError},
-};
+use crate::data_structures::common_types::DecryptionProof;
+use anyhow::anyhow;
 use serde::Deserialize;
 
 #[derive(Deserialize, Debug, Clone)]

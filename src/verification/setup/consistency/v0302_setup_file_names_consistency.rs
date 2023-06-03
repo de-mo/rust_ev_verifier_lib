@@ -1,18 +1,15 @@
-use super::super::super::{
-    error::{create_verification_failure, VerificationFailureType},
-    verification::VerificationResult,
+use super::super::super::result::{
+    create_verification_failure, VerificationEvent, VerificationResult,
 };
-use crate::{
-    error::{create_verifier_error, VerifierError},
-    file_structure::{
-        file::File, setup_directory::SetupDirectoryTrait, VerificationDirectoryTrait,
-    },
+use crate::file_structure::{
+    file::File, setup_directory::SetupDirectoryTrait, VerificationDirectoryTrait,
 };
+use anyhow::anyhow;
 use log::debug;
 
 fn test_file_exists(file: &File, result: &mut VerificationResult) {
     if !file.exists() {
-        result.push_failure(create_verification_failure!(format!(
+        result.push(create_verification_failure!(format!(
             "File {} does not exist",
             file.to_str()
         )))
@@ -36,7 +33,7 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
         .clone();
     cc_group_numbers.sort();
     if cc_group_numbers != vec![1, 2, 3, 4] {
-        result.push_failure(create_verification_failure!(format!(
+        result.push(create_verification_failure!(format!(
             "controlComponentPublicKeysPayload must have file from 1 to 4. But actually: {:?}",
             cc_group_numbers
         )))
@@ -52,7 +49,7 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
 #[cfg(test)]
 mod test {
     use super::{
-        super::super::super::{verification::VerificationResultTrait, VerificationPeriod},
+        super::super::super::{result::VerificationResultTrait, VerificationPeriod},
         *,
     };
     use crate::file_structure::VerificationDirectory;

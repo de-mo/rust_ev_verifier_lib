@@ -1,17 +1,16 @@
+use super::super::{
+    result::{create_verification_failure, VerificationEvent, VerificationResult},
+    suite::VerificationList,
+    verification::Verification,
+};
 use crate::{
-    error::{create_verifier_error, VerifierError},
     file_structure::{
         tally_directory::{BBDirectoryTrait, TallyDirectoryTrait},
         VerificationDirectoryTrait,
     },
     verification::meta_data::VerificationMetaDataList,
 };
-
-use super::super::{
-    error::{create_verification_failure, VerificationFailureType},
-    verification::{Verification, VerificationResult},
-    verification_suite::VerificationList,
-};
+use anyhow::anyhow;
 use log::debug;
 
 pub fn get_verifications(metadata_list: &VerificationMetaDataList) -> VerificationList {
@@ -23,7 +22,7 @@ pub fn get_verifications(metadata_list: &VerificationMetaDataList) -> Verificati
 fn validate_bb_dir<B: BBDirectoryTrait>(dir: &B, result: &mut VerificationResult) {
     match dir.tally_component_votes_payload() {
         Ok(_) => (),
-        Err(e) => result.push_failure(create_verification_failure!(
+        Err(e) => result.push(create_verification_failure!(
             format!(
                 "{}/tally_component_votes_payload has wrong format",
                 dir.get_name()
@@ -33,7 +32,7 @@ fn validate_bb_dir<B: BBDirectoryTrait>(dir: &B, result: &mut VerificationResult
     }
     match dir.tally_component_shuffle_payload() {
         Ok(_) => (),
-        Err(e) => result.push_failure(create_verification_failure!(
+        Err(e) => result.push(create_verification_failure!(
             format!(
                 "{}/tally_component_shuffle_payload has wrong format",
                 dir.get_name()
@@ -43,7 +42,7 @@ fn validate_bb_dir<B: BBDirectoryTrait>(dir: &B, result: &mut VerificationResult
     }
     for (i, f) in dir.control_component_ballot_box_payload_iter() {
         match f {
-            Err(e) => result.push_failure(create_verification_failure!(
+            Err(e) => result.push(create_verification_failure!(
                 format!(
                     "{}/control_component_ballot_box_payload_iter.{} has wrong format",
                     dir.get_name(),
@@ -56,7 +55,7 @@ fn validate_bb_dir<B: BBDirectoryTrait>(dir: &B, result: &mut VerificationResult
     }
     for (i, f) in dir.control_component_shuffle_payload_iter() {
         match f {
-            Err(e) => result.push_failure(create_verification_failure!(
+            Err(e) => result.push(create_verification_failure!(
                 format!(
                     "{}/control_component_shuffle_payload_iter.{} has wrong format",
                     dir.get_name(),
@@ -79,7 +78,10 @@ fn fn_verification_0901<D: VerificationDirectoryTrait>(dir: &D, result: &mut Ver
 #[cfg(test)]
 mod test {
     use super::{
-        super::super::{verification::VerificationResultTrait, VerificationPeriod},
+        super::super::{
+            result::{VerificationResult, VerificationResultTrait},
+            VerificationPeriod,
+        },
         *,
     };
     use crate::file_structure::VerificationDirectory;

@@ -127,7 +127,7 @@ impl<T> FileGroupIter<T> {
 /// ```
 macro_rules! impl_iterator_over_data_payload {
     ($p: ty, $fct: ident, $pread: ident, $preaditer: ident) => {
-        type $pread = Result<Box<$p>, FileStructureError>;
+        type $pread = anyhow::Result<Box<$p>>;
         type $preaditer = FileGroupIter<$pread>;
         impl FileGroupIterTrait<$pread> for $preaditer {
             fn current_elt(&self) -> Option<$pread> {
@@ -324,7 +324,7 @@ pub mod mock {
     /// ```
     macro_rules! impl_iterator_over_data_payload_mock {
         ($p: ty, $pread: ident, $preaditer: ident,$mockpreaditer: ident) => {
-            type $pread = Result<Box<$p>, FileStructureError>;
+            type $pread = anyhow::Result<Box<$p>>;
             type $mockpreaditer = MockFileGroupIter<$pread, $preaditer>;
             impl FileGroupIterTrait<$pread> for $mockpreaditer {
                 fn current_elt(&self) -> Option<$pread> {
@@ -332,15 +332,11 @@ pub mod mock {
                         Some(i) => match self.mocked_data().get(i) {
                             Some(data) => match data {
                                 Ok(d) => Some(Ok(d.clone().to_owned())),
-                                Err(e) => {
-                                    Some(create_result_with_error!(e.kind().clone(), e.message()))
-                                }
+                                Err(e) => Some(Err(anyhow!(format!("{}", e)))),
                             },
                             None => match self.orig().current_elt().unwrap() {
                                 Ok(d) => Some(Ok((d.clone().to_owned()))),
-                                Err(e) => {
-                                    Some(create_result_with_error!(e.kind().clone(), e.message()))
-                                }
+                                Err(e) => Some(Err(anyhow!(e))),
                             },
                         },
                         None => None,
@@ -448,7 +444,7 @@ pub mod mock {
                         i.to_owned(),
                         match elt {
                             Ok(d) => Ok(d.clone().to_owned()),
-                            Err(e) => create_result_with_error!(e.kind().clone(), e.message()),
+                            Err(e) => Err(anyhow!(format!("{}", e))),
                         },
                     );
                 }
@@ -466,12 +462,12 @@ pub mod mock {
     /// - $payload: Type of the payload
     macro_rules! mock_payload_iter {
         ($fct: ident, $mock: ident, $payload: ty) => {
-            pub fn $fct(&mut self, index: usize, data: &Result<&$payload, FileStructureError>) {
+            pub fn $fct(&mut self, index: usize, data: &anyhow::Result<&$payload>) {
                 self.$mock.insert(
                     index,
                     match data {
                         Ok(d) => Ok(Box::new(d.clone().to_owned())),
-                        Err(e) => create_result_with_error!(e.kind().clone(), e.message()),
+                        Err(e) => Err(anyhow!(format!("{}", e))),
                     },
                 );
             }

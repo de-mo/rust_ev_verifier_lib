@@ -1,9 +1,6 @@
-use super::super::super::{
-    error::{
-        create_verification_error, create_verification_failure, VerificationErrorType,
-        VerificationFailure, VerificationFailureType,
-    },
-    verification::VerificationResult,
+use super::super::super::result::{
+    create_verification_error, create_verification_failure, VerificationEvent, VerificationResult,
+    VerificationResultTrait,
 };
 use crate::{
     crypto_primitives::zero_knowledge_proof::verify_exponentiation,
@@ -15,13 +12,12 @@ use crate::{
         },
         VerifierSetupDataTrait,
     },
-    error::{create_verifier_error, VerifierError},
     file_structure::{
         setup_directory::{SetupDirectoryTrait, VCSDirectoryTrait},
         VerificationDirectoryTrait,
     },
-    verification::verification::VerificationResultTrait,
 };
+use anyhow::anyhow;
 use log::debug;
 use rayon::prelude::*;
 use std::iter::zip;
@@ -47,7 +43,7 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
     let ee_context = match setup_dir.election_event_context_payload() {
         Ok(p) => p.election_event_context,
         Err(e) => {
-            result.push_error(create_verification_error!(
+            result.push(create_verification_error!(
                 "election_event_context_payload cannot be read",
                 e
             ));
@@ -81,7 +77,7 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
                     let vcs_context = match ee_context.find_verification_card_set_context(&vcs_id) {
                         Some(c) => c,
                         None => {
-                            result.push_error(create_verification_error!(format!(
+                            result.push(create_verification_error!(format!(
                                 "vcs id {} not found in election_event_context_payload",
                                 vcs_id
                             )));
@@ -100,7 +96,7 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
                                     .unwrap()
                                     .number_of_voters()
                         {
-                            result.push_failure(create_verification_failure!(
+                            result.push(create_verification_failure!(
                                 format!("Number of vcs {} for vcs id {} not the same as in the chunks of setup_verification_data",
                                 vcs_context.number_of_voters(), vcs_id_for_sum_vcs)
                             ));
@@ -149,12 +145,10 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
                                                 ),
                                             )
                                         }
-                                        None => {
-                                            result.push_error(create_verification_error!(format!(
-                                                "Node id {} not found in {}",
-                                                j, cc_share_chunk_name
-                                            )))
-                                        }
+                                        None => result.push(create_verification_error!(format!(
+                                            "Node id {} not found in {}",
+                                            j, cc_share_chunk_name
+                                        ))),
                                     }
                                     result
                                 })
@@ -163,14 +157,14 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
                                 result.append(r);
                             }
                         }
-                        Err(e) => result.push_error(create_verification_error!(
+                        Err(e) => result.push(create_verification_error!(
                             format!("{} cannot be read", cc_share_chunk_name),
                             e
                         )),
                     }
                 }
                 Err(e) => {
-                    result.push_error(create_verification_error!(
+                    result.push(create_verification_error!(
                         format!("{} cannot be read", setup_verif_data_chunk_name),
                         e
                     ));
@@ -201,7 +195,7 @@ fn verify_encrypted_pccexponentiation_proofs(
     ) {
         // Parallel verification for each voting card.
         // WARNING: It is assumed that the voting cards are in the same order in each list.
-        let mut failures: Vec<Vec<VerificationFailure>> = verification_card_ids
+        let mut failures: Vec<Vec<VerificationEvent>> = verification_card_ids
             .iter()
             .enumerate()
             .par_bridge()
@@ -227,7 +221,7 @@ fn verify_encrypted_pccexponentiation_proofs_for_one_vc(
     vc_id: &String,
     setup_verif: &SetupComponentVerificationDataInner,
     cc_code_share: &ControlComponentCodeShare,
-) -> Vec<VerificationFailure> {
+) -> Vec<VerificationEvent> {
     let mut failures = vec![];
 
     debug!(
@@ -305,7 +299,7 @@ fn verify_encrypted_pccexponentiation_proofs_for_one_vc(
 fn verify_sizes(
     expected: &usize,
     vec_sizes: Vec<usize>,
-    result: &mut Vec<VerificationFailure>,
+    result: &mut Vec<VerificationEvent>,
     names: Vec<&str>,
     suffix_text: &String,
 ) -> bool {
@@ -325,7 +319,7 @@ fn verify_sizes(
 #[cfg(test)]
 mod test {
     use super::{
-        super::super::super::{verification::VerificationResultTrait, VerificationPeriod},
+        super::super::super::{result::VerificationResultTrait, VerificationPeriod},
         *,
     };
     use crate::file_structure::VerificationDirectory;

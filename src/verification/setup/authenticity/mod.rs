@@ -1,17 +1,17 @@
 use super::super::{
-    error::{create_verification_error, VerificationErrorType},
-    verification::{Verification, VerificationResult},
-    verification_suite::VerificationList,
+    result::{create_verification_error, VerificationEvent, VerificationResult},
+    suite::VerificationList,
+    verification::Verification,
     verify_signature_for_object,
 };
 use crate::{
-    error::{create_verifier_error, VerifierError},
     file_structure::{
         setup_directory::{SetupDirectoryTrait, VCSDirectoryTrait},
         VerificationDirectoryTrait,
     },
     verification::meta_data::VerificationMetaDataList,
 };
+use anyhow::anyhow;
 use log::debug;
 
 pub fn get_verifications(metadata_list: &VerificationMetaDataList) -> VerificationList {
@@ -30,7 +30,7 @@ fn fn_verification_0201<D: VerificationDirectoryTrait>(dir: &D, result: &mut Ver
     let eg = match setup_dir.encryption_parameters_payload() {
         Ok(p) => p,
         Err(e) => {
-            result.push_error(create_verification_error!(
+            result.push(create_verification_error!(
                 format!("{} cannot be read", "encryption_parameters_payload"),
                 e
             ));
@@ -45,7 +45,7 @@ fn fn_verification_0203<D: VerificationDirectoryTrait>(dir: &D, result: &mut Ver
     let eg = match setup_dir.setup_component_public_keys_payload() {
         Ok(p) => p,
         Err(e) => {
-            result.push_error(create_verification_error!(
+            result.push(create_verification_error!(
                 format!("{} cannot be read", "setup_component_public_keys_payload"),
                 e
             ));
@@ -65,7 +65,7 @@ fn fn_verification_0204<D: VerificationDirectoryTrait>(dir: &D, result: &mut Ver
                 result,
                 &format!("control_component_public_keys_payload_{}", i),
             ),
-            Err(e) => result.push_error(create_verification_error!(
+            Err(e) => result.push(create_verification_error!(
                 format!("control_component_public_keys_payload_{} cannot be read", i),
                 e
             )),
@@ -88,7 +88,7 @@ fn fn_verification_0205<D: VerificationDirectoryTrait>(dir: &D, result: &mut Ver
                         i
                     ),
                 ),
-                Err(e) => result.push_error(create_verification_error!(
+                Err(e) => result.push(create_verification_error!(
                     format!(
                         "{}/setup_component_verification_data_payload_iter.{}.json",
                         d.get_name(),
@@ -121,7 +121,7 @@ fn fn_verification_0206<D: VerificationDirectoryTrait>(dir: &D, result: &mut Ver
                         )
                     }
                 }
-                Err(e) => result.push_error(create_verification_error!(
+                Err(e) => result.push(create_verification_error!(
                     format!(
                         "Error reading {}/control_component_code_shares_payload.{}.json",
                         d.get_name(),
@@ -144,7 +144,7 @@ fn fn_verification_0207<D: VerificationDirectoryTrait>(dir: &D, result: &mut Ver
                 result,
                 &format!("{}/setup_component_tally_data_payload.json", d.get_name(),),
             ),
-            Err(e) => result.push_error(create_verification_error!(
+            Err(e) => result.push(create_verification_error!(
                 format!("{}/setup_component_tally_data_payload.json", d.get_name(),),
                 e
             )),
@@ -152,12 +152,13 @@ fn fn_verification_0207<D: VerificationDirectoryTrait>(dir: &D, result: &mut Ver
     }
 }
 
+#[allow(dead_code)]
 fn fn_verification_0208<D: VerificationDirectoryTrait>(dir: &D, result: &mut VerificationResult) {
     let setup_dir = dir.unwrap_setup();
     let rp = match setup_dir.election_event_context_payload() {
         Ok(p) => p,
         Err(e) => {
-            result.push_error(create_verification_error!(
+            result.push(create_verification_error!(
                 format!("{} cannot be read", "election_event_context_payload"),
                 e
             ));
@@ -170,7 +171,7 @@ fn fn_verification_0208<D: VerificationDirectoryTrait>(dir: &D, result: &mut Ver
 #[cfg(test)]
 mod test {
     use super::{
-        super::super::{verification::VerificationResultTrait, VerificationPeriod},
+        super::super::{result::VerificationResultTrait, VerificationPeriod},
         *,
     };
     use crate::file_structure::VerificationDirectory;

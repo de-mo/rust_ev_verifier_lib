@@ -1,19 +1,16 @@
 use super::{
     super::{
         common_types::{EncryptionGroup, ProofUnderline, SignatureJson},
-        deserialize_seq_string_hex_to_seq_bigunit,
-        error::{DeserializeError, DeserializeErrorType},
-        implement_trait_verifier_data_json_decode, VerifierDataDecode,
+        deserialize_seq_string_hex_to_seq_bigunit, implement_trait_verifier_data_json_decode,
+        VerifierDataDecode,
     },
     control_component_public_keys_payload::ControlComponentPublicKeys,
 };
-use crate::{
-    crypto_primitives::{
-        byte_array::ByteArray, direct_trust::CertificateAuthority, hashing::HashableMessage,
-        signature::VerifiySignatureTrait,
-    },
-    error::{create_verifier_error, VerifierError},
+use crate::crypto_primitives::{
+    byte_array::ByteArray, direct_trust::CertificateAuthority, hashing::HashableMessage,
+    signature::VerifiySignatureTrait,
 };
+use anyhow::anyhow;
 use num_bigint::BigUint;
 use serde::Deserialize;
 

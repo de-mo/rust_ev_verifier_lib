@@ -1,6 +1,6 @@
-use super::{FileStructureError, FileStructureErrorType, GetFileNameTrait};
+use super::GetFileNameTrait;
 use crate::data_structures::{VerifierData, VerifierDataType};
-use crate::error::{create_result_with_error, create_verifier_error, VerifierError};
+use anyhow::anyhow;
 use glob::glob;
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -56,29 +56,23 @@ impl File {
         self.path.to_str().unwrap()
     }
 
-    pub fn read_data(&self) -> Result<String, FileStructureError> {
-        fs::read_to_string(&self.get_path()).map_err(|e| {
-            create_verifier_error!(
-                FileStructureErrorType::FileError,
-                format!("Cannot read file \"{}\"", self.to_str()),
-                e
-            )
-        })
+    pub fn read_data(&self) -> anyhow::Result<String> {
+        fs::read_to_string(&self.get_path())
+            .map_err(|e| anyhow!(e).context(format!("Cannot read file \"{}\"", self.to_str())))
     }
 
-    pub fn get_data(&self) -> Result<VerifierData, FileStructureError> {
+    pub fn get_data(&self) -> anyhow::Result<VerifierData> {
         if !self.exists() {
-            return create_result_with_error!(
-                FileStructureErrorType::FileError,
-                format!("File \"{}\" does not exists", self.to_str())
-            );
+            return Err(anyhow!(format!(
+                "File \"{}\" does not exists",
+                self.to_str()
+            )));
         }
         self.data_type.verifier_data_from_file(&self).map_err(|e| {
-            create_verifier_error!(
-                FileStructureErrorType::DataError,
-                format!("Content of the file \"{}\" is not valid", self.to_str()),
-                e
-            )
+            anyhow!(e).context(format!(
+                "Content of the file \"{}\" is not valid",
+                self.to_str()
+            ))
         })
     }
 }

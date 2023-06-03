@@ -1,13 +1,10 @@
 use super::super::{
     common_types::{EncryptionGroup, ExponentiatedEncryptedElement, SignatureJson},
     deserialize_seq_string_hex_to_seq_bigunit, deserialize_string_hex_to_bigunit,
-    error::{DeserializeError, DeserializeErrorType},
     implement_trait_verifier_data_json_decode, VerifierDataDecode,
 };
-use crate::{
-    data_structures::common_types::DecryptionProof,
-    error::{create_verifier_error, VerifierError},
-};
+use crate::data_structures::common_types::DecryptionProof;
+use anyhow::anyhow;
 use num_bigint::BigUint;
 use serde::Deserialize;
 

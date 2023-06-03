@@ -1,17 +1,11 @@
-use super::super::super::{
-    error::{
-        create_verification_error, create_verification_failure, VerificationErrorType,
-        VerificationFailureType,
-    },
-    verification::VerificationResult,
+use super::super::super::result::{
+    create_verification_error, create_verification_failure, VerificationEvent, VerificationResult,
 };
-use crate::{
-    error::{create_verifier_error, VerifierError},
-    file_structure::{
-        setup_directory::{SetupDirectoryTrait, VCSDirectoryTrait},
-        VerificationDirectoryTrait,
-    },
+use crate::file_structure::{
+    setup_directory::{SetupDirectoryTrait, VCSDirectoryTrait},
+    VerificationDirectoryTrait,
 };
+use anyhow::anyhow;
 use log::debug;
 
 fn test_election_event_id(
@@ -21,7 +15,7 @@ fn test_election_event_id(
     result: &mut VerificationResult,
 ) {
     if ee_id != expected {
-        result.push_failure(create_verification_failure!(format!(
+        result.push(create_verification_failure!(format!(
             "Election Event ID not equal in {}",
             name
         )));
@@ -40,7 +34,7 @@ fn test_ee_id_for_vcs_dir<V: VCSDirectoryTrait>(
             &format!("{}/setup_component_tally_data_payload", dir.get_name()),
             result,
         ),
-        Err(e) => result.push_error(create_verification_error!(
+        Err(e) => result.push(create_verification_error!(
             format!(
                 "{}/setup_component_tally_data_payload has wrong format",
                 dir.get_name()
@@ -50,7 +44,7 @@ fn test_ee_id_for_vcs_dir<V: VCSDirectoryTrait>(
     }
     for (i, f) in dir.control_component_code_shares_payload_iter() {
         match f {
-            Err(e) => result.push_error(create_verification_error!(
+            Err(e) => result.push(create_verification_error!(
                 format!(
                     "{}/control_component_code_shares_payload_.{} has wrong format",
                     dir.get_name(),
@@ -77,7 +71,7 @@ fn test_ee_id_for_vcs_dir<V: VCSDirectoryTrait>(
     }
     for (i, f) in dir.setup_component_verification_data_payload_iter() {
         match f {
-            Err(e) => result.push_error(create_verification_error!(
+            Err(e) => result.push(create_verification_error!(
                 format!(
                     "{}/setup_component_verification_data_payload.{} has wrong format",
                     dir.get_name(),
@@ -107,7 +101,7 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
     let ee_id = match setup_dir.election_event_context_payload() {
         Ok(o) => o.election_event_context.election_event_id,
         Err(e) => {
-            result.push_error(create_verification_error!(
+            result.push(create_verification_error!(
                 "Cannot extract election_event_context_payload",
                 e
             ));
@@ -121,14 +115,14 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
             "setup_component_public_keys_payload",
             result,
         ),
-        Err(e) => result.push_error(create_verification_error!(
+        Err(e) => result.push(create_verification_error!(
             "election_event_context_payload has wrong format",
             e
         )),
     }
     for (i, f) in setup_dir.control_component_public_keys_payload_iter() {
         match f {
-            Err(e) => result.push_error(create_verification_error!(
+            Err(e) => result.push(create_verification_error!(
                 format!(
                     "control_component_public_keys_payload.{} has wrong format",
                     i
@@ -151,7 +145,7 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
 #[cfg(test)]
 mod test {
     use super::{
-        super::super::super::{verification::VerificationResultTrait, VerificationPeriod},
+        super::super::super::{result::VerificationResultTrait, VerificationPeriod},
         *,
     };
     use crate::file_structure::VerificationDirectory;

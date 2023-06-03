@@ -1,18 +1,14 @@
-use super::super::super::{
-    error::{
-        create_verification_error, create_verification_failure, VerificationErrorType,
-        VerificationFailureType,
-    },
-    verification::VerificationResult,
+use super::super::super::result::{
+    create_verification_error, create_verification_failure, VerificationEvent, VerificationResult,
 };
 use crate::{
     data_structures::{
         setup::control_component_public_keys_payload::ControlComponentPublicKeys,
         VerifierSetupDataTrait,
     },
-    error::{create_verifier_error, VerifierError},
     file_structure::{setup_directory::SetupDirectoryTrait, VerificationDirectoryTrait},
 };
+use anyhow::anyhow;
 use log::debug;
 
 fn validate_cc_ccm_pk<S: SetupDirectoryTrait>(
@@ -30,7 +26,7 @@ fn validate_cc_ccm_pk<S: SetupDirectoryTrait>(
     {
         Ok(d) => d.control_component_public_keys,
         Err(e) => {
-            result.push_error(create_verification_error!(
+            result.push(create_verification_error!(
                 format!("Cannot read data from file {}", f.to_str()),
                 e
             ));
@@ -38,12 +34,12 @@ fn validate_cc_ccm_pk<S: SetupDirectoryTrait>(
         }
     };
     if setup.ccmj_election_public_key.len() != cc_pk.ccmj_election_public_key.len() {
-        result.push_failure(create_verification_failure!(format!("The length of CCM public keys for control component {} are identical from both sources", node_id)));
+        result.push(create_verification_failure!(format!("The length of CCM public keys for control component {} are identical from both sources", node_id)));
     } else {
         if setup.ccrj_choice_return_codes_encryption_public_key
             != cc_pk.ccrj_choice_return_codes_encryption_public_key
         {
-            result.push_failure(create_verification_failure!(format!(
+            result.push(create_verification_failure!(format!(
                 "The CCM public keys for control component {} are identical from both sources",
                 node_id
             )));
@@ -59,7 +55,7 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
     let sc_pk = match setup_dir.setup_component_public_keys_payload() {
         Ok(o) => o,
         Err(e) => {
-            result.push_error(create_verification_error!(
+            result.push(create_verification_error!(
                 "Cannot extract setup_component_public_keys_payload",
                 e
             ));
@@ -77,7 +73,7 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
 #[cfg(test)]
 mod test {
     use super::{
-        super::super::super::{verification::VerificationResultTrait, VerificationPeriod},
+        super::super::super::{result::VerificationResultTrait, VerificationPeriod},
         *,
     };
     use crate::file_structure::VerificationDirectory;

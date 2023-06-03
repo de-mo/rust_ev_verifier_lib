@@ -699,6 +699,7 @@ dependencies = [
 name = "rust_verifier"
 version = "0.0.1"
 dependencies = [
+ "anyhow",
  "chrono",
  "data-encoding",
  "enum-kinds",

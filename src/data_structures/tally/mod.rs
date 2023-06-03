@@ -13,7 +13,7 @@ use self::{
     tally_component_shuffle_payload::TallyComponentShufflePayload,
     tally_component_votes_payload::TallyComponentVotesPayload,
 };
-use super::{error::DeserializeError, VerifierDataDecode, VerifierTallyDataTrait};
+use super::{VerifierDataDecode, VerifierTallyDataTrait};
 use crate::file_structure::{file::File, FileReadMode, FileType};
 use enum_kinds::EnumKind;
 
@@ -57,7 +57,7 @@ impl VerifierTallyDataType {
     /// Read from String as json or xml
     ///
     /// All the types have to implement the trait [VerifierDataDecode]
-    pub fn verifier_data_from_file(&self, f: &File) -> Result<VerifierTallyData, DeserializeError> {
+    pub fn verifier_data_from_file(&self, f: &File) -> anyhow::Result<VerifierTallyData> {
         match self {
             VerifierTallyDataType::EVotingDecrypt => {
                 EVotingDecrypt::from_file(f, &self.get_file_type(), &self.get_file_read_mode())

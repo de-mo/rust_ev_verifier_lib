@@ -1,22 +1,19 @@
-use super::super::{
-    error::{DeserializeError, DeserializeErrorType},
-    xml_read_to_end_into_buffer, VerifierDataDecode,
-};
+use super::super::{xml_read_to_end_into_buffer, VerifierDataDecode};
 use crate::{
     crypto_primitives::{
         byte_array::ByteArray, direct_trust::CertificateAuthority, hashing::HashableMessage,
         signature::VerifiySignatureTrait,
     },
     data_structures::hashable_no_value,
-    error::{create_result_with_error, create_verifier_error, VerifierError},
 };
+use anyhow::anyhow;
 use quick_xml::{
     de::from_str as xml_de_from_str,
     events::{BytesStart, Event},
     Reader,
 };
 use serde::Deserialize;
-use std::{collections::HashMap, path::PathBuf};
+use std::path::PathBuf;
 
 #[derive(Debug, Clone)]
 pub struct ElectionEventConfiguration {
@@ -40,13 +37,12 @@ pub struct PartialDelivery {
 }
 
 impl VerifierDataDecode for ElectionEventConfiguration {
-    fn from_xml_file(p: &std::path::Path) -> Result<Self, DeserializeError> {
+    fn from_xml_file(p: &std::path::Path) -> anyhow::Result<Self> {
         let mut reader = Reader::from_file(p).map_err(|e| {
-            create_verifier_error!(
-                DeserializeErrorType::XMLError,
-                format!("Error creating xml reader for file {}", p.to_str().unwrap()),
-                e
-            )
+            anyhow!(e).context(format!(
+                "Error creating xml reader for file {}",
+                p.to_str().unwrap()
+            ))
         })?;
         reader.trim_text(true);
 
@@ -56,39 +52,21 @@ impl VerifierDataDecode for ElectionEventConfiguration {
         loop {
             match reader.read_event_into(&mut buf) {
                 Err(e) => {
-                    return create_result_with_error!(
-                        DeserializeErrorType::XMLError,
-                        format!("Error at position {}", reader.buffer_position()),
-                        e
-                    )
+                    return Err(anyhow!(e)
+                        .context(format!("Error at position {}", reader.buffer_position())))
                 }
-                Ok(Event::Eof) => {
-                    return create_result_with_error!(
-                        DeserializeErrorType::XMLError,
-                        format!("cannot find tag voterTotal")
-                    )
-                }
+                Ok(Event::Eof) => return Err(anyhow!(format!("cannot find tag voterTotal"))),
                 Ok(Event::Start(e)) => {
                     if e == start_header {
                         let header_bytes =
                             xml_read_to_end_into_buffer(&mut reader, &start_header, &mut buf)
                                 .map_err(|e| {
-                                    create_verifier_error!(
-                                        DeserializeErrorType::XMLError,
-                                        "Error reading header bytes",
-                                        e
-                                    )
+                                    anyhow!(e).context(format!("Error reading header bytes"))
                                 })?;
                         let config_header: ConfigHeader = xml_de_from_str(
                             &String::from_utf8_lossy(&header_bytes),
                         )
-                        .map_err(|e| {
-                            create_verifier_error!(
-                                DeserializeErrorType::XMLError,
-                                "Error deserializing header",
-                                e
-                            )
-                        })?;
+                        .map_err(|e| anyhow!(e).context(format!("Error deserializing header")))?;
                         return Ok(Self {
                             path: p.to_path_buf(),
                             header: config_header,

@@ -2,14 +2,9 @@
 //!
 //! The metadata list is loaded from the file in resources.
 
-use super::{
-    VerificationCategory, VerificationPeriod, VerificationPreparationError,
-    VerificationPreparationErrorType,
-};
-use crate::{
-    constants::verification_list_path,
-    error::{create_verifier_error, VerifierError},
-};
+use super::{VerificationCategory, VerificationPeriod};
+use crate::constants::verification_list_path;
+use anyhow::anyhow;
 use serde::{
     de::{Deserialize as Deserialize2, Deserializer, Error},
     Deserialize,
@@ -24,7 +19,7 @@ pub type VerificationMetaDataList = Vec<VerificationMetaData>;
 /// Used so because it is a type of Vec.
 pub trait VerificationMetaDataListTrait: Sized {
     /// Load the list from the file in resources
-    fn load() -> Result<Self, VerificationPreparationError>;
+    fn load() -> anyhow::Result<Self>;
 
     // Get meta_data for id.
     fn meta_data_from_id(&self, id: &str) -> Option<&VerificationMetaData>;
@@ -61,21 +56,16 @@ pub struct VerificationMetaData {
 }
 
 impl VerificationMetaDataListTrait for VerificationMetaDataList {
-    fn load() -> Result<Self, VerificationPreparationError> {
+    fn load() -> anyhow::Result<Self> {
         let path = verification_list_path();
         let s = fs::read_to_string(&path).map_err(|e| {
-            create_verifier_error!(
-                VerificationPreparationErrorType::Metadata,
-                format!("Cannot read file {}", "toto"),
-                e
-            )
+            anyhow!(e).context(format!("Cannot read file {}", path.to_str().unwrap()))
         })?;
         serde_json::from_str(&s).map_err(|e| {
-            create_verifier_error!(
-                VerificationPreparationErrorType::Metadata,
-                format!("Cannot deserialize json"),
-                e
-            )
+            anyhow!(e).context(format!(
+                "Cannot deserialize json for file {}",
+                path.to_str().unwrap()
+            ))
         })
     }
 
@@ -101,7 +91,7 @@ where
 {
     let buf = String::deserialize(deserializer)?;
 
-    VerificationPeriod::try_from(&buf).map_err(|e| Error::custom(e.message()))
+    VerificationPeriod::try_from(&buf).map_err(|e| Error::custom(e.to_string()))
 }
 
 fn deserialize_string_to_category<'de, D>(deserializer: D) -> Result<VerificationCategory, D::Error>
@@ -110,7 +100,7 @@ where
 {
     let buf = String::deserialize(deserializer)?;
 
-    VerificationCategory::try_from(&buf).map_err(|e| Error::custom(e.message()))
+    VerificationCategory::try_from(&buf).map_err(|e| Error::custom(e.to_string()))
 }
 
 #[cfg(test)]

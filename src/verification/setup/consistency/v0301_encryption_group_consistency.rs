@@ -1,18 +1,14 @@
-use super::super::super::{
-    error::{
-        create_verification_error, create_verification_failure, VerificationErrorType,
-        VerificationFailureType,
-    },
-    verification::VerificationResult,
+use super::super::super::result::{
+    create_verification_error, create_verification_failure, VerificationEvent, VerificationResult,
 };
 use crate::{
     data_structures::common_types::EncryptionGroup,
-    error::{create_verifier_error, VerifierError},
     file_structure::{
         setup_directory::{SetupDirectoryTrait, VCSDirectoryTrait},
         VerificationDirectoryTrait,
     },
 };
+use anyhow::anyhow;
 use log::debug;
 
 fn verify_encryption_group(
@@ -22,19 +18,19 @@ fn verify_encryption_group(
     result: &mut VerificationResult,
 ) {
     if eg.p != expected.p {
-        result.push_failure(create_verification_failure!(format!(
+        result.push(create_verification_failure!(format!(
             "p not equal in {}",
             name
         )));
     }
     if eg.q != expected.q {
-        result.push_failure(create_verification_failure!(format!(
+        result.push(create_verification_failure!(format!(
             "q not equal in {}",
             name
         )));
     }
     if eg.g != expected.g {
-        result.push_failure(create_verification_failure!(format!(
+        result.push(create_verification_failure!(format!(
             "g not equal in {}",
             name
         )));
@@ -53,7 +49,7 @@ fn verify_encryption_group_for_vcs_dir<V: VCSDirectoryTrait>(
             &format!("{}/setup_component_tally_data_payload", dir.get_name()),
             result,
         ),
-        Err(e) => result.push_error(create_verification_error!(
+        Err(e) => result.push(create_verification_error!(
             format!(
                 "{}/setup_component_tally_data_payload has wrong format",
                 dir.get_name()
@@ -63,7 +59,7 @@ fn verify_encryption_group_for_vcs_dir<V: VCSDirectoryTrait>(
     }
     for (i, f) in dir.control_component_code_shares_payload_iter() {
         match f {
-            Err(e) => result.push_error(create_verification_error!(
+            Err(e) => result.push(create_verification_error!(
                 format!(
                     "{}/control_component_code_shares_payload_.{} has wrong format",
                     dir.get_name(),
@@ -90,7 +86,7 @@ fn verify_encryption_group_for_vcs_dir<V: VCSDirectoryTrait>(
     }
     for (i, f) in dir.setup_component_verification_data_payload_iter() {
         match f {
-            Err(e) => result.push_error(create_verification_error!(
+            Err(e) => result.push(create_verification_error!(
                 format!(
                     "{}/setup_component_verification_data_payload.{} has wrong format",
                     dir.get_name(),
@@ -120,7 +116,7 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
     let eg = match setup_dir.encryption_parameters_payload() {
         Ok(p) => p.encryption_group,
         Err(e) => {
-            result.push_error(create_verification_error!(
+            result.push(create_verification_error!(
                 "encryption_parameters_payload cannot be read",
                 e
             ));
@@ -134,7 +130,7 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
             "election_event_context_payload",
             result,
         ),
-        Err(e) => result.push_error(create_verification_error!(
+        Err(e) => result.push(create_verification_error!(
             "election_event_context_payload has wrong format",
             e
         )),
@@ -146,14 +142,14 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
             "setup_component_public_keys_payload",
             result,
         ),
-        Err(e) => result.push_error(create_verification_error!(
+        Err(e) => result.push(create_verification_error!(
             "election_event_context_payload has wrong format",
             e
         )),
     }
     for (i, f) in setup_dir.control_component_public_keys_payload_iter() {
         match f {
-            Err(e) => result.push_error(create_verification_error!(
+            Err(e) => result.push(create_verification_error!(
                 format!(
                     "control_component_public_keys_payload.{} has wrong format",
                     i
@@ -178,7 +174,7 @@ mod test {
     use num_bigint::BigUint;
 
     use super::{
-        super::super::super::{verification::VerificationResultTrait, VerificationPeriod},
+        super::super::super::{result::VerificationResultTrait, VerificationPeriod},
         *,
     };
     use crate::{

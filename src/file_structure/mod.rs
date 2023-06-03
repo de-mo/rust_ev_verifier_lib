@@ -10,11 +10,10 @@ use crate::{
     data_structures::{
         setup::VerifierSetupDataType, tally::VerifierTallyDataType, VerifierDataType,
     },
-    error::VerifierError,
     verification::VerificationPeriod,
 };
 use setup_directory::SetupDirectory;
-use std::{fmt::Display, path::Path};
+use std::path::Path;
 use tally_directory::TallyDirectory;
 
 use self::{setup_directory::SetupDirectoryTrait, tally_directory::TallyDirectoryTrait};
@@ -172,26 +171,6 @@ impl GetFileNameTrait for VerifierDataType {
         }
     }
 }
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum FileStructureErrorType {
-    FileError,
-    DataError,
-    IsNotDir,
-}
-
-impl Display for FileStructureErrorType {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let s = match self {
-            Self::FileError => "FileError",
-            Self::DataError => "DataError",
-            Self::IsNotDir => "Not Directory",
-        };
-        write!(f, "{s}")
-    }
-}
-
-type FileStructureError = VerifierError<FileStructureErrorType>;
 
 #[cfg(test)]
 mod test {
@@ -393,11 +372,11 @@ pub mod mock {
     /// - $payload: Type of the pyalod
     macro_rules! wrap_payload_getter {
         ($fct: ident, $mock: ident, $payload: ty) => {
-            fn $fct(&self) -> Result<Box<$payload>, FileStructureError> {
+            fn $fct(&self) -> anyhow::Result<Box<$payload>> {
                 match &self.$mock {
                     Some(e) => match e {
                         Ok(b) => Ok(Box::new(*b.clone())),
-                        Err(r) => create_result_with_error!(r.kind().clone(), r.message()),
+                        Err(r) => Err(anyhow!(format!("{}", r))),
                     },
                     None => self.dir.$fct(),
                 }
@@ -414,10 +393,10 @@ pub mod mock {
     /// - $payload: Type of the payload
     macro_rules! mock_payload {
         ($fct: ident, $mock: ident, $payload: ty) => {
-            pub fn $fct(&mut self, data: &Result<&$payload, FileStructureError>) {
+            pub fn $fct(&mut self, data: &anyhow::Result<&$payload>) {
                 self.$mock = match data {
                     Ok(d) => Some(Ok(Box::new(d.clone().to_owned()))),
-                    Err(e) => Some(create_result_with_error!(e.kind().clone(), e.message())),
+                    Err(e) => Some(Err(anyhow!(format!("{}", e)))),
                 };
             }
         };

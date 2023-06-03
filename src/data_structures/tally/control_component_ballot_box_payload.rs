@@ -1,12 +1,9 @@
 use super::super::{
     common_types::{EncryptionGroup, ExponentiatedEncryptedElement, SignatureJson},
-    error::{DeserializeError, DeserializeErrorType},
     implement_trait_verifier_data_json_decode, VerifierDataDecode,
 };
-use crate::{
-    data_structures::common_types::{DecryptionProof, Proof},
-    error::{create_verifier_error, VerifierError},
-};
+use crate::data_structures::common_types::{DecryptionProof, Proof};
+use anyhow::anyhow;
 use serde::Deserialize;
 
 #[derive(Deserialize, Debug, Clone)]

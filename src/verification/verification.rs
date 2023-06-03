@@ -1,13 +1,11 @@
 ///! Module implementing the structure of a verification
 use super::{
-    error::{VerificationError, VerificationFailure},
     meta_data::{VerificationMetaData, VerificationMetaDataList, VerificationMetaDataListTrait},
-    VerificationPreparationError, VerificationPreparationErrorType, VerificationStatus,
+    result::{VerificationEvent, VerificationResult, VerificationResultTrait},
+    VerificationStatus,
 };
-use crate::{
-    error::{create_result_with_error, create_verifier_error, VerifierError},
-    file_structure::{VerificationDirectory, VerificationDirectoryTrait},
-};
+use crate::file_structure::{VerificationDirectory, VerificationDirectoryTrait};
+use anyhow::bail;
 use log::{info, warn};
 use std::time::{Duration, SystemTime};
 
@@ -23,44 +21,6 @@ pub struct Verification<'a, D: VerificationDirectoryTrait> {
     verification_fn: Box<dyn Fn(&D, &mut VerificationResult)>,
     duration: Option<Duration>,
     result: Box<VerificationResult>,
-}
-
-/// Struct representing a result of the verification
-/// The verification can have many errors and/or many failures
-#[derive(Debug)]
-pub struct VerificationResult {
-    errors: Vec<VerificationError>,
-    failures: Vec<VerificationFailure>,
-}
-
-/// Trait defining functions to access the verficiation result
-pub trait VerificationResultTrait {
-    /// Is the verification ok ?
-    ///
-    /// If not run, the output is None
-    fn is_ok(&self) -> Option<bool>;
-
-    /// Has the verification errors ?
-    ///
-    /// If not run, the output is None
-    fn has_errors(&self) -> Option<bool>;
-
-    /// Has the verification failures ?
-    ///
-    /// If not run, the output is None
-    fn has_failures(&self) -> Option<bool>;
-
-    /// All the errors
-    fn errors(&self) -> &Vec<VerificationError>;
-
-    /// All the failures
-    fn failures(&self) -> &Vec<VerificationFailure>;
-
-    /// Mutable reference to the errors
-    fn errors_mut(&mut self) -> &mut Vec<VerificationError>;
-
-    /// Mutable reference to the failures
-    fn failures_mut(&mut self) -> &mut Vec<VerificationFailure>;
 }
 
 impl<'a> Verification<'a, VerificationDirectory> {
@@ -88,14 +48,11 @@ impl<'a> Verification<'a, VerificationDirectory> {
         id: &str,
         verification_fn: impl Fn(&VerificationDirectory, &mut VerificationResult) + 'static,
         metadata_list: &'a VerificationMetaDataList,
-    ) -> Result<Self, VerificationPreparationError> {
+    ) -> anyhow::Result<Self> {
         let meta_data = match metadata_list.meta_data_from_id(id) {
             Some(m) => m,
             None => {
-                return create_result_with_error!(
-                    VerificationPreparationErrorType::Metadata,
-                    format!("metadata for id {} not found", id)
-                )
+                bail!(format!("metadata for verification id {} not found", id))
             }
         };
         Ok(Verification {
@@ -146,62 +103,6 @@ impl<'a> Verification<'a, VerificationDirectory> {
     }
 }
 
-impl VerificationResult {
-    /// New VerificationResult
-    pub fn new() -> Self {
-        VerificationResult {
-            errors: vec![],
-            failures: vec![],
-        }
-    }
-
-    /// Push a new error to the VerificationResult
-    pub fn push_error(&mut self, e: VerificationError) {
-        self.errors.push(e)
-    }
-
-    /// Push a new failure to the VerificationResult
-    pub fn push_failure(&mut self, f: VerificationFailure) {
-        self.failures.push(f)
-    }
-
-    /// Append the results of ohter to self, emptying the vectors of other
-    pub fn append(&mut self, other: &mut Self) {
-        self.errors.append(&mut other.errors_mut());
-        self.failures.append(&mut other.failures_mut());
-    }
-}
-
-impl VerificationResultTrait for VerificationResult {
-    fn is_ok(&self) -> Option<bool> {
-        Some(!self.has_errors().unwrap() && !self.has_failures().unwrap())
-    }
-
-    fn has_errors(&self) -> Option<bool> {
-        Some(!self.errors.is_empty())
-    }
-
-    fn has_failures(&self) -> Option<bool> {
-        Some(!self.failures.is_empty())
-    }
-
-    fn errors(&self) -> &Vec<VerificationError> {
-        &self.errors
-    }
-
-    fn failures(&self) -> &Vec<VerificationFailure> {
-        &self.failures
-    }
-
-    fn errors_mut(&mut self) -> &mut Vec<VerificationError> {
-        &mut self.errors
-    }
-
-    fn failures_mut(&mut self) -> &mut Vec<VerificationFailure> {
-        &mut self.failures
-    }
-}
-
 impl<'a> VerificationResultTrait for Verification<'a, VerificationDirectory> {
     fn is_ok(&self) -> Option<bool> {
         match self.status {
@@ -227,32 +128,35 @@ impl<'a> VerificationResultTrait for Verification<'a, VerificationDirectory> {
         }
     }
 
-    fn errors(&self) -> &Vec<VerificationError> {
+    fn errors(&self) -> &Vec<VerificationEvent> {
         self.result.errors()
     }
 
-    fn failures(&self) -> &Vec<VerificationFailure> {
+    fn failures(&self) -> &Vec<VerificationEvent> {
         self.result.failures()
     }
 
-    fn errors_mut(&mut self) -> &mut Vec<VerificationError> {
+    fn errors_mut(&mut self) -> &mut Vec<VerificationEvent> {
         self.result.errors_mut()
     }
 
-    fn failures_mut(&mut self) -> &mut Vec<VerificationFailure> {
+    fn failures_mut(&mut self) -> &mut Vec<VerificationEvent> {
         self.result.failures_mut()
     }
 }
 
 #[cfg(test)]
 mod test {
+    use super::{
+        super::{
+            result::{create_verification_error, create_verification_failure},
+            VerificationPeriod,
+        },
+        *,
+    };
+    use anyhow::anyhow;
+    use log::debug;
     use std::path::Path;
-
-    use crate::error::{create_verifier_error, VerifierError};
-    use crate::verification::error::{VerificationErrorType, VerificationFailureType};
-    use crate::verification::VerificationPeriod;
-
-    use super::*;
 
     #[test]
     fn run_ok() {
@@ -276,15 +180,9 @@ mod test {
     #[test]
     fn run_error() {
         fn error(_: &VerificationDirectory, result: &mut VerificationResult) {
-            result.push_error(create_verifier_error!(VerificationErrorType::Error, "toto"));
-            result.push_error(create_verifier_error!(
-                VerificationErrorType::Error,
-                "toto2"
-            ));
-            result.push_failure(create_verifier_error!(
-                VerificationFailureType::Failure,
-                "toto"
-            ));
+            result.push(create_verification_error!("toto"));
+            result.push(create_verification_error!("toto2"));
+            result.push(create_verification_failure!("toto3"));
         }
         let md_list = VerificationMetaDataList::load().unwrap();
         let mut verif = Verification::new("01.01", error, &md_list).unwrap();
@@ -307,14 +205,8 @@ mod test {
     #[test]
     fn run_failure() {
         fn failure(_: &VerificationDirectory, result: &mut VerificationResult) {
-            result.push_failure(create_verifier_error!(
-                VerificationFailureType::Failure,
-                "toto"
-            ));
-            result.push_failure(create_verifier_error!(
-                VerificationFailureType::Failure,
-                "toto2"
-            ));
+            result.push(create_verification_failure!("toto"));
+            result.push(create_verification_failure!("toto2"));
         }
         let md_list = VerificationMetaDataList::load().unwrap();
         let mut verif = Verification::new("01.01", failure, &md_list).unwrap();
