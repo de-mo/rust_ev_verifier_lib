@@ -6,11 +6,11 @@ use super::{
     },
     control_component_public_keys_payload::ControlComponentPublicKeys,
 };
-use crate::crypto_primitives::{
+use anyhow::anyhow;
+use crypto_primitives::{
     byte_array::ByteArray, direct_trust::CertificateAuthority, hashing::HashableMessage,
     signature::VerifiySignatureTrait,
 };
-use anyhow::anyhow;
 use num_bigint::BigUint;
 use serde::Deserialize;
 

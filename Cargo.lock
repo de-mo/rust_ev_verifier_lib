@@ -160,6 +160,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "crypto_primitives"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "data-encoding",
+ "num-bigint",
+ "num-bigint-dig",
+ "num-traits",
+ "openssl",
+ "openssl-sys",
+ "thiserror",
+]
+
+[[package]]
 name = "data-encoding"
 version = "2.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -701,16 +715,13 @@ version = "0.0.1"
 dependencies = [
  "anyhow",
  "chrono",
+ "crypto_primitives",
  "data-encoding",
  "enum-kinds",
  "glob",
  "log",
  "log4rs",
  "num-bigint",
- "num-bigint-dig",
- "num-traits",
- "openssl",
- "openssl-sys",
  "quick-xml",
  "rayon",
  "roxmltree",

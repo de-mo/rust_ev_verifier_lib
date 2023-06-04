@@ -1,7 +1,6 @@
 //! This module implement the struct ByteArray that is used over the
-//! crate
 
-use crate::crypto_primitives::num_bigint::ByteLength;
+use super::num_bigint::ByteLength;
 use data_encoding::{DecodeError, BASE32, BASE64, HEXUPPER};
 use num_bigint::{BigUint, ToBigUint};
 use num_traits::Pow;

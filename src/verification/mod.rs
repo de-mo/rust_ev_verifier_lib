@@ -10,11 +10,9 @@ pub mod verification;
 use self::result::{
     create_verification_error, create_verification_failure, VerificationEvent, VerificationResult,
 };
-use crate::{
-    constants::direct_trust_path,
-    crypto_primitives::{hashing::HashableMessage, signature::VerifiySignatureTrait},
-};
+use crate::constants::direct_trust_path;
 use anyhow::{anyhow, bail};
+use crypto_primitives::{hashing::HashableMessage, signature::VerifiySignatureTrait};
 use log::debug;
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]

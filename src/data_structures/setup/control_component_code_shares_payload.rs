@@ -3,11 +3,11 @@ use super::super::{
     deserialize_seq_string_hex_to_seq_bigunit, implement_trait_verifier_data_json_decode,
     VerifierDataDecode,
 };
-use crate::crypto_primitives::{
+use anyhow::anyhow;
+use crypto_primitives::{
     byte_array::ByteArray, direct_trust::CertificateAuthority, hashing::HashableMessage,
     signature::VerifiySignatureTrait,
 };
-use anyhow::anyhow;
 use num_bigint::BigUint;
 use serde::Deserialize;
 

@@ -1,11 +1,9 @@
 use super::super::super::result::{
     create_verification_error, create_verification_failure, VerificationEvent, VerificationResult,
 };
-use crate::{
-    crypto_primitives::num_bigint::{Constants, Operations},
-    file_structure::{setup_directory::SetupDirectoryTrait, VerificationDirectoryTrait},
-};
+use crate::file_structure::{setup_directory::SetupDirectoryTrait, VerificationDirectoryTrait};
 use anyhow::anyhow;
+use crypto_primitives::num_bigint::{Constants, Operations};
 use log::debug;
 use num_bigint::BigUint;
 

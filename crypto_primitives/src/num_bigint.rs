@@ -45,11 +45,9 @@ pub trait Operations {
 /// Transformation from or to String in hexadecimal according to the specifications
 pub trait Hexa: Sized {
     /// Create object from hexadecimal String. If not valid return an error
-    /// ```rust
-    /// BigUint::from_hexa(&"0x12D9E8".to_string())
-    /// ```
     fn from_hexa_string(s: &String) -> Result<Self, BigUIntError>;
 
+    /// Create object from hexadecimal &str. If not valid return an error
     fn from_hexa_slice(s: &str) -> Result<Self, BigUIntError>;
 
     /// Generate the hexadecimal String

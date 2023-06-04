@@ -1,5 +1,5 @@
 use super::super::VerifierDataDecode;
-use crate::crypto_primitives::{
+use crypto_primitives::{
     byte_array::ByteArray, direct_trust::CertificateAuthority, hashing::HashableMessage,
     signature::VerifiySignatureTrait,
 };

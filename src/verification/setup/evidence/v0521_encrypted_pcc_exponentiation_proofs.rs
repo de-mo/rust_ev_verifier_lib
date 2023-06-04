@@ -3,7 +3,6 @@ use super::super::super::result::{
     VerificationResultTrait,
 };
 use crate::{
-    crypto_primitives::zero_knowledge_proof::verify_exponentiation,
     data_structures::{
         common_types::EncryptionGroup,
         setup::{
@@ -18,6 +17,7 @@ use crate::{
     },
 };
 use anyhow::anyhow;
+use crypto_primitives::zero_knowledge_proof::verify_exponentiation;
 use log::debug;
 use rayon::prelude::*;
 use std::iter::zip;
@@ -283,7 +283,13 @@ fn verify_encrypted_pccexponentiation_proofs_for_one_vc(
         let pi_exp_pcc_j = cc_code_share
             .encrypted_partial_choice_return_code_exponentiation_proof
             .clone();
-        if !verify_exponentiation(context.eg, &gs, &ys, &pi_exp_pcc_j, &i_aux) {
+        if !verify_exponentiation(
+            context.eg.as_tuple(),
+            &gs,
+            &ys,
+            pi_exp_pcc_j.as_tuple(),
+            &i_aux,
+        ) {
             failures.push(create_verification_failure!(format!(
                 "Failure verifying proofs for voting card id {} in chunk {} for node {}",
                 vc_id, context.chunk_id, context.node_id

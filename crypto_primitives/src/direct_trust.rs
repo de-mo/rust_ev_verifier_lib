@@ -108,7 +108,7 @@ mod test {
     use super::*;
 
     fn get_location() -> PathBuf {
-        Path::new(".").join("datasets").join("direct-trust")
+        Path::new("..").join("datasets").join("direct-trust")
     }
 
     #[test]

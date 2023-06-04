@@ -3,10 +3,11 @@ use super::super::super::result::{
 };
 use crate::{
     constants::MAXIMUM_NUMBER_OF_VOTING_OPTIONS,
-    crypto_primitives::elgamal::{get_encryption_parameters, get_small_prime_group_members},
+    data_structures::common_types::EncryptionGroup,
     file_structure::{setup_directory::SetupDirectoryTrait, VerificationDirectoryTrait},
 };
 use anyhow::anyhow;
+use crypto_primitives::elgamal::{get_encryption_parameters, get_small_prime_group_members};
 use log::debug;
 
 pub(super) fn fn_verification_0501<D: VerificationDirectoryTrait>(
@@ -25,7 +26,7 @@ pub(super) fn fn_verification_0501<D: VerificationDirectoryTrait>(
         }
     };
     let eg_test = match get_encryption_parameters(&eg.seed) {
-        Ok(eg) => eg,
+        Ok(eg) => EncryptionGroup::from(&eg),
         Err(e) => {
             result.push(create_verification_error!(
                 format!(

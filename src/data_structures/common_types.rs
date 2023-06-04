@@ -1,7 +1,7 @@
 //! Type that are used in many structures
 
 use super::{deserialize_seq_string_hex_to_seq_bigunit, deserialize_string_hex_to_bigunit};
-use crate::crypto_primitives::{
+use crypto_primitives::{
     byte_array::{ByteArray, Decode},
     hashing::HashableMessage,
 };
@@ -26,6 +26,22 @@ impl<'a> From<&'a EncryptionGroup> for HashableMessage<'a> {
         elts.push(Self::from(&value.q));
         elts.push(Self::from(&value.g));
         Self::from(elts)
+    }
+}
+
+impl From<&(BigUint, BigUint, BigUint)> for EncryptionGroup {
+    fn from((p, q, g): &(BigUint, BigUint, BigUint)) -> Self {
+        EncryptionGroup {
+            p: p.clone(),
+            q: q.clone(),
+            g: g.clone(),
+        }
+    }
+}
+
+impl EncryptionGroup {
+    pub fn as_tuple(&self) -> (&BigUint, &BigUint, &BigUint) {
+        (&self.p, &self.q, &self.g)
     }
 }
 
@@ -88,6 +104,12 @@ impl<'a> From<&'a Proof> for HashableMessage<'a> {
         elts.push(Self::from(&(value.e)));
         elts.push(Self::from(&(value.z)));
         Self::from(elts)
+    }
+}
+
+impl Proof {
+    pub fn as_tuple(&self) -> (&BigUint, &BigUint) {
+        (&self.e, &self.z)
     }
 }
 

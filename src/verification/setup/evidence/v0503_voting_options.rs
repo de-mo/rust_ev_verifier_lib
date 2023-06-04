@@ -3,10 +3,10 @@ use super::super::super::result::{
 };
 use crate::{
     constants::{MAXIMUM_NUMBER_OF_SELECTABLE_VOTING_OPTIONS, MAXIMUM_NUMBER_OF_VOTING_OPTIONS},
-    crypto_primitives::num_bigint::Constants,
     file_structure::{setup_directory::SetupDirectoryTrait, VerificationDirectoryTrait},
 };
 use anyhow::anyhow;
+use crypto_primitives::num_bigint::Constants;
 use log::debug;
 use num_bigint::BigUint;
 

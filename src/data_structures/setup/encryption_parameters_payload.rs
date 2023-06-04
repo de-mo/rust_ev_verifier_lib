@@ -2,11 +2,11 @@ use super::super::{
     common_types::{EncryptionGroup, SignatureJson},
     implement_trait_verifier_data_json_decode, VerifierDataDecode,
 };
-use crate::crypto_primitives::{
+use anyhow::anyhow;
+use crypto_primitives::{
     byte_array::ByteArray, direct_trust::CertificateAuthority, hashing::HashableMessage,
     signature::VerifiySignatureTrait,
 };
-use anyhow::anyhow;
 use serde::Deserialize;
 
 #[derive(Deserialize, Debug, Clone)]

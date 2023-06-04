@@ -2,11 +2,11 @@ use super::super::super::result::{
     create_verification_error, create_verification_failure, VerificationEvent, VerificationResult,
 };
 use crate::{
-    crypto_primitives::zero_knowledge_proof::verify_schnorr,
     data_structures::common_types::{EncryptionGroup, Proof},
     file_structure::{setup_directory::SetupDirectoryTrait, VerificationDirectoryTrait},
 };
 use anyhow::anyhow;
+use crypto_primitives::zero_knowledge_proof::verify_schnorr;
 use log::debug;
 use num_bigint::BigUint;
 use rayon::prelude::*;
@@ -173,7 +173,7 @@ fn run_verify_schnorr_proof(
         "Verification {} at pos {} for cc {:?}",
         test_name, pos, node
     );
-    if !verify_schnorr(eg, schnorr, y, i_aux) {
+    if !verify_schnorr(eg.as_tuple(), schnorr.as_tuple(), y, i_aux) {
         let mut text = format!(
             "{}: Verifiy {} Schnorr proofs not ok at pos {}",
             test_name, proof_name, pos

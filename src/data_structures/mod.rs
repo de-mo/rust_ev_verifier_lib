@@ -26,16 +26,16 @@ use self::{
     },
 };
 use crate::{
-    crypto_primitives::{
-        byte_array::{ByteArray, Decode},
-        hashing::HashableMessage,
-        num_bigint::Hexa,
-    },
     file_structure::{file::File, FileReadMode, FileType},
     setup_or_tally::SetupOrTally,
 };
 use anyhow::{anyhow, bail};
 use chrono::NaiveDateTime;
+use crypto_primitives::{
+    byte_array::{ByteArray, Decode},
+    hashing::HashableMessage,
+    num_bigint::Hexa,
+};
 use num_bigint::BigUint;
 use quick_xml::{
     events::{BytesStart, Event},

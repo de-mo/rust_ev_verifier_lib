@@ -1,0 +1,16 @@
+[package]
+name = "crypto_primitives"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+data-encoding = "2.3"
+openssl-sys = "0.9"
+openssl = "0.10"
+num-bigint-dig = { version="0.8", features= ["prime"] }
+num-traits = "0.2"
+num-bigint = "0.4"
+chrono = "0.4"
+thiserror = "1.0.40"

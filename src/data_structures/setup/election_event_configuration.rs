@@ -1,12 +1,9 @@
-use super::super::{xml_read_to_end_into_buffer, VerifierDataDecode};
-use crate::{
-    crypto_primitives::{
-        byte_array::ByteArray, direct_trust::CertificateAuthority, hashing::HashableMessage,
-        signature::VerifiySignatureTrait,
-    },
-    data_structures::hashable_no_value,
-};
+use super::super::{hashable_no_value, xml_read_to_end_into_buffer, VerifierDataDecode};
 use anyhow::anyhow;
+use crypto_primitives::{
+    byte_array::ByteArray, direct_trust::CertificateAuthority, hashing::HashableMessage,
+    signature::VerifiySignatureTrait,
+};
 use quick_xml::{
     de::from_str as xml_de_from_str,
     events::{BytesStart, Event},
@@ -95,22 +92,20 @@ impl<'a> From<&'a ConfigHeader> for HashableMessage<'a> {
         let mut elts = vec![];
         elts.push(Self::from(&value.file_date));
         elts.push(Self::from(&value.voter_total));
-        elts.push(Self::from(&value.partial_delivery));
+        elts.push(match &value.partial_delivery {
+            Some(v) => Self::from(v),
+            None => hashable_no_value("partialDelivery"),
+        });
         Self::from(elts)
     }
 }
 
-impl<'a> From<&'a Option<PartialDelivery>> for HashableMessage<'a> {
-    fn from(value: &'a Option<PartialDelivery>) -> Self {
-        match value {
-            Some(v) => {
-                let mut elts = vec![];
-                elts.push(Self::from(&v.voter_from));
-                elts.push(Self::from(&v.voter_to));
-                Self::from(elts)
-            }
-            None => hashable_no_value("partialDelivery"),
-        }
+impl<'a> From<&'a PartialDelivery> for HashableMessage<'a> {
+    fn from(value: &'a PartialDelivery) -> Self {
+        Self::from(vec![
+            Self::from(&value.voter_from),
+            Self::from(&value.voter_to),
+        ])
     }
 }
 

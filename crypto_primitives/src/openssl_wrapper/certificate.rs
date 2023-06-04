@@ -114,7 +114,7 @@ mod test {
     const PASSWORD: &str = "testPassword";
 
     fn get_file() -> PathBuf {
-        Path::new(".")
+        Path::new("../")
             .join("datasets")
             .join("direct-trust")
             .join("public_keys_keystore_verifier.p12")
