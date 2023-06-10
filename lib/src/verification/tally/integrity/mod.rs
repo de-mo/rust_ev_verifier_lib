@@ -13,7 +13,7 @@ use crate::{
 use anyhow::anyhow;
 use log::debug;
 
-pub fn get_verifications(metadata_list: &VerificationMetaDataList) -> VerificationList {
+pub(crate) fn get_verifications(metadata_list: &VerificationMetaDataList) -> VerificationList {
     let mut res = vec![];
     res.push(Verification::new("09.01", fn_verification_0901, metadata_list).unwrap());
     VerificationList(res)

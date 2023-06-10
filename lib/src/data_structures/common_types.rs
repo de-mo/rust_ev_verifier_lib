@@ -10,13 +10,13 @@ use serde::Deserialize;
 
 /// Struct representing an encryption group
 #[derive(Deserialize, Debug, Clone)]
-pub struct EncryptionGroup {
+pub(crate) struct EncryptionGroup {
     #[serde(deserialize_with = "deserialize_string_hex_to_bigunit")]
-    pub p: BigUint,
+    pub(crate) p: BigUint,
     #[serde(deserialize_with = "deserialize_string_hex_to_bigunit")]
-    pub q: BigUint,
+    pub(crate) q: BigUint,
     #[serde(deserialize_with = "deserialize_string_hex_to_bigunit")]
-    pub g: BigUint,
+    pub(crate) g: BigUint,
 }
 
 impl<'a> From<&'a EncryptionGroup> for HashableMessage<'a> {
@@ -40,7 +40,7 @@ impl From<&(BigUint, BigUint, BigUint)> for EncryptionGroup {
 }
 
 impl EncryptionGroup {
-    pub fn as_tuple(&self) -> (&BigUint, &BigUint, &BigUint) {
+    pub(crate) fn as_tuple(&self) -> (&BigUint, &BigUint, &BigUint) {
         (&self.p, &self.q, &self.g)
     }
 }
@@ -48,26 +48,26 @@ impl EncryptionGroup {
 /// Struct representing the signature of a json file
 #[derive(Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
-pub struct SignatureJson {
-    pub signature_contents: String,
+pub(crate) struct SignatureJson {
+    pub(crate) signature_contents: String,
 }
 
 impl SignatureJson {
     /// Get the signature as ByteArray
-    pub fn get_signature(&self) -> ByteArray {
+    pub(crate) fn get_signature(&self) -> ByteArray {
         ByteArray::base64_decode(&self.signature_contents).unwrap()
     }
 }
 
 /// A proof (e,z) where the keys are _e and _z in json
 #[derive(Deserialize, Debug, Clone)]
-pub struct ProofUnderline {
+pub(crate) struct ProofUnderline {
     #[serde(deserialize_with = "deserialize_string_hex_to_bigunit")]
     #[serde(rename = "_e")]
-    pub e: BigUint,
+    pub(crate) e: BigUint,
     #[serde(deserialize_with = "deserialize_string_hex_to_bigunit")]
     #[serde(rename = "_z")]
-    pub z: BigUint,
+    pub(crate) z: BigUint,
 }
 
 impl<'a> From<&'a ProofUnderline> for HashableMessage<'a> {
@@ -81,11 +81,11 @@ impl<'a> From<&'a ProofUnderline> for HashableMessage<'a> {
 
 /// A proof (e,z) where the keys are e and z in json
 #[derive(Deserialize, Debug, Clone)]
-pub struct Proof {
+pub(crate) struct Proof {
     #[serde(deserialize_with = "deserialize_string_hex_to_bigunit")]
-    pub e: BigUint,
+    pub(crate) e: BigUint,
     #[serde(deserialize_with = "deserialize_string_hex_to_bigunit")]
-    pub z: BigUint,
+    pub(crate) z: BigUint,
 }
 
 /// The possibility to transorm a [ProofUnderline] to [Proof]
@@ -108,18 +108,18 @@ impl<'a> From<&'a Proof> for HashableMessage<'a> {
 }
 
 impl Proof {
-    pub fn as_tuple(&self) -> (&BigUint, &BigUint) {
+    pub(crate) fn as_tuple(&self) -> (&BigUint, &BigUint) {
         (&self.e, &self.z)
     }
 }
 
 /// A proof (e,z) where the keys are _e and _z in json
 #[derive(Deserialize, Debug, Clone)]
-pub struct DecryptionProof {
+pub(crate) struct DecryptionProof {
     #[serde(deserialize_with = "deserialize_string_hex_to_bigunit")]
-    pub e: BigUint,
+    pub(crate) e: BigUint,
     #[serde(deserialize_with = "deserialize_seq_string_hex_to_seq_bigunit")]
-    pub z: Vec<BigUint>,
+    pub(crate) z: Vec<BigUint>,
 }
 
 impl<'a> From<&'a DecryptionProof> for HashableMessage<'a> {
@@ -133,11 +133,11 @@ impl<'a> From<&'a DecryptionProof> for HashableMessage<'a> {
 
 /// A exponentieted encrypted element (gamman, phi)
 #[derive(Deserialize, Debug, Clone)]
-pub struct ExponentiatedEncryptedElement {
+pub(crate) struct ExponentiatedEncryptedElement {
     #[serde(deserialize_with = "deserialize_string_hex_to_bigunit")]
-    pub gamma: BigUint,
+    pub(crate) gamma: BigUint,
     #[serde(deserialize_with = "deserialize_seq_string_hex_to_seq_bigunit")]
-    pub phis: Vec<BigUint>,
+    pub(crate) phis: Vec<BigUint>,
 }
 
 impl<'a> From<&'a ExponentiatedEncryptedElement> for HashableMessage<'a> {

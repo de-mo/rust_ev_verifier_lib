@@ -1,6 +1,6 @@
 ///! Module implementing the structure of a verification
 use super::{
-    meta_data::{VerificationMetaData, VerificationMetaDataList, VerificationMetaDataListTrait},
+    meta_data::{VerificationMetaData, VerificationMetaDataList},
     result::{VerificationEvent, VerificationResult, VerificationResultTrait},
     VerificationStatus,
 };
@@ -10,7 +10,7 @@ use log::{info, warn};
 use std::time::{Duration, SystemTime};
 
 /// Struct representing a verification
-pub struct Verification<'a, D: VerificationDirectoryTrait> {
+pub(crate) struct Verification<'a, D: VerificationDirectoryTrait> {
     /// Id of the verification
     id: String,
     /// Metadata of the verification
@@ -44,7 +44,7 @@ impl<'a> Verification<'a, VerificationDirectory> {
     ///
     /// All the helpers functions called from `fn_verification` have also to take then traits as parameter
     /// and not the structs. Then it is possible to mock the data
-    pub fn new(
+    pub(crate) fn new(
         id: &str,
         verification_fn: impl Fn(&VerificationDirectory, &mut VerificationResult) + 'static,
         metadata_list: &'a VerificationMetaDataList,
@@ -65,21 +65,23 @@ impl<'a> Verification<'a, VerificationDirectory> {
         })
     }
 
-    pub fn id(&self) -> &String {
+    pub(crate) fn id(&self) -> &String {
         &self.id
     }
 
-    pub fn meta_data(&'a self) -> &'a VerificationMetaData {
+    #[allow(dead_code)]
+    pub(crate) fn meta_data(&'a self) -> &'a VerificationMetaData {
         &self.meta_data
     }
 
     /// Run the test.
-    pub fn run(&mut self, directory: &VerificationDirectory) {
+    pub(crate) fn run(&mut self, directory: &VerificationDirectory) {
         self.status = VerificationStatus::Running;
         let start_time = SystemTime::now();
         info!(
             "Verification {} ({}) started",
-            self.meta_data.name, self.meta_data.id
+            self.meta_data.name(),
+            self.meta_data.id()
         );
         (self.verification_fn)(directory, self.result.as_mut());
         self.duration = Some(start_time.elapsed().unwrap());
@@ -87,24 +89,24 @@ impl<'a> Verification<'a, VerificationDirectory> {
         if self.is_ok().unwrap() {
             info!(
                 "Verification {} ({}) finished successfully. Duration: {}s",
-                self.meta_data.name,
-                self.meta_data.id,
+                self.meta_data.name(),
+                self.meta_data.id(),
                 self.duration.unwrap().as_secs_f32()
             );
         }
         if self.has_errors().unwrap() {
             warn!(
                 "Verification {} ({}) finished with errors. Duration: {}s",
-                self.meta_data.name,
-                self.meta_data.id,
+                self.meta_data.name(),
+                self.meta_data.id(),
                 self.duration.unwrap().as_secs_f32()
             );
         }
         if self.has_failures().unwrap() {
             warn!(
                 "Verification {} ({}) finished with failures. Duration: {}s",
-                self.meta_data.name,
-                self.meta_data.id,
+                self.meta_data.name(),
+                self.meta_data.id(),
                 self.duration.unwrap().as_secs_f32()
             );
         }

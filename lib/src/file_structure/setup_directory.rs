@@ -29,7 +29,7 @@ use std::{
 };
 
 #[derive(Clone)]
-pub struct SetupDirectory {
+pub(crate) struct SetupDirectory {
     location: PathBuf,
     encryption_parameters_payload_file: File,
     setup_component_public_keys_payload_file: File,
@@ -40,7 +40,7 @@ pub struct SetupDirectory {
 }
 
 #[derive(Clone)]
-pub struct VCSDirectory {
+pub(crate) struct VCSDirectory {
     location: PathBuf,
     setup_component_tally_data_payload_file: File,
     setup_component_verification_data_payload_group: FileGroup,
@@ -52,7 +52,7 @@ pub struct VCSDirectory {
 ///
 /// The trait is used as parameter of the verification functions to allow mock of
 /// test (negative tests)
-pub trait SetupDirectoryTrait {
+pub(crate) trait SetupDirectoryTrait {
     type VCSDirType: VCSDirectoryTrait;
     add_type_for_file_group_iter_trait!(
         ControlComponentPublicKeysPayloadAsResultIterType,
@@ -83,7 +83,7 @@ pub trait SetupDirectoryTrait {
 ///
 /// The trait is used as parameter of the verification functions to allow mock of
 /// test (negative tests)
-pub trait VCSDirectoryTrait {
+pub(crate) trait VCSDirectoryTrait {
     add_type_for_file_group_iter_trait!(
         SetupComponentVerificationDataPayloadAsResultIterType,
         SetupComponentVerificationDataPayloadAsResult
@@ -132,7 +132,7 @@ impl_iterator_over_data_payload!(
 
 impl SetupDirectory {
     /// New [SetupDirectory]
-    pub fn new(data_location: &Path) -> Self {
+    pub(crate) fn new(data_location: &Path) -> Self {
         let location = data_location.join(SETUP_DIR_NAME);
         let mut res = Self {
             location: location.to_path_buf(),
@@ -175,7 +175,8 @@ impl SetupDirectory {
     }
 
     /// Get location
-    pub fn get_location(&self) -> &Path {
+    #[allow(dead_code)]
+    pub(crate) fn get_location(&self) -> &Path {
         self.location.as_path()
     }
 }
@@ -242,7 +243,7 @@ impl SetupDirectoryTrait for SetupDirectory {
 
 impl VCSDirectory {
     /// New [VCSDirectory]
-    pub fn new(location: &Path) -> Self {
+    pub(crate) fn new(location: &Path) -> Self {
         Self {
             location: location.to_path_buf(),
             setup_component_tally_data_payload_file: create_file!(
@@ -262,7 +263,8 @@ impl VCSDirectory {
     }
 
     /// Get location
-    pub fn get_location(&self) -> &Path {
+    #[allow(dead_code)]
+    pub(crate) fn get_location(&self) -> &Path {
         self.location.as_path()
     }
 }
@@ -368,7 +370,8 @@ mod test {
 }
 
 #[cfg(any(test, doc))]
-pub mod mock {
+#[allow(dead_code)]
+pub(crate) mod mock {
     //! Module defining mocking structure for [VCSDirectory] and [SetupDirectory]
     //!
     //! The mocks read the correct data from the file. It is possible to change any data
@@ -386,7 +389,7 @@ pub mod mock {
     use anyhow::anyhow;
 
     /// Mock for [VCSDirectory]
-    pub struct MockVCSDirectory {
+    pub(crate) struct MockVCSDirectory {
         dir: VCSDirectory,
         mocked_setup_component_tally_data_payload_file: Option<File>,
         mocked_setup_component_verification_data_payload_group: Option<FileGroup>,
@@ -415,7 +418,7 @@ pub mod mock {
     );
 
     /// Mock for [SetupDirectory]
-    pub struct MockSetupDirectory {
+    pub(crate) struct MockSetupDirectory {
         dir: SetupDirectory,
         mocked_encryption_parameters_payload_file: Option<File>,
         mocked_setup_component_public_keys_payload_file: Option<File>,
@@ -557,7 +560,7 @@ pub mod mock {
 
     impl MockVCSDirectory {
         /// New [MockVCSDirectory]
-        pub fn new(location: &Path) -> Self {
+        pub(crate) fn new(location: &Path) -> Self {
             MockVCSDirectory {
                 dir: VCSDirectory::new(location),
                 mocked_setup_component_tally_data_payload_file: None,
@@ -570,13 +573,19 @@ pub mod mock {
             }
         }
 
-        pub fn mock_setup_component_tally_data_payload_file(&mut self, data: &File) {
+        pub(crate) fn mock_setup_component_tally_data_payload_file(&mut self, data: &File) {
             self.mocked_setup_component_tally_data_payload_file = Some(data.clone());
         }
-        pub fn mock_setup_component_verification_data_payload_group(&mut self, data: &FileGroup) {
+        pub(crate) fn mock_setup_component_verification_data_payload_group(
+            &mut self,
+            data: &FileGroup,
+        ) {
             self.mocked_setup_component_verification_data_payload_group = Some(data.clone());
         }
-        pub fn mock_control_component_code_shares_payload_group(&mut self, data: &FileGroup) {
+        pub(crate) fn mock_control_component_code_shares_payload_group(
+            &mut self,
+            data: &FileGroup,
+        ) {
             self.mocked_control_component_code_shares_payload_group = Some(data.clone());
         }
         mock_payload!(
@@ -597,14 +606,14 @@ pub mod mock {
             ControlComponentCodeSharesPayload
         );
 
-        pub fn mock_get_name(&mut self, data: &str) {
+        pub(crate) fn mock_get_name(&mut self, data: &str) {
             self.mocked_get_name = Some(data.to_string())
         }
     }
 
     impl MockSetupDirectory {
         /// New
-        pub fn new(data_location: &Path) -> Self {
+        pub(crate) fn new(data_location: &Path) -> Self {
             let setup_dir = SetupDirectory::new(data_location);
             let vcs_dirs: Vec<MockVCSDirectory> = setup_dir
                 .vcs_directories
@@ -628,23 +637,26 @@ pub mod mock {
         }
 
         /// Get the vcs_directories mutable in order to mock them
-        pub fn vcs_directories_mut(&mut self) -> Vec<&mut MockVCSDirectory> {
+        pub(crate) fn vcs_directories_mut(&mut self) -> Vec<&mut MockVCSDirectory> {
             self.vcs_directories.iter_mut().collect()
         }
 
-        pub fn mock_encryption_parameters_payload_file(&mut self, data: &File) {
+        pub(crate) fn mock_encryption_parameters_payload_file(&mut self, data: &File) {
             self.mocked_encryption_parameters_payload_file = Some(data.clone());
         }
-        pub fn mock_setup_component_public_keys_payload_file(&mut self, data: &File) {
+        pub(crate) fn mock_setup_component_public_keys_payload_file(&mut self, data: &File) {
             self.mocked_setup_component_public_keys_payload_file = Some(data.clone());
         }
-        pub fn mock_election_event_context_payload_file(&mut self, data: &File) {
+        pub(crate) fn mock_election_event_context_payload_file(&mut self, data: &File) {
             self.mocked_election_event_context_payload_file = Some(data.clone());
         }
-        pub fn mock_election_event_configuration_file(&mut self, data: &File) {
+        pub(crate) fn mock_election_event_configuration_file(&mut self, data: &File) {
             self.mocked_election_event_configuration_file = Some(data.clone());
         }
-        pub fn mock_control_component_public_keys_payload_group(&mut self, data: &FileGroup) {
+        pub(crate) fn mock_control_component_public_keys_payload_group(
+            &mut self,
+            data: &FileGroup,
+        ) {
             self.mocked_control_component_public_keys_payload_group = Some(data.clone());
         }
 

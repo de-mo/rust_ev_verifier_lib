@@ -1,8 +1,9 @@
 //! Module to collect data structures of the verifier
 
-pub mod common_types;
-pub mod setup;
-pub mod tally;
+pub(crate) mod common_types;
+pub(crate) mod setup;
+pub(crate) mod setup_or_tally;
+pub(crate) mod tally;
 
 use self::{
     setup::{
@@ -25,10 +26,7 @@ use self::{
         VerifierTallyDataType,
     },
 };
-use crate::{
-    file_structure::{file::File, FileReadMode, FileType},
-    setup_or_tally::SetupOrTally,
-};
+use crate::file_structure::{file::File, FileReadMode, FileType};
 use anyhow::{anyhow, bail};
 use chrono::NaiveDateTime;
 use crypto_primitives::{
@@ -44,13 +42,14 @@ use quick_xml::{
 };
 use roxmltree::Document;
 use serde::de::{Deserialize, Deserializer, Error};
+use setup_or_tally::SetupOrTally;
 use std::{io::BufRead, path::Path};
 
 /// The type VerifierData implement an option between [VerifierSetupData] and [VerifierTallyData]
-pub type VerifierData = SetupOrTally<VerifierSetupData, VerifierTallyData>;
+pub(crate) type VerifierData = SetupOrTally<VerifierSetupData, VerifierTallyData>;
 
 /// The type VerifierDataType implement an option between [VerifierSetupDataType] and [VerifierTallyDataType]
-pub type VerifierDataType = SetupOrTally<VerifierSetupDataType, VerifierTallyDataType>;
+pub(crate) type VerifierDataType = SetupOrTally<VerifierSetupDataType, VerifierTallyDataType>;
 
 macro_rules! create_verifier_setup_data_type {
     ($p: ident, $s: ident) => {
@@ -67,7 +66,7 @@ macro_rules! create_verifier_tally_data_type {
 pub(crate) use create_verifier_tally_data_type;
 
 /// Trait implementing the collection of the specific setup data type from the enum object
-pub trait VerifierSetupDataTrait {
+pub(crate) trait VerifierSetupDataTrait {
     /// Get the EncryptionParametersPayload is the enum is from correct type. Else give None
     fn encryption_parameters_payload(&self) -> Option<&EncryptionParametersPayload> {
         None
@@ -98,7 +97,7 @@ pub trait VerifierSetupDataTrait {
 }
 
 /// Trait implementing the collection of the specific tally data type from the enum object
-pub trait VerifierTallyDataTrait {
+pub(crate) trait VerifierTallyDataTrait {
     fn e_voting_decrypt(&self) -> Option<&EVotingDecrypt> {
         None
     }
@@ -124,7 +123,7 @@ pub trait VerifierTallyDataTrait {
 }
 
 /// A trait defining the necessary function to decode to the Verifier Data
-pub trait VerifierDataDecode: Sized {
+pub(crate) trait VerifierDataDecode: Sized {
     fn from_file(f: &File, t: &FileType, mode: &FileReadMode) -> anyhow::Result<Self> {
         match mode {
             FileReadMode::Memory => Self::from_file_memory(f, t),
@@ -289,7 +288,7 @@ impl VerifierTallyDataTrait for VerifierData {
 
 impl VerifierDataType {
     /// Read VerifierDataType from a String as JSON
-    pub fn verifier_data_from_file(&self, f: &File) -> anyhow::Result<VerifierData> {
+    pub(crate) fn verifier_data_from_file(&self, f: &File) -> anyhow::Result<VerifierData> {
         match self {
             VerifierDataType::Setup(t) => t
                 .verifier_data_from_file(f)
@@ -305,7 +304,7 @@ impl VerifierDataType {
 
 // reads from a start tag all the way to the corresponding end tag,
 // returns the bytes of the whole tag
-pub fn xml_read_to_end_into_buffer<R: BufRead>(
+pub(crate) fn xml_read_to_end_into_buffer<R: BufRead>(
     reader: &mut Reader<R>,
     start_tag: &BytesStart,
     junk_buf: &mut Vec<u8>,
@@ -343,11 +342,12 @@ pub fn xml_read_to_end_into_buffer<R: BufRead>(
     }
 }
 
-pub fn hashable_no_value<'a>(t: &'a str) -> HashableMessage<'a> {
+pub(crate) fn hashable_no_value<'a>(t: &'a str) -> HashableMessage<'a> {
     HashableMessage::from(format!("no {} value", t))
 }
 
-pub fn hashable_from_option<'a>(
+#[allow(dead_code)]
+pub(crate) fn hashable_from_option<'a>(
     opt: Option<HashableMessage<'a>>,
     t: &'a str,
 ) -> HashableMessage<'a> {

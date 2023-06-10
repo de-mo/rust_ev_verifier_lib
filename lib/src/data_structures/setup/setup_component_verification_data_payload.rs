@@ -13,21 +13,22 @@ use serde::Deserialize;
 
 #[derive(Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
-pub struct SetupComponentVerificationDataPayload {
-    pub election_event_id: String,
-    pub verification_card_set_id: String,
-    pub partial_choice_return_codes_allow_list: Vec<String>,
-    pub chunk_id: usize,
-    pub encryption_group: EncryptionGroup,
-    pub setup_component_verification_data: Vec<SetupComponentVerificationDataInner>,
-    pub combined_correctness_information: CombinedCorrectnessInformation,
-    pub signature: SignatureJson,
+pub(crate) struct SetupComponentVerificationDataPayload {
+    pub(crate) election_event_id: String,
+    pub(crate) verification_card_set_id: String,
+    pub(crate) partial_choice_return_codes_allow_list: Vec<String>,
+    pub(crate) chunk_id: usize,
+    pub(crate) encryption_group: EncryptionGroup,
+    pub(crate) setup_component_verification_data: Vec<SetupComponentVerificationDataInner>,
+    pub(crate) combined_correctness_information: CombinedCorrectnessInformation,
+    pub(crate) signature: SignatureJson,
 }
 
 implement_trait_verifier_data_json_decode!(SetupComponentVerificationDataPayload);
 
 impl SetupComponentVerificationDataPayload {
-    pub fn find_setup_component_verification_data_inner<'a>(
+    #[allow(dead_code)]
+    pub(crate) fn find_setup_component_verification_data_inner<'a>(
         &'a self,
         vc_id: &String,
     ) -> Option<&'a SetupComponentVerificationDataInner> {
@@ -36,7 +37,7 @@ impl SetupComponentVerificationDataPayload {
             .find(|d| &d.verification_card_id == vc_id)
     }
 
-    pub fn verification_card_ids<'a>(&'a self) -> Vec<&'a String> {
+    pub(crate) fn verification_card_ids<'a>(&'a self) -> Vec<&'a String> {
         self.setup_component_verification_data
             .iter()
             .map(|d| &d.verification_card_id)
@@ -46,27 +47,27 @@ impl SetupComponentVerificationDataPayload {
 
 #[derive(Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
-pub struct SetupComponentVerificationDataInner {
-    pub verification_card_id: String,
-    pub encrypted_hashed_squared_confirmation_key: ExponentiatedEncryptedElement,
-    pub encrypted_hashed_squared_partial_choice_return_codes: ExponentiatedEncryptedElement,
+pub(crate) struct SetupComponentVerificationDataInner {
+    pub(crate) verification_card_id: String,
+    pub(crate) encrypted_hashed_squared_confirmation_key: ExponentiatedEncryptedElement,
+    pub(crate) encrypted_hashed_squared_partial_choice_return_codes: ExponentiatedEncryptedElement,
     #[serde(deserialize_with = "deserialize_seq_string_hex_to_seq_bigunit")]
-    pub verification_card_public_key: Vec<BigUint>,
+    pub(crate) verification_card_public_key: Vec<BigUint>,
 }
 
 #[derive(Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
-pub struct CombinedCorrectnessInformation {
-    pub correctness_information_list: Vec<CorrectnessInformationElt>,
+pub(crate) struct CombinedCorrectnessInformation {
+    pub(crate) correctness_information_list: Vec<CorrectnessInformationElt>,
 }
 
 #[derive(Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
-pub struct CorrectnessInformationElt {
-    pub correctness_id: String,
-    pub number_of_selections: usize,
-    pub number_of_voting_options: usize,
-    pub list_of_write_in_options: Vec<usize>,
+pub(crate) struct CorrectnessInformationElt {
+    pub(crate) correctness_id: String,
+    pub(crate) number_of_selections: usize,
+    pub(crate) number_of_voting_options: usize,
+    pub(crate) list_of_write_in_options: Vec<usize>,
 }
 
 impl<'a> VerifiySignatureTrait<'a> for SetupComponentVerificationDataPayload {

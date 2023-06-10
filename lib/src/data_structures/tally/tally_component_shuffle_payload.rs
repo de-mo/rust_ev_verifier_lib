@@ -10,96 +10,96 @@ use serde::Deserialize;
 
 #[derive(Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
-pub struct TallyComponentShufflePayload {
-    pub encryption_group: EncryptionGroup,
-    pub election_event_id: String,
-    pub ballot_box_id: String,
-    pub verifiable_shuffle: VerifiableShuffle,
-    pub verifiable_plaintext_decryption: VerifiablePlaintextDecryption,
-    pub signature: SignatureJson,
+pub(crate) struct TallyComponentShufflePayload {
+    pub(crate) encryption_group: EncryptionGroup,
+    pub(crate) election_event_id: String,
+    pub(crate) ballot_box_id: String,
+    pub(crate) verifiable_shuffle: VerifiableShuffle,
+    pub(crate) verifiable_plaintext_decryption: VerifiablePlaintextDecryption,
+    pub(crate) signature: SignatureJson,
 }
 implement_trait_verifier_data_json_decode!(TallyComponentShufflePayload);
 
 #[derive(Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
-pub struct VerifiableShuffle {
-    pub shuffled_ciphertexts: Vec<ExponentiatedEncryptedElement>,
-    pub shuffle_argument: ShuffleArgument,
+pub(crate) struct VerifiableShuffle {
+    pub(crate) shuffled_ciphertexts: Vec<ExponentiatedEncryptedElement>,
+    pub(crate) shuffle_argument: ShuffleArgument,
 }
 
 #[derive(Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
-pub struct VerifiablePlaintextDecryption {
-    pub decrypted_votes: Vec<DecryptedVote>,
-    pub decryption_proofs: Vec<DecryptionProof>,
+pub(crate) struct VerifiablePlaintextDecryption {
+    pub(crate) decrypted_votes: Vec<DecryptedVote>,
+    pub(crate) decryption_proofs: Vec<DecryptionProof>,
 }
 
 #[derive(Deserialize, Debug, Clone)]
-pub struct ShuffleArgument {
+pub(crate) struct ShuffleArgument {
     #[serde(deserialize_with = "deserialize_seq_string_hex_to_seq_bigunit")]
     #[serde(rename = "c_A")]
-    pub c_a: Vec<BigUint>,
+    pub(crate) c_a: Vec<BigUint>,
     #[serde(deserialize_with = "deserialize_seq_string_hex_to_seq_bigunit")]
     #[serde(rename = "c_B")]
-    pub c_b: Vec<BigUint>,
+    pub(crate) c_b: Vec<BigUint>,
     #[serde(rename = "productArgument")]
-    pub product_argument: ProductArgument,
+    pub(crate) product_argument: ProductArgument,
     #[serde(rename = "multiExponentiationArgument")]
-    pub multi_exponentiation_argument: MultiExponentiationArgument,
+    pub(crate) multi_exponentiation_argument: MultiExponentiationArgument,
 }
 
 #[derive(Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
-pub struct ProductArgument {
-    pub single_value_product_argument: SingleValueProductArgument,
+pub(crate) struct ProductArgument {
+    pub(crate) single_value_product_argument: SingleValueProductArgument,
 }
 
 #[derive(Deserialize, Debug, Clone)]
-pub struct SingleValueProductArgument {
+pub(crate) struct SingleValueProductArgument {
     #[serde(deserialize_with = "deserialize_string_hex_to_bigunit")]
-    pub c_d: BigUint,
+    pub(crate) c_d: BigUint,
     #[serde(deserialize_with = "deserialize_string_hex_to_bigunit")]
-    pub c_delta: BigUint,
+    pub(crate) c_delta: BigUint,
     #[serde(deserialize_with = "deserialize_string_hex_to_bigunit")]
     #[serde(rename = "c_Delta")]
-    pub c_delta_upper: BigUint,
+    pub(crate) c_delta_upper: BigUint,
     #[serde(deserialize_with = "deserialize_seq_string_hex_to_seq_bigunit")]
-    pub a_tilde: Vec<BigUint>,
+    pub(crate) a_tilde: Vec<BigUint>,
     #[serde(deserialize_with = "deserialize_seq_string_hex_to_seq_bigunit")]
-    pub b_tilde: Vec<BigUint>,
+    pub(crate) b_tilde: Vec<BigUint>,
     #[serde(deserialize_with = "deserialize_string_hex_to_bigunit")]
-    pub r_tilde: BigUint,
+    pub(crate) r_tilde: BigUint,
     #[serde(deserialize_with = "deserialize_string_hex_to_bigunit")]
-    pub s_tilde: BigUint,
+    pub(crate) s_tilde: BigUint,
 }
 
 #[derive(Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
-pub struct MultiExponentiationArgument {
+pub(crate) struct MultiExponentiationArgument {
     #[serde(deserialize_with = "deserialize_string_hex_to_bigunit")]
     #[serde(rename = "c_A_0")]
-    pub c_a_0: BigUint,
+    pub(crate) c_a_0: BigUint,
     #[serde(deserialize_with = "deserialize_seq_string_hex_to_seq_bigunit")]
     #[serde(rename = "c_B")]
-    pub c_b: Vec<BigUint>,
+    pub(crate) c_b: Vec<BigUint>,
     #[serde(rename = "E")]
-    pub e: Vec<ExponentiatedEncryptedElement>,
+    pub(crate) e: Vec<ExponentiatedEncryptedElement>,
     #[serde(deserialize_with = "deserialize_seq_string_hex_to_seq_bigunit")]
-    pub a: Vec<BigUint>,
+    pub(crate) a: Vec<BigUint>,
     #[serde(deserialize_with = "deserialize_string_hex_to_bigunit")]
-    pub r: BigUint,
+    pub(crate) r: BigUint,
     #[serde(deserialize_with = "deserialize_string_hex_to_bigunit")]
-    pub b: BigUint,
+    pub(crate) b: BigUint,
     #[serde(deserialize_with = "deserialize_string_hex_to_bigunit")]
-    pub s: BigUint,
+    pub(crate) s: BigUint,
     #[serde(deserialize_with = "deserialize_string_hex_to_bigunit")]
-    pub tau: BigUint,
+    pub(crate) tau: BigUint,
 }
 
 #[derive(Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
-pub struct DecryptedVote {
-    pub message: Vec<String>,
+pub(crate) struct DecryptedVote {
+    pub(crate) message: Vec<String>,
 }
 
 #[cfg(test)]

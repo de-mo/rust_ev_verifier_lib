@@ -1,12 +1,12 @@
-pub mod v0501_0502_encryption_parameters_payload;
-pub mod v0503_voting_options;
-pub mod v0504_key_generation_schnorr_proofs;
-pub mod v0521_encrypted_pcc_exponentiation_proofs;
+mod v0501_0502_encryption_parameters_payload;
+mod v0503_voting_options;
+mod v0504_key_generation_schnorr_proofs;
+mod v0521_encrypted_pcc_exponentiation_proofs;
 
 use super::super::{suite::VerificationList, verification::Verification};
 use crate::verification::meta_data::VerificationMetaDataList;
 
-pub fn get_verifications(metadata_list: &VerificationMetaDataList) -> VerificationList {
+pub(crate) fn get_verifications(metadata_list: &VerificationMetaDataList) -> VerificationList {
     let mut res = vec![];
     res.push(
         Verification::new(

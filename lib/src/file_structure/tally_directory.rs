@@ -24,7 +24,7 @@ use std::{
 };
 
 #[derive(Clone)]
-pub struct TallyDirectory {
+pub(crate) struct TallyDirectory {
     location: PathBuf,
     e_voting_decrypt_file: File,
     ech_0110_file: File,
@@ -33,7 +33,7 @@ pub struct TallyDirectory {
 }
 
 #[derive(Clone)]
-pub struct BBDirectory {
+pub(crate) struct BBDirectory {
     location: PathBuf,
     tally_component_votes_payload_file: File,
     tally_component_shuffle_payload_file: File,
@@ -46,7 +46,7 @@ pub struct BBDirectory {
 ///
 /// The trait is used as parameter of the verification functions to allow mock of
 /// test (negative tests)
-pub trait TallyDirectoryTrait {
+pub(crate) trait TallyDirectoryTrait {
     type BBDirType: BBDirectoryTrait;
 
     fn e_voting_decrypt_file(&self) -> &File;
@@ -60,7 +60,7 @@ pub trait TallyDirectoryTrait {
 ///
 /// The trait is used as parameter of the verification functions to allow mock of
 /// test (negative tests)
-pub trait BBDirectoryTrait {
+pub(crate) trait BBDirectoryTrait {
     add_type_for_file_group_iter_trait!(
         ControlComponentBallotBoxPayloadAsResultIterType,
         ControlComponentBallotBoxPayloadAsResult
@@ -169,7 +169,7 @@ impl BBDirectoryTrait for BBDirectory {
 }
 
 impl TallyDirectory {
-    pub fn new(data_location: &Path) -> TallyDirectory {
+    pub(crate) fn new(data_location: &Path) -> TallyDirectory {
         let location = data_location.join(TALLY_DIR_NAME);
         let mut res = TallyDirectory {
             location: location.to_path_buf(),
@@ -194,13 +194,14 @@ impl TallyDirectory {
         res
     }
 
-    pub fn get_location(&self) -> &Path {
+    #[allow(dead_code)]
+    pub(crate) fn get_location(&self) -> &Path {
         self.location.as_path()
     }
 }
 
 impl BBDirectory {
-    pub fn new(location: &Path) -> Self {
+    pub(crate) fn new(location: &Path) -> Self {
         Self {
             location: location.to_path_buf(),
             tally_component_votes_payload_file: create_file!(
@@ -224,13 +225,15 @@ impl BBDirectory {
         }
     }
 
-    pub fn get_location(&self) -> &Path {
+    #[allow(dead_code)]
+    pub(crate) fn get_location(&self) -> &Path {
         self.location.as_path()
     }
 }
 
 #[cfg(any(test, doc))]
-pub mod mock {
+#[allow(dead_code)]
+pub(crate) mod mock {
     //! Module defining mocking structure for [VCSDirectory] and [SetupDirectory]
     //!
     //! The mocks read the correct data from the file. It is possible to change any data
@@ -245,7 +248,7 @@ pub mod mock {
     use std::collections::HashMap;
 
     /// Mock for [BBDirectory]
-    pub struct MockBBDirectory {
+    pub(crate) struct MockBBDirectory {
         dir: BBDirectory,
         mocked_tally_component_votes_payload_file: Option<File>,
         mocked_tally_component_shuffle_payload_file: Option<File>,
@@ -264,7 +267,7 @@ pub mod mock {
     }
 
     /// Mock for [TallyDirectory]
-    pub struct MockTallyDirectory {
+    pub(crate) struct MockTallyDirectory {
         dir: TallyDirectory,
         mocked_e_voting_decrypt_file: Option<File>,
         mocked_ech_0110_file: Option<File>,
@@ -354,7 +357,7 @@ pub mod mock {
     }
 
     impl MockBBDirectory {
-        pub fn new(location: &Path) -> Self {
+        pub(crate) fn new(location: &Path) -> Self {
             MockBBDirectory {
                 dir: BBDirectory::new(location),
                 mocked_tally_component_shuffle_payload_file: None,
@@ -368,25 +371,25 @@ pub mod mock {
                 mocked_get_name: None,
             }
         }
-        pub fn mock_tally_component_shuffle_payload_file(&mut self, data: &File) {
+        pub(crate) fn mock_tally_component_shuffle_payload_file(&mut self, data: &File) {
             self.mocked_tally_component_shuffle_payload_file = Some(data.clone());
         }
-        pub fn mock_tally_component_votes_payload_file(&mut self, data: &File) {
+        pub(crate) fn mock_tally_component_votes_payload_file(&mut self, data: &File) {
             self.mocked_tally_component_votes_payload_file = Some(data.clone());
         }
-        pub fn mock_control_component_ballot_box_payload_group(&mut self, data: &FileGroup) {
+        pub(crate) fn mock_control_component_ballot_box_payload_group(&mut self, data: &FileGroup) {
             self.mocked_control_component_ballot_box_payload_group = Some(data.clone());
         }
-        pub fn mock_control_component_shuffle_payload_group(&mut self, data: &FileGroup) {
+        pub(crate) fn mock_control_component_shuffle_payload_group(&mut self, data: &FileGroup) {
             self.mocked_control_component_shuffle_payload_group = Some(data.clone());
         }
-        pub fn mock_get_name(&mut self, data: &str) {
+        pub(crate) fn mock_get_name(&mut self, data: &str) {
             self.mocked_get_name = Some(data.to_string())
         }
     }
 
     impl MockTallyDirectory {
-        pub fn new(data_location: &Path) -> Self {
+        pub(crate) fn new(data_location: &Path) -> Self {
             let tally_dir = TallyDirectory::new(data_location);
             let bb_dirs: Vec<MockBBDirectory> = tally_dir
                 .bb_directories
@@ -401,17 +404,17 @@ pub mod mock {
                 bb_directories: bb_dirs,
             }
         }
-        pub fn bb_directories_mut(&mut self) -> Vec<&mut MockBBDirectory> {
+        pub(crate) fn bb_directories_mut(&mut self) -> Vec<&mut MockBBDirectory> {
             self.bb_directories.iter_mut().collect()
         }
 
-        pub fn mock_e_voting_decrypt_file(&mut self, data: &File) {
+        pub(crate) fn mock_e_voting_decrypt_file(&mut self, data: &File) {
             self.mocked_e_voting_decrypt_file = Some(data.clone());
         }
-        pub fn mock_ech_0110_file(&mut self, data: &File) {
+        pub(crate) fn mock_ech_0110_file(&mut self, data: &File) {
             self.mocked_ech_0110_file = Some(data.clone());
         }
-        pub fn mock_ech_0222_file(&mut self, data: &File) {
+        pub(crate) fn mock_ech_0222_file(&mut self, data: &File) {
             self.mocked_ech_0222_file = Some(data.clone());
         }
     }

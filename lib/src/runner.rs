@@ -3,9 +3,7 @@
 use crate::{
     file_structure::VerificationDirectory,
     verification::{
-        meta_data::{VerificationMetaDataList, VerificationMetaDataListTrait},
-        suite::VerificationSuite,
-        VerificationPeriod,
+        meta_data::VerificationMetaDataList, suite::VerificationSuite, VerificationPeriod,
     },
 };
 use anyhow::anyhow;
@@ -79,7 +77,7 @@ impl<'a> Runner<'a> {
         for id in self.verifications.exclusion().iter() {
             warn!(
                 "Verification {} ({}) skipped",
-                metadata_list.meta_data_from_id(id).unwrap().name,
+                metadata_list.meta_data_from_id(id).unwrap().name(),
                 id
             )
         }

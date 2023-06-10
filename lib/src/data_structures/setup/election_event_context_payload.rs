@@ -13,71 +13,73 @@ use serde::Deserialize;
 
 #[derive(Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
-pub struct ElectionEventContextPayload {
-    pub encryption_group: EncryptionGroup,
-    pub election_event_context: ElectionEventContext,
-    pub signature: SignatureJson,
+pub(crate) struct ElectionEventContextPayload {
+    pub(crate) encryption_group: EncryptionGroup,
+    pub(crate) election_event_context: ElectionEventContext,
+    pub(crate) signature: SignatureJson,
 }
 
 implement_trait_verifier_data_json_decode!(ElectionEventContextPayload);
 
 #[derive(Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
-pub struct ElectionEventContext {
-    pub election_event_id: String,
-    pub election_event_alias: String,
-    pub election_event_description: String,
-    pub verification_card_set_contexts: Vec<VerificationCardSetContext>,
+pub(crate) struct ElectionEventContext {
+    pub(crate) election_event_id: String,
+    //pub(crate) election_event_alias: String,
+    //pub(crate) election_event_description: String,
+    pub(crate) verification_card_set_contexts: Vec<VerificationCardSetContext>,
     #[serde(deserialize_with = "deserialize_string_string_to_datetime")]
-    pub start_time: NaiveDateTime,
+    pub(crate) start_time: NaiveDateTime,
     #[serde(deserialize_with = "deserialize_string_string_to_datetime")]
-    pub finish_time: NaiveDateTime,
+    pub(crate) finish_time: NaiveDateTime,
 }
 
 #[derive(Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
-pub struct VerificationCardSetContext {
-    pub verification_card_set_id: String,
-    pub verification_card_set_alias: String,
-    pub verification_card_set_description: String,
-    pub ballot_box_id: String,
-    #[serde(deserialize_with = "deserialize_string_string_to_datetime")]
-    pub ballot_box_start_time: NaiveDateTime,
-    #[serde(deserialize_with = "deserialize_string_string_to_datetime")]
-    pub ballot_box_finish_time: NaiveDateTime,
-    pub test_ballot_box: bool,
-    pub number_of_write_in_fields: usize,
-    pub number_of_voting_cards: usize,
-    pub grace_period: usize,
-    pub primes_mapping_table: PrimesMappingTable,
+#[warn(dead_code)]
+pub(crate) struct VerificationCardSetContext {
+    pub(crate) verification_card_set_id: String,
+    //pub(crate) verification_card_set_alias: String,
+    //pub(crate) verification_card_set_description: String,
+    pub(crate) ballot_box_id: String,
+    //#[serde(deserialize_with = "deserialize_string_string_to_datetime")]
+    //pub(crate) ballot_box_start_time: NaiveDateTime,
+    //#[serde(deserialize_with = "deserialize_string_string_to_datetime")]
+    //pub(crate) ballot_box_finish_time: NaiveDateTime,
+    pub(crate) test_ballot_box: bool,
+    pub(crate) number_of_write_in_fields: usize,
+    pub(crate) number_of_voting_cards: usize,
+    pub(crate) grace_period: usize,
+    pub(crate) primes_mapping_table: PrimesMappingTable,
 }
 
 #[derive(Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
-pub struct PrimesMappingTable {
-    pub p_table: Vec<PTableElement>,
+pub(crate) struct PrimesMappingTable {
+    pub(crate) p_table: Vec<PTableElement>,
 }
 
 #[derive(Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
-pub struct PTableElement {
-    pub actual_voting_option: String,
-    pub encoded_voting_option: usize,
-    pub semantic_information: String,
+#[warn(dead_code)]
+pub(crate) struct PTableElement {
+    pub(crate) actual_voting_option: String,
+    pub(crate) encoded_voting_option: usize,
+    //pub(crate) semantic_information: String,
 }
 
 impl VerificationCardSetContext {
-    pub fn number_of_voters(&self) -> usize {
+    pub(crate) fn number_of_voters(&self) -> usize {
         self.number_of_voting_cards.clone()
     }
 
-    pub fn number_of_voting_options(&self) -> usize {
+    pub(crate) fn number_of_voting_options(&self) -> usize {
         self.primes_mapping_table.p_table.len()
     }
 }
 
 impl ElectionEventContext {
-    pub fn find_verification_card_set_context<'a>(
+    pub(crate) fn find_verification_card_set_context<'a>(
         &'a self,
         vcs_id: &String,
     ) -> Option<&'a VerificationCardSetContext> {

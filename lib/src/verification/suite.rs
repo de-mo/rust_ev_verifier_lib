@@ -3,29 +3,27 @@
 use crate::file_structure::VerificationDirectory;
 
 use super::{
-    meta_data::{VerificationMetaDataList, VerificationMetaDataListTrait},
-    setup::get_verifications as get_verifications_setup,
-    tally::get_verifications as get_verifications_tally,
-    verification::Verification,
+    meta_data::VerificationMetaDataList, setup::get_verifications as get_verifications_setup,
+    tally::get_verifications as get_verifications_tally, verification::Verification,
     VerificationCategory, VerificationPeriod,
 };
 
 /// Enum for the suite of verifications
-pub struct VerificationSuite<'a> {
+pub(crate) struct VerificationSuite<'a> {
     period: VerificationPeriod,
-    pub list: Box<VerificationList<'a>>,
+    pub(crate) list: Box<VerificationList<'a>>,
     exclusion: Vec<String>,
 }
 
 /// List of verifications
-pub struct VerificationList<'a>(pub(crate) Vec<Verification<'a, VerificationDirectory>>);
+pub(crate) struct VerificationList<'a>(pub(crate) Vec<Verification<'a, VerificationDirectory>>);
 
 impl<'a> VerificationSuite<'a> {
     /// Create a new suite
     ///
     /// The function collects all the implemented tests and remove the excluded
     /// verifications. The ids in exclusion that does not exist are ignored
-    pub fn new(
+    pub(crate) fn new(
         period: &VerificationPeriod,
         metadata_list: &'a VerificationMetaDataList,
         exclusion: &Vec<String>,
@@ -54,6 +52,7 @@ impl<'a> VerificationSuite<'a> {
     /// All verifications
     ///
     /// The excluded verifications are not collected
+    #[allow(dead_code)]
     pub fn verifications(&'a self) -> &'a VerificationList {
         &self.list
     }
@@ -61,11 +60,13 @@ impl<'a> VerificationSuite<'a> {
     /// All verifications mutable
     ///
     /// The excluded verifications are not collected
-    pub fn verifications_mut(&'a mut self) -> &'a mut VerificationList {
+    #[allow(dead_code)]
+    pub(crate) fn verifications_mut(&'a mut self) -> &'a mut VerificationList {
         &mut self.list
     }
 
     /// Get the list of the verifications that are not implemented yet
+    #[allow(dead_code)]
     pub fn get_not_implemented_verifications_id(
         &self,
         metadata_list: &VerificationMetaDataList,
@@ -101,6 +102,7 @@ impl<'a> VerificationSuite<'a> {
     /// List of all verifications for a category
     ///
     /// The excluded verifications are not collected
+    #[allow(dead_code)]
     pub fn get_verifications_for_category(
         &self,
         category: VerificationCategory,
@@ -108,7 +110,7 @@ impl<'a> VerificationSuite<'a> {
         self.list
             .0
             .iter()
-            .filter(|e| e.meta_data().category == category)
+            .filter(|e| e.meta_data().category() == &category)
             .collect()
     }
 
@@ -124,8 +126,9 @@ impl<'a> VerificationSuite<'a> {
     /// Find a verification with id
     ///
     /// The excluded verifications are not searchable
+    #[allow(dead_code)]
     pub fn find_by_id(&self, id: &str) -> Option<&Verification<'a, VerificationDirectory>> {
-        self.list.0.iter().find(|&v| v.meta_data().id == id)
+        self.list.0.iter().find(|&v| v.meta_data().id() == id)
     }
 }
 

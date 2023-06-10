@@ -11,11 +11,11 @@ use serde::Deserialize;
 
 #[derive(Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
-pub struct EncryptionParametersPayload {
-    pub encryption_group: EncryptionGroup,
-    pub seed: String,
-    pub small_primes: Vec<usize>,
-    pub signature: SignatureJson,
+pub(crate) struct EncryptionParametersPayload {
+    pub(crate) encryption_group: EncryptionGroup,
+    pub(crate) seed: String,
+    pub(crate) small_primes: Vec<usize>,
+    pub(crate) signature: SignatureJson,
 }
 
 implement_trait_verifier_data_json_decode!(EncryptionParametersPayload);

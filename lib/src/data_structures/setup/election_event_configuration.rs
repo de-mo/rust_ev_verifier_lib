@@ -10,27 +10,26 @@ use quick_xml::{
     Reader,
 };
 use serde::Deserialize;
-use std::path::PathBuf;
 
 #[derive(Debug, Clone)]
-pub struct ElectionEventConfiguration {
-    path: PathBuf,
-    pub header: ConfigHeader,
+pub(crate) struct ElectionEventConfiguration {
+    //path: PathBuf,
+    pub(crate) header: ConfigHeader,
 }
 
 #[derive(Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
-pub struct ConfigHeader {
-    pub file_date: String,
-    pub voter_total: usize,
-    pub partial_delivery: Option<PartialDelivery>,
+pub(crate) struct ConfigHeader {
+    pub(crate) file_date: String,
+    pub(crate) voter_total: usize,
+    pub(crate) partial_delivery: Option<PartialDelivery>,
 }
 
 #[derive(Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
-pub struct PartialDelivery {
-    pub voter_from: usize,
-    pub voter_to: usize,
+pub(crate) struct PartialDelivery {
+    pub(crate) voter_from: usize,
+    pub(crate) voter_to: usize,
 }
 
 impl VerifierDataDecode for ElectionEventConfiguration {
@@ -65,7 +64,7 @@ impl VerifierDataDecode for ElectionEventConfiguration {
                         )
                         .map_err(|e| anyhow!(e).context(format!("Error deserializing header")))?;
                         return Ok(Self {
-                            path: p.to_path_buf(),
+                            //path: p.to_path_buf(),
                             header: config_header,
                         });
                     }

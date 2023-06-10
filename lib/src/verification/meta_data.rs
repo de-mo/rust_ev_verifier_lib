@@ -12,51 +12,35 @@ use serde::{
 use std::fs;
 
 /// List of Verification Metadata
-pub type VerificationMetaDataList = Vec<VerificationMetaData>;
-
-/// Trait implementing functions for [VerificationMetaDataList]
-///
-/// Used so because it is a type of Vec.
-pub trait VerificationMetaDataListTrait: Sized {
-    /// Load the list from the file in resources
-    fn load() -> anyhow::Result<Self>;
-
-    // Get meta_data for id.
-    fn meta_data_from_id(&self, id: &str) -> Option<&VerificationMetaData>;
-
-    // Get the list of ids
-    fn id_list(&self) -> Vec<String>;
-
-    // Get the list of ids for the given period
-    fn id_list_for_period(&self, period: &VerificationPeriod) -> Vec<String>;
-}
+#[derive(Deserialize, Debug, Clone)]
+pub struct VerificationMetaDataList(pub(crate) Vec<VerificationMetaData>);
 
 /// Metadata of a verification
 #[derive(Deserialize, Debug, Clone)]
 pub struct VerificationMetaData {
     /// id of the verification
-    pub id: String,
+    id: String,
 
     /// Name of the verification
-    pub name: String,
+    name: String,
 
     /// Algorithm in the specifications
-    pub algorithm: String,
+    algorithm: String,
 
     /// Description of the verification
-    pub description: String,
+    description: String,
 
     /// Period (Set or Tally) of the verification
     #[serde(deserialize_with = "deserialize_string_to_period")]
-    pub period: VerificationPeriod,
+    period: VerificationPeriod,
 
     /// Category of the verification
     #[serde(deserialize_with = "deserialize_string_to_category")]
-    pub category: VerificationCategory,
+    category: VerificationCategory,
 }
 
-impl VerificationMetaDataListTrait for VerificationMetaDataList {
-    fn load() -> anyhow::Result<Self> {
+impl VerificationMetaDataList {
+    pub fn load() -> anyhow::Result<Self> {
         let path = verification_list_path();
         let s = fs::read_to_string(&path).map_err(|e| {
             anyhow!(e).context(format!("Cannot read file {}", path.to_str().unwrap()))
@@ -69,19 +53,50 @@ impl VerificationMetaDataListTrait for VerificationMetaDataList {
         })
     }
 
-    fn meta_data_from_id(&self, id: &str) -> Option<&VerificationMetaData> {
-        self.iter().find(|e| e.id == id)
+    pub fn meta_data_from_id(&self, id: &str) -> Option<&VerificationMetaData> {
+        self.0.iter().find(|e| e.id == id)
     }
 
-    fn id_list(&self) -> Vec<String> {
-        self.iter().map(|e| e.id.clone()).collect::<Vec<String>>()
+    pub fn id_list(&self) -> Vec<String> {
+        self.0.iter().map(|e| e.id.clone()).collect::<Vec<String>>()
     }
 
-    fn id_list_for_period(&self, period: &VerificationPeriod) -> Vec<String> {
-        self.iter()
+    pub fn id_list_for_period(&self, period: &VerificationPeriod) -> Vec<String> {
+        self.0
+            .iter()
             .filter(|e| &e.period == period)
             .map(|e| e.id.clone())
             .collect::<Vec<String>>()
+    }
+
+    pub fn len(&self) -> usize {
+        self.0.len()
+    }
+}
+
+impl VerificationMetaData {
+    pub fn id(&self) -> &String {
+        &self.id
+    }
+
+    pub fn name(&self) -> &String {
+        &self.name
+    }
+
+    pub fn algorithm(&self) -> &String {
+        &self.algorithm
+    }
+
+    pub fn description(&self) -> &String {
+        &self.description
+    }
+
+    pub fn period(&self) -> &VerificationPeriod {
+        &self.period
+    }
+
+    pub fn category(&self) -> &VerificationCategory {
+        &self.category
     }
 }
 

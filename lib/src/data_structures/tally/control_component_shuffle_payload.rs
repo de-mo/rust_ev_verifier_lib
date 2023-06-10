@@ -9,22 +9,22 @@ use serde::Deserialize;
 
 #[derive(Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
-pub struct ControlComponentShufflePayload {
-    pub encryption_group: EncryptionGroup,
-    pub election_event_id: String,
-    pub ballot_box_id: String,
-    pub node_id: usize,
-    pub verifiable_decryptions: VerifiableDecryptions,
-    pub verifiable_shuffle: VerifiableShuffle,
-    pub signature: SignatureJson,
+pub(crate) struct ControlComponentShufflePayload {
+    pub(crate) encryption_group: EncryptionGroup,
+    pub(crate) election_event_id: String,
+    pub(crate) ballot_box_id: String,
+    pub(crate) node_id: usize,
+    pub(crate) verifiable_decryptions: VerifiableDecryptions,
+    pub(crate) verifiable_shuffle: VerifiableShuffle,
+    pub(crate) signature: SignatureJson,
 }
 implement_trait_verifier_data_json_decode!(ControlComponentShufflePayload);
 
 #[derive(Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
-pub struct VerifiableDecryptions {
-    pub ciphertexts: Vec<ExponentiatedEncryptedElement>,
-    pub decryption_proofs: Vec<DecryptionProof>,
+pub(crate) struct VerifiableDecryptions {
+    pub(crate) ciphertexts: Vec<ExponentiatedEncryptedElement>,
+    pub(crate) decryption_proofs: Vec<DecryptionProof>,
 }
 
 #[cfg(test)]

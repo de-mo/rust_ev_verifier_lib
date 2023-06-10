@@ -1,10 +1,10 @@
 //! Module implementing the structure of files and directories
 //! to collect data for the verifications
 //!
-pub mod file;
-pub mod file_group;
-pub mod setup_directory;
-pub mod tally_directory;
+pub(crate) mod file;
+pub(crate) mod file_group;
+pub(crate) mod setup_directory;
+pub(crate) mod tally_directory;
 
 use crate::{
     data_structures::{
@@ -19,23 +19,23 @@ use tally_directory::TallyDirectory;
 use self::{setup_directory::SetupDirectoryTrait, tally_directory::TallyDirectoryTrait};
 
 /// Type represending a VerificationDirectory
-pub struct VerificationDirectory {
+pub(crate) struct VerificationDirectory {
     setup: SetupDirectory,
     tally: Option<TallyDirectory>,
 }
 
-pub enum FileType {
+pub(crate) enum FileType {
     Json,
     Xml,
 }
 
-pub enum FileReadMode {
+pub(crate) enum FileReadMode {
     Memory,
     Streaming,
 }
 
 /// Trait defining functions to get the filename
-pub trait GetFileNameTrait {
+pub(crate) trait GetFileNameTrait {
     /// Get the file name as it is defiened
     fn get_raw_file_name(&self) -> String;
 
@@ -67,7 +67,7 @@ pub trait GetFileNameTrait {
 ///
 /// All the helpers functions called from `fn_verification` have also to take then traits as parameter
 /// and not the structs. Then it is possible to mock the data
-pub trait VerificationDirectoryTrait {
+pub(crate) trait VerificationDirectoryTrait {
     type SetupDirType: SetupDirectoryTrait;
     type TallyDirType: TallyDirectoryTrait;
 
@@ -84,7 +84,7 @@ pub trait VerificationDirectoryTrait {
 
 impl VerificationDirectory {
     /// Create a new VerificationDirectory
-    pub fn new(period: &VerificationPeriod, location: &Path) -> Self {
+    pub(crate) fn new(period: &VerificationPeriod, location: &Path) -> Self {
         match period {
             VerificationPeriod::Setup => VerificationDirectory {
                 setup: SetupDirectory::new(location),
@@ -98,12 +98,14 @@ impl VerificationDirectory {
     }
 
     /// Is setup
-    pub fn is_setup(&self) -> bool {
+    #[allow(dead_code)]
+    pub(crate) fn is_setup(&self) -> bool {
         self.tally.is_none()
     }
 
     /// Is tally
-    pub fn is_tally(&self) -> bool {
+    #[allow(dead_code)]
+    pub(crate) fn is_tally(&self) -> bool {
         !self.is_setup()
     }
 }
@@ -259,7 +261,8 @@ mod test {
 }
 
 #[cfg(any(test, doc))]
-pub mod mock {
+#[allow(dead_code)]
+pub(crate) mod mock {
     //! Module defining mocking structure for [VerificationDirectory]
     //!
     //! Example of usage:
@@ -284,7 +287,7 @@ pub mod mock {
     };
 
     /// Mock for [VerificationDirectory]
-    pub struct MockVerificationDirectory {
+    pub(crate) struct MockVerificationDirectory {
         setup: MockSetupDirectory,
         tally: Option<MockTallyDirectory>,
     }
@@ -306,7 +309,7 @@ pub mod mock {
 
     impl MockVerificationDirectory {
         /// Create a new [MockVerificationDirectory]
-        pub fn new(period: &VerificationPeriod, location: &Path) -> Self {
+        pub(crate) fn new(period: &VerificationPeriod, location: &Path) -> Self {
             match period {
                 VerificationPeriod::Setup => MockVerificationDirectory {
                     setup: MockSetupDirectory::new(location),
@@ -320,12 +323,12 @@ pub mod mock {
         }
 
         /// Unwrap [MockSetupDirectory] as mutable
-        pub fn unwrap_setup_mut(&mut self) -> &mut MockSetupDirectory {
+        pub(crate) fn unwrap_setup_mut(&mut self) -> &mut MockSetupDirectory {
             &mut self.setup
         }
 
         /// Unwrap [TallyDirectory] as mutable
-        pub fn unwrap_tally_mut(&mut self) -> &mut MockTallyDirectory {
+        pub(crate) fn unwrap_tally_mut(&mut self) -> &mut MockTallyDirectory {
             match &mut self.tally {
                 Some(t) => t,
                 None => panic!("called `unwrap_tally()` on a `Setup` value"),
@@ -384,7 +387,7 @@ pub mod mock {
     /// - $payload: Type of the payload
     macro_rules! mock_payload {
         ($fct: ident, $mock: ident, $payload: ty) => {
-            pub fn $fct(&mut self, data: &anyhow::Result<&$payload>) {
+            pub(crate) fn $fct(&mut self, data: &anyhow::Result<&$payload>) {
                 self.$mock = match data {
                     Ok(d) => Some(Ok(Box::new(d.clone().to_owned()))),
                     Err(e) => Some(Err(anyhow!(format!("{}", e)))),

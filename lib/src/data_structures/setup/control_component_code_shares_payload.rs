@@ -11,34 +11,34 @@ use crypto_primitives::{
 use num_bigint::BigUint;
 use serde::Deserialize;
 
-pub type ControlComponentCodeSharesPayload = Vec<ControlComponentCodeSharesPayloadInner>;
+pub(crate) type ControlComponentCodeSharesPayload = Vec<ControlComponentCodeSharesPayloadInner>;
 
 implement_trait_verifier_data_json_decode!(ControlComponentCodeSharesPayload);
 
 #[derive(Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
-pub struct ControlComponentCodeSharesPayloadInner {
-    pub election_event_id: String,
-    pub verification_card_set_id: String,
-    pub chunk_id: usize,
-    pub control_component_code_shares: Vec<ControlComponentCodeShare>,
-    pub encryption_group: EncryptionGroup,
-    pub node_id: usize,
-    pub signature: SignatureJson,
+pub(crate) struct ControlComponentCodeSharesPayloadInner {
+    pub(crate) election_event_id: String,
+    pub(crate) verification_card_set_id: String,
+    pub(crate) chunk_id: usize,
+    pub(crate) control_component_code_shares: Vec<ControlComponentCodeShare>,
+    pub(crate) encryption_group: EncryptionGroup,
+    pub(crate) node_id: usize,
+    pub(crate) signature: SignatureJson,
 }
 
 #[derive(Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
-pub struct ControlComponentCodeShare {
-    pub verification_card_id: String,
+pub(crate) struct ControlComponentCodeShare {
+    pub(crate) verification_card_id: String,
     #[serde(deserialize_with = "deserialize_seq_string_hex_to_seq_bigunit")]
-    pub voter_choice_return_code_generation_public_key: Vec<BigUint>,
+    pub(crate) voter_choice_return_code_generation_public_key: Vec<BigUint>,
     #[serde(deserialize_with = "deserialize_seq_string_hex_to_seq_bigunit")]
-    pub voter_vote_cast_return_code_generation_public_key: Vec<BigUint>,
-    pub exponentiated_encrypted_partial_choice_return_codes: ExponentiatedEncryptedElement,
-    pub encrypted_partial_choice_return_code_exponentiation_proof: Proof,
-    pub exponentiated_encrypted_confirmation_key: ExponentiatedEncryptedElement,
-    pub encrypted_confirmation_key_exponentiation_proof: Proof,
+    pub(crate) voter_vote_cast_return_code_generation_public_key: Vec<BigUint>,
+    pub(crate) exponentiated_encrypted_partial_choice_return_codes: ExponentiatedEncryptedElement,
+    pub(crate) encrypted_partial_choice_return_code_exponentiation_proof: Proof,
+    pub(crate) exponentiated_encrypted_confirmation_key: ExponentiatedEncryptedElement,
+    pub(crate) encrypted_confirmation_key_exponentiation_proof: Proof,
 }
 
 impl<'a> From<&'a ControlComponentCodeSharesPayloadInner> for HashableMessage<'a> {

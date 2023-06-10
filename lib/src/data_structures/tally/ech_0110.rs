@@ -6,7 +6,7 @@ use crypto_primitives::{
 use roxmltree::Document;
 
 #[derive(Debug, Clone)]
-pub struct ECH0110 {}
+pub(crate) struct ECH0110 {}
 
 impl VerifierDataDecode for ECH0110 {
     fn from_roxmltree<'a>(_: &'a Document<'a>) -> anyhow::Result<Self> {

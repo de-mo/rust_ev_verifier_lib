@@ -14,7 +14,7 @@ use super::super::{
 use anyhow::anyhow;
 use log::debug;
 
-pub fn get_verifications(metadata_list: &VerificationMetaDataList) -> VerificationList {
+pub(crate) fn get_verifications(metadata_list: &VerificationMetaDataList) -> VerificationList {
     let mut res = vec![];
     res.push(Verification::new("06.01", fn_verification_0601, metadata_list).unwrap());
     VerificationList(res)

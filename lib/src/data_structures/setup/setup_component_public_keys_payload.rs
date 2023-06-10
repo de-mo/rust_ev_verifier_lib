@@ -16,11 +16,11 @@ use serde::Deserialize;
 
 #[derive(Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
-pub struct SetupComponentPublicKeysPayload {
-    pub encryption_group: EncryptionGroup,
-    pub election_event_id: String,
-    pub setup_component_public_keys: SetupComponentPublicKeys,
-    pub signature: SignatureJson,
+pub(crate) struct SetupComponentPublicKeysPayload {
+    pub(crate) encryption_group: EncryptionGroup,
+    pub(crate) election_event_id: String,
+    pub(crate) setup_component_public_keys: SetupComponentPublicKeys,
+    pub(crate) signature: SignatureJson,
 }
 
 implement_trait_verifier_data_json_decode!(SetupComponentPublicKeysPayload);
@@ -54,15 +54,15 @@ impl<'a> VerifiySignatureTrait<'a> for SetupComponentPublicKeysPayload {
 
 #[derive(Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
-pub struct SetupComponentPublicKeys {
-    pub combined_control_component_public_keys: Vec<ControlComponentPublicKeys>,
+pub(crate) struct SetupComponentPublicKeys {
+    pub(crate) combined_control_component_public_keys: Vec<ControlComponentPublicKeys>,
     #[serde(deserialize_with = "deserialize_seq_string_hex_to_seq_bigunit")]
-    pub electoral_board_public_key: Vec<BigUint>,
-    pub electoral_board_schnorr_proofs: Vec<ProofUnderline>,
+    pub(crate) electoral_board_public_key: Vec<BigUint>,
+    pub(crate) electoral_board_schnorr_proofs: Vec<ProofUnderline>,
     #[serde(deserialize_with = "deserialize_seq_string_hex_to_seq_bigunit")]
-    pub election_public_key: Vec<BigUint>,
+    pub(crate) election_public_key: Vec<BigUint>,
     #[serde(deserialize_with = "deserialize_seq_string_hex_to_seq_bigunit")]
-    pub choice_return_codes_encryption_public_key: Vec<BigUint>,
+    pub(crate) choice_return_codes_encryption_public_key: Vec<BigUint>,
 }
 
 impl<'a> From<&'a SetupComponentPublicKeys> for HashableMessage<'a> {

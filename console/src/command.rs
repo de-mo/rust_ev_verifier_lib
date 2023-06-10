@@ -4,7 +4,7 @@
 //! ```shell
 //! rust_verifier --help
 //! ```
-use log::{info, warn, LevelFilter};
+use log::{info, LevelFilter};
 use log4rs::{
     append::{console::ConsoleAppender, file::FileAppender},
     config::{Appender, Config, Root},
@@ -13,10 +13,7 @@ use log4rs::{
 use rust_verifier_lib::runner::Runner;
 use rust_verifier_lib::{
     constants::LOG_PATH,
-    verification::{
-        meta_data::{VerificationMetaDataList, VerificationMetaDataListTrait},
-        VerificationPeriod,
-    },
+    verification::{meta_data::VerificationMetaDataList, VerificationPeriod},
 };
 use std::path::PathBuf;
 use structopt::StructOpt;
@@ -55,7 +52,7 @@ enum SubCommands {
 /// Verifier for E-Voting System of Swiss Post
 struct VerifiyCommand {
     #[structopt(subcommand)]
-    sub: Option<SubCommands>,
+    sub: SubCommands,
 }
 
 /// Init the logger with or without stdout
@@ -83,28 +80,18 @@ fn init_logger(level: LevelFilter, with_stdout: bool) {
 }
 
 pub(crate) fn execute_command() {
+    init_logger(LevelFilter::Debug, true);
     let command = VerifiyCommand::from_args();
-    println!("command: {:?}", command);
     match command.sub {
-        Some(cmd) => {
-            init_logger(LevelFilter::Debug, true);
-            match cmd {
-                SubCommands::Setup(c) => {
-                    info!("Start Verifier for setup");
-                    execute_runner(&VerificationPeriod::Setup, &c);
-                }
-                SubCommands::Tally(c) => {
-                    info!("Start Verifier for tally");
-                    execute_runner(&VerificationPeriod::Setup, &c);
-                }
-            };
+        SubCommands::Setup(c) => {
+            info!("Start Verifier for setup");
+            execute_runner(&VerificationPeriod::Setup, &c);
         }
-        None => {
-            init_logger(LevelFilter::Debug, false);
-            info!("Start GUI Verifier");
-            warn!("Not Implemented yet");
+        SubCommands::Tally(c) => {
+            info!("Start Verifier for tally");
+            execute_runner(&VerificationPeriod::Setup, &c);
         }
-    }
+    };
     info!("Verifier finished");
 }
 
