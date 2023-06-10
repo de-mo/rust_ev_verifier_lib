@@ -399,7 +399,7 @@ where
             let mut vec = <Self::Value>::new();
 
             while let Some(v) = (seq.next_element())? {
-                let r_b = BigUint::from_hexa_string(&v).map_err(|e| A::Error::custom(e))?;
+                let r_b = BigUint::from_hexa_string(v).map_err(|e| A::Error::custom(e))?;
                 vec.push(r_b);
             }
             Ok(vec)
@@ -431,7 +431,7 @@ where
             let mut vec = <Self::Value>::new();
 
             while let Some(v) = (seq.next_element())? {
-                let r_b = ByteArray::base64_decode(&v).map_err(|e| A::Error::custom(e))?;
+                let r_b = ByteArray::base64_decode(v).map_err(|e| A::Error::custom(e))?;
                 vec.push(r_b);
             }
             Ok(vec)

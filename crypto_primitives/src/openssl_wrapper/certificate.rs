@@ -60,7 +60,7 @@ impl Keystore {
         };
         for x in cas.iter() {
             for e in x.issuer_name().entries() {
-                if e.object().to_string() == "commonName".to_string()
+                if e.object().to_string() == *"commonName"
                     && e.data().as_slice() == authority.as_bytes()
                 {
                     return Ok(SigningCertificate {

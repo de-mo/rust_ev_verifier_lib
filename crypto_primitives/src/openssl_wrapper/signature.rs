@@ -24,8 +24,8 @@ pub fn verify(
     signature: &ByteArray,
 ) -> Result<bool, OpensslError> {
     // With the next two lines, it is sure that the certificate is recognized as SRA certificate from openssl
-    let pkey_temp = PKey::from_rsa(pkey.rsa().map_err(|e| OpensslError::PublicKeyError(e))?)
-        .map_err(|e| OpensslError::PublicKeyError(e))?;
+    let pkey_temp = PKey::from_rsa(pkey.rsa().map_err(OpensslError::PublicKeyError)?)
+        .map_err(OpensslError::PublicKeyError)?;
     let rsa_pkey = pkey_temp.as_ref();
     let mut verifier = Verifier::new(MessageDigest::sha256(), rsa_pkey).map_err(|e| {
         OpensslError::SignatureVerify {

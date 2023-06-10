@@ -62,7 +62,7 @@ impl File {
     }
 
     pub(crate) fn read_data(&self) -> anyhow::Result<String> {
-        fs::read_to_string(&self.get_path())
+        fs::read_to_string(self.get_path())
             .map_err(|e| anyhow!(e).context(format!("Cannot read file \"{}\"", self.to_str())))
     }
 

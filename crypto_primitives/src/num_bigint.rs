@@ -45,7 +45,7 @@ pub trait Operations {
 /// Transformation from or to String in hexadecimal according to the specifications
 pub trait Hexa: Sized {
     /// Create object from hexadecimal String. If not valid return an error
-    fn from_hexa_string(s: &String) -> Result<Self, BigUIntError>;
+    fn from_hexa_string(s: &str) -> Result<Self, BigUIntError>;
 
     /// Create object from hexadecimal &str. If not valid return an error
     fn from_hexa_slice(s: &str) -> Result<Self, BigUIntError>;
@@ -136,24 +136,22 @@ impl Operations for BigUint {
 }
 
 impl Hexa for BigUint {
-    fn from_hexa_string(s: &String) -> Result<Self, BigUIntError> {
+    fn from_hexa_string(s: &str) -> Result<Self, BigUIntError> {
         if !s.starts_with("0x") && !s.starts_with("0X") {
             return Err(BigUIntError::ParseError {
-                orig: s.clone(),
+                orig: s.to_string(),
                 fnname: "from_hexa_string".to_string(),
             });
         };
-        <BigUint>::from_str_radix(&s[2..], 16).or_else(|e| {
-            Err(BigUIntError::ParseErrorWithSource {
-                orig: s.clone(),
-                fnname: "from_hexa_string".to_string(),
-                source: e,
-            })
+        <BigUint>::from_str_radix(&s[2..], 16).map_err(|e| BigUIntError::ParseErrorWithSource {
+            orig: s.to_string(),
+            fnname: "from_hexa_string".to_string(),
+            source: e,
         })
     }
 
     fn from_hexa_slice(s: &str) -> Result<Self, BigUIntError> {
-        Self::from_hexa_string(&s.to_string())
+        Self::from_hexa_string(s)
     }
 
     fn to_hexa(&self) -> String {
@@ -195,23 +193,23 @@ mod test {
     #[test]
     fn from_exa() {
         assert_eq!(
-            BigUint::from_hexa_string(&"0x0".to_string()).unwrap(),
+            BigUint::from_hexa_string("0x0").unwrap(),
             0.to_biguint().unwrap()
         );
         assert_eq!(
-            BigUint::from_hexa_string(&"0xa".to_string()).unwrap(),
+            BigUint::from_hexa_string("0xa").unwrap(),
             10.to_biguint().unwrap()
         );
         assert_eq!(
-            BigUint::from_hexa_string(&"0xab".to_string()).unwrap(),
+            BigUint::from_hexa_string("0xab").unwrap(),
             171.to_biguint().unwrap()
         );
         assert_eq!(
-            BigUint::from_hexa_string(&"0x12D9E8".to_string()).unwrap(),
+            BigUint::from_hexa_string("0x12D9E8").unwrap(),
             1235432.to_biguint().unwrap()
         );
-        assert!(BigUint::from_hexa_string(&"123".to_string()).is_err());
-        assert!(BigUint::from_hexa_string(&"0xtt".to_string()).is_err());
+        assert!(BigUint::from_hexa_string("123").is_err());
+        assert!(BigUint::from_hexa_string("0xtt").is_err());
         assert_eq!(
             BigUint::from_hexa_slice("0x12D9E8").unwrap(),
             1235432.to_biguint().unwrap()

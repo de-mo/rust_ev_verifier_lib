@@ -6,9 +6,7 @@ mod integrity;
 
 use super::{meta_data::VerificationMetaDataList, suite::VerificationList};
 
-pub(crate) fn get_verifications<'a>(
-    metadata_list: &'a VerificationMetaDataList,
-) -> VerificationList<'a> {
+pub(crate) fn get_verifications(metadata_list: &VerificationMetaDataList) -> VerificationList {
     let mut res = VerificationList(vec![]);
     res.0
         .append(&mut authenticity::get_verifications(metadata_list).0);

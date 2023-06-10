@@ -71,7 +71,7 @@ impl<'a> Verification<'a, VerificationDirectory> {
 
     #[allow(dead_code)]
     pub(crate) fn meta_data(&'a self) -> &'a VerificationMetaData {
-        &self.meta_data
+        self.meta_data
     }
 
     /// Run the test.

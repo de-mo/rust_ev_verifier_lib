@@ -37,14 +37,14 @@ where
     /// Verfiy the signature according to the specifications of Verifier
     fn verifiy_signature(&'a self, location: &Path) -> Result<bool, SignatureError> {
         let dt = DirectTrust::new(location, &self.get_certificate_authority())
-            .map_err(|e| SignatureError::Keystore(e))?;
+            .map_err(SignatureError::Keystore)?;
         let cert = dt.signing_certificate();
         let time_ok = cert
             .is_valid_time()
             .map_err(|e| SignatureError::Certificate {
                 name: String::from(&self.get_certificate_authority()),
                 error: e,
-                action: format!("validating time"),
+                action: "validating time".to_string(),
             })?;
         if !time_ok {
             return Err(SignatureError::Time(String::from(
@@ -56,7 +56,7 @@ where
             .map_err(|e| SignatureError::Certificate {
                 name: String::from(&self.get_certificate_authority()),
                 error: e,
-                action: format!("reading public key"),
+                action: "reading public key".to_string(),
             })?;
         verify(
             pkey.as_ref(),
@@ -67,7 +67,7 @@ where
         .map_err(|e| SignatureError::Certificate {
             name: String::from(&self.get_certificate_authority()),
             error: e,
-            action: format!("verifyinh signature"),
+            action: "verifyinh signature".to_string(),
         })
     }
 }

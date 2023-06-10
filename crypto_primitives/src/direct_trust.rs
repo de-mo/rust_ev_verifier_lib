@@ -43,13 +43,13 @@ impl DirectTrust {
             msg: format!("Error reading password file {}", &file_pwd.display()),
             source: e,
         })?;
-        let ks = Keystore::read_keystore(&file, &pwd).map_err(|e| DirectTrustError::Keystore(e))?;
+        let ks = Keystore::read_keystore(&file, &pwd).map_err(DirectTrustError::Keystore)?;
         let cert = ks
             .get_certificate(&String::from(authority))
-            .map_err(|e| DirectTrustError::Certificate(e))?;
+            .map_err(DirectTrustError::Certificate)?;
         Ok(DirectTrust {
             authority: authority.clone(),
-            cert: cert.to_owned(),
+            cert,
         })
     }
 

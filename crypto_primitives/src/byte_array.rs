@@ -28,13 +28,13 @@ pub trait Encode {
 /// Trait to decode from string in different bases
 pub trait Decode: Sized {
     /// Code from string in base16 according specifications. The letters are in upper.
-    fn base16_decode(s: &String) -> Result<Self, ByteArrayError>;
+    fn base16_decode(s: &str) -> Result<Self, ByteArrayError>;
 
     /// Code from string in base32 according specifications.
-    fn base32_decode(s: &String) -> Result<Self, ByteArrayError>;
+    fn base32_decode(s: &str) -> Result<Self, ByteArrayError>;
 
     /// Code from string in base32 according specifications.
-    fn base64_decode(s: &String) -> Result<Self, ByteArrayError>;
+    fn base64_decode(s: &str) -> Result<Self, ByteArrayError>;
 }
 
 impl ByteArray {
@@ -58,6 +58,7 @@ impl ByteArray {
     }
 
     /// Len of the ByteArray in bytes
+    #[allow(clippy::len_without_is_empty)]
     pub fn len(&self) -> usize {
         self.inner.len()
     }
@@ -76,7 +77,7 @@ impl ByteArray {
     /// Create a bew ByteArray prepending a byte
     pub fn prepend_byte(&self, byte: u8) -> ByteArray {
         let mut res = ByteArray::from(&vec![byte]);
-        res.append(&self);
+        res.append(self);
         res
     }
 
@@ -99,8 +100,8 @@ impl ByteArray {
             println!("n % 8: {:?}", (n % 8));
             println!("2^(n % 8): {:?}", Pow::pow(2u8, n % 8));
             println!("2^(n % 8)-1: {:?}", Pow::pow(2u8, n % 8) - 1);
-            println!("mask: {:?}", (Pow::pow(2u8, n % 8) - 1) as u8);
-            arr.push(bs[offset] & ((Pow::pow(2u8, n % 8) - 1) as u8));
+            println!("mask: {:?}", (Pow::pow(2u8, n % 8) - 1));
+            arr.push(bs[offset] & (Pow::pow(2u8, n % 8) - 1));
         } else {
             arr.push(bs[offset])
         }
@@ -140,7 +141,7 @@ impl Encode for ByteArray {
 }
 
 impl Decode for ByteArray {
-    fn base16_decode(s: &String) -> Result<Self, ByteArrayError> {
+    fn base16_decode(s: &str) -> Result<Self, ByteArrayError> {
         HEXUPPER
             .decode(s.as_bytes())
             .map_err(|e| ByteArrayError::DecodeError {
@@ -151,7 +152,7 @@ impl Decode for ByteArray {
             .map(|r| Self::from(&r))
     }
 
-    fn base32_decode(s: &String) -> Result<Self, ByteArrayError> {
+    fn base32_decode(s: &str) -> Result<Self, ByteArrayError> {
         BASE32
             .decode(s.as_bytes())
             .map_err(|e| ByteArrayError::DecodeError {
@@ -162,7 +163,7 @@ impl Decode for ByteArray {
             .map(|r| Self::from(&r))
     }
 
-    fn base64_decode(s: &String) -> Result<Self, ByteArrayError> {
+    fn base64_decode(s: &str) -> Result<Self, ByteArrayError> {
         BASE64
             .decode(s.as_bytes())
             .map_err(|e| ByteArrayError::DecodeError {
@@ -199,7 +200,7 @@ impl From<&BigUint> for ByteArray {
         let mut d: Vec<u8> = Vec::new();
         for _i in 0..byte_length {
             d.insert(0, (x.clone() % 256.to_biguint().unwrap()).to_bytes_le()[0]);
-            x = x / 256.to_biguint().unwrap();
+            x /= 256.to_biguint().unwrap();
         }
         ByteArray::from(&d)
     }
@@ -353,46 +354,46 @@ mod test {
     #[test]
     fn cut_bit_length() {
         assert_eq!(
-            ByteArray::base64_decode(&"/w==".to_string())
+            ByteArray::base64_decode("/w==")
                 .unwrap()
                 .cut_bit_length(1)
                 .unwrap(),
-            ByteArray::base64_decode(&"AQ==".to_string()).unwrap()
+            ByteArray::base64_decode("AQ==").unwrap()
         );
         assert_eq!(
-            ByteArray::base64_decode(&"Dw==".to_string())
+            ByteArray::base64_decode("Dw==")
                 .unwrap()
                 .cut_bit_length(2)
                 .unwrap(),
-            ByteArray::base64_decode(&"Aw==".to_string()).unwrap()
+            ByteArray::base64_decode("Aw==").unwrap()
         );
         assert_eq!(
-            ByteArray::base64_decode(&"/w==".to_string())
+            ByteArray::base64_decode("/w==")
                 .unwrap()
                 .cut_bit_length(8)
                 .unwrap(),
-            ByteArray::base64_decode(&"/w==".to_string()).unwrap()
+            ByteArray::base64_decode("/w==").unwrap()
         );
         assert_eq!(
-            ByteArray::base64_decode(&"vu8=".to_string())
+            ByteArray::base64_decode("vu8=")
                 .unwrap()
                 .cut_bit_length(7)
                 .unwrap(),
-            ByteArray::base64_decode(&"bw==".to_string()).unwrap()
+            ByteArray::base64_decode("bw==").unwrap()
         );
         assert_eq!(
-            ByteArray::base64_decode(&"wP/u".to_string())
+            ByteArray::base64_decode("wP/u")
                 .unwrap()
                 .cut_bit_length(13)
                 .unwrap(),
-            ByteArray::base64_decode(&"H+4=".to_string()).unwrap()
+            ByteArray::base64_decode("H+4=").unwrap()
         );
         assert_eq!(
-            ByteArray::base64_decode(&"q80=".to_string())
+            ByteArray::base64_decode("q80=")
                 .unwrap()
                 .cut_bit_length(9)
                 .unwrap(),
-            ByteArray::base64_decode(&"Ac0=".to_string()).unwrap()
+            ByteArray::base64_decode("Ac0=").unwrap()
         );
         assert!(ByteArray::from_bytes(b"10011").cut_bit_length(0).is_err());
         assert!(ByteArray::from_bytes(b"\x11").cut_bit_length(9).is_err());
@@ -420,61 +421,25 @@ mod test {
 
     #[test]
     fn base16_decode() {
+        assert_eq!(ByteArray::base16_decode("00").unwrap().to_bytes(), b"\x00");
+        assert_eq!(ByteArray::base16_decode("41").unwrap().to_bytes(), b"\x41");
+        assert_eq!(ByteArray::base16_decode("60").unwrap().to_bytes(), b"\x60");
+        assert_eq!(ByteArray::base16_decode("7F").unwrap().to_bytes(), b"\x7F");
+        assert_eq!(ByteArray::base16_decode("80").unwrap().to_bytes(), b"\x80");
+        assert_eq!(ByteArray::base16_decode("FF").unwrap().to_bytes(), b"\xff");
         assert_eq!(
-            ByteArray::base16_decode(&"00".to_string())
-                .unwrap()
-                .to_bytes(),
-            b"\x00"
-        );
-        assert_eq!(
-            ByteArray::base16_decode(&"41".to_string())
-                .unwrap()
-                .to_bytes(),
-            b"\x41"
-        );
-        assert_eq!(
-            ByteArray::base16_decode(&"60".to_string())
-                .unwrap()
-                .to_bytes(),
-            b"\x60"
-        );
-        assert_eq!(
-            ByteArray::base16_decode(&"7F".to_string())
-                .unwrap()
-                .to_bytes(),
-            b"\x7F"
-        );
-        assert_eq!(
-            ByteArray::base16_decode(&"80".to_string())
-                .unwrap()
-                .to_bytes(),
-            b"\x80"
-        );
-        assert_eq!(
-            ByteArray::base16_decode(&"FF".to_string())
-                .unwrap()
-                .to_bytes(),
-            b"\xff"
-        );
-        assert_eq!(
-            ByteArray::base16_decode(&"4100".to_string())
-                .unwrap()
-                .to_bytes(),
+            ByteArray::base16_decode("4100").unwrap().to_bytes(),
             b"\x41\x00"
         );
         assert_eq!(
-            ByteArray::base16_decode(&"010101".to_string())
-                .unwrap()
-                .to_bytes(),
+            ByteArray::base16_decode("010101").unwrap().to_bytes(),
             b"\x01\x01\x01"
         );
         assert_eq!(
-            ByteArray::base16_decode(&"7F00FE03".to_string())
-                .unwrap()
-                .to_bytes(),
+            ByteArray::base16_decode("7F00FE03").unwrap().to_bytes(),
             b"\x7F\x00\xFE\x03"
         );
-        assert!(ByteArray::base16_decode(&"234G".to_string()).is_err())
+        assert!(ByteArray::base16_decode("234G").is_err())
     }
 
     #[test]
@@ -503,60 +468,42 @@ mod test {
     #[test]
     fn base32_decode() {
         assert_eq!(
-            ByteArray::base32_decode(&"AA======".to_string())
-                .unwrap()
-                .to_bytes(),
+            ByteArray::base32_decode("AA======").unwrap().to_bytes(),
             b"\x00"
         );
         assert_eq!(
-            ByteArray::base32_decode(&"IE======".to_string())
-                .unwrap()
-                .to_bytes(),
+            ByteArray::base32_decode("IE======").unwrap().to_bytes(),
             b"\x41"
         );
         assert_eq!(
-            ByteArray::base32_decode(&"MA======".to_string())
-                .unwrap()
-                .to_bytes(),
+            ByteArray::base32_decode("MA======").unwrap().to_bytes(),
             b"\x60"
         );
         assert_eq!(
-            ByteArray::base32_decode(&"P4======".to_string())
-                .unwrap()
-                .to_bytes(),
+            ByteArray::base32_decode("P4======").unwrap().to_bytes(),
             b"\x7F"
         );
         assert_eq!(
-            ByteArray::base32_decode(&"QA======".to_string())
-                .unwrap()
-                .to_bytes(),
+            ByteArray::base32_decode("QA======").unwrap().to_bytes(),
             b"\x80"
         );
         assert_eq!(
-            ByteArray::base32_decode(&"74======".to_string())
-                .unwrap()
-                .to_bytes(),
+            ByteArray::base32_decode("74======").unwrap().to_bytes(),
             b"\xff"
         );
         assert_eq!(
-            ByteArray::base32_decode(&"IEAA====".to_string())
-                .unwrap()
-                .to_bytes(),
+            ByteArray::base32_decode("IEAA====").unwrap().to_bytes(),
             b"\x41\x00"
         );
         assert_eq!(
-            ByteArray::base32_decode(&"AEAQC===".to_string())
-                .unwrap()
-                .to_bytes(),
+            ByteArray::base32_decode("AEAQC===").unwrap().to_bytes(),
             b"\x01\x01\x01"
         );
         assert_eq!(
-            ByteArray::base32_decode(&"P4AP4AY=".to_string())
-                .unwrap()
-                .to_bytes(),
+            ByteArray::base32_decode("P4AP4AY=").unwrap().to_bytes(),
             b"\x7F\x00\xFE\x03"
         );
-        assert!(ByteArray::base32_decode(&"P4AP4AY".to_string()).is_err())
+        assert!(ByteArray::base32_decode("P4AP4AY").is_err())
     }
 
     #[test]
@@ -582,59 +529,41 @@ mod test {
     #[test]
     fn base64_decode() {
         assert_eq!(
-            ByteArray::base64_decode(&"AA==".to_string())
-                .unwrap()
-                .to_bytes(),
+            ByteArray::base64_decode("AA==").unwrap().to_bytes(),
             b"\x00"
         );
         assert_eq!(
-            ByteArray::base64_decode(&"QQ==".to_string())
-                .unwrap()
-                .to_bytes(),
+            ByteArray::base64_decode("QQ==").unwrap().to_bytes(),
             b"\x41"
         );
         assert_eq!(
-            ByteArray::base64_decode(&"YA==".to_string())
-                .unwrap()
-                .to_bytes(),
+            ByteArray::base64_decode("YA==").unwrap().to_bytes(),
             b"\x60"
         );
         assert_eq!(
-            ByteArray::base64_decode(&"fw==".to_string())
-                .unwrap()
-                .to_bytes(),
+            ByteArray::base64_decode("fw==").unwrap().to_bytes(),
             b"\x7F"
         );
         assert_eq!(
-            ByteArray::base64_decode(&"gA==".to_string())
-                .unwrap()
-                .to_bytes(),
+            ByteArray::base64_decode("gA==").unwrap().to_bytes(),
             b"\x80"
         );
         assert_eq!(
-            ByteArray::base64_decode(&"/w==".to_string())
-                .unwrap()
-                .to_bytes(),
+            ByteArray::base64_decode("/w==").unwrap().to_bytes(),
             b"\xff"
         );
         assert_eq!(
-            ByteArray::base64_decode(&"QQA=".to_string())
-                .unwrap()
-                .to_bytes(),
+            ByteArray::base64_decode("QQA=").unwrap().to_bytes(),
             b"\x41\x00"
         );
         assert_eq!(
-            ByteArray::base64_decode(&"AQEB".to_string())
-                .unwrap()
-                .to_bytes(),
+            ByteArray::base64_decode("AQEB").unwrap().to_bytes(),
             b"\x01\x01\x01"
         );
         assert_eq!(
-            ByteArray::base64_decode(&"fwD+Aw==".to_string())
-                .unwrap()
-                .to_bytes(),
+            ByteArray::base64_decode("fwD+Aw==").unwrap().to_bytes(),
             b"\x7F\x00\xFE\x03"
         );
-        assert!(ByteArray::base64_decode(&"fwD+Aw=".to_string()).is_err())
+        assert!(ByteArray::base64_decode("fwD+Aw=").is_err())
     }
 }
