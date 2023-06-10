@@ -40,7 +40,7 @@ mod test {
             .join("ballot_boxes")
             .join("4AB4F95B8114C1DFEDB9586ADBFE36B3")
             .join("controlComponentShufflePayload_1.json");
-        let json = fs::read_to_string(&path).unwrap();
+        let json = fs::read_to_string(path).unwrap();
         let r_eec = ControlComponentShufflePayload::from_json(&json);
         println!("{:?}", r_eec.as_ref().err());
         assert!(r_eec.is_ok())

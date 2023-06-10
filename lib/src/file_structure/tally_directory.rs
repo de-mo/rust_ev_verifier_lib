@@ -169,6 +169,7 @@ impl BBDirectoryTrait for BBDirectory {
 }
 
 impl TallyDirectory {
+    #[allow(clippy::redundant_clone)]
     pub(crate) fn new(data_location: &Path) -> TallyDirectory {
         let location = data_location.join(TALLY_DIR_NAME);
         let mut res = TallyDirectory {
@@ -215,11 +216,11 @@ impl BBDirectory {
                 VerifierTallyDataType::TallyComponentShufflePayload
             ),
             control_component_ballot_box_payload_group: FileGroup::new(
-                &location,
+                location,
                 create_verifier_tally_data_type!(Tally, ControlComponentBallotBoxPayload),
             ),
             control_component_shuffle_payload_group: FileGroup::new(
-                &location,
+                location,
                 create_verifier_tally_data_type!(Tally, ControlComponentShufflePayload),
             ),
         }

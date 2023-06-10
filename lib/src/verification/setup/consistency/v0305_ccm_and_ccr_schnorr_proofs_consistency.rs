@@ -91,7 +91,7 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
         .setup_component_public_keys
         .combined_control_component_public_keys
     {
-        validate_ccm_and_ccr_schorr_proofs(setup_dir, &node, node.node_id as usize, result)
+        validate_ccm_and_ccr_schorr_proofs(setup_dir, &node, node.node_id, result)
     }
 }
 

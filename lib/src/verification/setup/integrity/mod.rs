@@ -1,7 +1,7 @@
 use super::super::{
     result::{create_verification_failure, VerificationEvent, VerificationResult},
     suite::VerificationList,
-    verification::Verification,
+    verifications::Verification,
 };
 use crate::{
     file_structure::{
@@ -14,9 +14,12 @@ use anyhow::anyhow;
 use log::debug;
 
 pub(crate) fn get_verifications(metadata_list: &VerificationMetaDataList) -> VerificationList {
-    let mut res = vec![];
-    res.push(Verification::new("04.01", fn_verification_0401, metadata_list).unwrap());
-    VerificationList(res)
+    VerificationList(vec![Verification::new(
+        "04.01",
+        fn_verification_0401,
+        metadata_list,
+    )
+    .unwrap()])
 }
 
 fn validate_vcs_dir<V: VCSDirectoryTrait>(dir: &V, result: &mut VerificationResult) {
@@ -31,29 +34,27 @@ fn validate_vcs_dir<V: VCSDirectoryTrait>(dir: &V, result: &mut VerificationResu
         )),
     }
     for (i, f) in dir.control_component_code_shares_payload_iter() {
-        match f {
-            Err(e) => result.push(create_verification_failure!(
+        if let Err(e) = f {
+            result.push(create_verification_failure!(
                 format!(
                     "{}/control_component_code_shares_payload.{} has wrong format",
                     dir.get_name(),
                     i
                 ),
                 e
-            )),
-            _ => (),
+            ))
         }
     }
     for (i, f) in dir.setup_component_verification_data_payload_iter() {
-        match f {
-            Err(e) => result.push(create_verification_failure!(
+        if let Err(e) = f {
+            result.push(create_verification_failure!(
                 format!(
                     "{}/setup_component_verification_data_payload.{} has wrong format",
                     dir.get_name(),
                     i
                 ),
                 e
-            )),
-            _ => (),
+            ))
         }
     }
 }
@@ -89,15 +90,14 @@ fn fn_verification_0401<D: VerificationDirectoryTrait>(dir: &D, result: &mut Ver
         )),
     }
     for (i, f) in setup_dir.control_component_public_keys_payload_iter() {
-        match f {
-            Err(e) => result.push(create_verification_failure!(
+        if let Err(e) = f {
+            result.push(create_verification_failure!(
                 format!(
                     "control_component_public_keys_payload.{} has wrong format",
                     i
                 ),
                 e
-            )),
-            _ => (),
+            ))
         }
     }
     for d in setup_dir.vcs_directories().iter() {

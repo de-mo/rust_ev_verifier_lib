@@ -45,7 +45,7 @@ fn verify_encryption_group_for_vcs_dir<V: VCSDirectoryTrait>(
     match dir.setup_component_tally_data_payload() {
         Ok(p) => verify_encryption_group(
             &p.encryption_group,
-            &eg,
+            eg,
             &format!("{}/setup_component_tally_data_payload", dir.get_name()),
             result,
         ),
@@ -71,7 +71,7 @@ fn verify_encryption_group_for_vcs_dir<V: VCSDirectoryTrait>(
                 for p in cc.iter() {
                     verify_encryption_group(
                         &p.encryption_group,
-                        &eg,
+                        eg,
                         &format!(
                             "{}/control_component_code_shares_payload.{}_chunk{}",
                             dir.get_name(),
@@ -96,7 +96,7 @@ fn verify_encryption_group_for_vcs_dir<V: VCSDirectoryTrait>(
             )),
             Ok(s) => verify_encryption_group(
                 &s.encryption_group,
-                &eg,
+                eg,
                 &format!(
                     "{}/setup_component_verification_data_payload.{}",
                     i,

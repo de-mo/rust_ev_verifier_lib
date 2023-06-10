@@ -44,7 +44,7 @@ mod test {
         let path = dataset_tally_path()
             .join("tally")
             .join("evoting-decrypt_Post_E2E_DEV.xml");
-        let xml = fs::read_to_string(&path).unwrap();
+        let xml = fs::read_to_string(path).unwrap();
         let config = EVotingDecrypt::from_roxmltree(&Document::parse(&xml).unwrap());
         assert!(config.is_ok())
     }

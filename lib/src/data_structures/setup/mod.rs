@@ -76,7 +76,7 @@ impl VerifierSetupDataType {
                     &self.get_file_type(),
                     &self.get_file_read_mode(),
                 )
-                .map(|r| VerifierSetupData::EncryptionParametersPayload(r))
+                .map(VerifierSetupData::EncryptionParametersPayload)
             }
             VerifierSetupDataType::ElectionEventContextPayload => {
                 ElectionEventContextPayload::from_file(
@@ -84,7 +84,7 @@ impl VerifierSetupDataType {
                     &self.get_file_type(),
                     &self.get_file_read_mode(),
                 )
-                .map(|r| VerifierSetupData::ElectionEventContextPayload(r))
+                .map(VerifierSetupData::ElectionEventContextPayload)
             }
             VerifierSetupDataType::SetupComponentPublicKeysPayload => {
                 SetupComponentPublicKeysPayload::from_file(
@@ -92,7 +92,7 @@ impl VerifierSetupDataType {
                     &self.get_file_type(),
                     &self.get_file_read_mode(),
                 )
-                .map(|r| VerifierSetupData::SetupComponentPublicKeysPayload(r))
+                .map(VerifierSetupData::SetupComponentPublicKeysPayload)
             }
             VerifierSetupDataType::ControlComponentPublicKeysPayload => {
                 ControlComponentPublicKeysPayload::from_file(
@@ -100,7 +100,7 @@ impl VerifierSetupDataType {
                     &self.get_file_type(),
                     &self.get_file_read_mode(),
                 )
-                .map(|r| VerifierSetupData::ControlComponentPublicKeysPayload(r))
+                .map(VerifierSetupData::ControlComponentPublicKeysPayload)
             }
             VerifierSetupDataType::SetupComponentVerificationDataPayload => {
                 SetupComponentVerificationDataPayload::from_file(
@@ -108,7 +108,7 @@ impl VerifierSetupDataType {
                     &self.get_file_type(),
                     &self.get_file_read_mode(),
                 )
-                .map(|r| VerifierSetupData::SetupComponentVerificationDataPayload(r))
+                .map(VerifierSetupData::SetupComponentVerificationDataPayload)
             }
             VerifierSetupDataType::ControlComponentCodeSharesPayload => {
                 ControlComponentCodeSharesPayload::from_file(
@@ -116,7 +116,7 @@ impl VerifierSetupDataType {
                     &self.get_file_type(),
                     &self.get_file_read_mode(),
                 )
-                .map(|r| VerifierSetupData::ControlComponentCodeSharesPayload(r))
+                .map(VerifierSetupData::ControlComponentCodeSharesPayload)
             }
             VerifierSetupDataType::SetupComponentTallyDataPayload => {
                 SetupComponentTallyDataPayload::from_file(
@@ -124,7 +124,7 @@ impl VerifierSetupDataType {
                     &self.get_file_type(),
                     &self.get_file_read_mode(),
                 )
-                .map(|r| VerifierSetupData::SetupComponentTallyDataPayload(r))
+                .map(VerifierSetupData::SetupComponentTallyDataPayload)
             }
             VerifierSetupDataType::ElectionEventConfiguration => {
                 ElectionEventConfiguration::from_file(
@@ -132,7 +132,7 @@ impl VerifierSetupDataType {
                     &self.get_file_type(),
                     &self.get_file_read_mode(),
                 )
-                .map(|r| VerifierSetupData::ElectionEventConfiguration(r))
+                .map(VerifierSetupData::ElectionEventConfiguration)
             }
         }
     }

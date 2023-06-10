@@ -1,7 +1,7 @@
 use super::super::{
     result::{create_verification_failure, VerificationEvent, VerificationResult},
     suite::VerificationList,
-    verification::Verification,
+    verifications::Verification,
 };
 use crate::{
     file_structure::{
@@ -14,9 +14,12 @@ use anyhow::anyhow;
 use log::debug;
 
 pub(crate) fn get_verifications(metadata_list: &VerificationMetaDataList) -> VerificationList {
-    let mut res = vec![];
-    res.push(Verification::new("09.01", fn_verification_0901, metadata_list).unwrap());
-    VerificationList(res)
+    VerificationList(vec![Verification::new(
+        "09.01",
+        fn_verification_0901,
+        metadata_list,
+    )
+    .unwrap()])
 }
 
 fn validate_bb_dir<B: BBDirectoryTrait>(dir: &B, result: &mut VerificationResult) {
@@ -41,29 +44,27 @@ fn validate_bb_dir<B: BBDirectoryTrait>(dir: &B, result: &mut VerificationResult
         )),
     }
     for (i, f) in dir.control_component_ballot_box_payload_iter() {
-        match f {
-            Err(e) => result.push(create_verification_failure!(
+        if let Err(e) = f {
+            result.push(create_verification_failure!(
                 format!(
                     "{}/control_component_ballot_box_payload_iter.{} has wrong format",
                     dir.get_name(),
                     i
                 ),
                 e
-            )),
-            _ => (),
+            ))
         }
     }
     for (i, f) in dir.control_component_shuffle_payload_iter() {
-        match f {
-            Err(e) => result.push(create_verification_failure!(
+        if let Err(e) = f {
+            result.push(create_verification_failure!(
                 format!(
                     "{}/control_component_shuffle_payload_iter.{} has wrong format",
                     dir.get_name(),
                     i
                 ),
                 e
-            )),
-            _ => (),
+            ))
         }
     }
 }

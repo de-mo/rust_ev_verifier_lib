@@ -61,15 +61,15 @@ impl VerifierTallyDataType {
         match self {
             VerifierTallyDataType::EVotingDecrypt => {
                 EVotingDecrypt::from_file(f, &self.get_file_type(), &self.get_file_read_mode())
-                    .map(|r| VerifierTallyData::EVotingDecrypt(r))
+                    .map(VerifierTallyData::EVotingDecrypt)
             }
             VerifierTallyDataType::ECH0110 => {
                 ECH0110::from_file(f, &self.get_file_type(), &self.get_file_read_mode())
-                    .map(|r| VerifierTallyData::ECH0110(r))
+                    .map(VerifierTallyData::ECH0110)
             }
             VerifierTallyDataType::ECH0222 => {
                 ECH0222::from_file(f, &self.get_file_type(), &self.get_file_read_mode())
-                    .map(|r| VerifierTallyData::ECH0222(r))
+                    .map(VerifierTallyData::ECH0222)
             }
             VerifierTallyDataType::TallyComponentVotesPayload => {
                 TallyComponentVotesPayload::from_file(
@@ -77,7 +77,7 @@ impl VerifierTallyDataType {
                     &self.get_file_type(),
                     &self.get_file_read_mode(),
                 )
-                .map(|r| VerifierTallyData::TallyComponentVotesPayload(r))
+                .map(VerifierTallyData::TallyComponentVotesPayload)
             }
             VerifierTallyDataType::TallyComponentShufflePayload => {
                 TallyComponentShufflePayload::from_file(
@@ -85,7 +85,7 @@ impl VerifierTallyDataType {
                     &self.get_file_type(),
                     &self.get_file_read_mode(),
                 )
-                .map(|r| VerifierTallyData::TallyComponentShufflePayload(r))
+                .map(VerifierTallyData::TallyComponentShufflePayload)
             }
             VerifierTallyDataType::ControlComponentBallotBoxPayload => {
                 ControlComponentBallotBoxPayload::from_file(
@@ -93,7 +93,7 @@ impl VerifierTallyDataType {
                     &self.get_file_type(),
                     &self.get_file_read_mode(),
                 )
-                .map(|r| VerifierTallyData::ControlComponentBallotBoxPayload(r))
+                .map(VerifierTallyData::ControlComponentBallotBoxPayload)
             }
             VerifierTallyDataType::ControlComponentShufflePayload => {
                 ControlComponentShufflePayload::from_file(
@@ -101,7 +101,7 @@ impl VerifierTallyDataType {
                     &self.get_file_type(),
                     &self.get_file_read_mode(),
                 )
-                .map(|r| VerifierTallyData::ControlComponentShufflePayload(r))
+                .map(VerifierTallyData::ControlComponentShufflePayload)
             }
         }
     }

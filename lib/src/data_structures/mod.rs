@@ -293,11 +293,11 @@ impl VerifierDataType {
             VerifierDataType::Setup(t) => t
                 .verifier_data_from_file(f)
                 .map_err(|e| e.context("in verifier_data_from_file"))
-                .map(|r| VerifierData::Setup(r)),
+                .map(VerifierData::Setup),
             VerifierDataType::Tally(t) => t
                 .verifier_data_from_file(f)
                 .map_err(|e| e.context("in verifier_data_from_file"))
-                .map(|r| VerifierData::Tally(r)),
+                .map(VerifierData::Tally),
         }
     }
 }
@@ -342,7 +342,7 @@ pub(crate) fn xml_read_to_end_into_buffer<R: BufRead>(
     }
 }
 
-pub(crate) fn hashable_no_value<'a>(t: &'a str) -> HashableMessage<'a> {
+pub(crate) fn hashable_no_value(t: &str) -> HashableMessage {
     HashableMessage::from(format!("no {} value", t))
 }
 
@@ -372,9 +372,8 @@ where
 {
     let buf = String::deserialize(deserializer)?;
 
-    let dt = NaiveDateTime::parse_from_str(&buf, "%Y-%m-%dT%H:%M:%S")
-        .map_err(|e| Error::custom(e.to_string()));
-    dt
+    NaiveDateTime::parse_from_str(&buf, "%Y-%m-%dT%H:%M:%S")
+        .map_err(|e| Error::custom(e.to_string()))
 }
 
 fn deserialize_seq_string_hex_to_seq_bigunit<'de, D>(
@@ -399,7 +398,7 @@ where
             let mut vec = <Self::Value>::new();
 
             while let Some(v) = (seq.next_element())? {
-                let r_b = BigUint::from_hexa_string(v).map_err(|e| A::Error::custom(e))?;
+                let r_b = BigUint::from_hexa_string(v).map_err(A::Error::custom)?;
                 vec.push(r_b);
             }
             Ok(vec)
@@ -431,7 +430,7 @@ where
             let mut vec = <Self::Value>::new();
 
             while let Some(v) = (seq.next_element())? {
-                let r_b = ByteArray::base64_decode(v).map_err(|e| A::Error::custom(e))?;
+                let r_b = ByteArray::base64_decode(v).map_err(A::Error::custom)?;
                 vec.push(r_b);
             }
             Ok(vec)
@@ -464,7 +463,7 @@ where
             while let Some(v) = (seq.next_element::<Vec<String>>())? {
                 let mut inner_vec = Vec::new();
                 for x in v {
-                    let r_b = BigUint::from_hexa_string(&x).map_err(|e| A::Error::custom(e))?;
+                    let r_b = BigUint::from_hexa_string(&x).map_err(A::Error::custom)?;
                     inner_vec.push(r_b);
                 }
                 vec.push(inner_vec.to_owned());

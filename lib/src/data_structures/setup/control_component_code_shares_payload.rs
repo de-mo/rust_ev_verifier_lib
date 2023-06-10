@@ -43,15 +43,16 @@ pub(crate) struct ControlComponentCodeShare {
 
 impl<'a> From<&'a ControlComponentCodeSharesPayloadInner> for HashableMessage<'a> {
     fn from(value: &'a ControlComponentCodeSharesPayloadInner) -> Self {
-        let mut elts = vec![];
-        elts.push(Self::from(&value.election_event_id));
-        elts.push(Self::from(&value.verification_card_set_id));
-        elts.push(Self::from(&value.chunk_id));
-        elts.push(Self::from(&value.encryption_group));
+        let mut elts = vec![
+            Self::from(&value.election_event_id),
+            Self::from(&value.verification_card_set_id),
+            Self::from(&value.chunk_id),
+            Self::from(&value.encryption_group),
+        ];
         let l: Vec<HashableMessage> = value
             .control_component_code_shares
             .iter()
-            .map(|e| Self::from(e))
+            .map(Self::from)
             .collect();
         elts.push(Self::from(l));
         elts.push(Self::from(&value.node_id));
@@ -61,25 +62,15 @@ impl<'a> From<&'a ControlComponentCodeSharesPayloadInner> for HashableMessage<'a
 
 impl<'a> From<&'a ControlComponentCodeShare> for HashableMessage<'a> {
     fn from(value: &'a ControlComponentCodeShare) -> Self {
-        let mut elts = vec![];
-        elts.push(Self::from(&value.verification_card_id));
-        elts.push(Self::from(
-            &value.voter_choice_return_code_generation_public_key,
-        ));
-        elts.push(Self::from(
-            &value.voter_vote_cast_return_code_generation_public_key,
-        ));
-        elts.push(Self::from(
-            &value.exponentiated_encrypted_partial_choice_return_codes,
-        ));
-        elts.push(Self::from(
-            &value.encrypted_partial_choice_return_code_exponentiation_proof,
-        ));
-        elts.push(Self::from(&value.exponentiated_encrypted_confirmation_key));
-        elts.push(Self::from(
-            &value.encrypted_confirmation_key_exponentiation_proof,
-        ));
-        Self::from(elts)
+        Self::from(vec![
+            Self::from(&value.verification_card_id),
+            Self::from(&value.voter_choice_return_code_generation_public_key),
+            Self::from(&value.voter_vote_cast_return_code_generation_public_key),
+            Self::from(&value.exponentiated_encrypted_partial_choice_return_codes),
+            Self::from(&value.encrypted_partial_choice_return_code_exponentiation_proof),
+            Self::from(&value.exponentiated_encrypted_confirmation_key),
+            Self::from(&value.encrypted_confirmation_key_exponentiation_proof),
+        ])
     }
 }
 
@@ -115,7 +106,7 @@ mod test {
             .join("verification_card_sets")
             .join("681B3488DE4CD4AD7FCED14B7A654169")
             .join("controlComponentCodeSharesPayload.0.json");
-        let json = fs::read_to_string(&path).unwrap();
+        let json = fs::read_to_string(path).unwrap();
         let r_eec = ControlComponentCodeSharesPayload::from_json(&json);
         //println!("{:?}", r_eec);
         assert!(r_eec.is_ok())

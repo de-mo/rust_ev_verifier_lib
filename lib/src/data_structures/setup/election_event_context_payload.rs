@@ -70,7 +70,7 @@ pub(crate) struct PTableElement {
 
 impl VerificationCardSetContext {
     pub(crate) fn number_of_voters(&self) -> usize {
-        self.number_of_voting_cards.clone()
+        self.number_of_voting_cards
     }
 
     pub(crate) fn number_of_voting_options(&self) -> usize {
@@ -121,7 +121,7 @@ impl<'a> From<&'a ElectionEventContext> for HashableMessage<'a> {
         let l: Vec<HashableMessage> = value
             .verification_card_set_contexts
             .iter()
-            .map(|e| Self::from(e))
+            .map(Self::from)
             .collect();
         elts.push(Self::from(l));
         elts.push(Self::from(&value.start_time));
@@ -144,7 +144,7 @@ impl<'a> From<&'a VerificationCardSetContext> for HashableMessage<'a> {
             .primes_mapping_table
             .p_table
             .iter()
-            .map(|e| Self::from(e))
+            .map(Self::from)
             .collect();
         elts.push(Self::from(l));
         Self::from(elts)
@@ -171,7 +171,7 @@ mod test {
         let path = dataset_tally_path()
             .join("setup")
             .join("electionEventContextPayload.json");
-        let json = fs::read_to_string(&path).unwrap();
+        let json = fs::read_to_string(path).unwrap();
         let r_eec = ElectionEventContextPayload::from_json(&json);
         //println!("{:?}", r_eec.unwrap_err())
         assert!(r_eec.is_ok())

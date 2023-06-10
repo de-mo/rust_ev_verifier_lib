@@ -57,12 +57,12 @@ impl VerifierDataDecode for ElectionEventConfiguration {
                         let header_bytes =
                             xml_read_to_end_into_buffer(&mut reader, &start_header, &mut buf)
                                 .map_err(|e| {
-                                    anyhow!(e).context(format!("Error reading header bytes"))
+                                    anyhow!(e).context("Error reading header bytes".to_string())
                                 })?;
-                        let config_header: ConfigHeader = xml_de_from_str(
-                            &String::from_utf8_lossy(&header_bytes),
-                        )
-                        .map_err(|e| anyhow!(e).context(format!("Error deserializing header")))?;
+                        let config_header: ConfigHeader =
+                            xml_de_from_str(&String::from_utf8_lossy(&header_bytes)).map_err(
+                                |e| anyhow!(e).context("Error deserializing header".to_string()),
+                            )?;
                         return Ok(Self {
                             //path: p.to_path_buf(),
                             header: config_header,
@@ -80,22 +80,20 @@ impl VerifierDataDecode for ElectionEventConfiguration {
 
 impl<'a> From<&'a ElectionEventConfiguration> for HashableMessage<'a> {
     fn from(config: &'a ElectionEventConfiguration) -> Self {
-        let mut elts = vec![];
-        elts.push(HashableMessage::from(&config.header));
-        Self::from(elts)
+        Self::from(vec![HashableMessage::from(&config.header)])
     }
 }
 
 impl<'a> From<&'a ConfigHeader> for HashableMessage<'a> {
     fn from(value: &'a ConfigHeader) -> Self {
-        let mut elts = vec![];
-        elts.push(Self::from(&value.file_date));
-        elts.push(Self::from(&value.voter_total));
-        elts.push(match &value.partial_delivery {
-            Some(v) => Self::from(v),
-            None => hashable_no_value("partialDelivery"),
-        });
-        Self::from(elts)
+        Self::from(vec![
+            Self::from(&value.file_date),
+            Self::from(&value.voter_total),
+            match &value.partial_delivery {
+                Some(v) => Self::from(v),
+                None => hashable_no_value("partialDelivery"),
+            },
+        ])
     }
 }
 

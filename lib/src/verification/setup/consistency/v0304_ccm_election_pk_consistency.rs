@@ -35,15 +35,13 @@ fn validate_cc_ccm_pk<S: SetupDirectoryTrait>(
     };
     if setup.ccmj_election_public_key.len() != cc_pk.ccmj_election_public_key.len() {
         result.push(create_verification_failure!(format!("The length of CCM public keys for control component {} are identical from both sources", node_id)));
-    } else {
-        if setup.ccrj_choice_return_codes_encryption_public_key
-            != cc_pk.ccrj_choice_return_codes_encryption_public_key
-        {
-            result.push(create_verification_failure!(format!(
-                "The CCM public keys for control component {} are identical from both sources",
-                node_id
-            )));
-        };
+    } else if setup.ccrj_choice_return_codes_encryption_public_key
+        != cc_pk.ccrj_choice_return_codes_encryption_public_key
+    {
+        result.push(create_verification_failure!(format!(
+            "The CCM public keys for control component {} are identical from both sources",
+            node_id
+        )));
     }
 }
 
@@ -66,7 +64,7 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
         .setup_component_public_keys
         .combined_control_component_public_keys
     {
-        validate_cc_ccm_pk(setup_dir, &node, node.node_id as usize, result)
+        validate_cc_ccm_pk(setup_dir, &node, node.node_id, result)
     }
 }
 

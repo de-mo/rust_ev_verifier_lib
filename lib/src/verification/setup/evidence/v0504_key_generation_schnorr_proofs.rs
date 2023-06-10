@@ -64,7 +64,7 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
         let proofs: Vec<Proof> = combined_cc_pk
             .ccrj_schnorr_proofs
             .iter()
-            .map(|e| Proof::from(e))
+            .map(Proof::from)
             .collect();
 
         let mut res = run_verify_schnorr_proofs(
@@ -87,7 +87,7 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
         let proofs: Vec<Proof> = combined_cc_pk
             .ccmj_schnorr_proofs
             .iter()
-            .map(|e| Proof::from(e))
+            .map(Proof::from)
             .collect();
 
         let mut res = run_verify_schnorr_proofs(
@@ -111,7 +111,7 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
         .setup_component_public_keys
         .electoral_board_schnorr_proofs
         .iter()
-        .map(|e| Proof::from(e))
+        .map(Proof::from)
         .collect();
     let mut res = run_verify_schnorr_proofs(
         &eg.encryption_group,
@@ -146,19 +146,19 @@ fn run_verify_schnorr_proofs(
             .enumerate()
             .par_bridge()
             .map(|(i, (pk, pi))| {
-                run_verify_schnorr_proof(eg, pi, &pk, &i_aux, test_name, proof_name, i, node)
+                run_verify_schnorr_proof(eg, pi, pk, i_aux, test_name, proof_name, i, node)
             })
             .collect();
-        for o in failures {
-            match o {
-                Some(f) => res.push(f),
-                None => (),
+        failures.into_iter().for_each(|o| {
+            if let Some(f) = o {
+                res.push(f)
             }
-        }
+        });
     }
     res
 }
 
+#[allow(clippy::too_many_arguments)]
 fn run_verify_schnorr_proof(
     eg: &EncryptionGroup,
     schnorr: &Proof,

@@ -24,11 +24,11 @@ implement_trait_verifier_data_json_decode!(ControlComponentPublicKeysPayload);
 
 impl<'a> From<&'a ControlComponentPublicKeysPayload> for HashableMessage<'a> {
     fn from(value: &'a ControlComponentPublicKeysPayload) -> Self {
-        let mut elts = vec![];
-        elts.push(Self::from(&value.encryption_group));
-        elts.push(Self::from(&value.election_event_id));
-        elts.push(Self::from(&value.control_component_public_keys));
-        Self::from(elts)
+        Self::from(vec![
+            Self::from(&value.encryption_group),
+            Self::from(&value.election_event_id),
+            Self::from(&value.control_component_public_keys),
+        ])
     }
 }
 
@@ -64,23 +64,14 @@ pub(crate) struct ControlComponentPublicKeys {
 
 impl<'a> From<&'a ControlComponentPublicKeys> for HashableMessage<'a> {
     fn from(value: &'a ControlComponentPublicKeys) -> Self {
-        let mut elts = vec![];
-        elts.push(Self::from(&value.node_id));
-        elts.push(Self::from(
-            &value.ccrj_choice_return_codes_encryption_public_key,
-        ));
-        let ccrj: Vec<HashableMessage> = value
-            .ccrj_schnorr_proofs
-            .iter()
-            .map(|e| Self::from(e))
-            .collect();
+        let mut elts = vec![
+            Self::from(&value.node_id),
+            Self::from(&value.ccrj_choice_return_codes_encryption_public_key),
+        ];
+        let ccrj: Vec<HashableMessage> = value.ccrj_schnorr_proofs.iter().map(Self::from).collect();
         elts.push(Self::from(ccrj));
         elts.push(Self::from(&value.ccmj_election_public_key));
-        let ccmj: Vec<HashableMessage> = value
-            .ccmj_schnorr_proofs
-            .iter()
-            .map(|e| Self::from(e))
-            .collect();
+        let ccmj: Vec<HashableMessage> = value.ccmj_schnorr_proofs.iter().map(Self::from).collect();
         elts.push(Self::from(ccmj));
         Self::from(elts)
     }
@@ -97,7 +88,7 @@ mod test {
         let path = dataset_tally_path()
             .join("setup")
             .join("controlComponentPublicKeysPayload.1.json");
-        let json = fs::read_to_string(&path).unwrap();
+        let json = fs::read_to_string(path).unwrap();
         let r_eec = ControlComponentPublicKeysPayload::from_json(&json);
         assert!(r_eec.is_ok())
     }

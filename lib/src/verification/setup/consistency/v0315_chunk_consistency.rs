@@ -16,7 +16,7 @@ fn verify_uninterrupted_monotonic_sequence(
 ) {
     let mut numbers = fg.get_numbers().clone();
     numbers.sort();
-    if !fg.has_elements() && !(numbers[0] + numbers[numbers.len() - 1] != numbers.len()) {
+    if !fg.has_elements() && numbers[0] + numbers[numbers.len() - 1] == numbers.len() {
         result.push(create_verification_failure!(format!(
             "The sequence is not uniterrupted for files {} in directory {}",
             fg.get_file_name(),

@@ -92,12 +92,10 @@ pub(super) fn fn_verification_0502<D: VerificationDirectoryTrait>(
             primes.len(),
             eg.small_primes.len()
         )))
-    } else {
-        if eg.small_primes != primes {
-            result.push(create_verification_failure!(
-                "Small prime group members are not the same"
-            ))
-        }
+    } else if eg.small_primes != primes {
+        result.push(create_verification_failure!(
+            "Small prime group members are not the same"
+        ))
     }
 }
 

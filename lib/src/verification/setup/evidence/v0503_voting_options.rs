@@ -45,7 +45,7 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
             vcsc.primes_mapping_table
                 .p_table
                 .iter()
-                .map(|e| e.encoded_voting_option.clone()),
+                .map(|e| e.encoded_voting_option),
         );
     }
     p_tilde.sort(); // Sort the primes
@@ -54,7 +54,7 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
         .small_primes
         .iter()
         .take(p_tilde.len())
-        .map(|e| e.clone())
+        .copied()
         .collect();
     if p_prime != p_tilde {
         result.push(create_verification_failure!(

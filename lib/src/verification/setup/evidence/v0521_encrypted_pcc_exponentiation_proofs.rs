@@ -74,7 +74,7 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
                 Ok(setup_verification_data_payload) => {
                     let vcs_id = &setup_verification_data_payload.verification_card_set_id;
                     // Find correct vcs context
-                    let vcs_context = match ee_context.find_verification_card_set_context(&vcs_id) {
+                    let vcs_context = match ee_context.find_verification_card_set_context(vcs_id) {
                         Some(c) => c,
                         None => {
                             result.push(create_verification_error!(format!(

@@ -5,7 +5,7 @@ mod result;
 mod setup;
 pub(crate) mod suite;
 mod tally;
-mod verification;
+mod verifications;
 
 use self::result::{
     create_verification_error, create_verification_failure, VerificationEvent, VerificationResult,

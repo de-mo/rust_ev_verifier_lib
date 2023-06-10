@@ -1,7 +1,7 @@
 use super::super::{
     result::{create_verification_failure, VerificationEvent, VerificationResult},
     suite::VerificationList,
-    verification::Verification,
+    verifications::Verification,
 };
 use crate::{
     file_structure::{
@@ -14,9 +14,12 @@ use anyhow::anyhow;
 use log::debug;
 
 pub(crate) fn get_verifications(metadata_list: &VerificationMetaDataList) -> VerificationList {
-    let mut res = vec![];
-    res.push(Verification::new("01.01", fn_verification_0101, metadata_list).unwrap());
-    VerificationList(res)
+    VerificationList(vec![Verification::new(
+        "01.01",
+        fn_verification_0101,
+        metadata_list,
+    )
+    .unwrap()])
 }
 
 fn validate_vcs_dir<B: VCSDirectoryTrait>(dir: &B, result: &mut VerificationResult) {

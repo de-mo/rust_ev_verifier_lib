@@ -72,6 +72,10 @@ impl VerificationMetaDataList {
     pub fn len(&self) -> usize {
         self.0.len()
     }
+
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
+    }
 }
 
 impl VerificationMetaData {
@@ -127,7 +131,7 @@ mod test {
         let metadata_res = VerificationMetaDataList::load();
         assert!(metadata_res.is_ok());
         let metadata = metadata_res.unwrap();
-        assert!(metadata.len() > 0);
+        assert!(!metadata.is_empty());
         assert!(metadata.meta_data_from_id("01.01").is_some())
     }
 }

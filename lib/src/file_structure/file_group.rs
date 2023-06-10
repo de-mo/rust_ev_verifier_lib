@@ -46,10 +46,7 @@ where
         match self.is_over() {
             true => None,
             false => {
-                let res = (
-                    self.current_index().unwrap().clone(),
-                    self.current_elt().unwrap(),
-                );
+                let res = (*self.current_index().unwrap(), self.current_elt().unwrap());
                 self.pos += 1;
                 Some(res)
             }
@@ -88,7 +85,7 @@ impl<T> FileGroupIter<T> {
 
     /// Get the current index
     pub(crate) fn current_index_impl(&self) -> Option<&usize> {
-        match &self.pos < &self.file_group.get_numbers().len() {
+        match self.pos < self.file_group.get_numbers().len() {
             true => Some(&self.file_group.get_numbers()[self.pos]),
             false => None,
         }
@@ -96,14 +93,13 @@ impl<T> FileGroupIter<T> {
 
     /// Get the current file
     pub(crate) fn current_file(&self) -> Option<File> {
-        match self.current_index_impl() {
-            Some(i) => Some(File::new(
+        self.current_index_impl().map(|i| {
+            File::new(
                 &self.file_group.location,
                 &self.file_group.data_type,
                 Some(*i),
-            )),
-            None => None,
-        }
+            )
+        })
     }
 }
 
@@ -179,9 +175,8 @@ impl FileGroup {
                     .replace(matching_splitted[0], "")
                     .replace(matching_splitted[1], "")
                     .parse::<usize>();
-                match tmp {
-                    Ok(i) => self.indexes.push(i),
-                    Err(_) => (),
+                if let Ok(i) = tmp {
+                    self.indexes.push(i)
                 }
             }
             self.indexes.sort()
@@ -401,7 +396,7 @@ pub(crate) mod mock {
     }
 
     // Implement iterator for all the [FileGroupIter] as generic type
-    impl<'a, 'b, T, I: FileGroupIterTrait<T>> Iterator for MockFileGroupIter<T, I>
+    impl<T, I: FileGroupIterTrait<T>> Iterator for MockFileGroupIter<T, I>
     where
         Self: FileGroupIterTrait<T>,
     {

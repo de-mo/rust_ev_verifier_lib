@@ -27,10 +27,10 @@ implement_trait_verifier_data_json_decode!(SetupComponentPublicKeysPayload);
 
 impl<'a> From<&'a SetupComponentPublicKeysPayload> for HashableMessage<'a> {
     fn from(value: &'a SetupComponentPublicKeysPayload) -> Self {
-        let mut elts = vec![];
-        elts.push(Self::from(&value.encryption_group));
-        elts.push(Self::from(&value.setup_component_public_keys));
-        Self::from(elts)
+        Self::from(vec![
+            Self::from(&value.encryption_group),
+            Self::from(&value.setup_component_public_keys),
+        ])
     }
 }
 
@@ -71,14 +71,14 @@ impl<'a> From<&'a SetupComponentPublicKeys> for HashableMessage<'a> {
         let cc: Vec<HashableMessage> = value
             .combined_control_component_public_keys
             .iter()
-            .map(|e| Self::from(e))
+            .map(Self::from)
             .collect();
         elts.push(Self::from(cc));
         elts.push(Self::from(&value.electoral_board_public_key));
         let el_sp: Vec<HashableMessage> = value
             .electoral_board_schnorr_proofs
             .iter()
-            .map(|e| Self::from(e))
+            .map(Self::from)
             .collect();
         elts.push(Self::from(el_sp));
         elts.push(Self::from(&value.election_public_key));
@@ -98,7 +98,7 @@ mod test {
         let path = dataset_tally_path()
             .join("setup")
             .join("setupComponentPublicKeysPayload.json");
-        let json = fs::read_to_string(&path).unwrap();
+        let json = fs::read_to_string(path).unwrap();
         let r_eec = SetupComponentPublicKeysPayload::from_json(&json);
         assert!(r_eec.is_ok())
     }

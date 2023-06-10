@@ -21,11 +21,11 @@ pub(crate) struct EncryptionGroup {
 
 impl<'a> From<&'a EncryptionGroup> for HashableMessage<'a> {
     fn from(value: &'a EncryptionGroup) -> Self {
-        let mut elts = vec![];
-        elts.push(Self::from(&value.p));
-        elts.push(Self::from(&value.q));
-        elts.push(Self::from(&value.g));
-        Self::from(elts)
+        Self::from(vec![
+            Self::from(&value.p),
+            Self::from(&value.q),
+            Self::from(&value.g),
+        ])
     }
 }
 
@@ -72,10 +72,7 @@ pub(crate) struct ProofUnderline {
 
 impl<'a> From<&'a ProofUnderline> for HashableMessage<'a> {
     fn from(value: &'a ProofUnderline) -> Self {
-        let mut elts = vec![];
-        elts.push(Self::from(&(value.e)));
-        elts.push(Self::from(&(value.z)));
-        Self::from(elts)
+        Self::from(vec![Self::from(&(value.e)), Self::from(&(value.z))])
     }
 }
 
@@ -100,10 +97,7 @@ impl From<&ProofUnderline> for Proof {
 
 impl<'a> From<&'a Proof> for HashableMessage<'a> {
     fn from(value: &'a Proof) -> Self {
-        let mut elts = vec![];
-        elts.push(Self::from(&(value.e)));
-        elts.push(Self::from(&(value.z)));
-        Self::from(elts)
+        Self::from(vec![Self::from(&(value.e)), Self::from(&(value.z))])
     }
 }
 
@@ -124,10 +118,7 @@ pub(crate) struct DecryptionProof {
 
 impl<'a> From<&'a DecryptionProof> for HashableMessage<'a> {
     fn from(value: &'a DecryptionProof) -> Self {
-        let mut elts = vec![];
-        elts.push(Self::from(&(value.e)));
-        elts.push(Self::from(&(value.z)));
-        Self::from(elts)
+        Self::from(vec![Self::from(&(value.e)), Self::from(&(value.z))])
     }
 }
 

@@ -28,16 +28,17 @@ implement_trait_verifier_data_json_decode!(SetupComponentTallyDataPayload);
 
 impl<'a> From<&'a SetupComponentTallyDataPayload> for HashableMessage<'a> {
     fn from(value: &'a SetupComponentTallyDataPayload) -> Self {
-        let mut elts = vec![];
-        elts.push(Self::from(&value.election_event_id));
-        elts.push(Self::from(&value.verification_card_set_id));
-        elts.push(Self::from(&value.ballot_box_default_title));
-        elts.push(Self::from(&value.encryption_group));
-        elts.push(Self::from(&value.verification_card_ids));
+        let mut elts = vec![
+            Self::from(&value.election_event_id),
+            Self::from(&value.verification_card_set_id),
+            Self::from(&value.ballot_box_default_title),
+            Self::from(&value.encryption_group),
+            Self::from(&value.verification_card_ids),
+        ];
         let l: Vec<HashableMessage> = value
             .verification_card_public_keys
             .iter()
-            .map(|p| HashableMessage::from(p))
+            .map(HashableMessage::from)
             .collect();
         elts.push(Self::from(l));
         Self::from(elts)
@@ -75,7 +76,7 @@ mod test {
             .join("verification_card_sets")
             .join("681B3488DE4CD4AD7FCED14B7A654169")
             .join("setupComponentTallyDataPayload.json");
-        let json = fs::read_to_string(&path).unwrap();
+        let json = fs::read_to_string(path).unwrap();
         let r_eec = SetupComponentTallyDataPayload::from_json(&json);
         assert!(r_eec.is_ok())
     }

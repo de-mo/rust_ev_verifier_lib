@@ -29,12 +29,12 @@ impl File {
     ) -> Self {
         let name = data_type.get_file_name(file_nb);
         let mut path = location.join(&name);
-        if (&name).contains("*") {
-            let entries = glob(path.as_os_str().to_str().unwrap());
-            if entries.is_ok() {
-                let p = entries.unwrap().last();
-                if p.is_some() {
-                    path = location.join(&p.unwrap().unwrap().file_name().unwrap());
+        if name.contains('*') {
+            let r_entries = glob(path.as_os_str().to_str().unwrap());
+            if let Ok(entries) = r_entries {
+                let p = entries.last();
+                if let Some(p_f) = p {
+                    path = location.join(p_f.unwrap().file_name().unwrap());
                 };
             }
         }
@@ -73,7 +73,7 @@ impl File {
                 self.to_str()
             )));
         }
-        self.data_type.verifier_data_from_file(&self).map_err(|e| {
+        self.data_type.verifier_data_from_file(self).map_err(|e| {
             anyhow!(e).context(format!(
                 "Content of the file \"{}\" is not valid",
                 self.to_str()

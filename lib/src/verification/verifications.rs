@@ -1,4 +1,4 @@
-///! Module implementing the structure of a verification
+//! Module implementing the structure of a verification
 use super::{
     meta_data::{VerificationMetaData, VerificationMetaDataList},
     result::{VerificationEvent, VerificationResult, VerificationResultTrait},
@@ -10,6 +10,7 @@ use log::{info, warn};
 use std::time::{Duration, SystemTime};
 
 /// Struct representing a verification
+#[allow(clippy::type_complexity)]
 pub(crate) struct Verification<'a, D: VerificationDirectoryTrait> {
     /// Id of the verification
     id: String,
@@ -179,7 +180,7 @@ mod test {
         assert!(verif.has_failures().is_none());
         verif.run(&VerificationDirectory::new(
             &VerificationPeriod::Setup,
-            &Path::new("."),
+            Path::new("."),
         ));
         assert_eq!(verif.status, VerificationStatus::Finished);
         assert!(verif.is_ok().unwrap());
@@ -202,7 +203,7 @@ mod test {
         assert!(verif.has_failures().is_none());
         verif.run(&VerificationDirectory::new(
             &VerificationPeriod::Setup,
-            &Path::new("."),
+            Path::new("."),
         ));
         assert_eq!(verif.status, VerificationStatus::Finished);
         assert!(!verif.is_ok().unwrap());
@@ -226,7 +227,7 @@ mod test {
         assert!(verif.has_failures().is_none());
         verif.run(&VerificationDirectory::new(
             &VerificationPeriod::Setup,
-            &Path::new("."),
+            Path::new("."),
         ));
         assert_eq!(verif.status, VerificationStatus::Finished);
         assert!(!verif.is_ok().unwrap());

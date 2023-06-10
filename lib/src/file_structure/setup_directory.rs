@@ -132,6 +132,7 @@ impl_iterator_over_data_payload!(
 
 impl SetupDirectory {
     /// New [SetupDirectory]
+    #[allow(clippy::redundant_clone)]
     pub(crate) fn new(data_location: &Path) -> Self {
         let location = data_location.join(SETUP_DIR_NAME);
         let mut res = Self {
@@ -252,11 +253,11 @@ impl VCSDirectory {
                 VerifierSetupDataType::SetupComponentTallyDataPayload
             ),
             setup_component_verification_data_payload_group: FileGroup::new(
-                &location,
+                location,
                 create_verifier_setup_data_type!(Setup, SetupComponentVerificationDataPayload),
             ),
             control_component_code_shares_payload_group: FileGroup::new(
-                &location,
+                location,
                 create_verifier_setup_data_type!(Setup, ControlComponentCodeSharesPayload),
             ),
         }
@@ -331,10 +332,7 @@ mod test {
         assert!(dir.election_event_context_payload().is_ok());
         for (i, p) in dir.control_component_public_keys_payload_iter() {
             assert!(p.is_ok());
-            assert_eq!(
-                usize::from(p.unwrap().control_component_public_keys.node_id),
-                i
-            )
+            assert_eq!(p.unwrap().control_component_public_keys.node_id, i)
         }
         let expected = vec![
             "A4C66F60561BE5EEFD017E5EF6650563",
@@ -364,7 +362,7 @@ mod test {
         }
         for (i, p) in dir.setup_component_verification_data_payload_iter() {
             assert!(p.is_ok());
-            assert_eq!(usize::from(p.unwrap().chunk_id), i)
+            assert_eq!(p.unwrap().chunk_id, i)
         }
     }
 }

@@ -32,7 +32,7 @@ impl<'a> Runner<'a> {
         path: &Path,
         period: &VerificationPeriod,
         metadata: &'a VerificationMetaDataList,
-        exclusion: &Vec<String>,
+        exclusion: &[String],
     ) -> Runner<'a> {
         Runner {
             path: path.to_path_buf(),
@@ -49,7 +49,7 @@ impl<'a> Runner<'a> {
         self.verifications = Box::new(VerificationSuite::new(
             self.period(),
             metadata_list,
-            &self.verifications.exclusion(),
+            self.verifications.exclusion(),
         ))
     }
 

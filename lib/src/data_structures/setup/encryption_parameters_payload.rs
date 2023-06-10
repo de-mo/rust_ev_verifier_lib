@@ -22,13 +22,11 @@ implement_trait_verifier_data_json_decode!(EncryptionParametersPayload);
 
 impl<'a> From<&'a EncryptionParametersPayload> for HashableMessage<'a> {
     fn from(value: &'a EncryptionParametersPayload) -> Self {
-        let mut elts = vec![];
-        elts.push(Self::from(&value.encryption_group));
-        elts.push(Self::from(&value.seed));
+        let mut elts = vec![Self::from(&value.encryption_group), Self::from(&value.seed)];
         let sp_hash: Vec<HashableMessage> = value
             .small_primes
             .iter()
-            .map(|p| HashableMessage::from(p))
+            .map(HashableMessage::from)
             .collect();
         elts.push(Self::from(sp_hash));
         Self::from(elts)
@@ -105,7 +103,7 @@ mod test {
         let path = dataset_tally_path()
             .join("setup")
             .join("encryptionParametersPayload.json");
-        let json = fs::read_to_string(&path).unwrap();
+        let json = fs::read_to_string(path).unwrap();
         let r_eg = EncryptionParametersPayload::from_json(&json);
         //let r_eg: Result<EncryptionParametersPayload, serde_json::Error> =
         //    serde_json::from_str(&json);

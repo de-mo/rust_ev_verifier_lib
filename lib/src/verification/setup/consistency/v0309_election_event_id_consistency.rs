@@ -30,7 +30,7 @@ fn test_ee_id_for_vcs_dir<V: VCSDirectoryTrait>(
     match dir.setup_component_tally_data_payload() {
         Ok(p) => test_election_event_id(
             &p.election_event_id,
-            &expected,
+            expected,
             &format!("{}/setup_component_tally_data_payload", dir.get_name()),
             result,
         ),
@@ -56,7 +56,7 @@ fn test_ee_id_for_vcs_dir<V: VCSDirectoryTrait>(
                 for p in cc.iter() {
                     test_election_event_id(
                         &p.election_event_id,
-                        &expected,
+                        expected,
                         &format!(
                             "{}/control_component_code_shares_payload.{}_chunk{}",
                             dir.get_name(),
@@ -81,7 +81,7 @@ fn test_ee_id_for_vcs_dir<V: VCSDirectoryTrait>(
             )),
             Ok(s) => test_election_event_id(
                 &s.election_event_id,
-                &expected,
+                expected,
                 &format!(
                     "{}/setup_component_verification_data_payload.{}",
                     i,

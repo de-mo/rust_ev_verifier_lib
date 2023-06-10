@@ -1,7 +1,7 @@
 use super::super::{
     result::{create_verification_error, VerificationEvent, VerificationResult},
     suite::VerificationList,
-    verification::Verification,
+    verifications::Verification,
     verify_signature_for_object,
 };
 use crate::{
@@ -15,14 +15,14 @@ use anyhow::anyhow;
 use log::debug;
 
 pub(crate) fn get_verifications(metadata_list: &VerificationMetaDataList) -> VerificationList {
-    let mut res = vec![];
-    res.push(Verification::new("02.01", fn_verification_0201, metadata_list).unwrap());
-    res.push(Verification::new("02.03", fn_verification_0203, metadata_list).unwrap());
-    res.push(Verification::new("02.04", fn_verification_0204, metadata_list).unwrap());
-    res.push(Verification::new("02.05", fn_verification_0205, metadata_list).unwrap());
-    res.push(Verification::new("02.06", fn_verification_0206, metadata_list).unwrap());
-    res.push(Verification::new("02.07", fn_verification_0207, metadata_list).unwrap());
-    VerificationList(res)
+    VerificationList(vec![
+        Verification::new("02.01", fn_verification_0201, metadata_list).unwrap(),
+        Verification::new("02.03", fn_verification_0203, metadata_list).unwrap(),
+        Verification::new("02.04", fn_verification_0204, metadata_list).unwrap(),
+        Verification::new("02.05", fn_verification_0205, metadata_list).unwrap(),
+        Verification::new("02.06", fn_verification_0206, metadata_list).unwrap(),
+        Verification::new("02.07", fn_verification_0207, metadata_list).unwrap(),
+    ])
 }
 
 fn fn_verification_0201<D: VerificationDirectoryTrait>(dir: &D, result: &mut VerificationResult) {

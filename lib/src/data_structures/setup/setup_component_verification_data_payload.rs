@@ -37,7 +37,7 @@ impl SetupComponentVerificationDataPayload {
             .find(|d| &d.verification_card_id == vc_id)
     }
 
-    pub(crate) fn verification_card_ids<'a>(&'a self) -> Vec<&'a String> {
+    pub(crate) fn verification_card_ids(&self) -> Vec<&String> {
         self.setup_component_verification_data
             .iter()
             .map(|d| &d.verification_card_id)
@@ -90,16 +90,17 @@ impl<'a> VerifiySignatureTrait<'a> for SetupComponentVerificationDataPayload {
 
 impl<'a> From<&'a SetupComponentVerificationDataPayload> for HashableMessage<'a> {
     fn from(value: &'a SetupComponentVerificationDataPayload) -> Self {
-        let mut elts = vec![];
-        elts.push(Self::from(&value.election_event_id));
-        elts.push(Self::from(&value.verification_card_set_id));
-        elts.push(Self::from(&value.partial_choice_return_codes_allow_list));
-        elts.push(Self::from(&value.chunk_id));
-        elts.push(Self::from(&value.encryption_group));
+        let mut elts = vec![
+            Self::from(&value.election_event_id),
+            Self::from(&value.verification_card_set_id),
+            Self::from(&value.partial_choice_return_codes_allow_list),
+            Self::from(&value.chunk_id),
+            Self::from(&value.encryption_group),
+        ];
         let l: Vec<HashableMessage> = value
             .setup_component_verification_data
             .iter()
-            .map(|e| Self::from(e))
+            .map(Self::from)
             .collect();
         elts.push(Self::from(l));
         elts.push(Self::from(&value.combined_correctness_information));
@@ -109,14 +110,12 @@ impl<'a> From<&'a SetupComponentVerificationDataPayload> for HashableMessage<'a>
 
 impl<'a> From<&'a SetupComponentVerificationDataInner> for HashableMessage<'a> {
     fn from(value: &'a SetupComponentVerificationDataInner) -> Self {
-        let mut elts = vec![];
-        elts.push(Self::from(&value.verification_card_id));
-        elts.push(Self::from(&value.encrypted_hashed_squared_confirmation_key));
-        elts.push(Self::from(
-            &value.encrypted_hashed_squared_partial_choice_return_codes,
-        ));
-        elts.push(Self::from(&value.verification_card_public_key));
-        Self::from(elts)
+        Self::from(vec![
+            Self::from(&value.verification_card_id),
+            Self::from(&value.encrypted_hashed_squared_confirmation_key),
+            Self::from(&value.encrypted_hashed_squared_partial_choice_return_codes),
+            Self::from(&value.verification_card_public_key),
+        ])
     }
 }
 
@@ -125,7 +124,7 @@ impl<'a> From<&'a CombinedCorrectnessInformation> for HashableMessage<'a> {
         let l: Vec<HashableMessage> = value
             .correctness_information_list
             .iter()
-            .map(|e| Self::from(e))
+            .map(Self::from)
             .collect();
         Self::from(l)
     }
@@ -133,12 +132,12 @@ impl<'a> From<&'a CombinedCorrectnessInformation> for HashableMessage<'a> {
 
 impl<'a> From<&'a CorrectnessInformationElt> for HashableMessage<'a> {
     fn from(value: &'a CorrectnessInformationElt) -> Self {
-        let mut elts = vec![];
-        elts.push(Self::from(&value.correctness_id));
-        elts.push(Self::from(&value.number_of_selections));
-        elts.push(Self::from(&value.number_of_voting_options));
-        elts.push(Self::from(&value.list_of_write_in_options));
-        Self::from(elts)
+        Self::from(vec![
+            Self::from(&value.correctness_id),
+            Self::from(&value.number_of_selections),
+            Self::from(&value.number_of_voting_options),
+            Self::from(&value.list_of_write_in_options),
+        ])
     }
 }
 
@@ -155,7 +154,7 @@ mod test {
             .join("verification_card_sets")
             .join("681B3488DE4CD4AD7FCED14B7A654169")
             .join("setupComponentVerificationDataPayload.0.json");
-        let json = fs::read_to_string(&path).unwrap();
+        let json = fs::read_to_string(path).unwrap();
         let r_eec = SetupComponentVerificationDataPayload::from_json(&json);
         assert!(r_eec.is_ok())
     }

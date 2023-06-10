@@ -69,8 +69,8 @@ impl VerificationResult {
 
     /// Append the results of ohter to self, emptying the vectors of other
     pub fn append(&mut self, other: &mut Self) {
-        self.errors.append(&mut other.errors_mut());
-        self.failures.append(&mut other.failures_mut());
+        self.errors.append(other.errors_mut());
+        self.failures.append(other.failures_mut());
     }
 }
 
