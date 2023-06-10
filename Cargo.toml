@@ -1,29 +1,17 @@
-[package]
-name = "rust_verifier"
-description = "Implementation of a Verifier for the E-Voting system of Swiss Post."
+[workspace]
+members = ["./lib", "./console", "./crypto_primitives"]
+
+[workspace.dependencies]
+log = "0.4"
+num-bigint = "0.4"
+chrono = "0.4"
+thiserror = "1.0.40"
+data-encoding = "2.3"
+
+[workspace.package]
+authors = ["Denis Morel"]
 version = "0.0.1"
 edition = "2021"
 rust-version = "1.68"
 license = "Apache-2.0"
-
-[workspace]
-members = ["./crypto_primitives"]
-
-[dependencies]
-crypto_primitives = {path = "./crypto_primitives"}
-data-encoding = "2.3"
-serde = { version = "1.0", features = ["derive"] }
-serde_json = "1.0"
-enum-kinds = "0.5"
-log = "0.4"
-log4rs = "1.2"
-num-bigint = "0.4"
-roxmltree = "0.18"
-glob = "0.3"
-quick-xml = { version = "0.28", features = ["serialize"] }
-rayon = "1.7"
-chrono = { version = "0.4", features = ["serde"]}
-structopt = "0.3.26"
-thiserror = "1.0.40"
-anyhow = "1.0.71"
-
+repository = "https://github.com/de-mo/rust_verifier"

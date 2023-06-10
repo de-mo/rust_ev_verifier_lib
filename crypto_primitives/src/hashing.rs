@@ -20,6 +20,7 @@ use num_bigint::BigUint;
 /// ```rust
 /// use crypto_primitives::byte_array::ByteArray;
 /// use crate::crypto_primitives::byte_array::Decode;
+/// use crypto_primitives::hashing::HashableMessage;
 /// let r = HashableMessage::from("test string").recursive_hash();
 /// let expected = ByteArray::base64_decode(&"m1a11iWW/Tcihy/IChyY51AO8UdZe48f5oRFh7RL+JQ=".to_string()).unwrap();
 /// assert_eq!(r, expected);
