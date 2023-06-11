@@ -1,8 +1,10 @@
 //! Wrapper for Certificate functions
 
 use super::OpensslError;
+use crate::byte_array::ByteArray;
 use openssl::{
     asn1::Asn1Time,
+    hash::MessageDigest,
     pkcs12::{ParsedPkcs12_2, Pkcs12},
     pkey::{PKey, Public},
     x509::X509,
@@ -26,7 +28,7 @@ pub struct SigningCertificate {
 }
 
 // PublicKey
-pub type PublicKey = PKey<Public>;
+pub struct PublicKey(PKey<Public>);
 
 impl Keystore {
     /// Read the keystore from file with password to open it
@@ -82,6 +84,7 @@ impl SigningCertificate {
     pub fn get_public_key(&self) -> Result<PublicKey, OpensslError> {
         self.x509
             .public_key()
+            .map(PublicKey)
             .map_err(|e| OpensslError::CertificateErrorPK {
                 name: self.authority.to_string(),
                 source: e,
@@ -103,11 +106,28 @@ impl SigningCertificate {
         })?;
         Ok(not_before < now && now <= not_after)
     }
+
+    pub fn x509(&self) -> &X509 {
+        &self.x509
+    }
+
+    /// Return the digest (hash256) fingerprint of the certificate
+    pub fn digest(&self) -> ByteArray {
+        ByteArray::from(&self.x509.digest(MessageDigest::sha256()).unwrap().to_vec())
+    }
+}
+
+impl PublicKey {
+    pub(crate) fn pkey_public(&self) -> &PKey<Public> {
+        &self.0
+    }
 }
 
 #[cfg(test)]
 mod test {
+    use crate::byte_array::Encode;
     use std::path::PathBuf;
+    use std::str;
 
     use super::*;
 
@@ -152,5 +172,17 @@ mod test {
         assert!(cert.is_ok());
         let cert = ks.get_certificate("toto");
         assert!(cert.is_err());
+    }
+
+    #[test]
+    fn digest() {
+        let ks = Keystore::read_keystore(&get_file(), PASSWORD).unwrap();
+        assert_eq!(
+            ks.get_certificate("canton")
+                .unwrap()
+                .digest()
+                .base16_encode(),
+            "51fcea9139ce3de992eeee1ef77d1e6461e747dff3e3fa52d23f855a319cc35e".to_uppercase()
+        );
     }
 }

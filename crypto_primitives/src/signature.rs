@@ -59,7 +59,7 @@ where
                 action: "reading public key".to_string(),
             })?;
         verify(
-            pkey.as_ref(),
+            pkey.pkey_public().as_ref(),
             &HashableMessage::from(self),
             &self.get_context_hashable(),
             &self.get_signature(),
