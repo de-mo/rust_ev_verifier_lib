@@ -6,7 +6,6 @@ mod setup;
 pub(crate) mod suite;
 mod tally;
 mod verifications;
-
 use self::result::{
     create_verification_error, create_verification_failure, VerificationEvent, VerificationResult,
 };
@@ -14,6 +13,7 @@ use crate::constants::direct_trust_path;
 use anyhow::{anyhow, bail};
 use crypto_primitives::{hashing::HashableMessage, signature::VerifiySignatureTrait};
 use log::debug;
+use std::fmt::Display;
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
 pub enum VerificationCategory {
@@ -35,6 +35,16 @@ pub enum VerificationStatus {
 pub enum VerificationPeriod {
     Setup,
     Tally,
+}
+
+impl VerificationPeriod {
+    pub fn is_setup(&self) -> bool {
+        self == &VerificationPeriod::Setup
+    }
+
+    pub fn is_tally(&self) -> bool {
+        self == &VerificationPeriod::Tally
+    }
 }
 
 /// Verify the signatue for a given object implementing [VerifiySignatureTrait]
@@ -101,5 +111,14 @@ impl TryFrom<&String> for VerificationCategory {
 
     fn try_from(value: &String) -> Result<Self, Self::Error> {
         Self::try_from(value.as_str())
+    }
+}
+
+impl Display for VerificationPeriod {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            VerificationPeriod::Setup => write!(f, "setup"),
+            VerificationPeriod::Tally => write!(f, "tally"),
+        }
     }
 }

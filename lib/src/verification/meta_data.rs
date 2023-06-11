@@ -3,13 +3,12 @@
 //! The metadata list is loaded from the file in resources.
 
 use super::{VerificationCategory, VerificationPeriod};
-use crate::constants::verification_list_path;
 use anyhow::anyhow;
 use serde::{
     de::{Deserialize as Deserialize2, Deserializer, Error},
     Deserialize,
 };
-use std::fs;
+use std::{fs, path::Path};
 
 /// List of Verification Metadata
 #[derive(Deserialize, Debug, Clone)]
@@ -40,9 +39,8 @@ pub struct VerificationMetaData {
 }
 
 impl VerificationMetaDataList {
-    pub fn load() -> anyhow::Result<Self> {
-        let path = verification_list_path();
-        let s = fs::read_to_string(&path).map_err(|e| {
+    pub fn load(path: &Path) -> anyhow::Result<Self> {
+        let s = fs::read_to_string(path).map_err(|e| {
             anyhow!(e).context(format!("Cannot read file {}", path.to_str().unwrap()))
         })?;
         serde_json::from_str(&s).map_err(|e| {
@@ -125,10 +123,11 @@ where
 #[cfg(test)]
 mod test {
     use super::*;
+    use crate::constants::verification_list_path;
 
     #[test]
     fn test_load() {
-        let metadata_res = VerificationMetaDataList::load();
+        let metadata_res = VerificationMetaDataList::load(&verification_list_path());
         assert!(metadata_res.is_ok());
         let metadata = metadata_res.unwrap();
         assert!(!metadata.is_empty());

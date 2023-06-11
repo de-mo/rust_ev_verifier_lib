@@ -22,22 +22,27 @@ pub(crate) const RESOURCES_PATH: &str = "resources";
 //pub(crate) const SCHEMA_PATH: &str = "schemas";
 pub(crate) const VERIFICATION_LIST_PATH: &str = "verification_list.json";
 
-//
-pub(crate) fn verification_list_path() -> PathBuf {
-    Path::new("..")
-        .join(RESOURCES_PATH)
-        .join(VERIFICATION_LIST_PATH)
+pub fn root_dir() -> PathBuf {
+    if cfg!(test) {
+        Path::new("..")
+    } else {
+        Path::new(".")
+    }
+    .to_path_buf()
+}
+
+pub fn verification_list_path() -> PathBuf {
+    root_dir().join(RESOURCES_PATH).join(VERIFICATION_LIST_PATH)
 }
 
 pub(crate) fn direct_trust_path() -> PathBuf {
-    Path::new("..").join(DIRECT_TRUST_PATH)
+    root_dir().join(DIRECT_TRUST_PATH)
 }
 
 #[cfg(test)]
 pub(crate) mod test {
-    use std::path::{Path, PathBuf};
-
     use crate::{file_structure::VerificationDirectory, verification::VerificationPeriod};
+    use std::path::{Path, PathBuf};
 
     pub(crate) fn datasets_path() -> PathBuf {
         Path::new("..").join("datasets")
