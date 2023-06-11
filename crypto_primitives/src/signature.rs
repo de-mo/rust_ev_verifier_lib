@@ -36,9 +36,13 @@ where
 
     /// Verfiy the signature according to the specifications of Verifier
     fn verifiy_signature(&'a self, location: &Path) -> Result<bool, SignatureError> {
-        let dt = DirectTrust::new(location, &self.get_certificate_authority())
+        //        let dt = DirectTrustCertificate::new(location, &self.get_certificate_authority());
+        let dtc = DirectTrust::new(location)
+            .map_err(SignatureError::Keystore)?
+            .certificate(&self.get_certificate_authority())
             .map_err(SignatureError::Keystore)?;
-        let cert = dt.signing_certificate();
+        let cert = dtc.signing_certificate();
+        //dt.signing_certificate();
         let time_ok = cert
             .is_valid_time()
             .map_err(|e| SignatureError::Certificate {

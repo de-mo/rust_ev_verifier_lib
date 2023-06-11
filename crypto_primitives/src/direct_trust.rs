@@ -23,36 +23,49 @@ pub enum CertificateAuthority {
     ControlComponent4,
 }
 
-/// Struct representing a direct trust certificate
-#[derive(Clone)]
+/// Struct representing a direct trust
 pub struct DirectTrust {
-    authority: CertificateAuthority,
-    cert: SigningCertificate,
+    keystore: Keystore,
 }
 
 impl DirectTrust {
     /// Create a new direct trust certificate reading the store at location for
     /// the given authority
-    pub fn new(
-        location: &Path,
-        authority: &CertificateAuthority,
-    ) -> Result<DirectTrust, DirectTrustError> {
+    pub fn new(location: &Path) -> Result<Self, DirectTrustError> {
         let file = location.join(KEYSTORE_FILE_NAME);
         let file_pwd = location.join(PASSWORD_FILE_NAME);
         let pwd = fs::read_to_string(&file_pwd).map_err(|e| DirectTrustError::IO {
             msg: format!("Error reading password file {}", &file_pwd.display()),
             source: e,
         })?;
-        let ks = Keystore::read_keystore(&file, &pwd).map_err(DirectTrustError::Keystore)?;
-        let cert = ks
+        Ok(DirectTrust {
+            keystore: Keystore::read_keystore(&file, &pwd).map_err(DirectTrustError::Keystore)?,
+        })
+    }
+
+    pub fn certificate(
+        &self,
+        authority: &CertificateAuthority,
+    ) -> Result<DirectTrustCertificate, DirectTrustError> {
+        let cert = self
+            .keystore
             .get_certificate(&String::from(authority))
             .map_err(DirectTrustError::Certificate)?;
-        Ok(DirectTrust {
+        Ok(DirectTrustCertificate {
             authority: authority.clone(),
             cert,
         })
     }
+}
 
+/// Struct representing a direct trust certificate
+#[derive(Clone)]
+pub struct DirectTrustCertificate {
+    authority: CertificateAuthority,
+    cert: SigningCertificate,
+}
+
+impl DirectTrustCertificate {
     /// Get authority of the certificate
     pub fn authority(&self) -> &CertificateAuthority {
         &self.authority
@@ -113,23 +126,25 @@ mod test {
 
     #[test]
     fn test_create() {
-        let dt = DirectTrust::new(&get_location(), &CertificateAuthority::Canton);
-        assert!(dt.is_ok());
-        let dt = DirectTrust::new(&get_location(), &CertificateAuthority::SdmConfig);
-        assert!(dt.is_ok());
-        let dt = DirectTrust::new(&get_location(), &CertificateAuthority::SdmTally);
-        assert!(dt.is_ok());
-        let dt = DirectTrust::new(&get_location(), &CertificateAuthority::VotingServer);
-        assert!(dt.is_ok());
-        let dt = DirectTrust::new(&get_location(), &CertificateAuthority::ControlComponent1);
-        assert!(dt.is_ok());
-        let dt = DirectTrust::new(&get_location(), &CertificateAuthority::ControlComponent2);
-        assert!(dt.is_ok());
-        let dt = DirectTrust::new(&get_location(), &CertificateAuthority::ControlComponent3);
-        assert!(dt.is_ok());
-        let dt = DirectTrust::new(&get_location(), &CertificateAuthority::ControlComponent4);
-        assert!(dt.is_ok());
-        let dt_err = DirectTrust::new(Path::new("./toto"), &CertificateAuthority::Canton);
+        let dt = DirectTrust::new(&get_location()).unwrap();
+        //let dt = DirectTrustCertificate::new(, &CertificateAuthority::Canton);
+        assert!(dt.certificate(&CertificateAuthority::Canton).is_ok());
+        assert!(dt.certificate(&CertificateAuthority::SdmConfig).is_ok());
+        assert!(dt.certificate(&CertificateAuthority::SdmTally).is_ok());
+        assert!(dt.certificate(&CertificateAuthority::VotingServer).is_ok());
+        assert!(dt
+            .certificate(&CertificateAuthority::ControlComponent1)
+            .is_ok());
+        assert!(dt
+            .certificate(&CertificateAuthority::ControlComponent2)
+            .is_ok());
+        assert!(dt
+            .certificate(&CertificateAuthority::ControlComponent3)
+            .is_ok());
+        assert!(dt
+            .certificate(&CertificateAuthority::ControlComponent4)
+            .is_ok());
+        let dt_err = DirectTrust::new(Path::new("./toto"));
         assert!(dt_err.is_err());
     }
 }
