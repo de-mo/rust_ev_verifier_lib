@@ -13,13 +13,16 @@ The verifier ist implemented for the version 1.2.3 of the E-Voting system of Swi
 
 ###  Structure of the project
 
-The project contains the following main modules:
+The project contains the following crates:
 
 - crypto_rimitives: The implementation of necessary methods, incl. a wrapper to opennssl
-- data_structures: The implementation of the data used for the verifier. The data can be read from the files using serde
-- file_structure: The structure of the files and directory.
-- verification: The implementation of each verification.
-- The handling of xml files is at the beginning.
+- rust_verifier_lib (in directory ./lib): The implementation of the functionalities and verifications
+  - data_structures: The implementation of the data used for the verifier. The data can be read from the files using serde
+  - file_structure: The structure of the files and directory.
+  - verification: The implementation of each verification.
+  - The handling of xml files is at the beginning.
+- rust_verifier_console (in directory ./console): The implementation of a console application to execute the verification
+- rust_verifier_gui (in directory ./gui): The implementation of a gui application with the framework [Tauri](https://tauri.app/) to execute the verification
 
 ###  Difference to the Swiss Post implementation
 
@@ -32,7 +35,8 @@ A major difference to Swiss Post is that the verifications does not return true 
 - Not all the tests are implemented
 - For many tests, the negative unit tests are not implemented
 - The tests are running sequentially. A parallelism should be introduced (e.g. using Rayon)
-- No gui actually
+- Gui is started but functionalities must be implemented
+- The manual verifications are not implemented
 - The report of the tests is not generated
 
 ## Development guide
