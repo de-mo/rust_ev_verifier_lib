@@ -1,12 +1,30 @@
 //! Module implementing the suite of verifications
 
-use crate::file_structure::VerificationDirectory;
-
 use super::{
     meta_data::VerificationMetaDataList, setup::get_verifications as get_verifications_setup,
     tally::get_verifications as get_verifications_tally, verifications::Verification,
     VerificationCategory, VerificationPeriod,
 };
+use crate::file_structure::VerificationDirectory;
+use std::path::Path;
+
+/// Get the list of the verifications that are not implemented yet
+#[allow(dead_code)]
+pub fn get_not_implemented_verifications_id(
+    config_path: &Path,
+    period: VerificationPeriod,
+) -> Vec<String> {
+    let metadata = VerificationMetaDataList::load_period(config_path, &period).unwrap();
+    let all_id = metadata.id_list();
+    let verifs_id = VerificationSuite::new(&period, &metadata, &[]).collect_id();
+    let mut diff: Vec<String> = all_id
+        .iter()
+        .filter(|&x| !verifs_id.contains(x))
+        .cloned()
+        .collect();
+    diff.sort();
+    diff
+}
 
 /// Enum for the suite of verifications
 pub(crate) struct VerificationSuite<'a> {
@@ -63,23 +81,6 @@ impl<'a> VerificationSuite<'a> {
     #[allow(dead_code)]
     pub(crate) fn verifications_mut(&'a mut self) -> &'a mut VerificationList {
         &mut self.list
-    }
-
-    /// Get the list of the verifications that are not implemented yet
-    #[allow(dead_code)]
-    pub fn get_not_implemented_verifications_id(
-        &self,
-        metadata_list: &VerificationMetaDataList,
-    ) -> Vec<String> {
-        let all_id = metadata_list.id_list_for_period(self.period());
-        let verifs_id = self.collect_id();
-        let mut diff: Vec<String> = all_id
-            .iter()
-            .filter(|&x| !verifs_id.contains(x))
-            .cloned()
-            .collect();
-        diff.sort();
-        diff
     }
 
     /// Length of all verifications
@@ -161,7 +162,10 @@ mod test {
         assert_eq!(verifs.len(), EXPECTED_IMPL_SETUP_VERIF);
         assert_eq!(verifs.collect_id(), IMPL_SETUP_TESTS);
         assert_eq!(
-            verifs.get_not_implemented_verifications_id(&metadata_list),
+            get_not_implemented_verifications_id(
+                &verification_list_path(None),
+                VerificationPeriod::Setup
+            ),
             MISSING_SETUP_TESTS
         );
     }
@@ -173,7 +177,10 @@ mod test {
         assert_eq!(verifs.len(), EXPECTED_IMPL_TALLY_VERIF);
         assert_eq!(verifs.collect_id(), IMPL_TALLY_TESTS);
         assert_eq!(
-            verifs.get_not_implemented_verifications_id(&metadata_list),
+            get_not_implemented_verifications_id(
+                &verification_list_path(None),
+                VerificationPeriod::Tally
+            ),
             MISSING_TALLY_TESTS
         );
     }

@@ -3,7 +3,7 @@
 pub mod meta_data;
 mod result;
 mod setup;
-pub(crate) mod suite;
+pub mod suite;
 mod tally;
 mod verifications;
 use self::result::{
