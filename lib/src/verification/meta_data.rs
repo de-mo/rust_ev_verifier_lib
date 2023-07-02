@@ -51,6 +51,17 @@ impl VerificationMetaDataList {
         })
     }
 
+    pub fn load_period(path: &Path, period: &VerificationPeriod) -> anyhow::Result<Self> {
+        Ok(Self(
+            Self::load(path)?
+                .0
+                .iter()
+                .filter(|&m| m.period() == period)
+                .cloned()
+                .collect::<Vec<VerificationMetaData>>(),
+        ))
+    }
+
     pub fn meta_data_from_id(&self, id: &str) -> Option<&VerificationMetaData> {
         self.0.iter().find(|e| e.id == id)
     }
@@ -73,6 +84,10 @@ impl VerificationMetaDataList {
 
     pub fn is_empty(&self) -> bool {
         self.len() == 0
+    }
+
+    pub fn iter(&self) -> std::slice::Iter<VerificationMetaData> {
+        self.0.iter()
     }
 }
 
@@ -127,7 +142,7 @@ mod test {
 
     #[test]
     fn test_load() {
-        let metadata_res = VerificationMetaDataList::load(&verification_list_path());
+        let metadata_res = VerificationMetaDataList::load(&verification_list_path(None));
         assert!(metadata_res.is_ok());
         let metadata = metadata_res.unwrap();
         assert!(!metadata.is_empty());
