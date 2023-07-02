@@ -5,9 +5,20 @@
     import { useSharedApplication } from "../composables/application";
     import { useVerifications } from "../composables/verifications"
     const { isTally } = useSharedApplication()
-    const { verifications, getVerifications } = useVerifications()
-    console.log("verifications", verifications)
-    console.log("isTally", isTally)
+    const { 
+        verifications, 
+        getVerifications,
+        notImplemented,
+        checked_deactivated,
+        checked, 
+        changeChecked 
+    } = useVerifications()
+
+    const checkedChanged = (id) => {
+        console.log("checkedChanged", id)
+        changeChecked(id)
+    }
+
     getVerifications(isTally.value)
     watch(isTally, (newV) => { getVerifications(newV) })
 </script>
@@ -17,7 +28,13 @@
         <template #title>Verifications ({{ isTally ? 'Tally' : 'Setup' }})</template>
         <div style="margin: 0.5em;">
             <div class="verif-grid" v-for="v in verifications" :key="v.id">
-                <VerificationItem :verification="v"></VerificationItem>
+                <VerificationItem 
+                    :verification="v" 
+                    :checked="checked(v.id)" 
+                    :deactivated="checked_deactivated(v.id)" 
+                    :notImplemented="notImplemented(v.id)"
+                    @checked-changed="(id) => checkedChanged(id)">
+                </VerificationItem>
             </div>
         </div>
     </CollapseElement>

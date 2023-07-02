@@ -1,14 +1,18 @@
-use rust_verifier_lib::constants::verification_list_path;
-use rust_verifier_lib::verification::meta_data::{VerificationMetaData, VerificationMetaDataList};
-use rust_verifier_lib::verification::VerificationPeriod;
+use super::root_dir;
+use rust_verifier_lib::{
+    constants::verification_list_path,
+    verification::{
+        meta_data::{VerificationMetaData, VerificationMetaDataList},
+        suite::get_not_implemented_verifications_id,
+        VerificationPeriod,
+    },
+};
 use tauri::{
     plugin::{Builder, TauriPlugin},
     Runtime,
 };
 
-use super::root_dir;
-
-#[derive(Clone, Copy, serde::Serialize)]
+#[derive(Clone, Copy, Debug, serde::Serialize)]
 enum VerificationStatus {
     #[serde(rename = "Not started")]
     NotStarted,
@@ -20,9 +24,11 @@ enum VerificationStatus {
     Failures,
     #[serde(rename = "Finished with errors and failures")]
     ErrorsAndFailures,
+    #[serde(rename = "Not Implemented")]
+    NotImplemented,
 }
 
-#[derive(Clone, serde::Serialize)]
+#[derive(Clone, Debug, serde::Serialize)]
 struct Verification {
     id: String,
     name: String,
@@ -52,14 +58,20 @@ impl From<&VerificationMetaData> for Verification {
     }
 }
 
-impl From<&VerificationMetaDataList> for VerificationListPayload {
-    fn from(value: &VerificationMetaDataList) -> Self {
-        Self(
-            value
-                .iter()
-                .map(Verification::from)
-                .collect::<Vec<Verification>>(),
-        )
+impl VerificationListPayload {
+    fn from_medata_list(period: VerificationPeriod, list: &VerificationMetaDataList) -> Self {
+        let mut res = list
+            .iter()
+            .map(Verification::from)
+            .collect::<Vec<Verification>>();
+        let not_implemented = get_not_implemented_verifications_id(
+            &verification_list_path(Some(&root_dir())),
+            period,
+        );
+        for v in res.iter_mut().filter(|v| not_implemented.contains(&v.id)) {
+            v.status = VerificationStatus::NotImplemented
+        }
+        Self(res)
     }
 }
 
@@ -69,7 +81,8 @@ async fn get_verifications(is_tally: bool) -> VerificationListPayload {
         true => VerificationPeriod::Tally,
         false => VerificationPeriod::Setup,
     };
-    VerificationListPayload::from(
+    VerificationListPayload::from_medata_list(
+        p,
         &VerificationMetaDataList::load_period(&verification_list_path(Some(&root_dir())), &p)
             .unwrap(),
     )
