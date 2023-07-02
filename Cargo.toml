@@ -1,5 +1,5 @@
 [workspace]
-members = ["./lib", "./console", "./crypto_primitives"]
+members = ["./lib", "./console", "./crypto_primitives", "./gui/src-tauri"]
 
 [workspace.dependencies]
 log = "0.4"

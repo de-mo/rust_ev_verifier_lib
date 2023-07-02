@@ -1,0 +1,24 @@
+[package]
+name = "rust_verifier_gui"
+description = "GUI application to verify the Swiss Post E-Voting."
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+version.workspace = true
+repository.workspace = true
+
+[build-dependencies]
+tauri-build = { version = "1", features = [] }
+
+[dependencies]
+rust_verifier_lib = {path = "../../lib"}
+tauri = { version = "1", features = ["dialog", "shell-open"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+anyhow.workspace = true
+
+[features]
+# this feature is used for production builds or when `devPath` points to the filesystem
+# DO NOT REMOVE!!
+custom-protocol = ["tauri/custom-protocol"]

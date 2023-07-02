@@ -1,0 +1,25 @@
+{
+  "name": "rust_verifier_gui",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "tauri": "tauri"
+  },
+  "dependencies": {
+    "@tauri-apps/api": "^1.4.0",
+    "@vueuse/core": "^10.2.0",
+    "vue": "^3.3.4",
+    "vue-cli-plugin-tauri": "^1.0.0"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^1.3.1",
+    "@vitejs/plugin-vue": "^4.0.0",
+    "eslint": "^8.43.0",
+    "eslint-plugin-vue": "^9.15.1",
+    "vite": "^4.2.1"
+  }
+}
