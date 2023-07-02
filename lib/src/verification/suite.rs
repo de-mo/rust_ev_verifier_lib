@@ -156,7 +156,7 @@ mod test {
 
     #[test]
     fn test_setup_verifications() {
-        let metadata_list = VerificationMetaDataList::load(&verification_list_path()).unwrap();
+        let metadata_list = VerificationMetaDataList::load(&verification_list_path(None)).unwrap();
         let verifs = VerificationSuite::new(&VerificationPeriod::Setup, &metadata_list, &[]);
         assert_eq!(verifs.len(), EXPECTED_IMPL_SETUP_VERIF);
         assert_eq!(verifs.collect_id(), IMPL_SETUP_TESTS);
@@ -168,7 +168,7 @@ mod test {
 
     #[test]
     fn test_tally_verifications() {
-        let metadata_list = VerificationMetaDataList::load(&verification_list_path()).unwrap();
+        let metadata_list = VerificationMetaDataList::load(&verification_list_path(None)).unwrap();
         let verifs = VerificationSuite::new(&VerificationPeriod::Tally, &metadata_list, &[]);
         assert_eq!(verifs.len(), EXPECTED_IMPL_TALLY_VERIF);
         assert_eq!(verifs.collect_id(), IMPL_TALLY_TESTS);
@@ -180,7 +180,7 @@ mod test {
 
     #[test]
     fn test_with_exclusion() {
-        let metadata_list = VerificationMetaDataList::load(&verification_list_path()).unwrap();
+        let metadata_list = VerificationMetaDataList::load(&verification_list_path(None)).unwrap();
         let verifs = VerificationSuite::new(
             &VerificationPeriod::Setup,
             &metadata_list,

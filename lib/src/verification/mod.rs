@@ -53,7 +53,7 @@ where
     T: VerifiySignatureTrait<'a>,
     HashableMessage<'a>: From<&'a T>,
 {
-    match obj.verifiy_signature(&direct_trust_path()) {
+    match obj.verifiy_signature(&direct_trust_path(None)) {
         Ok(t) => {
             if !t {
                 result.push(create_verification_failure!(format!(
@@ -119,6 +119,18 @@ impl Display for VerificationPeriod {
         match self {
             VerificationPeriod::Setup => write!(f, "setup"),
             VerificationPeriod::Tally => write!(f, "tally"),
+        }
+    }
+}
+
+impl Display for VerificationCategory {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            VerificationCategory::Authenticity => write!(f, "authenticity"),
+            VerificationCategory::Consistency => write!(f, "consistency"),
+            VerificationCategory::Completness => write!(f, "completness"),
+            VerificationCategory::Integrity => write!(f, "integrity"),
+            VerificationCategory::Evidence => write!(f, "evidence"),
         }
     }
 }

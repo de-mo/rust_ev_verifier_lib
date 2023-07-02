@@ -13,7 +13,7 @@ use log4rs::{
 };
 use rust_verifier_lib::{
     check_verification_dir,
-    constants::{verification_list_path, LOG_PATH},
+    constants::{log_path, verification_list_path},
     runner::Runner,
     start_check,
     verification::{meta_data::VerificationMetaDataList, VerificationPeriod},
@@ -80,7 +80,7 @@ impl SubCommands {
 fn init_logger(level: LevelFilter, with_stdout: bool) {
     let file = FileAppender::builder()
         .encoder(Box::new(PatternEncoder::new("{d} {l} - {m}{n}")))
-        .build(LOG_PATH)
+        .build(log_path(None))
         .unwrap();
 
     let mut root_builder = Root::builder().appender("file");
@@ -101,7 +101,7 @@ fn init_logger(level: LevelFilter, with_stdout: bool) {
 }
 
 fn execute_runner(period: &VerificationPeriod, cmd: &VerifierSubCommand) {
-    let metadata = VerificationMetaDataList::load(&verification_list_path()).unwrap();
+    let metadata = VerificationMetaDataList::load(&verification_list_path(None)).unwrap();
     let mut runner = Runner::new(&cmd.dir, period, &metadata, &cmd.exclude);
     runner.run_all_sequential(&metadata);
 }
