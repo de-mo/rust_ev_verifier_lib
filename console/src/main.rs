@@ -15,8 +15,8 @@ use rust_verifier_lib::{
     constants::{log_path, verification_list_path},
     verification::{meta_data::VerificationMetaDataList, VerificationPeriod},
 };
-use rust_verifier_runner::Runner;
 use rust_verifier_runner::{check_verification_dir, start_check};
+use rust_verifier_runner::{RunSequential, Runner};
 use std::path::PathBuf;
 use structopt::StructOpt;
 
@@ -101,8 +101,8 @@ fn init_logger(level: LevelFilter, with_stdout: bool) {
 
 fn execute_runner(period: &VerificationPeriod, cmd: &VerifierSubCommand) {
     let metadata = VerificationMetaDataList::load(&verification_list_path(None)).unwrap();
-    let mut runner = Runner::new(&cmd.dir, period, &metadata, &cmd.exclude);
-    runner.run_all_sequential(&metadata);
+    let mut runner = Runner::new(&cmd.dir, period, &metadata, &cmd.exclude, RunSequential);
+    runner.run_all(&metadata);
 }
 
 fn execute_verifier() -> anyhow::Result<()> {

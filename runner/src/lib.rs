@@ -17,17 +17,40 @@ use std::{
     time::{Duration, SystemTime},
 };
 
+/// Strategy to run the tests
+pub trait RunStrategy<'a> {
+    /// Run function
+    fn run(&self, verifications: &'a mut VerificationSuite<'a>, dir_path: &Path);
+}
+
+/// Strategy to run the tests sequentially
+pub struct RunSequential;
+
+impl<'a> RunStrategy<'a> for RunSequential {
+    fn run(&self, verifications: &'a mut VerificationSuite<'a>, dir_path: &Path) {
+        let directory = VerificationDirectory::new(verifications.period(), dir_path);
+        let it = verifications.list.0.iter_mut();
+        for v in it {
+            v.run(&directory);
+        }
+    }
+}
+
 /// Structure defining the runner
 ///
 /// The runner can run only once. The runner has to be reseted to restart.
-pub struct Runner<'a> {
+pub struct Runner<'a, T: RunStrategy<'a>> {
     path: PathBuf,
     verifications: Box<VerificationSuite<'a>>,
     start_time: Option<SystemTime>,
     duration: Option<Duration>,
+    run_strategy: T,
 }
 
-impl<'a> Runner<'a> {
+impl<'a, T> Runner<'a, T>
+where
+    T: RunStrategy<'a>,
+{
     /// Create a new runner.
     ///
     /// path represents the location where the directory setup and tally are stored
@@ -37,12 +60,14 @@ impl<'a> Runner<'a> {
         period: &VerificationPeriod,
         metadata: &'a VerificationMetaDataList,
         exclusion: &[String],
-    ) -> Runner<'a> {
+        run_strategy: T,
+    ) -> Runner<'a, T> {
         Runner {
             path: path.to_path_buf(),
             verifications: Box::new(VerificationSuite::new(period, metadata, exclusion)),
             start_time: None,
             duration: None,
+            run_strategy,
         }
     }
 
@@ -58,7 +83,7 @@ impl<'a> Runner<'a> {
     }
 
     /// Run all tests sequentially
-    pub fn run_all_sequential<'b: 'a>(
+    pub fn run_all<'b: 'a>(
         &'b mut self,
         metadata_list: &'a VerificationMetaDataList,
     ) -> Option<anyhow::Error> {
@@ -85,18 +110,21 @@ impl<'a> Runner<'a> {
                 id
             )
         }
-        let directory = VerificationDirectory::new(self.period(), &self.path);
-        let it = self.verifications.list.0.iter_mut();
-        for v in it {
-            v.run(&directory);
+        let len = self.verifications.len();
+        {
+            self.run_strategy.run(&mut self.verifications, &self.path);
         }
         self.duration = Some(self.start_time.unwrap().elapsed().unwrap());
         info!(
             "{} verifications run (duration: {}s)",
-            &self.verifications.len(),
+            &len,
             self.duration.unwrap().as_secs_f32()
         );
         None
+    }
+
+    pub fn verifications_mut(&'a mut self) -> &'a mut VerificationSuite<'a> {
+        &mut self.verifications
     }
 
     pub fn is_finished(&self) -> bool {
