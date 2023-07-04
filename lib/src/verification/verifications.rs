@@ -11,7 +11,7 @@ use std::time::{Duration, SystemTime};
 
 /// Struct representing a verification
 #[allow(clippy::type_complexity)]
-pub(crate) struct Verification<'a, D: VerificationDirectoryTrait> {
+pub struct Verification<'a, D: VerificationDirectoryTrait> {
     /// Id of the verification
     id: String,
     /// Metadata of the verification
@@ -45,7 +45,7 @@ impl<'a> Verification<'a, VerificationDirectory> {
     ///
     /// All the helpers functions called from `fn_verification` have also to take then traits as parameter
     /// and not the structs. Then it is possible to mock the data
-    pub(crate) fn new(
+    pub fn new(
         id: &str,
         verification_fn: impl Fn(&VerificationDirectory, &mut VerificationResult) + 'static,
         metadata_list: &'a VerificationMetaDataList,
@@ -66,17 +66,17 @@ impl<'a> Verification<'a, VerificationDirectory> {
         })
     }
 
-    pub(crate) fn id(&self) -> &String {
+    pub fn id(&self) -> &String {
         &self.id
     }
 
     #[allow(dead_code)]
-    pub(crate) fn meta_data(&'a self) -> &'a VerificationMetaData {
+    pub fn meta_data(&'a self) -> &'a VerificationMetaData {
         self.meta_data
     }
 
     /// Run the test.
-    pub(crate) fn run(&mut self, directory: &VerificationDirectory) {
+    pub fn run(&mut self, directory: &VerificationDirectory) {
         self.status = VerificationStatus::Running;
         let start_time = SystemTime::now();
         info!(

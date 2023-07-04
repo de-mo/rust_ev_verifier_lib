@@ -8,7 +8,7 @@ mod integrity;
 use super::{meta_data::VerificationMetaDataList, suite::VerificationList};
 
 /// Collect the verifications of the submodules
-pub(crate) fn get_verifications(metadata_list: &VerificationMetaDataList) -> VerificationList<'_> {
+pub fn get_verifications(metadata_list: &VerificationMetaDataList) -> VerificationList<'_> {
     let mut res = VerificationList(vec![]);
     res.0
         .append(&mut authenticity::get_verifications(metadata_list).0);

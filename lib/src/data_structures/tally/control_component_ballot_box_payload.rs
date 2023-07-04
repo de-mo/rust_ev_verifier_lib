@@ -8,33 +8,33 @@ use serde::Deserialize;
 
 #[derive(Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
-pub(crate) struct ControlComponentBallotBoxPayload {
-    pub(crate) encryption_group: EncryptionGroup,
-    pub(crate) election_event_id: String,
-    pub(crate) ballot_box_id: String,
-    pub(crate) node_id: usize,
-    pub(crate) confirmed_encrypted_votes: Vec<ConfirmedEncryptedVote>,
-    pub(crate) signature: SignatureJson,
+pub struct ControlComponentBallotBoxPayload {
+    pub encryption_group: EncryptionGroup,
+    pub election_event_id: String,
+    pub ballot_box_id: String,
+    pub node_id: usize,
+    pub confirmed_encrypted_votes: Vec<ConfirmedEncryptedVote>,
+    pub signature: SignatureJson,
 }
 implement_trait_verifier_data_json_decode!(ControlComponentBallotBoxPayload);
 
 #[derive(Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
-pub(crate) struct ConfirmedEncryptedVote {
-    pub(crate) context_ids: ContextIds,
-    pub(crate) encrypted_vote: ExponentiatedEncryptedElement,
-    pub(crate) exponentiated_encrypted_vote: ExponentiatedEncryptedElement,
-    pub(crate) encrypted_partial_choice_return_codes: ExponentiatedEncryptedElement,
-    pub(crate) exponentiation_proof: Proof,
-    pub(crate) plaintext_equality_proof: DecryptionProof,
+pub struct ConfirmedEncryptedVote {
+    pub context_ids: ContextIds,
+    pub encrypted_vote: ExponentiatedEncryptedElement,
+    pub exponentiated_encrypted_vote: ExponentiatedEncryptedElement,
+    pub encrypted_partial_choice_return_codes: ExponentiatedEncryptedElement,
+    pub exponentiation_proof: Proof,
+    pub plaintext_equality_proof: DecryptionProof,
 }
 
 #[derive(Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
-pub(crate) struct ContextIds {
-    pub(crate) election_event_id: String,
-    pub(crate) verification_card_set_id: String,
-    pub(crate) verification_card_id: String,
+pub struct ContextIds {
+    pub election_event_id: String,
+    pub verification_card_set_id: String,
+    pub verification_card_id: String,
 }
 
 #[cfg(test)]

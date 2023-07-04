@@ -6,7 +6,7 @@ use crypto_primitives::{
 use roxmltree::Document;
 
 #[derive(Debug, Clone)]
-pub(crate) struct EVotingDecrypt {}
+pub struct EVotingDecrypt {}
 
 impl VerifierDataDecode for EVotingDecrypt {
     fn from_roxmltree<'a>(_: &'a Document<'a>) -> anyhow::Result<Self> {

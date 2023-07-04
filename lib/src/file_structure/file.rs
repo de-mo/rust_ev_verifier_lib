@@ -6,7 +6,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 #[derive(Clone)]
-pub(crate) struct File {
+pub struct File {
     path: PathBuf,
     data_type: VerifierDataType,
 }
@@ -22,11 +22,7 @@ macro_rules! create_file {
 pub(crate) use create_file;
 
 impl File {
-    pub(crate) fn new(
-        location: &Path,
-        data_type: &VerifierDataType,
-        file_nb: Option<usize>,
-    ) -> Self {
+    pub fn new(location: &Path, data_type: &VerifierDataType, file_nb: Option<usize>) -> Self {
         let name = data_type.get_file_name(file_nb);
         let mut path = location.join(&name);
         if name.contains('*') {
@@ -45,28 +41,28 @@ impl File {
     }
 
     #[allow(dead_code)]
-    pub(crate) fn get_location(&self) -> PathBuf {
+    pub fn get_location(&self) -> PathBuf {
         self.path.parent().unwrap().to_path_buf()
     }
 
-    pub(crate) fn exists(&self) -> bool {
+    pub fn exists(&self) -> bool {
         self.path.exists()
     }
 
-    pub(crate) fn get_path(&self) -> PathBuf {
+    pub fn get_path(&self) -> PathBuf {
         self.path.to_path_buf()
     }
 
-    pub(crate) fn to_str(&self) -> &str {
+    pub fn to_str(&self) -> &str {
         self.path.to_str().unwrap()
     }
 
-    pub(crate) fn read_data(&self) -> anyhow::Result<String> {
+    pub fn read_data(&self) -> anyhow::Result<String> {
         fs::read_to_string(self.get_path())
             .map_err(|e| anyhow!(e).context(format!("Cannot read file \"{}\"", self.to_str())))
     }
 
-    pub(crate) fn get_data(&self) -> anyhow::Result<VerifierData> {
+    pub fn get_data(&self) -> anyhow::Result<VerifierData> {
         if !self.exists() {
             return Err(anyhow!(format!(
                 "File \"{}\" does not exists",

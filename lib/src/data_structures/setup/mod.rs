@@ -1,13 +1,13 @@
 //! Module implementing the data structures of the setup directory
 
-pub(crate) mod control_component_code_shares_payload;
-pub(crate) mod control_component_public_keys_payload;
-pub(crate) mod election_event_configuration;
-pub(crate) mod election_event_context_payload;
-pub(crate) mod encryption_parameters_payload;
-pub(crate) mod setup_component_public_keys_payload;
-pub(crate) mod setup_component_tally_data_payload;
-pub(crate) mod setup_component_verification_data_payload;
+pub mod control_component_code_shares_payload;
+pub mod control_component_public_keys_payload;
+pub mod election_event_configuration;
+pub mod election_event_context_payload;
+pub mod encryption_parameters_payload;
+pub mod setup_component_public_keys_payload;
+pub mod setup_component_tally_data_payload;
+pub mod setup_component_verification_data_payload;
 
 use self::{
     control_component_code_shares_payload::ControlComponentCodeSharesPayload,
@@ -27,7 +27,7 @@ use enum_kinds::EnumKind;
 /// An enum VerifierSetupDataType is automatically creating
 #[derive(Clone, EnumKind)]
 #[enum_kind(VerifierSetupDataType)]
-pub(crate) enum VerifierSetupData {
+pub enum VerifierSetupData {
     EncryptionParametersPayload(EncryptionParametersPayload),
     ElectionEventContextPayload(ElectionEventContextPayload),
     SetupComponentPublicKeysPayload(SetupComponentPublicKeysPayload),
@@ -39,7 +39,7 @@ pub(crate) enum VerifierSetupData {
 }
 
 impl VerifierSetupDataType {
-    pub(crate) fn get_file_type(&self) -> FileType {
+    pub fn get_file_type(&self) -> FileType {
         match self {
             Self::EncryptionParametersPayload => FileType::Json,
             Self::ElectionEventContextPayload => FileType::Json,
@@ -52,7 +52,7 @@ impl VerifierSetupDataType {
         }
     }
 
-    pub(crate) fn get_file_read_mode(&self) -> FileReadMode {
+    pub fn get_file_read_mode(&self) -> FileReadMode {
         match self {
             Self::EncryptionParametersPayload => FileReadMode::Memory,
             Self::ElectionEventContextPayload => FileReadMode::Memory,
@@ -68,7 +68,7 @@ impl VerifierSetupDataType {
     /// Read from String as json or xml
     ///
     /// All the types have to oimplement the trait [VerifierDataDecode]
-    pub(crate) fn verifier_data_from_file(&self, f: &File) -> anyhow::Result<VerifierSetupData> {
+    pub fn verifier_data_from_file(&self, f: &File) -> anyhow::Result<VerifierSetupData> {
         match self {
             VerifierSetupDataType::EncryptionParametersPayload => {
                 EncryptionParametersPayload::from_file(

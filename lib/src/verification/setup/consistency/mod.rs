@@ -14,7 +14,7 @@ use super::super::{
     meta_data::VerificationMetaDataList, suite::VerificationList, verifications::Verification,
 };
 
-pub(crate) fn get_verifications(metadata_list: &VerificationMetaDataList) -> VerificationList {
+pub fn get_verifications(metadata_list: &VerificationMetaDataList) -> VerificationList {
     VerificationList(vec![
         Verification::new(
             "03.01",

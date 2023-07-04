@@ -7,15 +7,15 @@ use serde::Deserialize;
 
 #[derive(Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
-pub(crate) struct TallyComponentVotesPayload {
-    pub(crate) election_event_id: String,
-    pub(crate) ballot_id: String,
-    pub(crate) ballot_box_id: String,
-    pub(crate) encryption_group: EncryptionGroup,
-    pub(crate) votes: Vec<Vec<usize>>,
-    pub(crate) actual_selected_voting_options: Vec<Vec<String>>,
-    pub(crate) decoded_write_in_votes: Vec<Vec<String>>,
-    pub(crate) signature: SignatureJson,
+pub struct TallyComponentVotesPayload {
+    pub election_event_id: String,
+    pub ballot_id: String,
+    pub ballot_box_id: String,
+    pub encryption_group: EncryptionGroup,
+    pub votes: Vec<Vec<usize>>,
+    pub actual_selected_voting_options: Vec<Vec<String>>,
+    pub decoded_write_in_votes: Vec<Vec<String>>,
+    pub signature: SignatureJson,
 }
 
 implement_trait_verifier_data_json_decode!(TallyComponentVotesPayload);

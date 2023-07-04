@@ -1,13 +1,17 @@
-//! Module implementing the runner
+//! Crate implementing the runner
 
-use crate::{
+mod checks;
+
+pub use checks::*;
+
+use anyhow::anyhow;
+use log::{info, warn};
+use rust_verifier_lib::{
     file_structure::VerificationDirectory,
     verification::{
         meta_data::VerificationMetaDataList, suite::VerificationSuite, VerificationPeriod,
     },
 };
-use anyhow::anyhow;
-use log::{info, warn};
 use std::{
     path::{Path, PathBuf},
     time::{Duration, SystemTime},

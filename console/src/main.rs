@@ -12,12 +12,11 @@ use log4rs::{
     encode::pattern::PatternEncoder,
 };
 use rust_verifier_lib::{
-    check_verification_dir,
     constants::{log_path, verification_list_path},
-    runner::Runner,
-    start_check,
     verification::{meta_data::VerificationMetaDataList, VerificationPeriod},
 };
+use rust_verifier_runner::Runner;
+use rust_verifier_runner::{check_verification_dir, start_check};
 use std::path::PathBuf;
 use structopt::StructOpt;
 

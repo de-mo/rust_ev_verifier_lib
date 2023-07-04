@@ -13,15 +13,15 @@ use serde::Deserialize;
 
 #[derive(Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
-pub(crate) struct SetupComponentTallyDataPayload {
-    pub(crate) election_event_id: String,
-    pub(crate) verification_card_set_id: String,
-    pub(crate) ballot_box_default_title: String,
-    pub(crate) encryption_group: EncryptionGroup,
-    pub(crate) verification_card_ids: Vec<String>,
+pub struct SetupComponentTallyDataPayload {
+    pub election_event_id: String,
+    pub verification_card_set_id: String,
+    pub ballot_box_default_title: String,
+    pub encryption_group: EncryptionGroup,
+    pub verification_card_ids: Vec<String>,
     #[serde(deserialize_with = "deserialize_seq_seq_string_hex_to_seq_seq_bigunit")]
-    pub(crate) verification_card_public_keys: Vec<Vec<BigUint>>,
-    pub(crate) signature: SignatureJson,
+    pub verification_card_public_keys: Vec<Vec<BigUint>>,
+    pub signature: SignatureJson,
 }
 
 implement_trait_verifier_data_json_decode!(SetupComponentTallyDataPayload);

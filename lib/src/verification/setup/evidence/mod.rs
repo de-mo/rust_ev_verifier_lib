@@ -6,7 +6,7 @@ mod v0521_encrypted_pcc_exponentiation_proofs;
 use super::super::{suite::VerificationList, verifications::Verification};
 use crate::verification::meta_data::VerificationMetaDataList;
 
-pub(crate) fn get_verifications(metadata_list: &VerificationMetaDataList) -> VerificationList {
+pub fn get_verifications(metadata_list: &VerificationMetaDataList) -> VerificationList {
     VerificationList(vec![
         Verification::new(
             "05.01",

@@ -12,24 +12,24 @@ use quick_xml::{
 use serde::Deserialize;
 
 #[derive(Debug, Clone)]
-pub(crate) struct ElectionEventConfiguration {
+pub struct ElectionEventConfiguration {
     //path: PathBuf,
-    pub(crate) header: ConfigHeader,
+    pub header: ConfigHeader,
 }
 
 #[derive(Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
-pub(crate) struct ConfigHeader {
-    pub(crate) file_date: String,
-    pub(crate) voter_total: usize,
-    pub(crate) partial_delivery: Option<PartialDelivery>,
+pub struct ConfigHeader {
+    pub file_date: String,
+    pub voter_total: usize,
+    pub partial_delivery: Option<PartialDelivery>,
 }
 
 #[derive(Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
-pub(crate) struct PartialDelivery {
-    pub(crate) voter_from: usize,
-    pub(crate) voter_to: usize,
+pub struct PartialDelivery {
+    pub voter_from: usize,
+    pub voter_to: usize,
 }
 
 impl VerifierDataDecode for ElectionEventConfiguration {

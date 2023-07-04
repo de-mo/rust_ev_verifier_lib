@@ -27,21 +27,21 @@ pub fn get_not_implemented_verifications_id(
 }
 
 /// Enum for the suite of verifications
-pub(crate) struct VerificationSuite<'a> {
+pub struct VerificationSuite<'a> {
     period: VerificationPeriod,
-    pub(crate) list: Box<VerificationList<'a>>,
+    pub list: Box<VerificationList<'a>>,
     exclusion: Vec<String>,
 }
 
 /// List of verifications
-pub(crate) struct VerificationList<'a>(pub(crate) Vec<Verification<'a, VerificationDirectory>>);
+pub struct VerificationList<'a>(pub Vec<Verification<'a, VerificationDirectory>>);
 
 impl<'a> VerificationSuite<'a> {
     /// Create a new suite
     ///
     /// The function collects all the implemented tests and remove the excluded
     /// verifications. The ids in exclusion that does not exist are ignored
-    pub(crate) fn new(
+    pub fn new(
         period: &VerificationPeriod,
         metadata_list: &'a VerificationMetaDataList,
         exclusion: &[String],
@@ -79,7 +79,7 @@ impl<'a> VerificationSuite<'a> {
     ///
     /// The excluded verifications are not collected
     #[allow(dead_code)]
-    pub(crate) fn verifications_mut(&'a mut self) -> &'a mut VerificationList {
+    pub fn verifications_mut(&'a mut self) -> &'a mut VerificationList {
         &mut self.list
     }
 

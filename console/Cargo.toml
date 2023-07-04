@@ -12,6 +12,7 @@ repository.workspace = true
 
 [dependencies]
 rust_verifier_lib = {path = "../lib"}
+rust_verifier_runner = {path = "../runner"}
 structopt = "0.3"
 log4rs = "1.2"
 log.workspace = true

@@ -12,7 +12,7 @@ use std::{fs, path::Path};
 
 /// List of Verification Metadata
 #[derive(Deserialize, Debug, Clone)]
-pub struct VerificationMetaDataList(pub(crate) Vec<VerificationMetaData>);
+pub struct VerificationMetaDataList(pub Vec<VerificationMetaData>);
 
 /// Metadata of a verification
 #[derive(Deserialize, Debug, Clone)]

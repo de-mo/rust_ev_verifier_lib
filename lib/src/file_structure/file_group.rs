@@ -8,7 +8,7 @@ use std::{
 };
 
 /// Trait for the possibility to mock the iteration over filegroup
-pub(crate) trait FileGroupIterTrait<T>: Iterator<Item = (usize, T)> {
+pub trait FileGroupIterTrait<T>: Iterator<Item = (usize, T)> {
     fn current_elt(&self) -> Option<T>;
     fn current_pos(&self) -> &usize;
     fn current_index(&self) -> Option<&usize>;
@@ -19,7 +19,7 @@ pub(crate) trait FileGroupIterTrait<T>: Iterator<Item = (usize, T)> {
 
 /// File Group
 #[derive(Clone)]
-pub(crate) struct FileGroup {
+pub struct FileGroup {
     /// location of the file group
     location: PathBuf,
     /// data_type. With the data_type it is possible to find the files in the location
@@ -29,8 +29,8 @@ pub(crate) struct FileGroup {
 }
 
 #[derive(Clone)]
-pub(crate) struct FileGroupIter<T> {
-    pub(crate) file_group: FileGroup,
+pub struct FileGroupIter<T> {
+    pub file_group: FileGroup,
     pos: usize,
     not_used: PhantomData<T>,
 }
@@ -70,7 +70,7 @@ impl FileGroupIterTrait<File> for FileGroupIter<File> {
 
 impl<T> FileGroupIter<T> {
     /// Create a new [FileGroupIter<T>]
-    pub(crate) fn new(file_group: &FileGroup) -> Self {
+    pub fn new(file_group: &FileGroup) -> Self {
         FileGroupIter {
             file_group: file_group.clone(),
             pos: 0,
@@ -79,12 +79,12 @@ impl<T> FileGroupIter<T> {
     }
 
     /// Get the current position
-    pub(crate) fn current_pos_impl(&self) -> &usize {
+    pub fn current_pos_impl(&self) -> &usize {
         &self.pos
     }
 
     /// Get the current index
-    pub(crate) fn current_index_impl(&self) -> Option<&usize> {
+    pub fn current_index_impl(&self) -> Option<&usize> {
         match self.pos < self.file_group.get_numbers().len() {
             true => Some(&self.file_group.get_numbers()[self.pos]),
             false => None,
@@ -92,7 +92,7 @@ impl<T> FileGroupIter<T> {
     }
 
     /// Get the current file
-    pub(crate) fn current_file(&self) -> Option<File> {
+    pub fn current_file(&self) -> Option<File> {
         self.current_index_impl().map(|i| {
             File::new(
                 &self.file_group.location,
@@ -155,7 +155,7 @@ pub(super) use add_type_for_file_group_iter_trait;
 
 impl FileGroup {
     /// New [FileGroup]
-    pub(crate) fn new(location: &Path, data_type: VerifierDataType) -> Self {
+    pub fn new(location: &Path, data_type: VerifierDataType) -> Self {
         let mut res = Self {
             location: location.to_path_buf(),
             data_type,
@@ -185,49 +185,49 @@ impl FileGroup {
 
     /// Get the location
     #[allow(dead_code)]
-    pub(crate) fn get_location(&self) -> &Path {
+    pub fn get_location(&self) -> &Path {
         self.location.as_path()
     }
 
     /// Get the name of the file group
-    pub(crate) fn get_file_name(&self) -> String {
+    pub fn get_file_name(&self) -> String {
         self.data_type.get_raw_file_name()
     }
 
     /// Get the data type
     #[allow(dead_code)]
-    pub(crate) fn get_data_type(&self) -> &VerifierDataType {
+    pub fn get_data_type(&self) -> &VerifierDataType {
         &self.data_type
     }
 
     /// Test if the location exist
-    pub(crate) fn location_exists(&self) -> bool {
+    pub fn location_exists(&self) -> bool {
         self.location.is_dir()
     }
 
     /// Test if the file group has elements, i.e. it exists files
-    pub(crate) fn has_elements(&self) -> bool {
+    pub fn has_elements(&self) -> bool {
         !self.indexes.is_empty()
     }
 
     /// Get the paths of the files
     #[allow(dead_code)]
-    pub(crate) fn get_paths(&self) -> Vec<PathBuf> {
+    pub fn get_paths(&self) -> Vec<PathBuf> {
         self.iter().map(|(_, f)| f.get_path()).collect()
     }
 
     /// Get all the valid numbers of the files
-    pub(crate) fn get_numbers(&self) -> &Vec<usize> {
+    pub fn get_numbers(&self) -> &Vec<usize> {
         &self.indexes
     }
 
     /// Get the file with the given number
-    pub(crate) fn get_file_with_number(&self, number: usize) -> File {
+    pub fn get_file_with_number(&self, number: usize) -> File {
         File::new(&self.location, &self.data_type, Some(number))
     }
 
     /// Iterate over the files
-    pub(crate) fn iter(&self) -> FileGroupIter<File> {
+    pub fn iter(&self) -> FileGroupIter<File> {
         FileGroupIter::new(self)
     }
 }
@@ -291,13 +291,13 @@ mod test {
 
 #[cfg(any(test, doc))]
 #[allow(dead_code)]
-pub(crate) mod mock {
+pub mod mock {
     //! Module defining mocking structure [FileGroupTrait]
     use super::*;
     use std::collections::HashMap;
 
     #[derive(Clone)]
-    pub(crate) struct MockFileGroupIter<T, I: FileGroupIterTrait<T>> {
+    pub struct MockFileGroupIter<T, I: FileGroupIterTrait<T>> {
         orig: I,
         mocked_data: HashMap<usize, T>,
     }
@@ -359,7 +359,7 @@ pub(crate) mod mock {
         ///
         /// During the iteration, the data of the mocked data will be return if the index exists in the hashmap,
         /// else the original data will be returned
-        pub(crate) fn new(fg_iter: I, mock_data: HashMap<usize, T>) -> Self {
+        pub fn new(fg_iter: I, mock_data: HashMap<usize, T>) -> Self {
             MockFileGroupIter {
                 orig: fg_iter,
                 mocked_data: mock_data,
@@ -367,30 +367,30 @@ pub(crate) mod mock {
         }
 
         /// Get the original iterator
-        pub(crate) fn orig(&self) -> &I {
+        pub fn orig(&self) -> &I {
             &self.orig
         }
 
         /// Get the original iterator as mutable
-        pub(crate) fn orig_mut(&mut self) -> &mut I {
+        pub fn orig_mut(&mut self) -> &mut I {
             &mut self.orig
         }
 
         /// Get the mocked data
-        pub(crate) fn mocked_data(&self) -> &HashMap<usize, T> {
+        pub fn mocked_data(&self) -> &HashMap<usize, T> {
             &self.mocked_data
         }
 
         ///
-        pub(crate) fn current_pos(&self) -> &usize {
+        pub fn current_pos(&self) -> &usize {
             self.orig.current_pos()
         }
 
-        pub(crate) fn current_index(&self) -> Option<&usize> {
+        pub fn current_index(&self) -> Option<&usize> {
             self.orig.current_index()
         }
 
-        pub(crate) fn is_over(&self) -> bool {
+        pub fn is_over(&self) -> bool {
             self.orig.is_over()
         }
     }
@@ -459,7 +459,7 @@ pub(crate) mod mock {
     /// - $payload: Type of the payload
     macro_rules! mock_payload_iter {
         ($fct: ident, $mock: ident, $payload: ty) => {
-            pub(crate) fn $fct(&mut self, index: usize, data: &anyhow::Result<&$payload>) {
+            pub fn $fct(&mut self, index: usize, data: &anyhow::Result<&$payload>) {
                 self.$mock.insert(
                     index,
                     match data {

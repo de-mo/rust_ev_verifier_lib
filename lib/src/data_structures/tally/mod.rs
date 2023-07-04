@@ -1,10 +1,10 @@
-pub(crate) mod control_component_ballot_box_payload;
-pub(crate) mod control_component_shuffle_payload;
-pub(crate) mod e_voting_decrypt;
-pub(crate) mod ech_0110;
-pub(crate) mod ech_0222;
-pub(crate) mod tally_component_shuffle_payload;
-pub(crate) mod tally_component_votes_payload;
+pub mod control_component_ballot_box_payload;
+pub mod control_component_shuffle_payload;
+pub mod e_voting_decrypt;
+pub mod ech_0110;
+pub mod ech_0222;
+pub mod tally_component_shuffle_payload;
+pub mod tally_component_votes_payload;
 
 use self::{
     control_component_ballot_box_payload::ControlComponentBallotBoxPayload,
@@ -19,7 +19,7 @@ use enum_kinds::EnumKind;
 
 #[derive(Clone, EnumKind)]
 #[enum_kind(VerifierTallyDataType)]
-pub(crate) enum VerifierTallyData {
+pub enum VerifierTallyData {
     EVotingDecrypt(EVotingDecrypt),
     ECH0110(ECH0110),
     ECH0222(ECH0222),
@@ -30,7 +30,7 @@ pub(crate) enum VerifierTallyData {
 }
 
 impl VerifierTallyDataType {
-    pub(crate) fn get_file_type(&self) -> FileType {
+    pub fn get_file_type(&self) -> FileType {
         match self {
             Self::EVotingDecrypt => FileType::Xml,
             Self::ECH0110 => FileType::Xml,
@@ -42,7 +42,7 @@ impl VerifierTallyDataType {
         }
     }
 
-    pub(crate) fn get_file_read_mode(&self) -> FileReadMode {
+    pub fn get_file_read_mode(&self) -> FileReadMode {
         match self {
             Self::EVotingDecrypt => FileReadMode::Memory,
             Self::ECH0110 => FileReadMode::Memory,
@@ -57,7 +57,7 @@ impl VerifierTallyDataType {
     /// Read from String as json or xml
     ///
     /// All the types have to implement the trait [VerifierDataDecode]
-    pub(crate) fn verifier_data_from_file(&self, f: &File) -> anyhow::Result<VerifierTallyData> {
+    pub fn verifier_data_from_file(&self, f: &File) -> anyhow::Result<VerifierTallyData> {
         match self {
             VerifierTallyDataType::EVotingDecrypt => {
                 EVotingDecrypt::from_file(f, &self.get_file_type(), &self.get_file_read_mode())
