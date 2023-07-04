@@ -74,6 +74,12 @@ impl VerificationResult {
     }
 }
 
+impl Default for VerificationResult {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl VerificationResultTrait for VerificationResult {
     fn is_ok(&self) -> Option<bool> {
         Some(!self.has_errors().unwrap() && !self.has_failures().unwrap())

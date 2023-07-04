@@ -90,6 +90,10 @@ impl<'a> VerificationSuite<'a> {
         self.list.0.len()
     }
 
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
+    }
+
     /// List of excluded verifications
     pub fn exclusion(&self) -> &Vec<String> {
         &self.exclusion
