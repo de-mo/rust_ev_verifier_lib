@@ -17,6 +17,7 @@ structopt = "0.3"
 log4rs = "1.2"
 log.workspace = true
 anyhow.workspace = true
+lazy_static.workspace = true
 
 
 

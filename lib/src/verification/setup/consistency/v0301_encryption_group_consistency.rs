@@ -2,6 +2,7 @@ use super::super::super::result::{
     create_verification_error, create_verification_failure, VerificationEvent, VerificationResult,
 };
 use crate::{
+    config::Config,
     data_structures::common_types::EncryptionGroup,
     file_structure::{
         setup_directory::{SetupDirectoryTrait, VCSDirectoryTrait},
@@ -110,6 +111,7 @@ fn verify_encryption_group_for_vcs_dir<V: VCSDirectoryTrait>(
 
 pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
     dir: &D,
+    _config: &'static Config,
     result: &mut VerificationResult,
 ) {
     let setup_dir = dir.unwrap_setup();
@@ -177,20 +179,22 @@ mod test {
         super::super::super::{result::VerificationResultTrait, VerificationPeriod},
         *,
     };
-    use crate::constants::test::{dataset_setup_path, get_verifier_setup_dir as get_verifier_dir};
+    use crate::config::test::{
+        get_test_verifier_setup_dir as get_verifier_dir, test_dataset_setup_path, CONFIG_TEST,
+    };
     use crate::{
         data_structures::VerifierSetupDataTrait, file_structure::mock::MockVerificationDirectory,
     };
 
     fn get_mock_verifier_dir() -> MockVerificationDirectory {
-        MockVerificationDirectory::new(&VerificationPeriod::Setup, &dataset_setup_path())
+        MockVerificationDirectory::new(&VerificationPeriod::Setup, &test_dataset_setup_path())
     }
 
     #[test]
     fn test_ok() {
         let dir = get_verifier_dir();
         let mut result = VerificationResult::new();
-        fn_verification(&dir, &mut result);
+        fn_verification(&dir, &CONFIG_TEST, &mut result);
         assert!(result.is_ok().unwrap());
     }
 
@@ -233,7 +237,7 @@ mod test {
     fn test_wrong_election_event_context() {
         let mut result = VerificationResult::new();
         let mut mock_dir = get_mock_verifier_dir();
-        fn_verification(&mock_dir, &mut result);
+        fn_verification(&mock_dir, &CONFIG_TEST, &mut result);
         assert!(result.is_ok().unwrap());
         let mut eec = mock_dir
             .unwrap_setup()
@@ -243,7 +247,7 @@ mod test {
         mock_dir
             .unwrap_setup_mut()
             .mock_election_event_context_payload(&Ok(&eec));
-        fn_verification(&mock_dir, &mut result);
+        fn_verification(&mock_dir, &CONFIG_TEST, &mut result);
         assert!(result.has_failures().unwrap());
     }
 
@@ -263,7 +267,7 @@ mod test {
         mock_dir
             .unwrap_setup_mut()
             .mock_control_component_public_keys_payloads(2, &Ok(&cc_pk));
-        fn_verification(&mock_dir, &mut result);
+        fn_verification(&mock_dir, &CONFIG_TEST, &mut result);
         assert!(result.has_failures().unwrap());
     }
 }

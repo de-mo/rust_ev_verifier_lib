@@ -50,7 +50,7 @@ impl<'a> VerifiySignatureTrait<'a> for EncryptionParametersPayload {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::constants::test::dataset_tally_path;
+    use crate::config::test::test_dataset_tally_path;
     use num_bigint::ToBigUint;
     use std::fs;
 
@@ -100,7 +100,7 @@ mod test {
 
     #[test]
     fn read_data_set() {
-        let path = dataset_tally_path()
+        let path = test_dataset_tally_path()
             .join("setup")
             .join("encryptionParametersPayload.json");
         let json = fs::read_to_string(path).unwrap();

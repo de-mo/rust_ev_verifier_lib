@@ -4,32 +4,22 @@
 mod directory;
 mod verifications;
 
-use std::{env::current_dir, path::PathBuf};
+use lazy_static::lazy_static;
+use rust_verifier_lib::config::Config;
 
-pub(crate) fn root_dir() -> PathBuf {
-    if cfg!(debug_assertions) {
-        current_dir()
-            .unwrap()
-            .parent()
-            .unwrap()
-            .parent()
-            .unwrap()
-            .to_path_buf()
-    } else {
-        current_dir().unwrap()
-    }
-}
-
-// Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
-#[tauri::command]
-fn greet(name: &str) -> String {
-    format!("Hello, {}! You've been greeted from Rust!", name)
+lazy_static! {
+    pub(crate) static ref CONFIG: Config = {
+        if cfg!(debug_assertions) {
+            Config::new("../..")
+        } else {
+            Config::new(".")
+        }
+    };
 }
 
 fn main() {
     tauri::Builder::default()
         .setup(|_app| Ok(()))
-        .invoke_handler(tauri::generate_handler![greet])
         .plugin(directory::init())
         .plugin(verifications::init())
         .build(tauri::generate_context!())

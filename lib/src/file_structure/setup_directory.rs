@@ -6,7 +6,7 @@ use super::{
     },
 };
 use crate::{
-    constants::{SETUP_DIR_NAME, VCS_DIR_NAME},
+    config::Config,
     data_structures::{
         create_verifier_setup_data_type,
         setup::{
@@ -134,7 +134,7 @@ impl SetupDirectory {
     /// New [SetupDirectory]
     #[allow(clippy::redundant_clone)]
     pub fn new(data_location: &Path) -> Self {
-        let location = data_location.join(SETUP_DIR_NAME);
+        let location = data_location.join(Config::setup_dir_name());
         let mut res = Self {
             location: location.to_path_buf(),
             encryption_parameters_payload_file: create_file!(
@@ -163,7 +163,7 @@ impl SetupDirectory {
             ),
             vcs_directories: vec![],
         };
-        let vcs_path = location.join(VCS_DIR_NAME);
+        let vcs_path = location.join(Config::vcs_dir_name());
         if vcs_path.is_dir() {
             for re in fs::read_dir(&vcs_path).unwrap() {
                 let e = re.unwrap().path();
@@ -318,7 +318,7 @@ impl VCSDirectoryTrait for VCSDirectory {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::constants::test::dataset_tally_path as get_location;
+    use crate::config::test::test_dataset_tally_path as get_location;
 
     #[test]
     fn test_setup_dir() {

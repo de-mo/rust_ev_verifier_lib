@@ -2,6 +2,7 @@ use super::super::super::result::{
     create_verification_error, create_verification_failure, VerificationEvent, VerificationResult,
 };
 use crate::{
+    config::Config,
     data_structures::common_types::{EncryptionGroup, Proof},
     file_structure::{setup_directory::SetupDirectoryTrait, VerificationDirectoryTrait},
 };
@@ -14,6 +15,7 @@ use std::iter::zip;
 
 pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
     dir: &D,
+    _config: &'static Config,
     result: &mut VerificationResult,
 ) {
     let setup_dir = dir.unwrap_setup();
@@ -189,14 +191,14 @@ fn run_verify_schnorr_proof(
 #[cfg(test)]
 mod test {
     use super::{super::super::super::result::VerificationResultTrait, *};
-    use crate::constants::test::get_verifier_setup_dir as get_verifier_dir;
+    use crate::config::test::{get_test_verifier_setup_dir as get_verifier_dir, CONFIG_TEST};
 
     #[test]
     #[ignore]
     fn test_ok() {
         let dir = get_verifier_dir();
         let mut result = VerificationResult::new();
-        fn_verification(&dir, &mut result);
+        fn_verification(&dir, &CONFIG_TEST, &mut result);
         assert!(result.is_ok().unwrap());
     }
 }

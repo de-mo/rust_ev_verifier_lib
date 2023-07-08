@@ -4,7 +4,10 @@ use super::{
     result::{VerificationEvent, VerificationResult, VerificationResultTrait},
     VerificationStatus,
 };
-use crate::file_structure::{VerificationDirectory, VerificationDirectoryTrait};
+use crate::{
+    config::Config,
+    file_structure::{VerificationDirectory, VerificationDirectoryTrait},
+};
 use anyhow::bail;
 use log::{info, warn};
 use std::time::{Duration, SystemTime};
@@ -19,9 +22,10 @@ pub struct Verification<'a, D: VerificationDirectoryTrait> {
     /// The meta data is a reference to the metadata list loaded from json
     meta_data: &'a VerificationMetaData,
     status: VerificationStatus,
-    verification_fn: Box<dyn Fn(&D, &mut VerificationResult)>,
+    verification_fn: Box<dyn Fn(&D, &'static Config, &mut VerificationResult)>,
     duration: Option<Duration>,
     result: Box<VerificationResult>,
+    config: &'static Config,
 }
 
 impl<'a> Verification<'a, VerificationDirectory> {
@@ -47,8 +51,10 @@ impl<'a> Verification<'a, VerificationDirectory> {
     /// and not the structs. Then it is possible to mock the data
     pub fn new(
         id: &str,
-        verification_fn: impl Fn(&VerificationDirectory, &mut VerificationResult) + 'static,
+        verification_fn: impl Fn(&VerificationDirectory, &'static Config, &mut VerificationResult)
+            + 'static,
         metadata_list: &'a VerificationMetaDataList,
+        config: &'static Config,
     ) -> anyhow::Result<Self> {
         let meta_data = match metadata_list.meta_data_from_id(id) {
             Some(m) => m,
@@ -63,6 +69,7 @@ impl<'a> Verification<'a, VerificationDirectory> {
             verification_fn: Box::new(verification_fn),
             duration: None,
             result: Box::new(VerificationResult::new()),
+            config,
         })
     }
 
@@ -84,7 +91,7 @@ impl<'a> Verification<'a, VerificationDirectory> {
             self.meta_data.name(),
             self.meta_data.id()
         );
-        (self.verification_fn)(directory, self.result.as_mut());
+        (self.verification_fn)(directory, self.config, self.result.as_mut());
         self.duration = Some(start_time.elapsed().unwrap());
         self.status = VerificationStatus::Finished;
         if self.is_ok().unwrap() {
@@ -165,16 +172,17 @@ mod test {
         },
         *,
     };
-    use crate::constants::verification_list_path;
+    use crate::config::test::CONFIG_TEST;
     use anyhow::anyhow;
     use log::debug;
     use std::path::Path;
 
     #[test]
     fn run_ok() {
-        fn ok(_: &VerificationDirectory, _: &mut VerificationResult) {}
-        let md_list = VerificationMetaDataList::load(&verification_list_path(None)).unwrap();
-        let mut verif = Verification::new("01.01", ok, &md_list).unwrap();
+        fn ok(_: &VerificationDirectory, _: &'static Config, _: &mut VerificationResult) {}
+        let md_list =
+            VerificationMetaDataList::load(&CONFIG_TEST.verification_list_path()).unwrap();
+        let mut verif = Verification::new("01.01", ok, &md_list, &CONFIG_TEST).unwrap();
         assert_eq!(verif.status, VerificationStatus::Stopped);
         assert!(verif.is_ok().is_none());
         assert!(verif.has_errors().is_none());
@@ -191,13 +199,14 @@ mod test {
 
     #[test]
     fn run_error() {
-        fn error(_: &VerificationDirectory, result: &mut VerificationResult) {
+        fn error(_: &VerificationDirectory, _: &'static Config, result: &mut VerificationResult) {
             result.push(create_verification_error!("toto"));
             result.push(create_verification_error!("toto2"));
             result.push(create_verification_failure!("toto3"));
         }
-        let md_list = VerificationMetaDataList::load(&verification_list_path(None)).unwrap();
-        let mut verif = Verification::new("01.01", error, &md_list).unwrap();
+        let md_list =
+            VerificationMetaDataList::load(&CONFIG_TEST.verification_list_path()).unwrap();
+        let mut verif = Verification::new("01.01", error, &md_list, &CONFIG_TEST).unwrap();
         assert_eq!(verif.status, VerificationStatus::Stopped);
         assert!(verif.is_ok().is_none());
         assert!(verif.has_errors().is_none());
@@ -216,12 +225,13 @@ mod test {
 
     #[test]
     fn run_failure() {
-        fn failure(_: &VerificationDirectory, result: &mut VerificationResult) {
+        fn failure(_: &VerificationDirectory, _: &'static Config, result: &mut VerificationResult) {
             result.push(create_verification_failure!("toto"));
             result.push(create_verification_failure!("toto2"));
         }
-        let md_list = VerificationMetaDataList::load(&verification_list_path(None)).unwrap();
-        let mut verif = Verification::new("01.01", failure, &md_list).unwrap();
+        let md_list =
+            VerificationMetaDataList::load(&CONFIG_TEST.verification_list_path()).unwrap();
+        let mut verif = Verification::new("01.01", failure, &md_list, &CONFIG_TEST).unwrap();
         assert_eq!(verif.status, VerificationStatus::Stopped);
         assert!(verif.is_ok().is_none());
         assert!(verif.has_errors().is_none());

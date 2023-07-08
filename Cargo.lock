@@ -2425,6 +2425,7 @@ name = "rust_verifier_console"
 version = "0.0.1"
 dependencies = [
  "anyhow",
+ "lazy_static",
  "log",
  "log4rs",
  "rust_verifier_lib",
@@ -2437,6 +2438,7 @@ name = "rust_verifier_gui"
 version = "0.0.1"
 dependencies = [
  "anyhow",
+ "lazy_static",
  "rust_verifier_lib",
  "rust_verifier_runner",
  "serde",
@@ -2455,6 +2457,7 @@ dependencies = [
  "data-encoding",
  "enum-kinds",
  "glob",
+ "lazy_static",
  "log",
  "num-bigint",
  "quick-xml",

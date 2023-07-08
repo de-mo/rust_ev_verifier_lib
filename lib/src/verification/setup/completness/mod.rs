@@ -4,6 +4,7 @@ use super::super::{
     verifications::Verification,
 };
 use crate::{
+    config::Config,
     file_structure::{
         setup_directory::{SetupDirectoryTrait, VCSDirectoryTrait},
         VerificationDirectoryTrait,
@@ -13,11 +14,15 @@ use crate::{
 use anyhow::anyhow;
 use log::debug;
 
-pub fn get_verifications(metadata_list: &VerificationMetaDataList) -> VerificationList {
+pub fn get_verifications<'a>(
+    metadata_list: &'a VerificationMetaDataList,
+    config: &'static Config,
+) -> VerificationList<'a> {
     VerificationList(vec![Verification::new(
         "01.01",
         fn_verification_0101,
         metadata_list,
+        config,
     )
     .unwrap()])
 }
@@ -46,7 +51,11 @@ fn validate_vcs_dir<B: VCSDirectoryTrait>(dir: &B, result: &mut VerificationResu
     }
 }
 
-fn fn_verification_0101<D: VerificationDirectoryTrait>(dir: &D, result: &mut VerificationResult) {
+fn fn_verification_0101<D: VerificationDirectoryTrait>(
+    dir: &D,
+    _config: &'static Config,
+    result: &mut VerificationResult,
+) {
     let setup_dir = dir.unwrap_setup();
     if !setup_dir.encryption_parameters_payload_file().exists() {
         result.push(create_verification_failure!(
@@ -91,13 +100,13 @@ fn fn_verification_0101<D: VerificationDirectoryTrait>(dir: &D, result: &mut Ver
 #[cfg(test)]
 mod test {
     use super::{super::super::result::VerificationResultTrait, *};
-    use crate::constants::test::get_verifier_setup_dir as get_verifier_dir;
+    use crate::config::test::{get_test_verifier_setup_dir as get_verifier_dir, CONFIG_TEST};
 
     #[test]
     fn test_ok() {
         let dir = get_verifier_dir();
         let mut result = VerificationResult::new();
-        fn_verification_0101(&dir, &mut result);
+        fn_verification_0101(&dir, &CONFIG_TEST, &mut result);
         assert!(result.is_ok().unwrap());
     }
 }

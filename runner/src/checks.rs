@@ -2,30 +2,27 @@ use std::path::Path;
 
 use anyhow::{anyhow, ensure};
 use crypto_primitives::direct_trust::DirectTrust;
-use rust_verifier_lib::{
-    constants::{direct_trust_path, verification_list_path, SETUP_DIR_NAME, TALLY_DIR_NAME},
-    verification::VerificationPeriod,
-};
+use rust_verifier_lib::{config::Config, verification::VerificationPeriod};
 
 /// Check some elements at start of the application.
 ///
 /// Must be caled by the application at the beginning. If error, then cannot continue
-pub fn start_check() -> anyhow::Result<()> {
+pub fn start_check(config: &'static Config) -> anyhow::Result<()> {
     ensure!(
-        verification_list_path(None).exists(),
+        config.verification_list_path().exists(),
         format!(
             "List of verifications {:?} does not exist",
-            verification_list_path(None).to_str()
+            config.verification_list_path().to_str()
         )
     );
     ensure!(
-        direct_trust_path(None).is_dir(),
+        config.direct_trust_dir_path().is_dir(),
         format!(
             "Direct trust directory {:?} does not exist, or is not a directory",
-            direct_trust_path(None).to_str()
+            config.direct_trust_dir_path().to_str()
         )
     );
-    DirectTrust::new(&direct_trust_path(None))
+    DirectTrust::new(&config.direct_trust_dir_path())
         .map_err(|e| anyhow!("Cannot read keystore").context(e))?;
     Ok(())
 }
@@ -36,13 +33,13 @@ pub fn is_directory_tally(path: &Path) -> anyhow::Result<bool> {
         format!("Giveen directory {:?} does not exist", path)
     );
     ensure!(
-        path.join(SETUP_DIR_NAME).is_dir(),
+        path.join(Config::setup_dir_name()).is_dir(),
         format!(
             "The setup directory {:?} does not exist",
-            path.join(SETUP_DIR_NAME)
+            path.join(Config::setup_dir_name())
         )
     );
-    Ok(path.join(TALLY_DIR_NAME).is_dir())
+    Ok(path.join(Config::tally_dir_name()).is_dir())
 }
 
 pub fn check_verification_dir(period: &VerificationPeriod, path: &Path) -> anyhow::Result<()> {
@@ -52,7 +49,7 @@ pub fn check_verification_dir(period: &VerificationPeriod, path: &Path) -> anyho
             true => Ok(()),
             false => Err(anyhow!(format!(
                 "The tally directory {:?} does not exist",
-                path.join(TALLY_DIR_NAME)
+                path.join(Config::tally_dir_name())
             ))),
         },
         false => Ok(()),

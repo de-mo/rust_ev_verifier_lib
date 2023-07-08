@@ -7,6 +7,7 @@ pub use checks::*;
 use anyhow::anyhow;
 use log::{info, warn};
 use rust_verifier_lib::{
+    config::Config,
     file_structure::VerificationDirectory,
     verification::{
         meta_data::VerificationMetaDataList, suite::VerificationSuite, VerificationPeriod,
@@ -45,6 +46,7 @@ pub struct Runner<'a, T: RunStrategy<'a>> {
     start_time: Option<SystemTime>,
     duration: Option<Duration>,
     run_strategy: T,
+    config: &'static Config,
 }
 
 impl<'a, T> Runner<'a, T>
@@ -61,13 +63,15 @@ where
         metadata: &'a VerificationMetaDataList,
         exclusion: &[String],
         run_strategy: T,
+        config: &'static Config,
     ) -> Runner<'a, T> {
         Runner {
             path: path.to_path_buf(),
-            verifications: Box::new(VerificationSuite::new(period, metadata, exclusion)),
+            verifications: Box::new(VerificationSuite::new(period, metadata, exclusion, config)),
             start_time: None,
             duration: None,
             run_strategy,
+            config,
         }
     }
 
@@ -79,6 +83,7 @@ where
             self.period(),
             metadata_list,
             self.verifications.exclusion(),
+            self.config,
         ))
     }
 

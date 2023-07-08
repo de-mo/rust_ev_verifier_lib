@@ -1,11 +1,8 @@
-use super::root_dir;
-use rust_verifier_lib::{
-    constants::verification_list_path,
-    verification::{
-        meta_data::{VerificationMetaData, VerificationMetaDataList},
-        suite::get_not_implemented_verifications_id,
-        VerificationPeriod,
-    },
+use super::CONFIG;
+use rust_verifier_lib::verification::{
+    meta_data::{VerificationMetaData, VerificationMetaDataList},
+    suite::get_not_implemented_verifications_id,
+    VerificationPeriod,
 };
 use tauri::{
     plugin::{Builder, TauriPlugin},
@@ -64,10 +61,7 @@ impl VerificationListPayload {
             .iter()
             .map(Verification::from)
             .collect::<Vec<Verification>>();
-        let not_implemented = get_not_implemented_verifications_id(
-            &verification_list_path(Some(&root_dir())),
-            period,
-        );
+        let not_implemented = get_not_implemented_verifications_id(period, &CONFIG);
         for v in res.iter_mut().filter(|v| not_implemented.contains(&v.id)) {
             v.status = VerificationStatus::NotImplemented
         }
@@ -83,8 +77,7 @@ async fn get_verifications(is_tally: bool) -> VerificationListPayload {
     };
     VerificationListPayload::from_medata_list(
         p,
-        &VerificationMetaDataList::load_period(&verification_list_path(Some(&root_dir())), &p)
-            .unwrap(),
+        &VerificationMetaDataList::load_period(&CONFIG.verification_list_path(), &p).unwrap(),
     )
 }
 

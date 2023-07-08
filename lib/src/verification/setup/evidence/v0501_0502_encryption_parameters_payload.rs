@@ -2,7 +2,7 @@ use super::super::super::result::{
     create_verification_error, create_verification_failure, VerificationEvent, VerificationResult,
 };
 use crate::{
-    constants::MAXIMUM_NUMBER_OF_VOTING_OPTIONS,
+    config::Config,
     data_structures::common_types::EncryptionGroup,
     file_structure::{setup_directory::SetupDirectoryTrait, VerificationDirectoryTrait},
 };
@@ -12,6 +12,7 @@ use log::debug;
 
 pub(super) fn fn_verification_0501<D: VerificationDirectoryTrait>(
     dir: &D,
+    _config: &'static Config,
     result: &mut VerificationResult,
 ) {
     let setup_dir = dir.unwrap_setup();
@@ -60,6 +61,7 @@ pub(super) fn fn_verification_0501<D: VerificationDirectoryTrait>(
 
 pub(super) fn fn_verification_0502<D: VerificationDirectoryTrait>(
     dir: &D,
+    _config: &'static Config,
     result: &mut VerificationResult,
 ) {
     let setup_dir = dir.unwrap_setup();
@@ -75,7 +77,7 @@ pub(super) fn fn_verification_0502<D: VerificationDirectoryTrait>(
     };
     let primes = match get_small_prime_group_members(
         &eg.encryption_group.p,
-        MAXIMUM_NUMBER_OF_VOTING_OPTIONS,
+        Config::maximum_number_of_voting_options(),
     ) {
         Ok(p) => p,
         Err(e) => {
@@ -102,14 +104,14 @@ pub(super) fn fn_verification_0502<D: VerificationDirectoryTrait>(
 #[cfg(test)]
 mod test {
     use super::{super::super::super::result::VerificationResultTrait, *};
-    use crate::constants::test::get_verifier_setup_dir as get_verifier_dir;
+    use crate::config::test::{get_test_verifier_setup_dir as get_verifier_dir, CONFIG_TEST};
 
     #[test]
     #[ignore]
     fn test_500_ok() {
         let dir = get_verifier_dir();
         let mut result = VerificationResult::new();
-        fn_verification_0501(&dir, &mut result);
+        fn_verification_0501(&dir, &CONFIG_TEST, &mut result);
         assert!(result.is_ok().unwrap());
     }
 
@@ -117,7 +119,7 @@ mod test {
     fn test_501_ok() {
         let dir = get_verifier_dir();
         let mut result = VerificationResult::new();
-        fn_verification_0502(&dir, &mut result);
+        fn_verification_0502(&dir, &CONFIG_TEST, &mut result);
         assert!(result.is_ok().unwrap());
     }
 }

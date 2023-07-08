@@ -81,7 +81,7 @@ impl File {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::constants::test::{dataset_setup_path, dataset_tally_path};
+    use crate::config::test::{test_dataset_setup_path, test_dataset_tally_path};
     use crate::data_structures::{
         setup::VerifierSetupDataType, tally::VerifierTallyDataType, VerifierDataType,
         VerifierSetupDataTrait,
@@ -89,7 +89,7 @@ mod test {
     use std::path::PathBuf;
 
     fn get_location() -> PathBuf {
-        dataset_setup_path().join("setup")
+        test_dataset_setup_path().join("setup")
     }
 
     #[test]
@@ -170,7 +170,7 @@ mod test {
 
     #[test]
     fn test_file_with_astrerix() {
-        let location = dataset_tally_path().join("tally");
+        let location = test_dataset_tally_path().join("tally");
         let f = File::new(
             &location,
             &VerifierDataType::Tally(VerifierTallyDataType::ECH0110),

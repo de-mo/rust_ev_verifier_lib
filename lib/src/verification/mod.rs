@@ -6,7 +6,6 @@ mod setup;
 pub mod suite;
 mod tally;
 mod verifications;
-use crate::constants::direct_trust_path;
 
 use self::result::{
     create_verification_error, create_verification_failure, VerificationEvent, VerificationResult,
@@ -14,7 +13,7 @@ use self::result::{
 use anyhow::{anyhow, bail};
 use crypto_primitives::{hashing::HashableMessage, signature::VerifiySignatureTrait};
 use log::debug;
-use std::fmt::Display;
+use std::{fmt::Display, path::Path};
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
 pub enum VerificationCategory {
@@ -49,12 +48,16 @@ impl VerificationPeriod {
 }
 
 /// Verify the signatue for a given object implementing [VerifiySignatureTrait]
-fn verify_signature_for_object<'a, T>(obj: &'a T, result: &mut VerificationResult, name: &str)
-where
+fn verify_signature_for_object<'a, T>(
+    obj: &'a T,
+    result: &mut VerificationResult,
+    direct_trust_pah: &Path,
+    name: &str,
+) where
     T: VerifiySignatureTrait<'a>,
     HashableMessage<'a>: From<&'a T>,
 {
-    match obj.verifiy_signature(&direct_trust_path(None)) {
+    match obj.verifiy_signature(direct_trust_pah) {
         Ok(t) => {
             if !t {
                 result.push(create_verification_failure!(format!(

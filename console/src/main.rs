@@ -5,6 +5,7 @@
 //! rust_verifier --help
 //! ```
 use anyhow::bail;
+use lazy_static::lazy_static;
 use log::{error, info, LevelFilter};
 use log4rs::{
     append::{console::ConsoleAppender, file::FileAppender},
@@ -12,13 +13,17 @@ use log4rs::{
     encode::pattern::PatternEncoder,
 };
 use rust_verifier_lib::{
-    constants::{log_path, verification_list_path},
+    config::Config as VerifierConfig,
     verification::{meta_data::VerificationMetaDataList, VerificationPeriod},
 };
 use rust_verifier_runner::{check_verification_dir, start_check};
 use rust_verifier_runner::{RunSequential, Runner};
 use std::path::PathBuf;
 use structopt::StructOpt;
+
+lazy_static! {
+    static ref CONFIG: VerifierConfig = VerifierConfig::new(".");
+}
 
 #[derive(Debug, PartialEq, StructOpt)]
 #[structopt()]
@@ -76,37 +81,42 @@ impl SubCommands {
 }
 
 /// Init the logger with or without stdout
-fn init_logger(level: LevelFilter, with_stdout: bool) {
+fn init_logger(level: LevelFilter) {
+    // File logger
     let file = FileAppender::builder()
         .encoder(Box::new(PatternEncoder::new("{d} {l} - {m}{n}")))
-        .build(log_path(None))
+        .build(CONFIG.log_file_path())
         .unwrap();
-
     let mut root_builder = Root::builder().appender("file");
     let mut config_builder =
         Config::builder().appender(Appender::builder().build("file", Box::new(file)));
 
-    if with_stdout {
-        let stdout = ConsoleAppender::builder()
-            .encoder(Box::new(PatternEncoder::new("{h({l})} - {m}{n}")))
-            .build();
-        root_builder = root_builder.appender("stdout");
-        config_builder =
-            config_builder.appender(Appender::builder().build("stdout", Box::new(stdout)));
-    }
+    // Console logger
+    let stdout = ConsoleAppender::builder()
+        .encoder(Box::new(PatternEncoder::new("{h({l})} - {m}{n}")))
+        .build();
+    root_builder = root_builder.appender("stdout");
+    config_builder = config_builder.appender(Appender::builder().build("stdout", Box::new(stdout)));
 
     let config = config_builder.build(root_builder.build(level)).unwrap();
     let _handle = log4rs::init_config(config).unwrap();
 }
 
 fn execute_runner(period: &VerificationPeriod, cmd: &VerifierSubCommand) {
-    let metadata = VerificationMetaDataList::load(&verification_list_path(None)).unwrap();
-    let mut runner = Runner::new(&cmd.dir, period, &metadata, &cmd.exclude, RunSequential);
+    let metadata = VerificationMetaDataList::load(&CONFIG.verification_list_path()).unwrap();
+    let mut runner = Runner::new(
+        &cmd.dir,
+        period,
+        &metadata,
+        &cmd.exclude,
+        RunSequential,
+        &CONFIG,
+    );
     runner.run_all(&metadata);
 }
 
 fn execute_verifier() -> anyhow::Result<()> {
-    if let Err(e) = start_check() {
+    if let Err(e) = start_check(&CONFIG) {
         bail!("Application cannot start: {}", e);
     };
     let command = VerifiyCommand::from_args();
@@ -123,7 +133,7 @@ fn execute_verifier() -> anyhow::Result<()> {
 }
 
 fn main() {
-    init_logger(LevelFilter::Debug, true);
+    init_logger(LevelFilter::Debug);
     if let Err(e) = execute_verifier() {
         error!("{}", e)
     }

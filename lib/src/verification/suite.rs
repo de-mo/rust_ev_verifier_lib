@@ -5,18 +5,18 @@ use super::{
     tally::get_verifications as get_verifications_tally, verifications::Verification,
     VerificationCategory, VerificationPeriod,
 };
-use crate::file_structure::VerificationDirectory;
-use std::path::Path;
+use crate::{config::Config, file_structure::VerificationDirectory};
 
 /// Get the list of the verifications that are not implemented yet
 #[allow(dead_code)]
 pub fn get_not_implemented_verifications_id(
-    config_path: &Path,
     period: VerificationPeriod,
+    config: &'static Config,
 ) -> Vec<String> {
-    let metadata = VerificationMetaDataList::load_period(config_path, &period).unwrap();
+    let metadata =
+        VerificationMetaDataList::load_period(&config.verification_list_path(), &period).unwrap();
     let all_id = metadata.id_list();
-    let verifs_id = VerificationSuite::new(&period, &metadata, &[]).collect_id();
+    let verifs_id = VerificationSuite::new(&period, &metadata, &[], config).collect_id();
     let mut diff: Vec<String> = all_id
         .iter()
         .filter(|&x| !verifs_id.contains(x))
@@ -45,11 +45,12 @@ impl<'a> VerificationSuite<'a> {
         period: &VerificationPeriod,
         metadata_list: &'a VerificationMetaDataList,
         exclusion: &[String],
+        config: &'static Config,
     ) -> VerificationSuite<'a> {
         let mut all_verifs = match period {
-            VerificationPeriod::Setup => get_verifications_setup(metadata_list),
+            VerificationPeriod::Setup => get_verifications_setup(metadata_list, config),
 
-            VerificationPeriod::Tally => get_verifications_tally(metadata_list),
+            VerificationPeriod::Tally => get_verifications_tally(metadata_list, config),
         };
         let all_ids: Vec<String> = all_verifs.0.iter().map(|v| v.id().clone()).collect();
         all_verifs.0.retain(|x| !exclusion.contains(x.id()));
@@ -140,7 +141,7 @@ impl<'a> VerificationSuite<'a> {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::constants::verification_list_path;
+    use crate::config::test::CONFIG_TEST;
 
     const EXPECTED_IMPL_SETUP_VERIF: usize = 24;
     const IMPL_SETUP_TESTS: &[&str] = &[
@@ -161,41 +162,49 @@ mod test {
 
     #[test]
     fn test_setup_verifications() {
-        let metadata_list = VerificationMetaDataList::load(&verification_list_path(None)).unwrap();
-        let verifs = VerificationSuite::new(&VerificationPeriod::Setup, &metadata_list, &[]);
+        let metadata_list =
+            VerificationMetaDataList::load(&CONFIG_TEST.verification_list_path()).unwrap();
+        let verifs = VerificationSuite::new(
+            &VerificationPeriod::Setup,
+            &metadata_list,
+            &[],
+            &CONFIG_TEST,
+        );
         assert_eq!(verifs.len(), EXPECTED_IMPL_SETUP_VERIF);
         assert_eq!(verifs.collect_id(), IMPL_SETUP_TESTS);
         assert_eq!(
-            get_not_implemented_verifications_id(
-                &verification_list_path(None),
-                VerificationPeriod::Setup
-            ),
+            get_not_implemented_verifications_id(VerificationPeriod::Setup, &CONFIG_TEST),
             MISSING_SETUP_TESTS
         );
     }
 
     #[test]
     fn test_tally_verifications() {
-        let metadata_list = VerificationMetaDataList::load(&verification_list_path(None)).unwrap();
-        let verifs = VerificationSuite::new(&VerificationPeriod::Tally, &metadata_list, &[]);
+        let metadata_list =
+            VerificationMetaDataList::load(&CONFIG_TEST.verification_list_path()).unwrap();
+        let verifs = VerificationSuite::new(
+            &VerificationPeriod::Tally,
+            &metadata_list,
+            &[],
+            &CONFIG_TEST,
+        );
         assert_eq!(verifs.len(), EXPECTED_IMPL_TALLY_VERIF);
         assert_eq!(verifs.collect_id(), IMPL_TALLY_TESTS);
         assert_eq!(
-            get_not_implemented_verifications_id(
-                &verification_list_path(None),
-                VerificationPeriod::Tally
-            ),
+            get_not_implemented_verifications_id(VerificationPeriod::Tally, &CONFIG_TEST),
             MISSING_TALLY_TESTS
         );
     }
 
     #[test]
     fn test_with_exclusion() {
-        let metadata_list = VerificationMetaDataList::load(&verification_list_path(None)).unwrap();
+        let metadata_list =
+            VerificationMetaDataList::load(&CONFIG_TEST.verification_list_path()).unwrap();
         let verifs = VerificationSuite::new(
             &VerificationPeriod::Setup,
             &metadata_list,
             &["02.01".to_string(), "05.01".to_string()],
+            &CONFIG_TEST,
         );
         assert_eq!(verifs.len(), EXPECTED_IMPL_SETUP_VERIF - 2);
         assert_eq!(verifs.len_excluded(), 2);
@@ -207,6 +216,7 @@ mod test {
             &VerificationPeriod::Setup,
             &metadata_list,
             &["toto".to_string()],
+            &CONFIG_TEST,
         );
         assert_eq!(verifs.len(), EXPECTED_IMPL_SETUP_VERIF);
         assert_eq!(verifs.len_excluded(), 0);
@@ -215,6 +225,7 @@ mod test {
             &VerificationPeriod::Setup,
             &metadata_list,
             &["02.01".to_string(), "05.01".to_string(), "toto".to_string()],
+            &CONFIG_TEST,
         );
         assert_eq!(verifs.len(), EXPECTED_IMPL_SETUP_VERIF - 2);
         assert_eq!(verifs.len_excluded(), 2);

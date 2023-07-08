@@ -235,12 +235,12 @@ impl FileGroup {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::constants::test::dataset_setup_path;
+    use crate::config::test::test_dataset_setup_path;
     use crate::data_structures::setup::VerifierSetupDataType;
     use std::path::PathBuf;
 
     fn get_location() -> PathBuf {
-        dataset_setup_path().join("setup")
+        test_dataset_setup_path().join("setup")
     }
 
     #[test]

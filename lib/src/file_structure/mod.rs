@@ -177,11 +177,11 @@ impl GetFileNameTrait for VerifierDataType {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::constants::test::dataset_tally_path;
+    use crate::config::test::test_dataset_tally_path;
 
     #[test]
     fn test_setup_files_exist() {
-        let path = dataset_tally_path().join("setup");
+        let path = test_dataset_tally_path().join("setup");
         assert!(path
             .join(
                 VerifierDataType::Setup(VerifierSetupDataType::EncryptionParametersPayload)
@@ -213,7 +213,7 @@ mod test {
 
     #[test]
     fn test_tally_files_exist() {
-        let path = dataset_tally_path().join("tally");
+        let path = test_dataset_tally_path().join("tally");
         let path2 = path
             .join("ballot_boxes")
             .join("4AB4F95B8114C1DFEDB9586ADBFE36B3");
@@ -233,7 +233,7 @@ mod test {
 
     #[test]
     fn test_setup_groups_exist() {
-        let path = dataset_tally_path().join("setup");
+        let path = test_dataset_tally_path().join("setup");
         assert!(path
             .join(
                 VerifierDataType::Setup(VerifierSetupDataType::ControlComponentPublicKeysPayload)

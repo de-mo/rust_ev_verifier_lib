@@ -138,11 +138,11 @@ where
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::constants::verification_list_path;
+    use crate::config::test::CONFIG_TEST;
 
     #[test]
     fn test_load() {
-        let metadata_res = VerificationMetaDataList::load(&verification_list_path(None));
+        let metadata_res = VerificationMetaDataList::load(&CONFIG_TEST.verification_list_path());
         assert!(metadata_res.is_ok());
         let metadata = metadata_res.unwrap();
         assert!(!metadata.is_empty());

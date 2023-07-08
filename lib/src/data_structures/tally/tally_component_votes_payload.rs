@@ -23,12 +23,12 @@ implement_trait_verifier_data_json_decode!(TallyComponentVotesPayload);
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::constants::test::dataset_tally_path;
+    use crate::config::test::test_dataset_tally_path;
     use std::fs;
 
     #[test]
     fn read_data_set() {
-        let path = dataset_tally_path()
+        let path = test_dataset_tally_path()
             .join("tally")
             .join("ballot_boxes")
             .join("4AB4F95B8114C1DFEDB9586ADBFE36B3")
