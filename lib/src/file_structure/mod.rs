@@ -18,6 +18,7 @@ use tally_directory::TallyDirectory;
 
 use self::{setup_directory::SetupDirectoryTrait, tally_directory::TallyDirectoryTrait};
 
+#[derive(Clone)]
 /// Type represending a VerificationDirectory
 pub struct VerificationDirectory {
     setup: SetupDirectory,

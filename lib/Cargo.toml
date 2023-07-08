@@ -16,7 +16,6 @@ enum-kinds = "0.5"
 roxmltree = "0.18"
 glob = "0.3"
 quick-xml = { version = "0.28", features = ["serialize"] }
-rayon = "1.7"
 log.workspace = true
 data-encoding.workspace = true
 num-bigint.workspace = true
@@ -24,5 +23,6 @@ chrono = {workspace = true, features = ["serde"]}
 thiserror.workspace = true
 anyhow.workspace = true
 lazy_static.workspace = true
+rayon.workspace = true
 
 

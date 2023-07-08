@@ -1,4 +1,5 @@
 use anyhow::anyhow;
+//use futures::{stream::FuturesUnordered, StreamExt};
 use log::{info, warn};
 use rust_verifier_lib::{
     config::Config as VerifierConfig,
@@ -7,27 +8,70 @@ use rust_verifier_lib::{
         meta_data::VerificationMetaDataList, suite::VerificationSuite, VerificationPeriod,
     },
 };
+//use std::future::Future;
+use rayon::prelude::*;
+use std::{iter::zip, sync::Mutex};
 use std::{
     path::{Path, PathBuf},
     time::{Duration, SystemTime},
 };
 
+pub fn no_action_fn(_: &str) {}
+
 /// Strategy to run the tests
 pub trait RunStrategy<'a> {
     /// Run function
-    fn run(&self, verifications: &'a mut VerificationSuite<'a>, dir_path: &Path);
+    fn run(
+        &self,
+        verifications: &'a mut VerificationSuite<'a>,
+        dir_path: &Path,
+        action_before: impl Fn(&str) + Send + Sync,
+        action_after: impl Fn(&str) + Send + Sync,
+    );
 }
 
 /// Strategy to run the tests sequentially
 pub struct RunSequential;
 
+/// Strategy to run the tests concurrently
+pub struct RunParallel;
+
 impl<'a> RunStrategy<'a> for RunSequential {
-    fn run(&self, verifications: &'a mut VerificationSuite<'a>, dir_path: &Path) {
+    fn run(
+        &self,
+        verifications: &'a mut VerificationSuite<'a>,
+        dir_path: &Path,
+        action_before: impl Fn(&str) + Send + Sync,
+        action_after: impl Fn(&str) + Send + Sync,
+    ) {
         let directory = VerificationDirectory::new(verifications.period(), dir_path);
         let it = verifications.list.0.iter_mut();
         for v in it {
+            action_before(v.id());
             v.run(&directory);
+            action_after(v.id());
         }
+    }
+}
+
+impl<'a> RunStrategy<'a> for RunParallel {
+    fn run(
+        &self,
+        verifications: &'a mut VerificationSuite<'a>,
+        dir_path: &Path,
+        action_before: impl Fn(&str) + Send + Sync,
+        action_after: impl Fn(&str) + Send + Sync,
+    ) {
+        let directory = VerificationDirectory::new(verifications.period(), dir_path);
+        let dirs = vec![directory; verifications.len()];
+        zip(verifications.list.0.iter_mut().map(Mutex::new), dirs)
+            .par_bridge()
+            .for_each(|(vm, d)| {
+                let mut v = vm.lock().unwrap();
+                action_before(v.id());
+                v.run(&d);
+                action_after(v.id());
+            });
     }
 }
 
@@ -41,6 +85,8 @@ pub struct Runner<'a, T: RunStrategy<'a>> {
     duration: Option<Duration>,
     run_strategy: T,
     config: &'static VerifierConfig,
+    action_before: Box<dyn Fn(&str) + Send + Sync>,
+    action_after: Box<dyn Fn(&str) + Send + Sync>,
 }
 
 impl<'a, T> Runner<'a, T>
@@ -51,6 +97,7 @@ where
     ///
     /// path represents the location where the directory setup and tally are stored
     /// period ist the verification period
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         path: &Path,
         period: &VerificationPeriod,
@@ -58,6 +105,8 @@ where
         exclusion: &[String],
         run_strategy: T,
         config: &'static VerifierConfig,
+        action_before: impl Fn(&str) + Send + Sync + 'static,
+        action_after: impl Fn(&str) + Send + Sync + 'static,
     ) -> Runner<'a, T> {
         Runner {
             path: path.to_path_buf(),
@@ -66,6 +115,8 @@ where
             duration: None,
             run_strategy,
             config,
+            action_before: Box::new(action_before),
+            action_after: Box::new(action_after),
         }
     }
 
@@ -111,7 +162,12 @@ where
         }
         let len = self.verifications.len();
         {
-            self.run_strategy.run(&mut self.verifications, &self.path);
+            self.run_strategy.run(
+                &mut self.verifications,
+                &self.path,
+                &self.action_before,
+                &self.action_after,
+            );
         }
         self.duration = Some(self.start_time.unwrap().elapsed().unwrap());
         info!(

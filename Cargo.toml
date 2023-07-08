@@ -9,6 +9,7 @@ thiserror = "1.0.40"
 data-encoding = "2.3"
 anyhow = "1.0.71"
 lazy_static = "1.4.0"
+rayon = "1.7"
 
 [workspace.package]
 authors = ["Denis Morel"]

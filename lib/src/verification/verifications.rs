@@ -22,7 +22,7 @@ pub struct Verification<'a, D: VerificationDirectoryTrait> {
     /// The meta data is a reference to the metadata list loaded from json
     meta_data: &'a VerificationMetaData,
     status: VerificationStatus,
-    verification_fn: Box<dyn Fn(&D, &'static Config, &mut VerificationResult)>,
+    verification_fn: Box<dyn Fn(&D, &'static Config, &mut VerificationResult) + Send + Sync>,
     duration: Option<Duration>,
     result: Box<VerificationResult>,
     config: &'static Config,
@@ -52,6 +52,8 @@ impl<'a> Verification<'a, VerificationDirectory> {
     pub fn new(
         id: &str,
         verification_fn: impl Fn(&VerificationDirectory, &'static Config, &mut VerificationResult)
+            + Send
+            + Sync
             + 'static,
         metadata_list: &'a VerificationMetaDataList,
         config: &'static Config,

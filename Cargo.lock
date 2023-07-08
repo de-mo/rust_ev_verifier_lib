@@ -2471,6 +2471,7 @@ dependencies = [
  "crypto_primitives",
  "log",
  "log4rs",
+ "rayon",
  "rust_verifier_lib",
  "thiserror",
 ]

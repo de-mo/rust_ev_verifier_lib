@@ -8,7 +8,7 @@ use anyhow::bail;
 use lazy_static::lazy_static;
 use log::{error, info, LevelFilter};
 use rust_verifier_application::{
-    check_verification_dir, init_logger, start_check, RunSequential, Runner,
+    check_verification_dir, init_logger, no_action_fn, start_check, RunParallel, Runner,
     VerificationMetaDataList, VerificationPeriod, VerifierConfig,
 };
 use std::path::PathBuf;
@@ -80,8 +80,10 @@ fn execute_runner(period: &VerificationPeriod, cmd: &VerifierSubCommand) {
         period,
         &metadata,
         &cmd.exclude,
-        RunSequential,
+        RunParallel,
         &CONFIG,
+        no_action_fn,
+        no_action_fn,
     );
     runner.run_all(&metadata);
 }
