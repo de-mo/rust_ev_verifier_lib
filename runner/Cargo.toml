@@ -15,5 +15,6 @@ log.workspace = true
 chrono = {workspace = true, features = ["serde"]}
 thiserror.workspace = true
 anyhow.workspace = true
+log4rs = "1.2"
 
 

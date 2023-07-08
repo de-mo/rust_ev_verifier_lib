@@ -5,9 +5,15 @@ mod checks;
 pub use checks::*;
 
 use anyhow::anyhow;
+use log::LevelFilter;
 use log::{info, warn};
+use log4rs::{
+    append::{console::ConsoleAppender, file::FileAppender},
+    config::{Appender, Config, Root},
+    encode::pattern::PatternEncoder,
+};
 use rust_verifier_lib::{
-    config::Config,
+    config::Config as VerifierConfig,
     file_structure::VerificationDirectory,
     verification::{
         meta_data::VerificationMetaDataList, suite::VerificationSuite, VerificationPeriod,
@@ -17,6 +23,31 @@ use std::{
     path::{Path, PathBuf},
     time::{Duration, SystemTime},
 };
+
+/// Init the logger with or without stdout
+pub fn init_logger(config: &'static VerifierConfig, level: LevelFilter, with_console: bool) {
+    // File logger
+    let file = FileAppender::builder()
+        .encoder(Box::new(PatternEncoder::new("{d} {l} - {m}{n}")))
+        .build(config.log_file_path())
+        .unwrap();
+    let mut root_builder = Root::builder().appender("file");
+    let mut config_builder =
+        Config::builder().appender(Appender::builder().build("file", Box::new(file)));
+
+    // Console logger
+    if with_console {
+        let stdout = ConsoleAppender::builder()
+            .encoder(Box::new(PatternEncoder::new("{h({l})} - {m}{n}")))
+            .build();
+        root_builder = root_builder.appender("stdout");
+        config_builder =
+            config_builder.appender(Appender::builder().build("stdout", Box::new(stdout)));
+    }
+
+    let config = config_builder.build(root_builder.build(level)).unwrap();
+    let _handle = log4rs::init_config(config).unwrap();
+}
 
 /// Strategy to run the tests
 pub trait RunStrategy<'a> {
@@ -46,7 +77,7 @@ pub struct Runner<'a, T: RunStrategy<'a>> {
     start_time: Option<SystemTime>,
     duration: Option<Duration>,
     run_strategy: T,
-    config: &'static Config,
+    config: &'static VerifierConfig,
 }
 
 impl<'a, T> Runner<'a, T>
@@ -63,7 +94,7 @@ where
         metadata: &'a VerificationMetaDataList,
         exclusion: &[String],
         run_strategy: T,
-        config: &'static Config,
+        config: &'static VerifierConfig,
     ) -> Runner<'a, T> {
         Runner {
             path: path.to_path_buf(),

@@ -7,17 +7,13 @@
 use anyhow::bail;
 use lazy_static::lazy_static;
 use log::{error, info, LevelFilter};
-use log4rs::{
-    append::{console::ConsoleAppender, file::FileAppender},
-    config::{Appender, Config, Root},
-    encode::pattern::PatternEncoder,
-};
 use rust_verifier_lib::{
     config::Config as VerifierConfig,
     verification::{meta_data::VerificationMetaDataList, VerificationPeriod},
 };
-use rust_verifier_runner::{check_verification_dir, start_check};
-use rust_verifier_runner::{RunSequential, Runner};
+use rust_verifier_runner::{
+    check_verification_dir, init_logger, start_check, RunSequential, Runner,
+};
 use std::path::PathBuf;
 use structopt::StructOpt;
 
@@ -80,28 +76,6 @@ impl SubCommands {
     }
 }
 
-/// Init the logger with or without stdout
-fn init_logger(level: LevelFilter) {
-    // File logger
-    let file = FileAppender::builder()
-        .encoder(Box::new(PatternEncoder::new("{d} {l} - {m}{n}")))
-        .build(CONFIG.log_file_path())
-        .unwrap();
-    let mut root_builder = Root::builder().appender("file");
-    let mut config_builder =
-        Config::builder().appender(Appender::builder().build("file", Box::new(file)));
-
-    // Console logger
-    let stdout = ConsoleAppender::builder()
-        .encoder(Box::new(PatternEncoder::new("{h({l})} - {m}{n}")))
-        .build();
-    root_builder = root_builder.appender("stdout");
-    config_builder = config_builder.appender(Appender::builder().build("stdout", Box::new(stdout)));
-
-    let config = config_builder.build(root_builder.build(level)).unwrap();
-    let _handle = log4rs::init_config(config).unwrap();
-}
-
 fn execute_runner(period: &VerificationPeriod, cmd: &VerifierSubCommand) {
     let metadata = VerificationMetaDataList::load(&CONFIG.verification_list_path()).unwrap();
     let mut runner = Runner::new(
@@ -133,7 +107,7 @@ fn execute_verifier() -> anyhow::Result<()> {
 }
 
 fn main() {
-    init_logger(LevelFilter::Debug);
+    init_logger(&CONFIG, LevelFilter::Debug, true);
     if let Err(e) = execute_verifier() {
         error!("{}", e)
     }

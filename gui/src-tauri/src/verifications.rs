@@ -1,4 +1,5 @@
 use super::CONFIG;
+use log::debug;
 use rust_verifier_lib::verification::{
     meta_data::{VerificationMetaData, VerificationMetaDataList},
     suite::get_not_implemented_verifications_id,
@@ -75,6 +76,7 @@ async fn get_verifications(is_tally: bool) -> VerificationListPayload {
         true => VerificationPeriod::Tally,
         false => VerificationPeriod::Setup,
     };
+    debug!("Loading verifications for period {}", p);
     VerificationListPayload::from_medata_list(
         p,
         &VerificationMetaDataList::load_period(&CONFIG.verification_list_path(), &p).unwrap(),

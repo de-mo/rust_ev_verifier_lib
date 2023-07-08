@@ -1,3 +1,4 @@
+use log::{error, info};
 use rust_verifier_runner::is_directory_tally;
 use std::path::Path;
 use tauri::api::dialog::blocking::FileDialogBuilder;
@@ -15,11 +16,21 @@ struct DirectoryDataPayload {
 impl DirectoryDataPayload {
     fn new(path: &Path) -> Result<Self, String> {
         match is_directory_tally(path) {
-            Ok(b) => Ok(DirectoryDataPayload {
-                path: path.as_os_str().to_str().unwrap().to_string(),
-                is_tally: b,
-            }),
-            Err(e) => Err(e.to_string()),
+            Ok(b) => {
+                info!("Directory loaded: {}", path.to_str().unwrap());
+                Ok(DirectoryDataPayload {
+                    path: path.as_os_str().to_str().unwrap().to_string(),
+                    is_tally: b,
+                })
+            }
+            Err(e) => {
+                error!(
+                    "Error loading the directory {}: {}",
+                    path.to_str().unwrap(),
+                    e
+                );
+                Err(e.to_string())
+            }
         }
     }
 }
