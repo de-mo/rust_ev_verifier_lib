@@ -1,8 +1,7 @@
 use super::CONFIG;
 use log::debug;
-use rust_verifier_lib::verification::{
-    meta_data::{VerificationMetaData, VerificationMetaDataList},
-    suite::get_not_implemented_verifications_id,
+use rust_verifier_application::{
+    get_not_implemented_verifications_id, VerificationMetaData, VerificationMetaDataList,
     VerificationPeriod,
 };
 use tauri::{

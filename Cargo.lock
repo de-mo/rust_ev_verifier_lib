@@ -2463,14 +2463,26 @@ dependencies = [
 ]
 
 [[package]]
+name = "rust_verifier_application"
+version = "0.0.1"
+dependencies = [
+ "anyhow",
+ "chrono",
+ "crypto_primitives",
+ "log",
+ "log4rs",
+ "rust_verifier_lib",
+ "thiserror",
+]
+
+[[package]]
 name = "rust_verifier_console"
 version = "0.0.1"
 dependencies = [
  "anyhow",
  "lazy_static",
  "log",
- "rust_verifier_lib",
- "rust_verifier_runner",
+ "rust_verifier_application",
  "structopt",
 ]
 
@@ -2481,8 +2493,7 @@ dependencies = [
  "anyhow",
  "lazy_static",
  "log",
- "rust_verifier_lib",
- "rust_verifier_runner",
+ "rust_verifier_application",
  "serde",
  "serde_json",
  "tauri",
@@ -2507,19 +2518,6 @@ dependencies = [
  "roxmltree",
  "serde",
  "serde_json",
- "thiserror",
-]
-
-[[package]]
-name = "rust_verifier_runner"
-version = "0.0.1"
-dependencies = [
- "anyhow",
- "chrono",
- "crypto_primitives",
- "log",
- "log4rs",
- "rust_verifier_lib",
  "thiserror",
 ]
 

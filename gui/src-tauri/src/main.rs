@@ -6,15 +6,14 @@ mod verifications;
 
 use lazy_static::lazy_static;
 use log::{info, LevelFilter};
-use rust_verifier_lib::config::Config;
-use rust_verifier_runner::init_logger;
+use rust_verifier_application::{init_logger, VerifierConfig};
 
 lazy_static! {
-    pub(crate) static ref CONFIG: Config = {
+    pub(crate) static ref CONFIG: VerifierConfig = {
         if cfg!(debug_assertions) {
-            Config::new("../..")
+            VerifierConfig::new("../..")
         } else {
-            Config::new(".")
+            VerifierConfig::new(".")
         }
     };
 }

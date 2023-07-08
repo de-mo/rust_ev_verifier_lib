@@ -1,5 +1,5 @@
 [package]
-name = "rust_verifier_runner"
+name = "rust_verifier_application"
 description = "Library for an Implementation of a Runner of verifications for Verifier for the E-Voting system of Swiss Post."
 edition.workspace = true
 rust-version.workspace = true

@@ -1,5 +1,5 @@
 use log::{error, info};
-use rust_verifier_runner::is_directory_tally;
+use rust_verifier_application::is_directory_tally;
 use std::path::Path;
 use tauri::api::dialog::blocking::FileDialogBuilder;
 use tauri::{

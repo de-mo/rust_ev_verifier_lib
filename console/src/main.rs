@@ -7,12 +7,9 @@
 use anyhow::bail;
 use lazy_static::lazy_static;
 use log::{error, info, LevelFilter};
-use rust_verifier_lib::{
-    config::Config as VerifierConfig,
-    verification::{meta_data::VerificationMetaDataList, VerificationPeriod},
-};
-use rust_verifier_runner::{
+use rust_verifier_application::{
     check_verification_dir, init_logger, start_check, RunSequential, Runner,
+    VerificationMetaDataList, VerificationPeriod, VerifierConfig,
 };
 use std::path::PathBuf;
 use structopt::StructOpt;

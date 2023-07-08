@@ -11,8 +11,7 @@ repository.workspace = true
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-rust_verifier_lib = {path = "../lib"}
-rust_verifier_runner = {path = "../runner"}
+rust_verifier_application = {path = "../application"}
 structopt = "0.3"
 log.workspace = true
 anyhow.workspace = true
