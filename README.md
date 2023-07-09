@@ -33,11 +33,11 @@ A major difference to Swiss Post is that the verifications does not return true 
 ###  Future works
 
 - Not all the tests are implemented
-- For many tests, the negative unit tests are not implemented
-- The tests are running sequentially. A parallelism should be introduced (e.g. using Rayon)
-- Gui is started but functionalities must be implemented
+- For most of the tests, the negative unit tests are not implemented
+- Gui is implemented, but look & feel should be improved
 - The manual verifications are not implemented
 - The report of the tests is not generated
+- Add functionality to read zip file (to check hashes)
 
 ## Development guide
 
