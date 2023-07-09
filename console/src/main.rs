@@ -8,8 +8,8 @@ use anyhow::bail;
 use lazy_static::lazy_static;
 use log::{error, info, LevelFilter};
 use rust_verifier_application::{
-    check_verification_dir, init_logger, no_action_fn, start_check, RunParallel, Runner,
-    VerificationMetaDataList, VerificationPeriod, VerifierConfig,
+    check_verification_dir, init_logger, no_action_after_fn, no_action_before_fn, start_check,
+    RunParallel, Runner, VerificationMetaDataList, VerificationPeriod, VerifierConfig,
 };
 use std::path::PathBuf;
 use structopt::StructOpt;
@@ -82,8 +82,8 @@ fn execute_runner(period: &VerificationPeriod, cmd: &VerifierSubCommand) {
         &cmd.exclude,
         RunParallel,
         &CONFIG,
-        no_action_fn,
-        no_action_fn,
+        no_action_before_fn,
+        no_action_after_fn,
     );
     runner.run_all(&metadata);
 }
