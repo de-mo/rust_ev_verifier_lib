@@ -40,8 +40,12 @@ pub trait VerificationResultTrait {
     /// All the errors
     fn errors(&self) -> &Vec<VerificationEvent>;
 
+    fn errors_to_string(&self) -> Vec<String>;
+
     /// All the failures
     fn failures(&self) -> &Vec<VerificationEvent>;
+
+    fn failures_to_string(&self) -> Vec<String>;
 
     /// Mutable reference to the errors
     fn errors_mut(&mut self) -> &mut Vec<VerificationEvent>;
@@ -107,6 +111,14 @@ impl VerificationResultTrait for VerificationResult {
 
     fn failures_mut(&mut self) -> &mut Vec<VerificationEvent> {
         &mut self.failures
+    }
+
+    fn errors_to_string(&self) -> Vec<String> {
+        self.errors().iter().map(|e| e.to_string()).collect()
+    }
+
+    fn failures_to_string(&self) -> Vec<String> {
+        self.failures().iter().map(|e| e.to_string()).collect()
     }
 }
 

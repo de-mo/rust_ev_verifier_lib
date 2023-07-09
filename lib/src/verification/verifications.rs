@@ -163,6 +163,14 @@ impl<'a> VerificationResultTrait for Verification<'a, VerificationDirectory> {
     fn failures_mut(&mut self) -> &mut Vec<VerificationEvent> {
         self.result.failures_mut()
     }
+
+    fn errors_to_string(&self) -> Vec<String> {
+        self.result.errors_to_string()
+    }
+
+    fn failures_to_string(&self) -> Vec<String> {
+        self.result.failures_to_string()
+    }
 }
 
 #[cfg(test)]
