@@ -86,6 +86,10 @@ impl VerificationMetaDataList {
         self.len() == 0
     }
 
+    pub fn get(&self, id: &str) -> Option<&VerificationMetaData> {
+        self.iter().find(|&e| e.id == id)
+    }
+
     pub fn iter(&self) -> std::slice::Iter<VerificationMetaData> {
         self.0.iter()
     }
@@ -114,6 +118,13 @@ impl VerificationMetaData {
 
     pub fn category(&self) -> &VerificationCategory {
         &self.category
+    }
+
+    pub fn from_id(id: &str, path: &Path) -> Option<Self> {
+        match VerificationMetaDataList::load(path) {
+            Ok(l) => l.get(id).cloned(),
+            Err(_) => None,
+        }
     }
 }
 

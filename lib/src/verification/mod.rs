@@ -1,11 +1,11 @@
 //! Module implementing all the verifications
 
 pub mod meta_data;
-mod result;
+pub mod result;
 mod setup;
 pub mod suite;
 mod tally;
-mod verifications;
+pub mod verifications;
 
 use self::result::{
     create_verification_error, create_verification_failure, VerificationEvent, VerificationResult,
