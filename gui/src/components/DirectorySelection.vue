@@ -1,16 +1,18 @@
 <script setup>
   import { useSharedDirectory } from "../composables/directory"
+  import { useSharedApplication } from "../composables/application"
   const { directory, hasDirectory, directoryError, hasError, chooseDirectory } = useSharedDirectory()
+  const { isRunning } = useSharedApplication()
 </script>
 
 <template>
   <div v-if="hasError">
     <span class="ele_inline text" style="color:red">{{ directoryError }}</span>
-    <button  class="button-verifier ele_inline" role="button" @click="chooseDirectory">Change Directory</button>
+    <button  class="button-verifier ele_inline" role="button" @click="chooseDirectory" :disabled="isRunning">Change Directory</button>
   </div>
   <div v-else-if="hasDirectory">
       <span class="ele_inline text"><b>Chosen directory: </b>{{ directory }}</span>
-      <button class="button-verifier ele_inline" role="button" @click="chooseDirectory">Change Directory</button>
+      <button class="button-verifier ele_inline" role="button" @click="chooseDirectory" :disabled="isRunning">Change Directory</button>
   </div>
   <button  v-else class="button-verifier" role="button" @click="chooseDirectory">Choose a Directory</button>
 </template>

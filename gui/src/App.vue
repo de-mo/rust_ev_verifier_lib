@@ -4,6 +4,7 @@
 import HeaderFrame from "./components/HeaderFrame.vue";
 import InformationFrame from "./components/InformationFrame.vue";
 import VerificationList from "./components/VerificationList.vue";
+import DebugInformation from "./components/utils/DebugInformation.vue";
 import { useSharedApplication } from "./composables/application"
 
 const { hasDirectory } = useSharedApplication()
@@ -12,6 +13,7 @@ const { hasDirectory } = useSharedApplication()
 <template>
   <div class="container">
     <div style="text-align: center"><h1>Welcome to the Verifier</h1></div>
+      <DebugInformation></DebugInformation>
       <div><HeaderFrame/></div>
       <div><InformationFrame/></div>
       <div v-if="hasDirectory"><VerificationList/></div>

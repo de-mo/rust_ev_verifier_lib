@@ -3,22 +3,25 @@
     import CollapseElement from "./utils/CollapseElement.vue";
     import VerificationItem from "./VerificationItem.vue";
     import { useSharedApplication } from "../composables/application";
+    import { useSharedDirectory } from "../composables/directory";
     import { useVerifications } from "../composables/verifications"
-    const { isTally } = useSharedApplication()
+    const { isTally, isNotStarted } = useSharedApplication()
+    const { directory } = useSharedDirectory()
     const { 
         verifications, 
         getVerifications,
         notImplemented,
         checked_deactivated,
         checked, 
-        changeChecked 
+        changeChecked,
+        runAll,
+        selectAll,
+        deselectAll
     } = useVerifications()
 
     const checkedChanged = (id) => {
-        console.log("checkedChanged", id)
         changeChecked(id)
     }
-
     getVerifications(isTally.value)
     watch(isTally, (newV) => { getVerifications(newV) })
 </script>
@@ -26,6 +29,9 @@
 <template>
     <CollapseElement>
         <template #title>Verifications ({{ isTally ? 'Tally' : 'Setup' }})</template>
+        <button class="button-verifier ele_inline" role="button" @click="selectAll" :disabled="!isNotStarted">Select All</button>
+        <button class="button-verifier ele_inline" role="button" @click="deselectAll" :disabled="!isNotStarted">Deselect All</button>
+        <button class="button-verifier ele_inline" role="button" @click="runAll(directory, isTally)" :disabled="!isNotStarted">Start</button>
         <div style="margin: 0.5em;">
             <div class="verif-grid" v-for="v in verifications" :key="v.id">
                 <VerificationItem 
