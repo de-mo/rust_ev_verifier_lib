@@ -39,7 +39,7 @@ A major difference to Swiss Post is that the verifications does not return true 
 
 ## Development guide
 
-The library depends from the crate [crypto_rimitives](https://github.com/de-mo/rust_ev_crypto_primitives.git).
+The library depends from the crate [rust_ev_crypto_primitives](https://github.com/de-mo/rust_ev_crypto_primitives.git).
 
 Generate the doc to see the documentation of the modules:
 
