@@ -8,7 +8,6 @@ use serde::{
     de::{Deserialize as Deserialize2, Deserializer, Error},
     Deserialize,
 };
-use std::{fs, path::Path};
 
 /// List of Verification Metadata
 #[derive(Deserialize, Debug, Clone)]
@@ -39,21 +38,14 @@ pub struct VerificationMetaData {
 }
 
 impl VerificationMetaDataList {
-    pub fn load(path: &Path) -> anyhow::Result<Self> {
-        let s = fs::read_to_string(path).map_err(|e| {
-            anyhow!(e).context(format!("Cannot read file {}", path.to_str().unwrap()))
-        })?;
-        serde_json::from_str(&s).map_err(|e| {
-            anyhow!(e).context(format!(
-                "Cannot deserialize json for file {}",
-                path.to_str().unwrap()
-            ))
-        })
+    pub fn load(data: &str) -> anyhow::Result<Self> {
+        serde_json::from_str(data)
+            .map_err(|e| anyhow!(e).context("Cannot deserialize the verification list from json"))
     }
 
-    pub fn load_period(path: &Path, period: &VerificationPeriod) -> anyhow::Result<Self> {
+    pub fn load_period(data: &str, period: &VerificationPeriod) -> anyhow::Result<Self> {
         Ok(Self(
-            Self::load(path)?
+            Self::load(data)?
                 .0
                 .iter()
                 .filter(|&m| m.period() == period)
@@ -120,8 +112,8 @@ impl VerificationMetaData {
         &self.category
     }
 
-    pub fn from_id(id: &str, path: &Path) -> Option<Self> {
-        match VerificationMetaDataList::load(path) {
+    pub fn from_id(id: &str, data: &str) -> Option<Self> {
+        match VerificationMetaDataList::load(data) {
             Ok(l) => l.get(id).cloned(),
             Err(_) => None,
         }
@@ -153,7 +145,7 @@ mod test {
 
     #[test]
     fn test_load() {
-        let metadata_res = VerificationMetaDataList::load(&CONFIG_TEST.verification_list_path());
+        let metadata_res = VerificationMetaDataList::load(CONFIG_TEST.get_verification_list_str());
         assert!(metadata_res.is_ok());
         let metadata = metadata_res.unwrap();
         assert!(!metadata.is_empty());

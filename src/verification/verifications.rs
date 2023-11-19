@@ -191,7 +191,7 @@ mod test {
     fn run_ok() {
         fn ok(_: &VerificationDirectory, _: &'static Config, _: &mut VerificationResult) {}
         let md_list =
-            VerificationMetaDataList::load(&CONFIG_TEST.verification_list_path()).unwrap();
+            VerificationMetaDataList::load(CONFIG_TEST.get_verification_list_str()).unwrap();
         let mut verif = Verification::new("01.01", ok, &md_list, &CONFIG_TEST).unwrap();
         assert_eq!(verif.status, VerificationStatus::Stopped);
         assert!(verif.is_ok().is_none());
@@ -215,7 +215,7 @@ mod test {
             result.push(create_verification_failure!("toto3"));
         }
         let md_list =
-            VerificationMetaDataList::load(&CONFIG_TEST.verification_list_path()).unwrap();
+            VerificationMetaDataList::load(CONFIG_TEST.get_verification_list_str()).unwrap();
         let mut verif = Verification::new("01.01", error, &md_list, &CONFIG_TEST).unwrap();
         assert_eq!(verif.status, VerificationStatus::Stopped);
         assert!(verif.is_ok().is_none());
@@ -240,7 +240,7 @@ mod test {
             result.push(create_verification_failure!("toto2"));
         }
         let md_list =
-            VerificationMetaDataList::load(&CONFIG_TEST.verification_list_path()).unwrap();
+            VerificationMetaDataList::load(CONFIG_TEST.get_verification_list_str()).unwrap();
         let mut verif = Verification::new("01.01", failure, &md_list, &CONFIG_TEST).unwrap();
         assert_eq!(verif.status, VerificationStatus::Stopped);
         assert!(verif.is_ok().is_none());

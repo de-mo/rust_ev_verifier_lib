@@ -1,6 +1,9 @@
 use std::path::Path;
 
-use crate::{config::Config as VerifierConfig, verification::VerificationPeriod};
+use crate::{
+    config::Config as VerifierConfig,
+    verification::{meta_data::VerificationMetaDataList, VerificationPeriod},
+};
 use anyhow::{anyhow, ensure};
 use rust_ev_crypto_primitives::direct_trust::DirectTrust;
 
@@ -8,11 +11,12 @@ use rust_ev_crypto_primitives::direct_trust::DirectTrust;
 ///
 /// Must be caled by the application at the beginning. If error, then cannot continue
 pub fn start_check(config: &'static VerifierConfig) -> anyhow::Result<()> {
+    let md_list_check = VerificationMetaDataList::load(config.get_verification_list_str());
     ensure!(
-        config.verification_list_path().exists(),
+        md_list_check.is_ok(),
         format!(
-            "List of verifications {:?} does not exist",
-            config.verification_list_path().to_str()
+            "List of verifications has an error: {}",
+            md_list_check.unwrap_err()
         )
     );
     ensure!(

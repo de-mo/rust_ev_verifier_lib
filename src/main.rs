@@ -83,7 +83,7 @@ impl SubCommands {
 }
 
 fn execute_runner(period: &VerificationPeriod, cmd: &VerifierSubCommand) {
-    let metadata = VerificationMetaDataList::load(&CONFIG.verification_list_path()).unwrap();
+    let metadata = VerificationMetaDataList::load(CONFIG.get_verification_list_str()).unwrap();
     let mut runner = Runner::new(
         &cmd.dir,
         period,

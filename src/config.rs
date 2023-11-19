@@ -17,9 +17,11 @@ const BB_DIR_NAME: &str = "ballot_boxes";
 const LOG_DIR_NAME: &str = "log";
 const LOG_FILE_NAME: &str = "log.txt";
 const DIRECT_TRUST_DIR_NAME: &str = "direct_trust";
-const RESOURCES_DIR_NAME: &str = "resources";
+//const RESOURCES_DIR_NAME: &str = "resources";
 // const SCHEMA_PATH: &str = "schemas";
-const VERIFICATION_LIST_FILE_NAME: &str = "verification_list.json";
+//const VERIFICATION_LIST_FILE_NAME: &str = "verification_list.json";
+
+static VERIFICATION_LIST: &str = include_str!("../resources/verification_list.json");
 
 /// Structuring getting all the configuration information relevant for the
 /// verifier
@@ -95,11 +97,8 @@ impl Config {
         self.root_dir_path().join(DIRECT_TRUST_DIR_NAME)
     }
 
-    /// Path to the json file containing all the tests
-    pub fn verification_list_path(&self) -> PathBuf {
-        self.root_dir_path()
-            .join(RESOURCES_DIR_NAME)
-            .join(VERIFICATION_LIST_FILE_NAME)
+    pub fn get_verification_list_str(&self) -> &'static str {
+        VERIFICATION_LIST
     }
 }
 
@@ -139,9 +138,6 @@ pub(crate) mod test {
         assert_eq!(c.root_dir_path(), Path::new("."));
         assert_eq!(c.log_file_path(), Path::new("./log/log.txt"));
         assert_eq!(c.direct_trust_dir_path(), Path::new("./direct_trust"));
-        assert_eq!(
-            c.verification_list_path(),
-            Path::new("./resources/verification_list.json")
-        );
+        assert!(!c.get_verification_list_str().is_empty());
     }
 }
