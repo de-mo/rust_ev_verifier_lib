@@ -2,7 +2,9 @@
 
 ## Introduction
 
-This application implements a Verifier for the E-Voting system of Swiss Post. It is based on the specifications of Swiss Post, according to the following document versions:
+This crate is the main library and the console application for the E-Voting system of Swiss Post.
+
+It is based on the specifications of Swiss Post, according to the following document versions:
 
 - [Crypo-primitives](https://gitlab.com/swisspost-evoting/crypto-primitives/crypto-primitives), version 1.3.0
 - [Verifier](https://gitlab.com/swisspost-evoting/verifier/verifier), version 1.4.0
@@ -13,16 +15,12 @@ The verifier ist implemented for the version 1.2.3 of the E-Voting system of Swi
 
 ###  Structure of the project
 
-The project contains the following crates:
+The library contains the following modules:
 
-- crypto_rimitives: The implementation of necessary methods, incl. a wrapper to opennssl
-- rust_verifier_lib (in directory ./lib): The implementation of the functionalities and verifications
-  - data_structures: The implementation of the data used for the verifier. The data can be read from the files using serde
-  - file_structure: The structure of the files and directory.
-  - verification: The implementation of each verification.
-  - The handling of xml files is at the beginning.
-- rust_verifier_console (in directory ./console): The implementation of a console application to execute the verification
-- rust_verifier_gui (in directory ./gui): The implementation of a gui application with the framework [Tauri](https://tauri.app/) to execute the verification
+- data_structures: The implementation of the data used for the verifier. The data can be read from the files using serde
+- file_structure: The structure of the files and directory.
+- verification: The implementation of each verification.
+- application_runner: The runner that can be used by another gui or application
 
 ###  Difference to the Swiss Post implementation
 
@@ -41,9 +39,7 @@ A major difference to Swiss Post is that the verifications does not return true 
 
 ## Development guide
 
-The application is tested with the version 1.69.1 of rust.
-
-The application use the crate openssl to wrap the functions of the library openssl. Please check the installation guide of the create.
+The library depends from the crate [crypto_rimitives](https://github.com/de-mo/rust_ev_crypto_primitives.git).
 
 Generate the doc to see the documentation of the modules:
 

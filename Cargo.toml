@@ -1,7 +1,21 @@
-[workspace]
-members = ["./lib", "./console", "./crypto_primitives", "./gui/src-tauri", "./application"]
+[package]
+name = "rust_verifier"
+authors = ["Denis Morel"]
+version = "0.0.1"
+edition = "2021"
+rust-version = "1.74"
+license = "Apache-2.0"
+repository = "https://github.com/de-mo/rust_verifier"
 
-[workspace.dependencies]
+[lib]
+
+[[bin]]
+name="rust_verifier_console"
+path="src/main.rs"
+test = false
+
+[dependencies]
+rust_ev_crypto_primitives = {git="https://github.com/de-mo/rust_ev_crypto_primitives.git"}
 log = "0.4"
 num-bigint = "0.4"
 chrono = "0.4"
@@ -10,11 +24,12 @@ data-encoding = "2.3"
 anyhow = "1.0.71"
 lazy_static = "1.4.0"
 rayon = "1.7"
+log4rs = "1.2"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+enum-kinds = "0.5"
+roxmltree = "0.19"
+glob = "0.3"
+quick-xml = { version = "0.31", features = ["serialize"] }
+structopt = "0.3"
 
-[workspace.package]
-authors = ["Denis Morel"]
-version = "0.0.1"
-edition = "2021"
-rust-version = "1.68"
-license = "Apache-2.0"
-repository = "https://github.com/de-mo/rust_verifier"
