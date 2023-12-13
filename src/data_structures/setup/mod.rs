@@ -39,6 +39,7 @@ pub enum VerifierSetupData {
 }
 
 impl VerifierSetupDataType {
+    /// Get the type of the file for the [VerifierSetupData]
     pub fn get_file_type(&self) -> FileType {
         match self {
             Self::EncryptionParametersPayload => FileType::Json,
@@ -52,6 +53,7 @@ impl VerifierSetupDataType {
         }
     }
 
+    /// Get the read mode of the file for the [VerifierSetupData]
     pub fn get_file_read_mode(&self) -> FileReadMode {
         match self {
             Self::EncryptionParametersPayload => FileReadMode::Memory,

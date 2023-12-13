@@ -1,6 +1,6 @@
 //! Module implementing [SetupOrTally]
 
-/// Enum that is a type of setup or tally
+/// Generic Enum that is a type of setup or tally
 #[derive(Clone)]
 pub enum SetupOrTally<S, T> {
     Setup(S),

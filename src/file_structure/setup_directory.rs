@@ -1,3 +1,5 @@
+//! Module to implement the setup directory
+
 use super::{
     file::{create_file, File},
     file_group::{
@@ -28,6 +30,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
+/// The setup directoy, containing the files, file groues and subdirectories
 #[derive(Clone)]
 pub struct SetupDirectory {
     location: PathBuf,
@@ -39,6 +42,7 @@ pub struct SetupDirectory {
     vcs_directories: Vec<VCSDirectory>,
 }
 
+/// The vcs directoy, containing the files, file groues and subdirectories
 #[derive(Clone)]
 pub struct VCSDirectory {
     location: PathBuf,
@@ -48,7 +52,7 @@ pub struct VCSDirectory {
 }
 
 /// Trait to set the necessary functions for the struct [SetupDirectory] that
-/// are used during the tests
+/// are used during the verifications
 ///
 /// The trait is used as parameter of the verification functions to allow mock of
 /// test (negative tests)
@@ -317,6 +321,8 @@ impl VCSDirectoryTrait for VCSDirectory {
 
 #[cfg(test)]
 mod test {
+    use std::ops::Index;
+
     use super::*;
     use crate::config::test::test_dataset_tally_path as get_location;
 
@@ -334,14 +340,15 @@ mod test {
             assert!(p.is_ok());
             assert_eq!(p.unwrap().control_component_public_keys.node_id, i)
         }
-        let expected = vec![
+        let expected = [
             "A4C66F60561BE5EEFD017E5EF6650563",
             "C165B503B8A3DDD99402EF4DC4267079",
             "681B3488DE4CD4AD7FCED14B7A654169",
             "3800FC91D8652090731C69F807565BEF",
         ];
-        for (i, d) in dir.vcs_directories().iter().enumerate() {
-            assert_eq!(d.get_location(), vcs_location.join(expected[i]))
+        for d in dir.vcs_directories().iter() {
+            let j = expected.iter().position(|l| &d.get_name() == l).unwrap();
+            assert_eq!(d.get_location(), vcs_location.join(expected[j]))
         }
     }
 

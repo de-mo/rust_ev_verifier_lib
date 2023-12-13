@@ -1,5 +1,7 @@
-//! Module to collect data structures of the verifier
-
+//! Module to define the structure of the data and to read the data from the files into these structures
+//! 
+//! The module is separate in two module: [setup] and [tally]
+//! 
 pub mod common_types;
 pub mod setup;
 pub mod setup_or_tally;
@@ -124,6 +126,15 @@ pub trait VerifierTallyDataTrait {
 
 /// A trait defining the necessary function to decode to the Verifier Data
 pub trait VerifierDataDecode: Sized {
+    /// Decode the data from the file
+    /// 
+    /// # Arguments
+    /// * `f`: The [File] to read
+    /// * `t`: The type of the file (json or xml)
+    /// * `mode`: The mode to read the file (memory or streaming)
+    /// 
+    /// # Return
+    /// The decoded data or [anyhow::Result] if something wrong
     fn from_file(f: &File, t: &FileType, mode: &FileReadMode) -> anyhow::Result<Self> {
         match mode {
             FileReadMode::Memory => Self::from_file_memory(f, t),
@@ -131,6 +142,14 @@ pub trait VerifierDataDecode: Sized {
         }
     }
 
+    /// Decode the data from the file in memory
+    /// 
+    /// # Arguments
+    /// * `f`: The [File] to read
+    /// * `t`: The type of the file (json or xml)
+    /// 
+    /// # Return
+    /// The decoded data or [anyhow::Result] if something wrong
     fn from_file_memory(f: &File, t: &FileType) -> anyhow::Result<Self> {
         let s = f.read_data().map_err(|e| {
             anyhow!(e).context(format!("Error reading data in file {}", f.to_str()))
@@ -146,6 +165,14 @@ pub trait VerifierDataDecode: Sized {
         }
     }
 
+    /// Decode the data from the file streaming
+    /// 
+    /// # Arguments
+    /// * `f`: The [File] to read
+    /// * `t`: The type of the file (json or xml)
+    /// 
+    /// # Return
+    /// The decoded data or [anyhow::Result] if something wrong
     fn from_file_stream(f: &File, t: &FileType) -> anyhow::Result<Self> {
         match t {
             FileType::Json => {
@@ -155,14 +182,29 @@ pub trait VerifierDataDecode: Sized {
         }
     }
 
+    /// Decode the data from a json string
+    /// 
+    /// # Return
+    /// The decoded data or [anyhow::Result] if something wrong, e.g. if it is not allowed, or if an error
+    /// occured during the decoding
     fn from_json(_: &String) -> anyhow::Result<Self> {
         bail!(format!("from_json not implemented now"))
     }
 
+    /// Decode the data from a xml [Document] (roxmltreee)
+    /// 
+    /// # Return
+    /// The decoded data or [anyhow::Result] if something wrong, e.g. if it is not allowed, or if an error
+    /// occured during the decoding
     fn from_roxmltree<'a>(_: &'a Document<'a>) -> anyhow::Result<Self> {
         bail!(format!("from_roxmltree not implemented now"))
     }
 
+    /// Decode the data from a xml xml file
+    /// 
+    /// # Return
+    /// The decoded data or [anyhow::Result] if something wrong, e.g. if it is not allowed, or if an error
+    /// occured during the decoding
     fn from_xml_file(_: &Path) -> anyhow::Result<Self> {
         bail!(format!("from_xml_file not implemented now"))
     }
@@ -342,11 +384,13 @@ pub fn xml_read_to_end_into_buffer<R: BufRead>(
     }
 }
 
+/// Return the [HashableMessage] no value with the argument `t`
 pub fn hashable_no_value(t: &str) -> HashableMessage {
     HashableMessage::from(format!("no {} value", t))
 }
 
 #[allow(dead_code)]
+/// Return the [HashableMessage] from an option using [hashable_no_value] for `None`
 pub fn hashable_from_option<'a>(
     opt: Option<HashableMessage<'a>>,
     t: &'a str,

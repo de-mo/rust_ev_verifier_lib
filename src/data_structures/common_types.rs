@@ -107,7 +107,7 @@ impl Proof {
     }
 }
 
-/// A proof (e,z) where the keys are _e and _z in json
+/// A decryption proof (e,z) where the keys are _e and _z in json
 #[derive(Deserialize, Debug, Clone)]
 pub struct DecryptionProof {
     #[serde(deserialize_with = "deserialize_string_hex_to_bigunit")]

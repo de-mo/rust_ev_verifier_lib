@@ -19,17 +19,19 @@ use tally_directory::TallyDirectory;
 use self::{setup_directory::SetupDirectoryTrait, tally_directory::TallyDirectoryTrait};
 
 #[derive(Clone)]
-/// Type represending a VerificationDirectory
+/// Type represending a VerificationDirectory (subdirectory setup or tally)
 pub struct VerificationDirectory {
     setup: SetupDirectory,
     tally: Option<TallyDirectory>,
 }
 
+/// Enum to define the type of the file (Json or Xml)
 pub enum FileType {
     Json,
     Xml,
 }
 
+/// Enum representing the mode to read a fie (Memory or streaming).
 pub enum FileReadMode {
     Memory,
     Streaming,
@@ -41,6 +43,26 @@ pub trait GetFileNameTrait {
     fn get_raw_file_name(&self) -> String;
 
     /// Get the filename injecting the number (if given)
+    ///
+    /// # Argument
+    /// * `value`: The value as option
+    ///
+    /// # return
+    /// The name replacing `{}` with the given value (if is some).
+    ///
+    /// # Example
+    /// ```rust
+    /// use rust_verifier::file_structure::GetFileNameTrait;
+    /// struct Test;
+    /// impl GetFileNameTrait for Test {
+    ///     fn get_raw_file_name(&self) -> String {
+    ///         String::from("new_{}")
+    ///     }
+    /// };
+    /// let t = Test {};
+    /// assert_eq!(t.get_file_name(None), "new_{}");
+    /// assert_eq!(t.get_file_name(Some(2)), "new_2");
+    /// ```
     fn get_file_name(&self, value: Option<usize>) -> String {
         let s = self.get_raw_file_name();
         match value {
@@ -158,7 +180,7 @@ impl GetFileNameTrait for VerifierTallyDataType {
             Self::EVotingDecrypt => "evoting-decrypt_*.xml",
             Self::ECH0222 => "eCH-0222_*.xml",
             Self::TallyComponentVotesPayload => "tallyComponentVotesPayload.json",
-            Self::TallyComponentShufflePayload => "TallyComponentShufflePayload.json",
+            Self::TallyComponentShufflePayload => "tallyComponentShufflePayload.json",
             Self::ControlComponentBallotBoxPayload => "controlComponentBallotBoxPayload_{}.json",
             Self::ControlComponentShufflePayload => "controlComponentShufflePayload_{}.json",
         };
@@ -224,6 +246,13 @@ mod test {
                     .get_file_name(None)
             )
             .exists());
+        println!("{:?}", VerifierDataType::Tally(VerifierTallyDataType::TallyComponentShufflePayload)
+        .get_file_name(None));
+        println!("{:?}", path2
+        .join(
+            VerifierDataType::Tally(VerifierTallyDataType::TallyComponentShufflePayload)
+                .get_file_name(None)
+        ));
         assert!(path2
             .join(
                 VerifierDataType::Tally(VerifierTallyDataType::TallyComponentShufflePayload)

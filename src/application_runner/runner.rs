@@ -4,18 +4,17 @@ use crate::{
     config::Config as VerifierConfig,
     file_structure::VerificationDirectory,
     verification::{
-        meta_data::VerificationMetaDataList, result::VerificationResultTrait,
-        suite::VerificationSuite, VerificationPeriod,
+        meta_data::VerificationMetaDataList,
+        result::VerificationResultTrait,
+        suite::VerificationSuite,
+        VerificationPeriod,
     },
 };
-use log::{info, warn};
+use log::{ info, warn };
 //use std::future::Future;
 use rayon::prelude::*;
-use std::{iter::zip, sync::Mutex};
-use std::{
-    path::{Path, PathBuf},
-    time::{Duration, SystemTime},
-};
+use std::{ iter::zip, sync::Mutex };
+use std::{ path::{ Path, PathBuf }, time::{ Duration, SystemTime } };
 
 pub fn no_action_before_fn(_: &str) {}
 pub fn no_action_after_fn(_: &str, _: Vec<String>, _: Vec<String>) {}
@@ -28,7 +27,7 @@ pub trait RunStrategy<'a> {
         verifications: &'a mut VerificationSuite<'a>,
         dir_path: &Path,
         action_before: impl Fn(&str) + Send + Sync,
-        action_after: impl Fn(&str, Vec<String>, Vec<String>) + Send + Sync,
+        action_after: impl Fn(&str, Vec<String>, Vec<String>) + Send + Sync
     );
 }
 
@@ -44,7 +43,7 @@ impl<'a> RunStrategy<'a> for RunSequential {
         verifications: &'a mut VerificationSuite<'a>,
         dir_path: &Path,
         action_before: impl Fn(&str) + Send + Sync,
-        action_after: impl Fn(&str, Vec<String>, Vec<String>) + Send + Sync,
+        action_after: impl Fn(&str, Vec<String>, Vec<String>) + Send + Sync
     ) {
         let directory = VerificationDirectory::new(verifications.period(), dir_path);
         let it = verifications.list.0.iter_mut();
@@ -62,7 +61,7 @@ impl<'a> RunStrategy<'a> for RunParallel {
         verifications: &'a mut VerificationSuite<'a>,
         dir_path: &Path,
         action_before: impl Fn(&str) + Send + Sync,
-        action_after: impl Fn(&str, Vec<String>, Vec<String>) + Send + Sync,
+        action_after: impl Fn(&str, Vec<String>, Vec<String>) + Send + Sync
     ) {
         let directory = VerificationDirectory::new(verifications.period(), dir_path);
         let dirs = vec![directory; verifications.len()];
@@ -92,10 +91,7 @@ pub struct Runner<'a, T: RunStrategy<'a>> {
     action_after: Box<dyn Fn(&str, Vec<String>, Vec<String>) + Send + Sync>,
 }
 
-impl<'a, T> Runner<'a, T>
-where
-    T: RunStrategy<'a>,
-{
+impl<'a, T> Runner<'a, T> where T: RunStrategy<'a> {
     /// Create a new runner.
     ///
     /// path represents the location where the directory setup and tally are stored
@@ -109,7 +105,7 @@ where
         run_strategy: T,
         config: &'static VerifierConfig,
         action_before: impl Fn(&str) + Send + Sync + 'static,
-        action_after: impl Fn(&str, Vec<String>, Vec<String>) + Send + Sync + 'static,
+        action_after: impl Fn(&str, Vec<String>, Vec<String>) + Send + Sync + 'static
     ) -> Runner<'a, T> {
         Runner {
             path: path.to_path_buf(),
@@ -127,28 +123,28 @@ where
     pub fn reset(&'a mut self, metadata_list: &'a VerificationMetaDataList) {
         self.start_time = None;
         self.duration = None;
-        self.verifications = Box::new(VerificationSuite::new(
-            self.period(),
-            metadata_list,
-            self.verifications.exclusion(),
-            self.config,
-        ))
+        self.verifications = Box::new(
+            VerificationSuite::new(
+                self.period(),
+                metadata_list,
+                self.verifications.exclusion(),
+                self.config
+            )
+        );
     }
 
     /// Run all tests
     pub fn run_all<'c: 'a>(
         &'c mut self,
-        metadata_list: &'a VerificationMetaDataList,
+        metadata_list: &'a VerificationMetaDataList
     ) -> Option<anyhow::Error> {
         if self.is_running() {
-            return Some(anyhow!(format!(
-                "Runner is already running. Cannot be started"
-            )));
+            return Some(anyhow!(format!("Runner is already running. Cannot be started")));
         }
         if self.is_finished() {
-            return Some(anyhow!(format!(
-                "Runner is already running. Cannot be started before resetting it"
-            )));
+            return Some(
+                anyhow!(format!("Runner is already running. Cannot be started before resetting it"))
+            );
         }
         self.start_time = Some(SystemTime::now());
         info!(
@@ -161,7 +157,7 @@ where
                 "Verification {} ({}) skipped",
                 metadata_list.meta_data_from_id(id).unwrap().name(),
                 id
-            )
+            );
         }
         let len = self.verifications.len();
         {
@@ -169,15 +165,11 @@ where
                 &mut self.verifications,
                 &self.path,
                 &self.action_before,
-                &self.action_after,
+                &self.action_after
             );
         }
         self.duration = Some(self.start_time.unwrap().elapsed().unwrap());
-        info!(
-            "{} verifications run (duration: {}s)",
-            &len,
-            self.duration.unwrap().as_secs_f32()
-        );
+        info!("{} verifications run (duration: {}s)", &len, self.duration.unwrap().as_secs_f32());
         None
     }
 

@@ -1,4 +1,4 @@
-//! Trait implementing group of files
+//! Trait implementing group of files with the same structure (in particular for the files from the control components)
 use super::{file::File, GetFileNameTrait};
 use crate::data_structures::VerifierDataType;
 use std::{
@@ -28,6 +28,7 @@ pub struct FileGroup {
     indexes: Vec<usize>,
 }
 
+/// Iterator for the files in a file group
 #[derive(Clone)]
 pub struct FileGroupIter<T> {
     pub file_group: FileGroup,
@@ -78,7 +79,7 @@ impl<T> FileGroupIter<T> {
         }
     }
 
-    /// Get the current position
+    /// Get the current  of the ireation
     pub fn current_pos_impl(&self) -> &usize {
         &self.pos
     }
