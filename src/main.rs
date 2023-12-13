@@ -27,6 +27,7 @@ lazy_static! {
     static ref CONFIG: VerifierConfig = VerifierConfig::new(".");
 }
 
+/// Specification of the sub commands (tally or setup)
 #[derive(Debug, PartialEq, StructOpt)]
 #[structopt()]
 struct VerifierSubCommand {
@@ -41,6 +42,7 @@ struct VerifierSubCommand {
     exclude: Vec<String>,
 }
 
+/// Enum with the possible subcommands
 #[derive(Debug, PartialEq, StructOpt)]
 #[structopt()]
 enum SubCommands {
@@ -55,6 +57,7 @@ enum SubCommands {
     Tally(VerifierSubCommand),
 }
 
+/// Main command
 #[derive(Debug, StructOpt)]
 #[structopt(name = env!("CARGO_PKG_NAME"), version = env!("CARGO_PKG_VERSION"), author = env!("CARGO_PKG_AUTHORS"), about = env!("CARGO_PKG_DESCRIPTION"))]
 /// E-Voting Verifier
@@ -82,6 +85,11 @@ impl SubCommands {
     }
 }
 
+/// Execute the runner for a given period
+/// 
+/// # Argument
+/// * `period`: The Verification Period
+/// * `cmd`: The [VerifierSubCommand] containung the necessary information to run the test
 fn execute_runner(period: &VerificationPeriod, cmd: &VerifierSubCommand) {
     let metadata = VerificationMetaDataList::load(CONFIG.get_verification_list_str()).unwrap();
     let mut runner = Runner::new(
@@ -97,6 +105,12 @@ fn execute_runner(period: &VerificationPeriod, cmd: &VerifierSubCommand) {
     runner.run_all(&metadata);
 }
 
+/// Execute the verifier
+/// This is the main method called from the console
+/// 
+/// # return
+/// * Nothing if the execution runs correctly
+/// * [anyhow::Result] with the related error by a problem
 fn execute_verifier() -> anyhow::Result<()> {
     if let Err(e) = start_check(&CONFIG) {
         bail!("Application cannot start: {}", e);
