@@ -42,6 +42,7 @@ The Verifier is not ready for production.
 - The report of the verifications is not generated
 - Add functionality to read zip file (to check hashes)
 - Improve the performance
+- XML Files: Read, decode and control of signature must be implemented
 - Upgrade to the last version of Swiss Post
 
 ## Development guide
