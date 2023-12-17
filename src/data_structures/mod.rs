@@ -210,6 +210,10 @@ pub trait VerifierDataDecode: Sized {
     }
 }
 
+pub trait CheckDomainTrait {
+    fn check_domain(&self) -> Vec<anyhow::Error>;
+}
+
 /// Macro to automatically implement the DataStructureTrait for a type
 macro_rules! implement_trait_verifier_data_json_decode {
     ($s: ty) => {
