@@ -10,6 +10,7 @@ use crate::{
         VerificationDirectoryTrait,
     },
     verification::meta_data::VerificationMetaDataList,
+    data_structures::CheckDomainTrait
 };
 use anyhow::anyhow;
 use log::debug;
@@ -71,7 +72,9 @@ fn fn_verification_0401<D: VerificationDirectoryTrait>(
 ) {
     let setup_dir = dir.unwrap_setup();
     match setup_dir.encryption_parameters_payload() {
-        Ok(_) => (),
+        Ok(ep) => {
+            result.append_failures(&ep.encryption_group.check_domain())
+        },
         Err(e) => result.push(create_verification_failure!(
             "encryption_parameters_payload has wrong format",
             e

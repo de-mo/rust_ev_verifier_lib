@@ -1,10 +1,10 @@
 //! Type that are used in many structures
 
-use super::{deserialize_seq_string_hex_to_seq_bigunit, deserialize_string_hex_to_bigunit};
+use super::{deserialize_seq_string_hex_to_seq_bigunit, deserialize_string_hex_to_bigunit, CheckDomainTrait};
 use num_bigint::BigUint;
 use rust_ev_crypto_primitives::{
     byte_array::{ByteArray, Decode},
-    hashing::HashableMessage,
+    hashing::HashableMessage, elgamal::{check_p, check_q, check_g},
 };
 use serde::Deserialize;
 
@@ -36,6 +36,22 @@ impl From<&(BigUint, BigUint, BigUint)> for EncryptionGroup {
             q: q.clone(),
             g: g.clone(),
         }
+    }
+}
+
+impl CheckDomainTrait for EncryptionGroup {
+    fn check_domain(&self) -> Vec<anyhow::Error> {
+        let mut res = vec![];
+        if let Some(e) = check_p(&self.p) {
+            res.push(anyhow::anyhow!(e))
+        }
+        if let Some(e) = check_q(&self.p,&self.q) {
+            res.push(anyhow::anyhow!(e))
+        }
+        if let Some(e) = check_g(&self.p,&self.g) {
+            res.push(anyhow::anyhow!(e))
+        }
+        res
     }
 }
 
