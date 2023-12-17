@@ -76,6 +76,22 @@ impl VerificationResult {
         self.errors.append(other.errors_mut());
         self.failures.append(other.failures_mut());
     }
+
+    /// Append anyhow errors to self as errors
+    pub fn append_errors(&mut self, errors: &[anyhow::Error]) {
+        let events: Vec<VerificationEvent> = errors.iter().map(|e| VerificationEvent::Error { source: anyhow::anyhow!(e.to_string()) }).collect();
+        for e in events {
+            self.push(e)
+        }
+    }
+
+    /// Append anyhow errors to self as failures
+    pub fn append_failures(&mut self, failures: &[anyhow::Error]) {
+        let events: Vec<VerificationEvent> = failures.iter().map(|e| VerificationEvent::Error { source: anyhow::anyhow!(e.to_string()) }).collect();
+        for e in events {
+            self.push(e)
+        }
+    }
 }
 
 impl Default for VerificationResult {
