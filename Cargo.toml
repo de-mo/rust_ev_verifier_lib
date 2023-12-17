@@ -15,7 +15,7 @@ path="src/main.rs"
 test = false
 
 [dependencies]
-rust_ev_crypto_primitives = {git="https://github.com/de-mo/rust_ev_crypto_primitives.git", rev="5bbea15"}
+rust_ev_crypto_primitives = {git="https://github.com/de-mo/rust_ev_crypto_primitives.git", rev="cb77ca6"}
 log = "0.4"
 num-bigint = "0.4"
 chrono = "0.4"

@@ -175,15 +175,20 @@ fn run_verify_schnorr_proof(
         "Verification {} at pos {} for cc {:?}",
         test_name, pos, node
     );
-    if !verify_schnorr(eg.as_tuple(), schnorr.as_tuple(), y, i_aux) {
-        let mut text = format!(
-            "{}: Verifiy {} Schnorr proofs not ok at pos {}",
-            test_name, proof_name, pos
-        );
-        if node.is_some() {
-            text = format!("{} for node {}", text, node.unwrap());
+    match verify_schnorr(eg.as_tuple(), schnorr.as_tuple(), y, i_aux) {
+        Err(e) => return Some(VerificationEvent::Failure { source: anyhow::anyhow!(e) }),
+        Ok(b) => {
+            if !b {
+                let mut text = format!(
+                    "{}: Verifiy {} Schnorr proofs not ok at pos {}",
+                    test_name, proof_name, pos
+                );
+                if node.is_some() {
+                    text = format!("{} for node {}", text, node.unwrap());
+                }
+                return Some(create_verification_failure!(text));
+            }
         }
-        return Some(create_verification_failure!(text));
     }
     None
 }
