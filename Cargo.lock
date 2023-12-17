@@ -759,7 +759,7 @@ dependencies = [
 [[package]]
 name = "rust_ev_crypto_primitives"
 version = "0.1.0"
-source = "git+https://github.com/de-mo/rust_ev_crypto_primitives.git#4cfb0f4783fdfa61c2c4fe68ce006b6f8294bb91"
+source = "git+https://github.com/de-mo/rust_ev_crypto_primitives.git?rev=5bbea15#5bbea15adb6b22306833b8a6147b7940bea3010c"
 dependencies = [
  "chrono",
  "data-encoding",
