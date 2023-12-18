@@ -73,7 +73,7 @@ fn fn_verification_0401<D: VerificationDirectoryTrait>(
     let setup_dir = dir.unwrap_setup();
     match setup_dir.encryption_parameters_payload() {
         Ok(ep) => {
-            result.append_failures(&ep.encryption_group.check_domain())
+            result.append_failures(&ep.check_domain())
         },
         Err(e) => result.push(create_verification_failure!(
             "encryption_parameters_payload has wrong format",

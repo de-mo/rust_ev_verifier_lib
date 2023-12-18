@@ -210,6 +210,8 @@ pub trait VerifierDataDecode: Sized {
     }
 }
 
+/// Trait to implement a check that the domain of the data is correct
+/// according to the specifications of Swiss Post
 pub trait CheckDomainTrait {
     fn check_domain(&self) -> Vec<anyhow::Error>;
 }

@@ -1,6 +1,7 @@
 use super::super::{
     common_types::{EncryptionGroup, SignatureJson},
     implement_trait_verifier_data_json_decode, VerifierDataDecode,
+    CheckDomainTrait
 };
 use anyhow::anyhow;
 use rust_ev_crypto_primitives::{
@@ -8,6 +9,7 @@ use rust_ev_crypto_primitives::{
     signature::VerifiySignatureTrait,
 };
 use serde::Deserialize;
+use crate::config::Config as VerifierConfig;
 
 #[derive(Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -19,6 +21,35 @@ pub struct EncryptionParametersPayload {
 }
 
 implement_trait_verifier_data_json_decode!(EncryptionParametersPayload);
+
+impl CheckDomainTrait for EncryptionParametersPayload {
+    fn check_domain(&self) -> Vec<anyhow::Error> {
+        let mut res = vec![];
+        res.append(&mut self.encryption_group.check_domain());
+        // For 5.02
+        if !self.small_primes.len() == VerifierConfig::maximum_number_of_voting_options() {
+            res.push(
+                anyhow!(
+                    format!("The list of small primes {} is not equal to the maximal number of voting options {}", 
+                        self.small_primes.len(), 
+                        VerifierConfig::maximum_number_of_voting_options()
+                    )
+                )
+            )
+        }
+        // for 5.02
+        let mut sp = self.small_primes.clone();
+        sp.sort();
+        if sp != self.small_primes {
+            res.push(anyhow!("Small primes list is not in ascending order"))
+        }
+        // for 5.02
+        if sp[0] < 5 {
+            res.push(anyhow!("The small primes contain 2 or 3, what is not allowed"))
+        }
+        res
+    }
+}
 
 impl<'a> From<&'a EncryptionParametersPayload> for HashableMessage<'a> {
     fn from(value: &'a EncryptionParametersPayload) -> Self {
@@ -105,8 +136,16 @@ mod test {
             .join("encryptionParametersPayload.json");
         let json = fs::read_to_string(path).unwrap();
         let r_eg = EncryptionParametersPayload::from_json(&json);
-        //let r_eg: Result<EncryptionParametersPayload, serde_json::Error> =
-        //    serde_json::from_str(&json);
         assert!(r_eg.is_ok())
+    }
+
+    #[test]
+    fn test_check_domain() {
+        let path = test_dataset_tally_path()
+            .join("setup")
+            .join("encryptionParametersPayload.json");
+        let json = fs::read_to_string(path).unwrap();
+        let eg = EncryptionParametersPayload::from_json(&json).unwrap();
+        assert!(eg.check_domain().is_empty())
     }
 }
