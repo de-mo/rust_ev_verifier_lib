@@ -10,12 +10,12 @@ repository = "https://github.com/de-mo/rust_verifier"
 [lib]
 
 [[bin]]
-name="rust_verifier_console"
-path="src/main.rs"
+name = "rust_verifier_console"
+path = "src/main.rs"
 test = false
 
 [dependencies]
-rust_ev_crypto_primitives = {git="https://github.com/de-mo/rust_ev_crypto_primitives.git", rev="cb77ca6"}
+rust_ev_crypto_primitives = { git = "https://github.com/de-mo/rust_ev_crypto_primitives.git", rev = "cb77ca6" }
 log = "0.4"
 num-bigint = "0.4"
 chrono = "0.4"
@@ -33,4 +33,3 @@ glob = "0.3"
 quick-xml = { version = "0.31", features = ["serialize"] }
 structopt = "0.3"
 rust-embed = "8"
-

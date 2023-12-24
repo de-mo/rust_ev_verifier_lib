@@ -6,6 +6,7 @@ pub mod common_types;
 pub mod setup;
 pub mod setup_or_tally;
 pub mod tally;
+mod xml;
 
 use self::{
     setup::{
