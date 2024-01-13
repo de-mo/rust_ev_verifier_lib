@@ -1,34 +1,50 @@
+//! Module to define an iterator over the definition of the types in the schema, as a tree structure.
+
 use super::schema::{self, Schema};
-use anyhow::{anyhow, Context, Error, Result};
+use anyhow::{anyhow, Context, Result};
 use quick_xml::name::QName;
 use roxmltree::Node as RoNode;
 use std::str;
 
-struct Node<'a> {
+/// Node in the schema
+/// 
+/// The construction is thought, that only tags `xs:element` are built in this structure. The children are also
+/// these kind of nodes.
+struct ElementNode<'a> {
     schema: &'a Schema<'a>,
     ro_node: RoNode<'a, 'a>,
-    parent: Option<&'a Node<'a>>,
+    parent: Option<&'a ElementNode<'a>>,
 }
 
+/// Kind of the node (complex type, simple type or xsd native type)
 enum NodeKind<'a> {
+    /// Node complex type. It stores the [RoNode] of the location of the information
     ComplexType(RoNode<'a, 'a>),
+    /// Node simple type. It stores the [RoNode] of the location of the information
     SimpleType(RoNode<'a, 'a>),
+    /// Native type. It store the name of the type, without prefix
     Native(String),
 }
 
 impl<'a> NodeKind<'a> {
+    /// Is the node a complex type
     fn is_complex_type(&self) -> bool {
         self.unwrap_complex_type().is_some()
     }
 
+    /// Is the node a simple type
     fn is_simple_type(&self) -> bool {
         self.unwrap_simple_type().is_some()
     }
 
+    /// Is the node a native type
     fn is_native(&self) -> bool {
         self.unwrap_native().is_some()
     }
 
+    /// Unwrap the [RoNode] of the complex type
+    /// 
+    /// Return `None` if the node is not complex
     fn unwrap_complex_type(&self) -> Option<RoNode<'a, 'a>> {
         if let Self::ComplexType(n) = self {
             return Some(*n);
@@ -36,6 +52,9 @@ impl<'a> NodeKind<'a> {
         None
     }
 
+    /// Unwrap the [RoNode] of the simple type
+    /// 
+    /// Return `None` if the node is not simple
     fn unwrap_simple_type(&self) -> Option<RoNode<'a, 'a>> {
         if let Self::SimpleType(n) = self {
             return Some(*n);
@@ -43,6 +62,9 @@ impl<'a> NodeKind<'a> {
         None
     }
 
+    /// Unwrap the [RoNode] of the native type
+    /// 
+    /// Return `None` if the node is not native
     fn unwrap_native(&'a self) -> Option<&'a str> {
         if let Self::Native(s) = self {
             return Some(s.as_str());
@@ -51,19 +73,25 @@ impl<'a> NodeKind<'a> {
     }
 }
 
-impl<'a, 'input> Node<'a> {
+impl<'a, 'input> ElementNode<'a> {
+    /// Name of the nome (attribute `"name"`, not the name of the tag)
     fn name(&'a self) -> &'a str {
         self.ro_node.find_attribute("name").unwrap()
     }
 
+    /// Is the element optional ?
     fn is_optional(&self) -> bool {
         self.ro_node.min_occurs() == 0
     }
 
+    /// Is the element a list (many elements allowed)
     fn is_list(&self) -> bool {
         self.ro_node.max_occurs() > 1
     }
 
+    /// Get the kind of the node
+    /// 
+    /// Return an error if the [NodeKind] cannot be built or is empty
     fn node_kind(&'a self) -> Result<NodeKind<'a>> {
         let mut res_node = None;
         // Type is defined as attribute
@@ -115,6 +143,11 @@ impl<'a, 'input> Node<'a> {
         }
     }
 
+    /// Get the children of the node, e.g. the children of type `xs_element`
+    /// 
+    /// Return an error if the [NodeKind] cannot be built or is empty
+    /// 
+    /// Return an empty vector if the node is not a complex type
     fn children(&'a self) -> Result<Vec<Self>> {
         let mut res = vec![];
         let kind = self.node_kind().context("Error getting children")?;
@@ -134,7 +167,7 @@ impl<'a, 'input> Node<'a> {
     }
 }
 
-impl<'a> From<&'a schema::Schema<'a>> for Node<'a> {
+impl<'a> From<&'a schema::Schema<'a>> for ElementNode<'a> {
     fn from(value: &'a schema::Schema) -> Self {
         let root = value.root_element();
         let node = root.children().find(|e| e.is_schema_element()).unwrap();
@@ -146,32 +179,42 @@ impl<'a> From<&'a schema::Schema<'a>> for Node<'a> {
     }
 }
 
+/// Trait to extend the functionalities of [RoNode]
 trait AdditionalMethodsRoxmlNode<'a>: Sized {
+    /// Tagname of the node
     fn node_tag_name(&self) -> &'a str;
+    /// Find an attribute in the node
     fn find_attribute(&'a self, name: &str) -> Option<&'a str>;
+    /// find a node in the whole document with a given name
     fn find_node_with_name(&'a self, name: &str) -> Option<Self>;
 
+    /// Is a node with tag `element`
     fn is_schema_element(&self) -> bool {
         self.node_tag_name() == "element"
     }
 
+    /// Is a node with tag `complexType`
     fn is_schema_complex_type(&self) -> bool {
         self.node_tag_name() == "complexType"
     }
 
+    /// Is a node with tag `simpleType`
     fn is_schema_simple_type(&self) -> bool {
         self.node_tag_name() == "simpleType"
     }
 
+    /// Is a node with tag `simpleType` or `complexType`, e.g. not a native type
     fn is_schema_type(&self) -> bool {
         self.is_schema_complex_type() || self.is_schema_simple_type()
     }
 
+    /// Get the value `minOccurs` of the node. Default is 1
     fn min_occurs(&'a self) -> usize {
         self.find_attribute("minOccurs")
             .map_or(1, |e| e.parse::<usize>().unwrap())
     }
 
+    /// Get the value `maxOccurs` of the node. Default is 1. `"unbounded"` is set to `usize:MAX`
     fn max_occurs(&'a self) -> usize {
         self.find_attribute("maxOccurs").map_or(1, |e| match e {
             "unbounded" => usize::MAX,
@@ -179,6 +222,7 @@ trait AdditionalMethodsRoxmlNode<'a>: Sized {
         })
     }
 
+    /// Get the attribute "type" of the node, as qualified name
     fn schema_node_type(&'a self) -> Option<QName> {
         self.find_attribute("type").map(|e| QName(e.as_bytes()))
     }
@@ -215,7 +259,7 @@ mod test {
     #[test]
     fn test_from_schema() {
         let xsd = schema();
-        let node = Node::from(xsd);
+        let node = ElementNode::from(xsd);
         assert!(node.parent.is_none());
         assert_eq!(node.ro_node.node_tag_name(), "element");
         assert_eq!(node.ro_node.find_attribute("name"), Some("configuration"))
@@ -229,7 +273,7 @@ mod test {
             .children()
             .find(|e| e.is_schema_element())
             .unwrap();
-        let node1 = Node {
+        let node1 = ElementNode {
             schema: xsd,
             ro_node: n1,
             parent: None,
@@ -245,7 +289,7 @@ mod test {
             .first_element_child()
             .unwrap();
         let n2 = n_parent.first_element_child().unwrap();
-        let node2 = Node {
+        let node2 = ElementNode {
             schema: xsd,
             ro_node: n2,
             parent: None,
@@ -274,7 +318,7 @@ mod test {
             .unwrap()
             .first_element_child()
             .unwrap();
-        let node1 = Node {
+        let node1 = ElementNode {
             schema: xsd,
             ro_node: n1,
             parent: None,
@@ -291,7 +335,7 @@ mod test {
             "identifierType"
         );
         let n2 = n1.next_sibling_element().unwrap();
-        let node2 = Node {
+        let node2 = ElementNode {
             schema: xsd,
             ro_node: n2,
             parent: None,
@@ -311,7 +355,7 @@ mod test {
             .children()
             .find(|e| e.is_schema_element())
             .unwrap();
-        let node1 = Node {
+        let node1 = ElementNode {
             schema: xsd,
             ro_node: n1,
             parent: None,
@@ -347,7 +391,7 @@ mod test {
                     && e.find_attribute("name").unwrap() == "adminBoard"
             })
             .unwrap();
-        let node1 = Node {
+        let node1 = ElementNode {
             schema: xsd,
             ro_node: n1,
             parent: None,
