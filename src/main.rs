@@ -5,6 +5,9 @@
 //! rust_verifier_console --help
 //! ```
 
+
+mod resources;
+mod consts;
 mod application_runner;
 mod config;
 mod data_structures;

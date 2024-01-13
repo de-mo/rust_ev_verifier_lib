@@ -1,13 +1,8 @@
 //! Module containing the contstants and the way to access them
 
 use std::path::{Path, PathBuf};
-
-// Constants from specification
-const MAXIMUM_NUMBER_OF_VOTING_OPTIONS: usize = 3000;
-const MAXIMUM_NUMBER_OF_SELECTABLE_VOTING_OPTIONS: usize = 120;
-const MAXIMUM_NUMBER_OF_WRITE_IN_OPTIONS: usize = 15;
-const MAXIMUM_WRITE_IN_OPTION_LENGTH: usize = 500;
-const MAXIMUM_ACTUAL_VOTING_OPTION_LENGTH: usize = 50;
+use super::consts;
+use super::resources::VERIFICATION_LIST;
 
 // Directory structure
 pub const SETUP_DIR_NAME: &str = "setup";
@@ -19,11 +14,8 @@ const BB_DIR_NAME: &str = "ballot_boxes";
 const LOG_DIR_NAME: &str = "log";
 const LOG_FILE_NAME: &str = "log.txt";
 const DIRECT_TRUST_DIR_NAME: &str = "direct-trust";
-//const RESOURCES_DIR_NAME: &str = "resources";
-// const SCHEMA_PATH: &str = "schemas";
-//const VERIFICATION_LIST_FILE_NAME: &str = "verification_list.json";
 
-static VERIFICATION_LIST: &str = include_str!("../resources/verification_list.json");
+
 
 /// Structuring getting all the configuration information relevant for the
 /// verifier
@@ -58,25 +50,25 @@ impl Config {
 
     /// Maximum number of voting options according to the specification
     pub fn maximum_number_of_voting_options() -> usize {
-        MAXIMUM_NUMBER_OF_VOTING_OPTIONS
+        consts::MAXIMUM_NUMBER_OF_VOTING_OPTIONS
     }
 
     /// Maximum number of selectable voting options according to the specification
     pub fn maximum_number_of_selectable_voting_options() -> usize {
-        MAXIMUM_NUMBER_OF_SELECTABLE_VOTING_OPTIONS
+        consts::MAXIMUM_NUMBER_OF_SELECTABLE_VOTING_OPTIONS
     }
 
     /// Maximum number of write-in options according to the specification
     pub fn maximum_number_of_write_in_options() -> usize {
-        MAXIMUM_NUMBER_OF_WRITE_IN_OPTIONS
+        consts::MAXIMUM_NUMBER_OF_WRITE_IN_OPTIONS
     }
 
     pub fn maximum_write_in_option_length() -> usize {
-        MAXIMUM_WRITE_IN_OPTION_LENGTH
+        consts::MAXIMUM_WRITE_IN_OPTION_LENGTH
     }
 
     pub fn maximum_actual_voting_option_length() -> usize {
-        MAXIMUM_ACTUAL_VOTING_OPTION_LENGTH
+        consts::MAXIMUM_ACTUAL_VOTING_OPTION_LENGTH
     }
 
     /// The name of the setup directory
