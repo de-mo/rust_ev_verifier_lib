@@ -1,165 +1,157 @@
+use anyhow::{Context, Result};
+use roxmltree::{Document, Node as RoNode};
+use std::ops::Deref;
+use std::sync::OnceLock;
 use std::collections::HashMap;
+use crate::resources;
 
-use anyhow::anyhow;
-use roxmltree::{Document, Node};
-use super::{SCHEMA_CONFIG, SCHEMA_DECRYPT};
+static SCHEMA_CELL_ECH_0006: OnceLock<Schema> = OnceLock::new();
+static SCHEMA_CELL_ECH_0007: OnceLock<Schema> = OnceLock::new();
+static SCHEMA_CELL_ECH_0008: OnceLock<Schema> = OnceLock::new();
+static SCHEMA_CELL_ECH_0010: OnceLock<Schema> = OnceLock::new();
+static SCHEMA_CELL_ECH_0044: OnceLock<Schema> = OnceLock::new();
+static SCHEMA_CELL_ECH_0058: OnceLock<Schema> = OnceLock::new();
+static SCHEMA_CELL_ECH_0110: OnceLock<Schema> = OnceLock::new();
+static SCHEMA_CELL_ECH_0155: OnceLock<Schema> = OnceLock::new();
+static SCHEMA_CELL_ECH_0222: OnceLock<Schema> = OnceLock::new();
+static SCHEMA_CELL_ECH_DECRYPT: OnceLock<Schema> = OnceLock::new();
+static SCHEMA_CELL_ECH_CONFIG: OnceLock<Schema> = OnceLock::new();
 
-/// Enum containing the various schemas.
-/// 
-/// Used to get the [XMLSchema] associated to the enum.
-pub enum SchemaEnum {
-    CONFIG,
-    DECRYPT,
-    ECH_0222,
-    ECH_0110,
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
+pub enum SchemaKind {
+    ech_0006,
+    ech_0007,
+    ech_0008,
+    ech_0010,
+    ech_0044,
+    ech_0058,
+    ech_0110,
+    ech_0155,
+    ech_0222,
+    decrypt,
+    config,
 }
 
-struct Namespaces {
-    hm: HashMap<String, String>
-}
-
-/// Representation of an XML Schema
-/// 
-/// Can be generated using the enum [SchemaEnum].
-pub struct XMLSchema<'a> {
+pub struct Schema<'a> {
     document: Document<'a>,
-    namespaces: Namespaces,
+    target_namespace: Option<String>,
+    schema_kind: SchemaKind,
+    namespaces: HashMap<String, String>,
 }
 
-
-impl SchemaEnum {
-    /// Get the schema associated to the element of the enum
-    pub fn get_schema(&self) -> XMLSchema<'_> {
+impl SchemaKind {
+    pub fn get_schema(&self) -> &Schema {
         match self {
-            SchemaEnum::CONFIG => XMLSchema::try_from(SCHEMA_CONFIG).unwrap(),
-            SchemaEnum::DECRYPT => XMLSchema::try_from(SCHEMA_DECRYPT).unwrap(),
-            SchemaEnum::ECH_0222 => todo!(),
-            SchemaEnum::ECH_0110 => todo!(),
+            SchemaKind::ech_0006 => {
+                SCHEMA_CELL_ECH_0006.get_or_init(|| Schema::new(self, resources::XSD_ECH_0006))
+            }
+            SchemaKind::ech_0007 => {
+                SCHEMA_CELL_ECH_0007.get_or_init(|| Schema::new(self, resources::XSD_ECH_0007))
+            }
+            SchemaKind::ech_0008 => {
+                SCHEMA_CELL_ECH_0008.get_or_init(|| Schema::new(self, resources::XSD_ECH_0008))
+            }
+            SchemaKind::ech_0010 => {
+                SCHEMA_CELL_ECH_0010.get_or_init(|| Schema::new(self, resources::XSD_ECH_0010))
+            }
+            SchemaKind::ech_0044 => {
+                SCHEMA_CELL_ECH_0044.get_or_init(|| Schema::new(self, resources::XSD_ECH_0044))
+            }
+            SchemaKind::ech_0058 => {
+                SCHEMA_CELL_ECH_0058.get_or_init(|| Schema::new(self, resources::XSD_ECH_0058))
+            }
+            SchemaKind::ech_0110 => {
+                SCHEMA_CELL_ECH_0110.get_or_init(|| Schema::new(self, resources::XSD_ECH_0110))
+            }
+            SchemaKind::ech_0155 => {
+                SCHEMA_CELL_ECH_0155.get_or_init(|| Schema::new(self, resources::XSD_ECH_0155))
+            }
+            SchemaKind::ech_0222 => {
+                SCHEMA_CELL_ECH_0222.get_or_init(|| Schema::new(self, resources::XSD_ECH_0222))
+            }
+            SchemaKind::decrypt => {
+                SCHEMA_CELL_ECH_DECRYPT.get_or_init(|| Schema::new(self, resources::XSD_DECRYPT))
+            }
+            SchemaKind::config => {
+                SCHEMA_CELL_ECH_CONFIG.get_or_init(|| Schema::new(self, resources::XSD_CONFIG))
+            }
         }
     }
 }
 
-impl Namespaces {
-    pub fn new() -> Self {
-        Self { hm: HashMap::new() }
+impl<'a> Schema<'a> {
+    pub fn try_new(schema_kind: &SchemaKind, xsd_str: &'static str) -> Result<Self> {
+        let doc = Document::parse(xsd_str).with_context(|| "Failed to read the schema")?;
+        let root = doc.root_element();
+        let target_ns =root
+            .attributes()
+            .find(|attr| attr.name() == "targetNamespace")
+            .map(|a| a.value().to_string());
+        let mut hm = HashMap::new();
+        for ns in root.namespaces() {
+            hm.insert(ns.name().unwrap().to_string(), ns.uri().to_string());
+        }
+        Ok(Self {
+            document: doc,
+            target_namespace: target_ns,
+            namespaces: hm,
+            schema_kind: *schema_kind,
+        })
     }
 
-    pub fn set(&mut self, hm: &HashMap<String, String>) {
-        self.hm = hm.clone()
+    pub fn new(schema_kind: &SchemaKind, xsd_str: &'static str) -> Self {
+        Self::try_new(schema_kind, xsd_str).unwrap()
     }
 
-    pub fn len(&self) -> usize {
-        self.hm.len()
-    }
-    pub fn uri(&self, key: &str) -> Option<&str> {
-        self.hm.get(key).map(|s| s.as_str())
+    pub fn root_element(&self) -> RoNode {
+        self.document.root_element()
     }
 
-    pub fn name(&self, uri: &str) -> Option<&str> {
-        self.hm
-            .iter()
-            .find(|(_, u)| u.as_str()==uri)
-            .map(|(n, _)| n.as_str())
-    }
-}
-
-impl<'a> XMLSchema<'a> {
-
-    /// Derive the namespace of the schema according to the content of the tag `<xs:schema>`
-    pub fn derive_namespaces(&mut self) {
-        let schema = self.schema_tag();
-        let hm = schema.namespaces().map(|ns| 
-            match ns.name() {
-                Some(n) => (n.to_string(), ns.uri().to_string()),
-                None => (String::new(), ns.uri().to_string()),
-            }
-        ).collect();
-        self.namespaces.set(&hm);
-    }
-
-    /// Get the [Document] from the crate [roxmltree].
-    pub fn document(&self) -> &'a Document {
+    pub fn document(&self) -> &Document {
         &self.document
     }
 
-    /// Get the root of the [Document]
-    fn root(&'a self) -> Node<'a, 'a> {
-        self.document.root()
+    pub fn target_namespace_name(&'a self) -> Option<&'a str> {
+        self.namespaces.iter().find(|(k,v)| Some(*v)==self.target_namespace.as_ref()).map(|(k,v)| k.deref())
     }
 
-    /// Get the schema tag containing namespace information
-    fn schema_tag(&'a self) -> Node<'a, 'a> {
-        self.root().children().find(|n| !n.is_comment()).unwrap()
-    }
-
-    /// List of the namespaces used in the xml document
-    /// 
-    /// panic if no namespace is set.
-    pub fn namespaces(&self) -> &Namespaces {
-        &self.namespaces
-    }
-
-    /// Return the value of `targetNamespace`. None if not set
-    pub fn target_namespace(&'a self) -> Option<&'a str> {
-        self.schema_tag()
-            .attributes()
-            .find(|attr| attr.name()=="targetNamespace")
-            .map(|attr| attr.value())
+    pub fn xmlschema_namespace_name(&'a self) -> Option<&'a str> {
+        self.namespaces.iter().find(|(k,v)| v.deref()=="http://www.w3.org/2001/XMLSchema").map(|(k,v)| k.deref())
     }
 }
 
-impl<'a> TryFrom<&'static str> for XMLSchema<'a> {
-    type Error=anyhow::Error;
-
-    fn try_from(value: &'static str) -> Result<Self, Self::Error> {
-        let document = Document::parse(value).map_err(|e| anyhow!(e))?;
-        let mut res = Self { 
-            document,
-            namespaces: Namespaces::new()
-        };
-        res.derive_namespaces();
-        Ok(res)
-    }
-}
- 
 
 #[cfg(test)]
 mod test {
     use super::*;
 
     #[test]
-    fn test_namespaces() {
-        let mut ns = Namespaces::new();
-        assert_eq!(ns.len(), 0);
-        ns.set(&HashMap::from([("a".to_string(),"1".to_string()),("b".to_string(),"3".to_string()),("c".to_string(),"2".to_string())]));
-        assert_eq!(ns.len(), 3);
-        assert_eq!(ns.uri("a"), Some("1"));
-        assert_eq!(ns.uri("b"), Some("3"));
-        assert_eq!(ns.uri("c"), Some("2"));
-        assert_eq!(ns.uri("d"), None);
-        assert_eq!(ns.name("1"), Some("a"));
-        assert_eq!(ns.name("2"), Some("c"));
-        assert_eq!(ns.name("4"), None);
-    }
-
-
-    #[test]
-    fn test_config() {
-        let xsd_config = SchemaEnum::CONFIG.get_schema();
-        assert_eq!(xsd_config.target_namespace().unwrap(), "http://www.evoting.ch/xmlns/config/5");
-        let ns = xsd_config.namespaces();
-        assert_eq!(ns.len(), 2);
-        assert_eq!(ns.uri("xs"), Some("http://www.w3.org/2001/XMLSchema"));
-        assert_eq!(ns.uri("config"), Some("http://www.evoting.ch/xmlns/config/5"));
+    fn test_schema_decrypt() {
+        let xsd = SchemaKind::decrypt.get_schema();
+        assert_eq!(xsd.target_namespace.as_deref().unwrap(), "http://www.evoting.ch/xmlns/decrypt/1");
+        assert_eq!(xsd.namespaces.keys().len(), 2);
+        assert_eq!(xsd.namespaces.get("decrypt").unwrap(), "http://www.evoting.ch/xmlns/decrypt/1");
+        assert_eq!(xsd.namespaces.get("xs").unwrap(), "http://www.w3.org/2001/XMLSchema");
     }
 
     #[test]
-    fn test_decrypt() {
-        let xsd_config = SchemaEnum::DECRYPT.get_schema();
-        assert_eq!(xsd_config.target_namespace().unwrap(), "http://www.evoting.ch/xmlns/decrypt/1");
-        let ns = xsd_config.namespaces();
-        assert_eq!(ns.len(), 2);
-        assert_eq!(ns.uri("xs"), Some("http://www.w3.org/2001/XMLSchema"));
-        assert_eq!(ns.uri("decrypt"), Some("http://www.evoting.ch/xmlns/decrypt/1")); 
+    fn test_schema_config() {
+        let xsd = SchemaKind::config.get_schema();
+        assert_eq!(xsd.target_namespace.as_deref().unwrap(), "http://www.evoting.ch/xmlns/config/5");
+        assert_eq!(xsd.namespaces.keys().len(), 2);
+        assert_eq!(xsd.namespaces.get("config").unwrap(), "http://www.evoting.ch/xmlns/config/5");
+        assert_eq!(xsd.namespaces.get("xs").unwrap(), "http://www.w3.org/2001/XMLSchema");
     }
-}
+
+    #[test]
+    fn test_target_namespace_name() {
+        let xsd = SchemaKind::config.get_schema();
+        assert_eq!(xsd.target_namespace_name(), Some("config"));
+    }
+
+    #[test]
+    fn test_xmlschema_namespace_name() {
+        let xsd = SchemaKind::config.get_schema();
+        assert_eq!(xsd.xmlschema_namespace_name(), Some("xs"));
+    }
+} 
