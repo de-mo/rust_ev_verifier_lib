@@ -71,6 +71,12 @@ pub struct CorrectnessInformationElt {
 }
 
 impl<'a> VerifiySignatureTrait<'a> for SetupComponentVerificationDataPayload {
+    type Error=std::convert::Infallible;
+
+    fn get_hashable(&'a self) -> Result<HashableMessage<'a>, Self::Error> {
+        Ok(HashableMessage::from(self))
+    }
+
     fn get_context_data(&'a self) -> Vec<HashableMessage<'a>> {
         vec![
             HashableMessage::from("verification data"),

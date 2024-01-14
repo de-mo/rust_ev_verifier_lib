@@ -75,6 +75,12 @@ impl<'a> From<&'a ControlComponentCodeShare> for HashableMessage<'a> {
 }
 
 impl<'a> VerifiySignatureTrait<'a> for ControlComponentCodeSharesPayloadInner {
+    type Error=std::convert::Infallible;
+
+    fn get_hashable(&'a self) -> Result<HashableMessage<'a>, Self::Error> {
+        Ok(HashableMessage::from(self))
+    }
+
     fn get_context_data(&'a self) -> Vec<HashableMessage<'a>> {
         vec![
             HashableMessage::from("encrypted code shares"),

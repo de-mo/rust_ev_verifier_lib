@@ -35,6 +35,12 @@ impl<'a> From<&'a SetupComponentPublicKeysPayload> for HashableMessage<'a> {
 }
 
 impl<'a> VerifiySignatureTrait<'a> for SetupComponentPublicKeysPayload {
+    type Error=std::convert::Infallible;
+
+    fn get_hashable(&'a self) -> Result<HashableMessage<'a>, Self::Error> {
+        Ok(HashableMessage::from(self))
+    }
+
     fn get_context_data(&'a self) -> Vec<HashableMessage<'a>> {
         vec![
             HashableMessage::from("public keys"),

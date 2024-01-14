@@ -14,13 +14,16 @@ impl VerifierDataDecode for ECH0110 {
     }
 }
 
-impl<'a> From<&'a ECH0110> for HashableMessage<'a> {
-    fn from(_: &'a ECH0110) -> Self {
+impl<'a> VerifiySignatureTrait<'a> for ECH0110 {
+    type Error=anyhow::Error;
+
+    fn get_hashable(&'a self) -> Result<HashableMessage<'a>, Self::Error> {
+        //let hashable = XMLFileHashable::new(&self.path, &SchemaKind::config);
+        //let hash = hashable.try_hash()?;
+        //Ok(HashableMessage::Hashed(hash))
         todo!()
     }
-}
 
-impl<'a> VerifiySignatureTrait<'a> for ECH0110 {
     fn get_context_data(&self) -> Vec<HashableMessage<'a>> {
         vec![HashableMessage::from("eCH 0110")]
     }

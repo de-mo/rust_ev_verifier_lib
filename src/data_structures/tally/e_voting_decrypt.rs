@@ -14,13 +14,16 @@ impl VerifierDataDecode for EVotingDecrypt {
     }
 }
 
-impl<'a> From<&'a EVotingDecrypt> for HashableMessage<'a> {
-    fn from(_: &'a EVotingDecrypt) -> Self {
+impl<'a> VerifiySignatureTrait<'a> for EVotingDecrypt {
+    type Error=anyhow::Error;
+
+    fn get_hashable(&'a self) -> Result<HashableMessage<'a>, Self::Error> {
+        //let hashable = XMLFileHashable::new(&self.path, &SchemaKind::config);
+        //let hash = hashable.try_hash()?;
+        //Ok(HashableMessage::Hashed(hash))
         todo!()
     }
-}
 
-impl<'a> VerifiySignatureTrait<'a> for EVotingDecrypt {
     fn get_context_data(&self) -> Vec<HashableMessage<'a>> {
         vec![HashableMessage::from("evoting decrypt")]
     }
