@@ -677,7 +677,7 @@ checksum = "3cd14fd5e3b777a7422cca79358c57a8f6e3a703d9ac187448d0daf220c2407f"
 [[package]]
 name = "rust_ev_crypto_primitives"
 version = "0.1.0"
-source = "git+https://github.com/de-mo/rust_ev_crypto_primitives.git?rev=404aa92#404aa92650db0a3d03f9f72cbfcac77da74db10a"
+source = "git+https://github.com/de-mo/rust_ev_crypto_primitives.git?rev=9666f95#9666f95bf1136145f1ccf8e0297e1f87844e3337"
 dependencies = [
  "chrono",
  "data-encoding",

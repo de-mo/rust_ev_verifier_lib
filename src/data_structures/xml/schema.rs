@@ -7,7 +7,6 @@ use crate::resources;
 use anyhow::{anyhow, Context, Result};
 use roxmltree::{Document, Node as RoNode};
 use std::collections::HashMap;
-use std::ops::Deref;
 use std::sync::OnceLock;
 
 static SCHEMA_CELL_ECH_0006: OnceLock<Schema> = OnceLock::new();

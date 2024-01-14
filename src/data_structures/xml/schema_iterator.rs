@@ -10,7 +10,7 @@ use std::str;
 ///
 /// The construction is thought, that only tags `xs:element` are built in this structure. The children are also
 /// these kind of nodes.
-struct ElementNode<'a> {
+pub struct ElementNode<'a> {
     schema: &'a Schema<'a>,
     ro_node: RoNode<'a, 'a>,
     parent: Option<&'a ElementNode<'a>>,
@@ -71,7 +71,7 @@ impl<'a> NodeKind<'a> {
         }
         Err(anyhow!("The node is not a complex type"))
     }
-
+    
     fn native_type(&'a self) -> Result<String> {
         match self {
             NodeKind::ComplexType(_) => {
@@ -97,18 +97,26 @@ impl<'a> NodeKind<'a> {
 
 impl<'a, 'input> ElementNode<'a> {
     /// Name of the nome (attribute `"name"`, not the name of the tag)
-    fn name(&'a self) -> &'a str {
+    pub fn name(&'a self) -> &'a str {
         self.ro_node.find_attribute("name").unwrap()
     }
 
     /// Is the element optional ?
-    fn is_optional(&self) -> bool {
+    pub fn is_optional(&self) -> bool {
         self.ro_node.min_occurs() == 0
     }
 
     /// Is the element a list (many elements allowed)
-    fn is_list(&self) -> bool {
+    pub fn is_list(&self) -> bool {
         self.ro_node.max_occurs() > 1
+    }
+
+    /// Is the node a complex type
+    pub fn is_complex_type(&self) -> bool {
+        match self.node_kind() {
+            Ok(k) => k.is_complex_type(),
+            Err(_) => false
+        }
     }
 
     /// Get the kind of the node
@@ -161,14 +169,26 @@ impl<'a, 'input> ElementNode<'a> {
         }
     }
 
-    /// Get the children of the node, e.g. the children of type `xs_element`
+    /// Get the native type of the node
     ///
     /// Return an error if the [NodeKind] cannot be built or is empty
     ///
+    /// Return None if the node is not a complex type
+    pub fn native_type(&'a self) -> Result<Option<String>> {
+        let kind = self.node_kind().context("Error getting the node kind")?;
+        if kind.is_complex_type() {
+            return Ok(None)
+        }
+        kind.native_type().map(Some)
+    }
+
+    /// Get the children of the node, e.g. the children of type `xs_element`
+    ///
+    /// Return an error if the [NodeKind] cannot be built or is empty
     /// Return an empty vector if the node is not a complex type
-    fn children(&'a self) -> Result<Vec<Self>> {
+    pub fn children(&'a self) -> Result<Vec<Self>> {
         let mut res = vec![];
-        let kind = self.node_kind().context("Error getting children")?;
+        let kind = self.node_kind().context("Error getting the node kind")?;
         if let Ok(n) = kind.unwrap_complex_type() {
             let seq = n
                 .first_element_child()

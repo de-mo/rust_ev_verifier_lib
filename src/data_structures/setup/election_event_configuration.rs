@@ -1,19 +1,22 @@
-use super::super::{hashable_no_value, xml_read_to_end_into_buffer, VerifierDataDecode};
+use super::super::xml::{hashable::XMLFileHashable, SchemaKind};
+use super::super::{xml::xml_read_to_end_into_buffer, VerifierDataDecode};
 use anyhow::anyhow;
 use quick_xml::{
     de::from_str as xml_de_from_str,
     events::{BytesStart, Event},
     Reader,
 };
+use rust_ev_crypto_primitives::hashing::HashTrait;
 use rust_ev_crypto_primitives::{
     byte_array::ByteArray, direct_trust::CertificateAuthority, hashing::HashableMessage,
     signature::VerifiySignatureTrait,
 };
 use serde::Deserialize;
+use std::path::PathBuf;
 
 #[derive(Debug, Clone)]
 pub struct ElectionEventConfiguration {
-    //path: PathBuf,
+    pub path: PathBuf,
     pub header: ConfigHeader,
 }
 
@@ -64,7 +67,7 @@ impl VerifierDataDecode for ElectionEventConfiguration {
                                 |e| anyhow!(e).context("Error deserializing header".to_string()),
                             )?;
                         return Ok(Self {
-                            //path: p.to_path_buf(),
+                            path: p.to_path_buf(),
                             header: config_header,
                         });
                     }
@@ -78,12 +81,8 @@ impl VerifierDataDecode for ElectionEventConfiguration {
     }
 }
 
-impl<'a> From<&'a ElectionEventConfiguration> for HashableMessage<'a> {
-    fn from(config: &'a ElectionEventConfiguration) -> Self {
-        Self::from(vec![HashableMessage::from(&config.header)])
-    }
-}
 
+/*
 impl<'a> From<&'a ConfigHeader> for HashableMessage<'a> {
     fn from(value: &'a ConfigHeader) -> Self {
         Self::from(vec![
@@ -105,8 +104,16 @@ impl<'a> From<&'a PartialDelivery> for HashableMessage<'a> {
         ])
     }
 }
-
+ */
 impl<'a> VerifiySignatureTrait<'a> for ElectionEventConfiguration {
+    type Error=anyhow::Error;
+
+    fn get_hashable(&'a self) -> Result<HashableMessage<'a>, Self::Error> {
+        let hashable = XMLFileHashable::new(&self.path, &SchemaKind::config);
+        let hash = hashable.try_hash()?;
+        Ok(HashableMessage::Hashed(hash))
+    }
+
     fn get_context_data(&self) -> Vec<HashableMessage<'a>> {
         vec![HashableMessage::from("configuration")]
     }
