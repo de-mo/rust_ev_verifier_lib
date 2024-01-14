@@ -57,7 +57,8 @@ pub fn xml_read_to_end_into_buffer<R: BufRead>(
 
 /// Return the [HashableMessage] no value with the argument `t`
 pub fn hashable_no_value(t: &str) -> HashableMessage {
-    HashableMessage::from(format!("no {} value", t))
+    let s: String = format!("no {} value", t).to_string();
+    HashableMessage::from(s)
 }
 
 #[allow(dead_code)]
