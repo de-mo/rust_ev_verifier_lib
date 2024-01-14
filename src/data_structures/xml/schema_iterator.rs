@@ -7,7 +7,7 @@ use roxmltree::Node as RoNode;
 use std::str;
 
 /// Node in the schema
-/// 
+///
 /// The construction is thought, that only tags `xs:element` are built in this structure. The children are also
 /// these kind of nodes.
 struct ElementNode<'a> {
@@ -29,47 +29,69 @@ enum NodeKind<'a> {
 impl<'a> NodeKind<'a> {
     /// Is the node a complex type
     fn is_complex_type(&self) -> bool {
-        self.unwrap_complex_type().is_some()
+        self.unwrap_complex_type().is_ok()
     }
 
     /// Is the node a simple type
     fn is_simple_type(&self) -> bool {
-        self.unwrap_simple_type().is_some()
+        self.unwrap_simple_type().is_ok()
     }
 
     /// Is the node a native type
     fn is_native(&self) -> bool {
-        self.unwrap_native().is_some()
+        self.unwrap_native().is_ok()
     }
 
     /// Unwrap the [RoNode] of the complex type
-    /// 
-    /// Return `None` if the node is not complex
-    fn unwrap_complex_type(&self) -> Option<RoNode<'a, 'a>> {
+    ///
+    /// Return error if the node is not complex
+    fn unwrap_complex_type(&self) -> Result<RoNode<'a, 'a>> {
         if let Self::ComplexType(n) = self {
-            return Some(*n);
+            return Ok(*n);
         }
-        None
+        Err(anyhow!("The node is not a complex type"))
     }
 
     /// Unwrap the [RoNode] of the simple type
-    /// 
+    ///
     /// Return `None` if the node is not simple
-    fn unwrap_simple_type(&self) -> Option<RoNode<'a, 'a>> {
+    fn unwrap_simple_type(&self) -> Result<RoNode<'a, 'a>> {
         if let Self::SimpleType(n) = self {
-            return Some(*n);
+            return Ok(*n);
         }
-        None
+        Err(anyhow!("The node is not a complex type"))
     }
 
     /// Unwrap the [RoNode] of the native type
-    /// 
+    ///
     /// Return `None` if the node is not native
-    fn unwrap_native(&'a self) -> Option<&'a str> {
+    fn unwrap_native(&'a self) -> Result<&'a str> {
         if let Self::Native(s) = self {
-            return Some(s.as_str());
+            return Ok(s.as_str());
         }
-        None
+        Err(anyhow!("The node is not a complex type"))
+    }
+
+    fn native_type(&'a self) -> Result<String> {
+        match self {
+            NodeKind::ComplexType(_) => {
+                Err(anyhow!("native type is not possible for complex types"))
+            }
+            NodeKind::SimpleType(n) => {
+                let restriction = n
+                    .children()
+                    .find(|e| e.node_tag_name() == "restriction")
+                    .ok_or(anyhow!("Simple type must have a child with tag restriction. Other constructs are not implemented"))?;
+                let base = QName(
+                    restriction
+                        .find_attribute("base")
+                        .ok_or(anyhow!("The atribute base is missing for restriction."))?
+                        .as_bytes(),
+                );
+                Ok(str::from_utf8(base.local_name().as_ref()).unwrap().to_string())
+            }
+            NodeKind::Native(s) => Ok(s.clone()),
+        }
     }
 }
 
@@ -90,18 +112,16 @@ impl<'a, 'input> ElementNode<'a> {
     }
 
     /// Get the kind of the node
-    /// 
+    ///
     /// Return an error if the [NodeKind] cannot be built or is empty
     fn node_kind(&'a self) -> Result<NodeKind<'a>> {
         let mut res_node = None;
         // Type is defined as attribute
         if let Some(q_name) = self.ro_node.schema_node_type() {
             // The type name is qualified with prefix
-            if q_name.prefix().is_some() {
+            if let Some(prefix) = q_name.prefix() {
                 // The prefix is for xmlschema
-                if q_name.prefix().as_ref().map(|e| e.as_ref())
-                    == self.schema.xmlschema_namespace_name().map(|e| e.as_bytes())
-                {
+                if prefix.as_ref() == self.schema.xmlschema_namespace_name().as_bytes() {
                     return Ok(NodeKind::Native(
                         str::from_utf8(q_name.local_name().as_ref())
                             .unwrap()
@@ -109,9 +129,7 @@ impl<'a, 'input> ElementNode<'a> {
                     ));
                 }
                 // The prefix is for target namespace (e.g. in the current schema)
-                if q_name.prefix().as_ref().map(|e| e.as_ref())
-                    == self.schema.target_namespace_name().map(|e| e.as_bytes())
-                {
+                if prefix.as_ref() == self.schema.target_namespace_name().as_bytes() {
                     let n = self
                         .ro_node
                         .find_node_with_name(str::from_utf8(q_name.local_name().as_ref()).unwrap());
@@ -144,14 +162,14 @@ impl<'a, 'input> ElementNode<'a> {
     }
 
     /// Get the children of the node, e.g. the children of type `xs_element`
-    /// 
+    ///
     /// Return an error if the [NodeKind] cannot be built or is empty
-    /// 
+    ///
     /// Return an empty vector if the node is not a complex type
     fn children(&'a self) -> Result<Vec<Self>> {
         let mut res = vec![];
         let kind = self.node_kind().context("Error getting children")?;
-        if let Some(n) = kind.unwrap_complex_type() {
+        if let Ok(n) = kind.unwrap_complex_type() {
             let seq = n
                 .first_element_child()
                 .ok_or(anyhow!("Missing first child"))?;
@@ -411,7 +429,59 @@ mod test {
         assert_eq!(cs[4].name(), "adminBoardMembers");
         assert!(cs[4].node_kind().unwrap().is_complex_type());
     }
-}
+
+    #[test]
+    fn test_native_type() {
+        let xsd = schema();
+        let root = xsd.root_element();
+        let n1 = root
+            .find_node_with_name("contestType")
+            .unwrap()
+            .first_element_child()
+            .unwrap()
+            .children()
+            .find(|e| {
+                e.find_attribute("name").is_some()
+                    && e.find_attribute("name").unwrap() == "adminBoard"
+            })
+            .unwrap();
+        let node1 = ElementNode {
+            schema: xsd,
+            ro_node: n1,
+            parent: None,
+        };
+        let r_cs = node1.children();
+        assert!(r_cs.is_ok());
+        let cs = r_cs.unwrap();
+        assert_eq!(cs[0].node_kind().unwrap().native_type().unwrap().as_str(), "token");
+        assert_eq!(cs[1].node_kind().unwrap().native_type().unwrap().as_str(), "token");
+        assert_eq!(cs[2].node_kind().unwrap().native_type().unwrap().as_str(), "token");
+        assert_eq!(cs[3].node_kind().unwrap().native_type().unwrap().as_str(), "integer");
+        assert!(cs[4].node_kind().unwrap().native_type().is_err());
+    }
+
+    #[test]
+    fn test_native_type_2() {
+        let xsd = schema();
+        let n1 = xsd
+            .root_element()
+            .children()
+            .find(|e| e.is_schema_element())
+            .unwrap();
+        let node1 = ElementNode {
+            schema: xsd,
+            ro_node: n1,
+            parent: None,
+        };
+        let r_cs = node1.children();
+        assert!(r_cs.is_ok());
+        let cs = r_cs.unwrap();
+        assert!(cs[0].node_kind().unwrap().native_type().is_err());
+        assert!(cs[1].node_kind().unwrap().native_type().is_err());
+        assert!(cs[2].node_kind().unwrap().native_type().is_err());
+        assert!(cs[3].node_kind().unwrap().native_type().is_err());
+        assert_eq!(cs[4].node_kind().unwrap().native_type().unwrap().as_str(), "base64Binary");
+    }}
 
 #[cfg(test)]
 mod test_additional_method_node {

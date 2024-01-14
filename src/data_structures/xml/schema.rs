@@ -1,19 +1,14 @@
-//! Module to read the static schema and to prodive some functionalities in the 
+//! Module to read the static schema and to prodive some functionalities in the
 //! structure
-//! 
-//! ```
-//! use crate::xml::schema::SchemaKind;
-//! let xsd = SchemaKind::config.get_schema();
-//! ```
-//! 
-//! Use the object [OnceLock] to create the structure only once from the static string. Action is thread safe 
+//!
+//! Use the object [OnceLock] to create the structure only once from the static string. Action is thread safe
 
-use anyhow::{Context, Result};
+use crate::resources;
+use anyhow::{anyhow, Context, Result};
 use roxmltree::{Document, Node as RoNode};
+use std::collections::HashMap;
 use std::ops::Deref;
 use std::sync::OnceLock;
-use std::collections::HashMap;
-use crate::resources;
 
 static SCHEMA_CELL_ECH_0006: OnceLock<Schema> = OnceLock::new();
 static SCHEMA_CELL_ECH_0007: OnceLock<Schema> = OnceLock::new();
@@ -26,6 +21,8 @@ static SCHEMA_CELL_ECH_0155: OnceLock<Schema> = OnceLock::new();
 static SCHEMA_CELL_ECH_0222: OnceLock<Schema> = OnceLock::new();
 static SCHEMA_CELL_ECH_DECRYPT: OnceLock<Schema> = OnceLock::new();
 static SCHEMA_CELL_ECH_CONFIG: OnceLock<Schema> = OnceLock::new();
+
+const XML_SCHEMA_URI: &str = "http://www.w3.org/2001/XMLSchema";
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 /// Enumarate for the kind of schemas.
@@ -46,8 +43,10 @@ pub enum SchemaKind {
 /// Schema containing the structure of the schema
 pub struct Schema<'a> {
     document: Document<'a>,
-    target_namespace: Option<String>,
     schema_kind: SchemaKind,
+    target_namespace_name: String,
+    target_namespace_uri: String,
+    xml_schema_name: String,
     namespaces: HashMap<String, String>,
 }
 
@@ -94,29 +93,48 @@ impl SchemaKind {
 
 impl<'a> Schema<'a> {
     /// Try to create a new schema of kind [schema_kind] with the static str [xsd_str]
-    /// 
-    /// Return an error if it is not possible to create it
+    ///
+    /// Return an error in the following cases:
+    /// - It is not possible to create it
+    /// - Targetnamespace is missing
     pub fn try_new(schema_kind: &SchemaKind, xsd_str: &'static str) -> Result<Self> {
         let doc = Document::parse(xsd_str).with_context(|| "Failed to read the schema")?;
         let root = doc.root_element();
-        let target_ns =root
+        let target_ns_uri = root
             .attributes()
             .find(|attr| attr.name() == "targetNamespace")
-            .map(|a| a.value().to_string());
+            .map(|a| a.value().to_string())
+            .ok_or(anyhow!("targetNamespace is missing"))?;
         let mut hm = HashMap::new();
         for ns in root.namespaces() {
             hm.insert(ns.name().unwrap().to_string(), ns.uri().to_string());
         }
+        let target_ns_name = hm
+            .iter()
+            .find(|(_, uri)| uri == &&target_ns_uri)
+            .ok_or(anyhow!(
+                "The name of the target namespace is not defined in the list of namespaces"
+            ))?
+            .0;
+        let schema_ns_name = hm
+            .iter()
+            .find(|(_, uri)| uri.as_str() == XML_SCHEMA_URI)
+            .ok_or(anyhow!(
+                "The name of the xml schema is not defined in the list of namespaces"
+            ))?
+            .0;
         Ok(Self {
             document: doc,
-            target_namespace: target_ns,
+            target_namespace_uri: target_ns_uri,
+            target_namespace_name: target_ns_name.clone(),
+            xml_schema_name: schema_ns_name.clone(),
             namespaces: hm,
             schema_kind: *schema_kind,
         })
     }
 
     /// Try to create a new schema of kind [schema_kind] with the static str [xsd_str]
-    /// 
+    ///
     /// Panic if it is not possible to create it
     pub fn new(schema_kind: &SchemaKind, xsd_str: &'static str) -> Self {
         Self::try_new(schema_kind, xsd_str).unwrap()
@@ -133,16 +151,15 @@ impl<'a> Schema<'a> {
     }
 
     /// The name of the target namespace's name, based on the uri in `targetNamespace` and the list of namespaces
-    pub fn target_namespace_name(&'a self) -> Option<&'a str> {
-        self.namespaces.iter().find(|(k,v)| Some(*v)==self.target_namespace.as_ref()).map(|(k,v)| k.deref())
+    pub fn target_namespace_name(&'a self) -> &'a str {
+        self.target_namespace_name.as_str()
     }
 
     /// The name of the xml schema namespace's name, based on the standard uri "http://www.w3.org/2001/XMLSchema" and the list of namespaces
-    pub fn xmlschema_namespace_name(&'a self) -> Option<&'a str> {
-        self.namespaces.iter().find(|(k,v)| v.deref()=="http://www.w3.org/2001/XMLSchema").map(|(k,v)| k.deref())
+    pub fn xmlschema_namespace_name(&'a self) -> &'a str {
+        self.xml_schema_name.as_str()
     }
 }
-
 
 #[cfg(test)]
 mod test {
@@ -151,30 +168,48 @@ mod test {
     #[test]
     fn test_schema_decrypt() {
         let xsd = SchemaKind::decrypt.get_schema();
-        assert_eq!(xsd.target_namespace.as_deref().unwrap(), "http://www.evoting.ch/xmlns/decrypt/1");
+        assert_eq!(
+            xsd.target_namespace_uri,
+            "http://www.evoting.ch/xmlns/decrypt/1"
+        );
         assert_eq!(xsd.namespaces.keys().len(), 2);
-        assert_eq!(xsd.namespaces.get("decrypt").unwrap(), "http://www.evoting.ch/xmlns/decrypt/1");
-        assert_eq!(xsd.namespaces.get("xs").unwrap(), "http://www.w3.org/2001/XMLSchema");
+        assert_eq!(
+            xsd.namespaces.get("decrypt").unwrap(),
+            "http://www.evoting.ch/xmlns/decrypt/1"
+        );
+        assert_eq!(
+            xsd.namespaces.get("xs").unwrap(),
+            "http://www.w3.org/2001/XMLSchema"
+        );
     }
 
     #[test]
     fn test_schema_config() {
         let xsd = SchemaKind::config.get_schema();
-        assert_eq!(xsd.target_namespace.as_deref().unwrap(), "http://www.evoting.ch/xmlns/config/5");
+        assert_eq!(
+            xsd.target_namespace_uri,
+            "http://www.evoting.ch/xmlns/config/5"
+        );
         assert_eq!(xsd.namespaces.keys().len(), 2);
-        assert_eq!(xsd.namespaces.get("config").unwrap(), "http://www.evoting.ch/xmlns/config/5");
-        assert_eq!(xsd.namespaces.get("xs").unwrap(), "http://www.w3.org/2001/XMLSchema");
+        assert_eq!(
+            xsd.namespaces.get("config").unwrap(),
+            "http://www.evoting.ch/xmlns/config/5"
+        );
+        assert_eq!(
+            xsd.namespaces.get("xs").unwrap(),
+            "http://www.w3.org/2001/XMLSchema"
+        );
     }
 
     #[test]
     fn test_target_namespace_name() {
         let xsd = SchemaKind::config.get_schema();
-        assert_eq!(xsd.target_namespace_name(), Some("config"));
+        assert_eq!(xsd.target_namespace_name(), "config");
     }
 
     #[test]
     fn test_xmlschema_namespace_name() {
         let xsd = SchemaKind::config.get_schema();
-        assert_eq!(xsd.xmlschema_namespace_name(), Some("xs"));
+        assert_eq!(xsd.xmlschema_namespace_name(), "xs");
     }
-} 
+}
