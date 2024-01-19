@@ -51,32 +51,24 @@ impl VerificationPeriod {
 fn verify_signature_for_object<'a, T>(
     obj: &'a T,
     result: &mut VerificationResult,
-    keystore: &Result<Keystore>,
+    keystore: &Keystore,
     name: &str,
 ) where
     T: VerifiySignatureTrait<'a>,
     HashableMessage<'a>: From<&'a T>,
 {
-    match keystore {
-        Ok(ks) => match obj.verifiy_signature(ks) {
-            Ok(t) => {
-                if !t {
-                    result.push(create_verification_failure!(format!(
-                        "Wrong signature for {}",
-                        name
-                    )))
-                }
+    match obj.verifiy_signature(keystore) {
+        Ok(t) => {
+            if !t {
+                result.push(create_verification_failure!(format!(
+                    "Wrong signature for {}",
+                    name
+                )))
             }
-            Err(e) => {
-                result.push(create_verification_error!(
-                    format!("Error testing signature of {}", name),
-                    e
-                ));
-            }
-        },
+        }
         Err(e) => {
             result.push(create_verification_error!(
-                format!("Error reading keystore for testing signature of {}", name),
+                format!("Error testing signature of {}", name),
                 e
             ));
         }

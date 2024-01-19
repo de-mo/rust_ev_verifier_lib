@@ -13,6 +13,7 @@ mod config;
 mod data_structures;
 mod file_structure;
 mod verification;
+mod direct_trust;
 
 use anyhow::bail;
 use application_runner::{

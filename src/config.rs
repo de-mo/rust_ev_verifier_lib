@@ -4,7 +4,6 @@ use super::consts;
 use rust_ev_crypto_primitives::Keystore;
 use super::resources::VERIFICATION_LIST;
 use std::path::{Path, PathBuf};
-use std::sync::OnceLock;
 use anyhow::{Result, Context};
 
 // Directory structure
@@ -19,8 +18,6 @@ const LOG_FILE_NAME: &str = "log.txt";
 const DIRECT_TRUST_DIR_NAME: &str = "direct-trust";
 const KEYSTORE_FILE_NAME: &str = "public_keys_keystore_verifier.p12";
 const KEYSTORE_PASSWORD_FILE_NAME: &str = "public_keys_keystore_verifier_pw.txt";
-
-static KEYSTORE: OnceLock<Result<Keystore>> = OnceLock::new();
 
 /// Structuring getting all the configuration information relevant for the
 /// verifier
@@ -121,13 +118,11 @@ impl Config {
     }
 
     /// Get the keystore
-    pub fn keystore(&self) -> &Result<Keystore> {
-        &KEYSTORE.get_or_init(|| {
-            Keystore::new(
-                &self.direct_trust_keystore_path(),
-                &self.direct_trust_keystore_password_path(),
-            ).context("Problem reading the keystore")
-        })
+    pub fn keystore(&self) -> Result<Keystore> {
+        Keystore::new(
+            &self.direct_trust_keystore_path(),
+            &self.direct_trust_keystore_password_path(),
+        ).context("Problem reading the keystore")
     }
 }
 

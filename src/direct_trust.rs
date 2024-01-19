@@ -1,5 +1,3 @@
-use super::config::Config;
-
 /// List of valide Certificate authorities
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum CertificateAuthority {
