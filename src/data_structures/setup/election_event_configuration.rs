@@ -1,16 +1,13 @@
 use super::super::xml::{hashable::XMLFileHashable, SchemaKind};
 use super::super::{xml::xml_read_to_end_into_buffer, VerifierDataDecode};
+use crate::direct_trust::CertificateAuthority;
 use anyhow::anyhow;
 use quick_xml::{
     de::from_str as xml_de_from_str,
     events::{BytesStart, Event},
     Reader,
 };
-use rust_ev_crypto_primitives::hashing::HashTrait;
-use rust_ev_crypto_primitives::{
-    byte_array::ByteArray, direct_trust::CertificateAuthority, hashing::HashableMessage,
-    signature::VerifiySignatureTrait,
-};
+use rust_ev_crypto_primitives::{ByteArray, HashTrait, HashableMessage, VerifiySignatureTrait};
 use serde::Deserialize;
 use std::path::PathBuf;
 
@@ -81,7 +78,6 @@ impl VerifierDataDecode for ElectionEventConfiguration {
     }
 }
 
-
 /*
 impl<'a> From<&'a ConfigHeader> for HashableMessage<'a> {
     fn from(value: &'a ConfigHeader) -> Self {
@@ -106,7 +102,7 @@ impl<'a> From<&'a PartialDelivery> for HashableMessage<'a> {
 }
  */
 impl<'a> VerifiySignatureTrait<'a> for ElectionEventConfiguration {
-    type Error=anyhow::Error;
+    type Error = anyhow::Error;
 
     fn get_hashable(&'a self) -> Result<HashableMessage<'a>, Self::Error> {
         let hashable = XMLFileHashable::new(&self.path, &SchemaKind::config);
@@ -118,8 +114,8 @@ impl<'a> VerifiySignatureTrait<'a> for ElectionEventConfiguration {
         vec![HashableMessage::from("configuration")]
     }
 
-    fn get_certificate_authority(&self) -> CertificateAuthority {
-        CertificateAuthority::Canton
+    fn get_certificate_authority(&self) -> Result<String, Self::Error> {
+        Ok(String::from(&CertificateAuthority::Canton))
     }
 
     fn get_signature(&self) -> ByteArray {

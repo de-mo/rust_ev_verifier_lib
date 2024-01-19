@@ -1,13 +1,13 @@
 use super::super::{
-    common_types::{EncryptionGroup, ExponentiatedEncryptedElement, Proof, SignatureJson},
+    common_types::{EncryptionParametersDef, ExponentiatedEncryptedElement, Proof, SignatureJson},
     deserialize_seq_string_hex_to_seq_bigunit, implement_trait_verifier_data_json_decode,
     VerifierDataDecode,
 };
-use anyhow::anyhow;
+use crate::direct_trust::CertificateAuthority;
+use anyhow::{anyhow, Context};
 use num_bigint::BigUint;
 use rust_ev_crypto_primitives::{
-    byte_array::ByteArray, direct_trust::CertificateAuthority, hashing::HashableMessage,
-    signature::VerifiySignatureTrait,
+    ByteArray, EncryptionParameters, HashableMessage, VerifiySignatureTrait,
 };
 use serde::Deserialize;
 
@@ -22,7 +22,8 @@ pub struct ControlComponentCodeSharesPayloadInner {
     pub verification_card_set_id: String,
     pub chunk_id: usize,
     pub control_component_code_shares: Vec<ControlComponentCodeShare>,
-    pub encryption_group: EncryptionGroup,
+    #[serde(with = "EncryptionParametersDef")]
+    pub encryption_group: EncryptionParameters,
     pub node_id: usize,
     pub signature: SignatureJson,
 }
@@ -75,7 +76,7 @@ impl<'a> From<&'a ControlComponentCodeShare> for HashableMessage<'a> {
 }
 
 impl<'a> VerifiySignatureTrait<'a> for ControlComponentCodeSharesPayloadInner {
-    type Error=std::convert::Infallible;
+    type Error = anyhow::Error;
 
     fn get_hashable(&'a self) -> Result<HashableMessage<'a>, Self::Error> {
         Ok(HashableMessage::from(self))
@@ -90,8 +91,13 @@ impl<'a> VerifiySignatureTrait<'a> for ControlComponentCodeSharesPayloadInner {
         ]
     }
 
-    fn get_certificate_authority(&self) -> CertificateAuthority {
-        CertificateAuthority::get_ca_cc(&self.node_id).unwrap()
+    fn get_certificate_authority(&self) -> Result<String, Self::Error> {
+        Ok(String::from(
+            &CertificateAuthority::get_ca_cc(&self.node_id).context(format!(
+                "verifiy signature for ControlComponentCodeSharesPayloadInner for node {}",
+                self.node_id
+            ))?,
+        ))
     }
 
     fn get_signature(&self) -> ByteArray {

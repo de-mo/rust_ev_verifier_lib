@@ -1,7 +1,7 @@
 //! Module to define the structure of the data and to read the data from the files into these structures
-//! 
+//!
 //! The module is separate in two module: [setup] and [tally]
-//! 
+//!
 pub mod common_types;
 pub mod setup;
 pub mod setup_or_tally;
@@ -34,10 +34,7 @@ use anyhow::{anyhow, bail};
 use chrono::NaiveDateTime;
 use num_bigint::BigUint;
 use roxmltree::Document;
-use rust_ev_crypto_primitives::{
-    byte_array::{ByteArray, Decode},
-    num_bigint::Hexa,
-};
+use rust_ev_crypto_primitives::{ByteArray, Decode, Hexa};
 use serde::de::{Deserialize, Deserializer, Error};
 use setup_or_tally::SetupOrTally;
 use std::path::Path;
@@ -122,12 +119,12 @@ pub trait VerifierTallyDataTrait {
 /// A trait defining the necessary function to decode to the Verifier Data
 pub trait VerifierDataDecode: Sized {
     /// Decode the data from the file
-    /// 
+    ///
     /// # Arguments
     /// * `f`: The [File] to read
     /// * `t`: The type of the file (json or xml)
     /// * `mode`: The mode to read the file (memory or streaming)
-    /// 
+    ///
     /// # Return
     /// The decoded data or [anyhow::Result] if something wrong
     fn from_file(f: &File, t: &FileType, mode: &FileReadMode) -> anyhow::Result<Self> {
@@ -138,11 +135,11 @@ pub trait VerifierDataDecode: Sized {
     }
 
     /// Decode the data from the file in memory
-    /// 
+    ///
     /// # Arguments
     /// * `f`: The [File] to read
     /// * `t`: The type of the file (json or xml)
-    /// 
+    ///
     /// # Return
     /// The decoded data or [anyhow::Result] if something wrong
     fn from_file_memory(f: &File, t: &FileType) -> anyhow::Result<Self> {
@@ -161,11 +158,11 @@ pub trait VerifierDataDecode: Sized {
     }
 
     /// Decode the data from the file streaming
-    /// 
+    ///
     /// # Arguments
     /// * `f`: The [File] to read
     /// * `t`: The type of the file (json or xml)
-    /// 
+    ///
     /// # Return
     /// The decoded data or [anyhow::Result] if something wrong
     fn from_file_stream(f: &File, t: &FileType) -> anyhow::Result<Self> {
@@ -178,7 +175,7 @@ pub trait VerifierDataDecode: Sized {
     }
 
     /// Decode the data from a json string
-    /// 
+    ///
     /// # Return
     /// The decoded data or [anyhow::Result] if something wrong, e.g. if it is not allowed, or if an error
     /// occured during the decoding
@@ -187,7 +184,7 @@ pub trait VerifierDataDecode: Sized {
     }
 
     /// Decode the data from a xml [Document] (roxmltreee)
-    /// 
+    ///
     /// # Return
     /// The decoded data or [anyhow::Result] if something wrong, e.g. if it is not allowed, or if an error
     /// occured during the decoding
@@ -196,7 +193,7 @@ pub trait VerifierDataDecode: Sized {
     }
 
     /// Decode the data from a xml xml file
-    /// 
+    ///
     /// # Return
     /// The decoded data or [anyhow::Result] if something wrong, e.g. if it is not allowed, or if an error
     /// occured during the decoding

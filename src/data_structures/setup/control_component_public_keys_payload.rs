@@ -1,20 +1,21 @@
 use super::super::{
-    common_types::{EncryptionGroup, ProofUnderline, SignatureJson},
+    common_types::{EncryptionParametersDef, ProofUnderline, SignatureJson},
     deserialize_seq_string_hex_to_seq_bigunit, implement_trait_verifier_data_json_decode,
     VerifierDataDecode,
 };
-use anyhow::anyhow;
+use crate::direct_trust::CertificateAuthority;
+use anyhow::{anyhow, Context};
 use num_bigint::BigUint;
 use rust_ev_crypto_primitives::{
-    byte_array::ByteArray, direct_trust::CertificateAuthority, hashing::HashableMessage,
-    signature::VerifiySignatureTrait,
+    ByteArray, EncryptionParameters, HashableMessage, VerifiySignatureTrait,
 };
 use serde::Deserialize;
 
 #[derive(Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct ControlComponentPublicKeysPayload {
-    pub encryption_group: EncryptionGroup,
+    #[serde(with = "EncryptionParametersDef")]
+    pub encryption_group: EncryptionParameters,
     pub election_event_id: String,
     pub control_component_public_keys: ControlComponentPublicKeys,
     pub signature: SignatureJson,
@@ -33,7 +34,7 @@ impl<'a> From<&'a ControlComponentPublicKeysPayload> for HashableMessage<'a> {
 }
 
 impl<'a> VerifiySignatureTrait<'a> for ControlComponentPublicKeysPayload {
-    type Error=std::convert::Infallible;
+    type Error = anyhow::Error;
 
     fn get_hashable(&'a self) -> Result<HashableMessage<'a>, Self::Error> {
         Ok(HashableMessage::from(self))
@@ -47,8 +48,15 @@ impl<'a> VerifiySignatureTrait<'a> for ControlComponentPublicKeysPayload {
         ]
     }
 
-    fn get_certificate_authority(&self) -> CertificateAuthority {
-        CertificateAuthority::get_ca_cc(&self.control_component_public_keys.node_id).unwrap()
+    fn get_certificate_authority(&self) -> Result<String, Self::Error> {
+        Ok(String::from(
+            &CertificateAuthority::get_ca_cc(&self.control_component_public_keys.node_id).context(
+                format!(
+                    "verifiy signature for ControlComponentPublicKeysPayload for node {}",
+                    self.control_component_public_keys.node_id
+                ),
+            )?,
+        ))
     }
 
     fn get_signature(&self) -> ByteArray {

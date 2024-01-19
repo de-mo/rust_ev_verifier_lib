@@ -8,7 +8,7 @@ use crate::{
 use anyhow::anyhow;
 use log::debug;
 use num_bigint::BigUint;
-use rust_ev_crypto_primitives::num_bigint::{Constants, Operations};
+use rust_ev_crypto_primitives::{Constants, Operations};
 
 pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
     dir: &D,
@@ -16,8 +16,8 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
     result: &mut VerificationResult,
 ) {
     let setup_dir = dir.unwrap_setup();
-    let eg_p = match setup_dir.encryption_parameters_payload() {
-        Ok(o) => o.encryption_group.p,
+    let eg = match setup_dir.encryption_parameters_payload() {
+        Ok(o) => o.encryption_group,
         Err(e) => {
             result.push(create_verification_error!(
                 "Cannot extract encryption_parameters_payload",
@@ -45,10 +45,10 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
         let product_cc_el_pk = combined_cc_pk
             .iter()
             .map(|e| &e.ccmj_election_public_key[i])
-            .fold(BigUint::one(), |acc, x| acc.mod_multiply(x, &eg_p));
+            .fold(BigUint::one().clone(), |acc, x| acc.mod_multiply(x, eg.p()));
         let calculated_el_pk = product_cc_el_pk.mod_multiply(
             &sc_pk.setup_component_public_keys.electoral_board_public_key[i],
-            &eg_p,
+            eg.p(),
         );
         if &calculated_el_pk != el_pk_i {
             result.push(create_verification_failure!(format!(

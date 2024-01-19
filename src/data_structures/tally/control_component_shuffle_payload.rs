@@ -1,16 +1,18 @@
 use super::super::{
-    common_types::{EncryptionGroup, ExponentiatedEncryptedElement, SignatureJson},
+    common_types::{ExponentiatedEncryptedElement, SignatureJson, EncryptionParametersDef},
     implement_trait_verifier_data_json_decode, VerifierDataDecode,
 };
 use super::tally_component_shuffle_payload::VerifiableShuffle;
 use crate::data_structures::common_types::DecryptionProof;
 use anyhow::anyhow;
+use rust_ev_crypto_primitives::EncryptionParameters;
 use serde::Deserialize;
 
 #[derive(Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct ControlComponentShufflePayload {
-    pub encryption_group: EncryptionGroup,
+    #[serde(with = "EncryptionParametersDef")]
+    pub encryption_group: EncryptionParameters,
     pub election_event_id: String,
     pub ballot_box_id: String,
     pub node_id: usize,

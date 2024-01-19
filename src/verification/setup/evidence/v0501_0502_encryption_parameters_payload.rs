@@ -3,13 +3,12 @@ use super::super::super::result::{
 };
 use crate::{
     config::Config,
-    data_structures::common_types::EncryptionGroup,
     file_structure::{setup_directory::SetupDirectoryTrait, VerificationDirectoryTrait},
 };
 use anyhow::anyhow;
 use log::debug;
-use rust_ev_crypto_primitives::elgamal::{
-    get_encryption_parameters, get_small_prime_group_members,
+use rust_ev_crypto_primitives::{
+    EncryptionParameters, get_small_prime_group_members,
 };
 
 pub(super) fn fn_verification_0501<D: VerificationDirectoryTrait>(
@@ -28,8 +27,8 @@ pub(super) fn fn_verification_0501<D: VerificationDirectoryTrait>(
             return;
         }
     };
-    let eg_test = match get_encryption_parameters(&eg.seed) {
-        Ok(eg) => EncryptionGroup::from(&eg),
+    let eg_test = match EncryptionParameters::get_encryption_parameters(&eg.seed) {
+        Ok(eg) => eg,
         Err(e) => {
             result.push(create_verification_error!(
                 format!(
@@ -41,22 +40,22 @@ pub(super) fn fn_verification_0501<D: VerificationDirectoryTrait>(
             return;
         }
     };
-    if eg_test.p != eg.encryption_group.p {
+    if eg_test.p() != eg.encryption_group.p() {
         result.push(create_verification_failure!(format!(
             "payload p and calculated p are equal: payload: {} / calculated: {}",
-            eg.encryption_group.p, eg_test.p
+            eg.encryption_group.p(), eg_test.p()
         )))
     }
-    if eg_test.q != eg.encryption_group.q {
+    if eg_test.q() != eg.encryption_group.q() {
         result.push(create_verification_failure!(format!(
             "payload q and calculated q are equal: payload: {} / calculated: {}",
-            eg.encryption_group.q, eg_test.q
+            eg.encryption_group.q(), eg_test.q()
         )))
     }
-    if eg_test.g != eg.encryption_group.g {
+    if eg_test.g() != eg.encryption_group.g() {
         result.push(create_verification_failure!(format!(
             "payload g and calculated g are equal: payload: {} / calculated: {}",
-            eg.encryption_group.g, eg_test.g
+            eg.encryption_group.g(), eg_test.g()
         )))
     }
 }
@@ -78,7 +77,7 @@ pub(super) fn fn_verification_0502<D: VerificationDirectoryTrait>(
         }
     };
     let primes = match get_small_prime_group_members(
-        &eg.encryption_group.p,
+        eg.encryption_group.p(),
         Config::maximum_number_of_voting_options(),
     ) {
         Ok(p) => p,

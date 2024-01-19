@@ -1,9 +1,10 @@
 use super::super::VerifierDataDecode;
 use roxmltree::Document;
 use rust_ev_crypto_primitives::{
-    byte_array::ByteArray, direct_trust::CertificateAuthority, hashing::HashableMessage,
-    signature::VerifiySignatureTrait,
+    ByteArray, HashableMessage,
+    VerifiySignatureTrait,
 };
+use crate::direct_trust::CertificateAuthority;
 
 #[derive(Debug, Clone)]
 pub struct ECH0110 {}
@@ -28,9 +29,10 @@ impl<'a> VerifiySignatureTrait<'a> for ECH0110 {
         vec![HashableMessage::from("eCH 0110")]
     }
 
-    fn get_certificate_authority(&self) -> CertificateAuthority {
-        CertificateAuthority::Canton
+    fn get_certificate_authority(&self) -> Result<String, Self::Error> {
+        Ok(String::from(&CertificateAuthority::Canton))
     }
+    
     fn get_signature(&self) -> ByteArray {
         todo!()
     }

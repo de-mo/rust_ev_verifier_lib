@@ -31,7 +31,7 @@ pub fn get_verifications<'a>(
 
 fn fn_verification_0201<D: VerificationDirectoryTrait>(
     dir: &D,
-    _config: &'static Config,
+    config: &'static Config,
     result: &mut VerificationResult,
 ) {
     let setup_dir = dir.unwrap_setup();
@@ -48,14 +48,14 @@ fn fn_verification_0201<D: VerificationDirectoryTrait>(
     verify_signature_for_object(
         eg.as_ref(),
         result,
-        &_config.direct_trust_dir_path(),
+        config.keystore(),
         "encryption_parameters_payload",
     )
 }
 
 fn fn_verification_0203<D: VerificationDirectoryTrait>(
     dir: &D,
-    _config: &'static Config,
+    config: &'static Config,
     result: &mut VerificationResult,
 ) {
     let setup_dir = dir.unwrap_setup();
@@ -72,14 +72,14 @@ fn fn_verification_0203<D: VerificationDirectoryTrait>(
     verify_signature_for_object(
         eg.as_ref(),
         result,
-        &_config.direct_trust_dir_path(),
+        config.keystore(),
         "setup_component_public_keys_payload",
     )
 }
 
 fn fn_verification_0204<D: VerificationDirectoryTrait>(
     dir: &D,
-    _config: &'static Config,
+    config: &'static Config,
     result: &mut VerificationResult,
 ) {
     let setup_dir = dir.unwrap_setup();
@@ -89,7 +89,7 @@ fn fn_verification_0204<D: VerificationDirectoryTrait>(
             Ok(cc) => verify_signature_for_object(
                 cc.as_ref(),
                 result,
-                &_config.direct_trust_dir_path(),
+                config.keystore(),
                 &format!("control_component_public_keys_payload_{}", i),
             ),
             Err(e) => result.push(create_verification_error!(
@@ -102,7 +102,7 @@ fn fn_verification_0204<D: VerificationDirectoryTrait>(
 
 fn fn_verification_0205<D: VerificationDirectoryTrait>(
     dir: &D,
-    _config: &'static Config,
+    config: &'static Config,
     result: &mut VerificationResult,
 ) {
     let setup_dir = dir.unwrap_setup();
@@ -113,7 +113,7 @@ fn fn_verification_0205<D: VerificationDirectoryTrait>(
                 Ok(p) => verify_signature_for_object(
                     p.as_ref(),
                     result,
-                    &_config.direct_trust_dir_path(),
+                    config.keystore(),
                     &format!(
                         "{}/setup_component_verification_data_payload_iter.{}.json",
                         d.get_name(),
@@ -135,7 +135,7 @@ fn fn_verification_0205<D: VerificationDirectoryTrait>(
 
 fn fn_verification_0206<D: VerificationDirectoryTrait>(
     dir: &D,
-    _config: &'static Config,
+    config: &'static Config,
     result: &mut VerificationResult,
 ) {
     let setup_dir = dir.unwrap_setup();
@@ -148,7 +148,7 @@ fn fn_verification_0206<D: VerificationDirectoryTrait>(
                         verify_signature_for_object(
                             p,
                             result,
-                            &_config.direct_trust_dir_path(),
+                            config.keystore(),
                             &format!(
                                 "{}/control_component_code_shares_payload.{}.json[{}]",
                                 d.get_name(),
@@ -173,7 +173,7 @@ fn fn_verification_0206<D: VerificationDirectoryTrait>(
 
 fn fn_verification_0207<D: VerificationDirectoryTrait>(
     dir: &D,
-    _config: &'static Config,
+    config: &'static Config,
     result: &mut VerificationResult,
 ) {
     let setup_dir = dir.unwrap_setup();
@@ -183,7 +183,7 @@ fn fn_verification_0207<D: VerificationDirectoryTrait>(
             Ok(p) => verify_signature_for_object(
                 p.as_ref(),
                 result,
-                &_config.direct_trust_dir_path(),
+                config.keystore(),
                 &format!("{}/setup_component_tally_data_payload.json", d.get_name(),),
             ),
             Err(e) => result.push(create_verification_error!(
@@ -197,7 +197,7 @@ fn fn_verification_0207<D: VerificationDirectoryTrait>(
 #[allow(dead_code)]
 fn fn_verification_0208<D: VerificationDirectoryTrait>(
     dir: &D,
-    _config: &'static Config,
+    config: &'static Config,
     result: &mut VerificationResult,
 ) {
     let setup_dir = dir.unwrap_setup();
@@ -214,7 +214,7 @@ fn fn_verification_0208<D: VerificationDirectoryTrait>(
     verify_signature_for_object(
         rp.as_ref(),
         result,
-        &_config.direct_trust_dir_path(),
+        config.keystore(),
         "election_event_context_payload",
     )
 }

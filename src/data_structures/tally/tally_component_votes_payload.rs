@@ -1,7 +1,8 @@
 use super::super::{
-    common_types::{EncryptionGroup, SignatureJson},
+    common_types::{EncryptionParametersDef, SignatureJson},
     implement_trait_verifier_data_json_decode, VerifierDataDecode,
 };
+use rust_ev_crypto_primitives::EncryptionParameters;
 use anyhow::anyhow;
 use serde::Deserialize;
 
@@ -11,7 +12,8 @@ pub struct TallyComponentVotesPayload {
     pub election_event_id: String,
     pub ballot_id: String,
     pub ballot_box_id: String,
-    pub encryption_group: EncryptionGroup,
+    #[serde(with = "EncryptionParametersDef")]
+    pub encryption_group: EncryptionParameters,
     pub votes: Vec<Vec<usize>>,
     pub actual_selected_voting_options: Vec<Vec<String>>,
     pub decoded_write_in_votes: Vec<Vec<String>>,

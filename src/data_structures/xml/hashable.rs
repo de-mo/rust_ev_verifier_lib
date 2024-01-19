@@ -12,8 +12,7 @@ use quick_xml::{
     reader::NsReader,
 };
 use rust_ev_crypto_primitives::{
-    byte_array::{ByteArray, Decode},
-    hashing::{HashTrait, HashableMessage},
+    ByteArray, Decode, HashTrait, HashableMessage,
 };
 use std::{
     collections::HashMap,

@@ -8,7 +8,7 @@ use crate::{
 use anyhow::anyhow;
 use log::debug;
 use num_bigint::BigUint;
-use rust_ev_crypto_primitives::num_bigint::Constants;
+use rust_ev_crypto_primitives::Constants;
 
 pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
     dir: &D,
@@ -62,14 +62,14 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
             "VerifA: prime group members and encoding voting options are not the same"
         ))
     }
-    let mut verifb: BigUint = BigUint::zero();
+    let mut verifb: BigUint = BigUint::zero().clone();
     for i in (Config::maximum_number_of_voting_options()
         - Config::maximum_number_of_selectable_voting_options())
         ..Config::maximum_number_of_selectable_voting_options()
     {
         verifb = &verifb * BigUint::from(eg.small_primes[i]);
     }
-    if verifb >= eg.encryption_group.p {
+    if &verifb >= eg.encryption_group.p() {
         result.push(create_verification_failure!(
             "VerifB: The product of the phi last primes (the largest possible encoded vote) must be smaller than p"
         ))

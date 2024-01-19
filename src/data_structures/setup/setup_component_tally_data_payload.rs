@@ -1,13 +1,12 @@
 use super::super::{
-    common_types::{EncryptionGroup, SignatureJson},
-    deserialize_seq_seq_string_hex_to_seq_seq_bigunit, implement_trait_verifier_data_json_decode,
-    VerifierDataDecode,
+    common_types::{SignatureJson, EncryptionParametersDef}, deserialize_seq_seq_string_hex_to_seq_seq_bigunit,
+    implement_trait_verifier_data_json_decode, VerifierDataDecode,
 };
+use crate::direct_trust::CertificateAuthority;
 use anyhow::anyhow;
 use num_bigint::BigUint;
 use rust_ev_crypto_primitives::{
-    byte_array::ByteArray, direct_trust::CertificateAuthority, hashing::HashableMessage,
-    signature::VerifiySignatureTrait,
+    ByteArray, EncryptionParameters, HashableMessage, VerifiySignatureTrait,
 };
 use serde::Deserialize;
 
@@ -17,7 +16,8 @@ pub struct SetupComponentTallyDataPayload {
     pub election_event_id: String,
     pub verification_card_set_id: String,
     pub ballot_box_default_title: String,
-    pub encryption_group: EncryptionGroup,
+    #[serde(with = "EncryptionParametersDef")]
+    pub encryption_group: EncryptionParameters,
     pub verification_card_ids: Vec<String>,
     #[serde(deserialize_with = "deserialize_seq_seq_string_hex_to_seq_seq_bigunit")]
     pub verification_card_public_keys: Vec<Vec<BigUint>>,
@@ -46,7 +46,7 @@ impl<'a> From<&'a SetupComponentTallyDataPayload> for HashableMessage<'a> {
 }
 
 impl<'a> VerifiySignatureTrait<'a> for SetupComponentTallyDataPayload {
-    type Error=std::convert::Infallible;
+    type Error = std::convert::Infallible;
 
     fn get_hashable(&'a self) -> Result<HashableMessage<'a>, Self::Error> {
         Ok(HashableMessage::from(self))
@@ -60,8 +60,8 @@ impl<'a> VerifiySignatureTrait<'a> for SetupComponentTallyDataPayload {
         ]
     }
 
-    fn get_certificate_authority(&self) -> CertificateAuthority {
-        CertificateAuthority::SdmConfig
+    fn get_certificate_authority(&self) -> Result<String, Self::Error> {
+        Ok(String::from(&CertificateAuthority::SdmConfig))
     }
 
     fn get_signature(&self) -> ByteArray {

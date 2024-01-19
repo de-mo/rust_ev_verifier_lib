@@ -1,8 +1,11 @@
 //! Module containing the contstants and the way to access them
 
-use std::path::{Path, PathBuf};
 use super::consts;
+use rust_ev_crypto_primitives::Keystore;
 use super::resources::VERIFICATION_LIST;
+use std::path::{Path, PathBuf};
+use std::sync::OnceLock;
+use anyhow::{Result, Context};
 
 // Directory structure
 pub const SETUP_DIR_NAME: &str = "setup";
@@ -14,8 +17,10 @@ const BB_DIR_NAME: &str = "ballot_boxes";
 const LOG_DIR_NAME: &str = "log";
 const LOG_FILE_NAME: &str = "log.txt";
 const DIRECT_TRUST_DIR_NAME: &str = "direct-trust";
+const KEYSTORE_FILE_NAME: &str = "public_keys_keystore_verifier.p12";
+const KEYSTORE_PASSWORD_FILE_NAME: &str = "public_keys_keystore_verifier_pw.txt";
 
-
+static KEYSTORE: OnceLock<Result<Keystore>> = OnceLock::new();
 
 /// Structuring getting all the configuration information relevant for the
 /// verifier
@@ -97,13 +102,32 @@ impl Config {
     }
 
     /// The path to the directory where direct trust keystore is stored
-    pub fn direct_trust_dir_path(&self) -> PathBuf {
+    fn direct_trust_dir_path(&self) -> PathBuf {
         self.root_dir_path().join(DIRECT_TRUST_DIR_NAME)
+    }
+
+    pub fn direct_trust_keystore_path(&self) -> PathBuf {
+        self.direct_trust_dir_path().join(KEYSTORE_FILE_NAME)
+    }
+
+    pub fn direct_trust_keystore_password_path(&self) -> PathBuf {
+        self.direct_trust_dir_path()
+            .join(KEYSTORE_PASSWORD_FILE_NAME)
     }
 
     /// Get the relative path of the file containing the configuration of the verifications
     pub fn get_verification_list_str(&self) -> &'static str {
         VERIFICATION_LIST
+    }
+
+    /// Get the keystore
+    pub fn keystore(&self) -> &Result<Keystore> {
+        &KEYSTORE.get_or_init(|| {
+            Keystore::new(
+                &self.direct_trust_keystore_path(),
+                &self.direct_trust_keystore_password_path(),
+            ).context("Problem reading the keystore")
+        })
     }
 }
 

@@ -5,7 +5,6 @@ use super::super::super::result::{
 use crate::{
     config::Config,
     data_structures::{
-        common_types::EncryptionGroup,
         setup::{
             control_component_code_shares_payload::ControlComponentCodeShare,
             setup_component_verification_data_payload::SetupComponentVerificationDataInner,
@@ -20,12 +19,12 @@ use crate::{
 use anyhow::anyhow;
 use log::debug;
 use rayon::prelude::*;
-use rust_ev_crypto_primitives::zero_knowledge_proof::verify_exponentiation;
+use rust_ev_crypto_primitives::{verify_exponentiation, EncryptionParameters};
 use std::iter::zip;
 
 /// Context data according to the specifications
 struct Context<'a> {
-    eg: &'a EncryptionGroup,
+    eg: &'a EncryptionParameters,
     node_id: &'a usize,
     ee_id: &'a String,
     vcs_id: &'a String,
@@ -260,7 +259,7 @@ fn verify_encrypted_pccexponentiation_proofs_for_one_vc(
                 .gamma
                 .clone(),
         );
-        gs.insert(0, context.eg.g.clone());
+        gs.insert(0, context.eg.g().clone());
         let mut ys = cc_code_share
             .exponentiated_encrypted_partial_choice_return_codes
             .phis
@@ -286,7 +285,7 @@ fn verify_encrypted_pccexponentiation_proofs_for_one_vc(
             .encrypted_partial_choice_return_code_exponentiation_proof
             .clone();
         match verify_exponentiation(
-            (&context.eg.p, &context.eg.q),
+            context.eg,
             &gs,
             &ys,
             pi_exp_pcc_j.as_tuple(),

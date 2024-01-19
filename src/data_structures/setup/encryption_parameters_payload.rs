@@ -1,20 +1,22 @@
 use super::super::{
-    common_types::{EncryptionGroup, SignatureJson},
+    common_types::{SignatureJson, EncryptionParametersDef},
     implement_trait_verifier_data_json_decode, VerifierDataDecode,
     CheckDomainTrait
 };
 use anyhow::anyhow;
-use rust_ev_crypto_primitives::{
-    byte_array::ByteArray, direct_trust::CertificateAuthority, hashing::HashableMessage,
-    signature::VerifiySignatureTrait,
+use rust_ev_crypto_primitives::{EncryptionParameters,
+    ByteArray,  HashableMessage,
+    VerifiySignatureTrait,
 };
 use serde::Deserialize;
 use crate::config::Config as VerifierConfig;
+use crate::direct_trust::CertificateAuthority;
 
 #[derive(Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct EncryptionParametersPayload {
-    pub encryption_group: EncryptionGroup,
+    #[serde(with = "EncryptionParametersDef")]
+    pub encryption_group: EncryptionParameters,
     pub seed: String,
     pub small_primes: Vec<usize>,
     pub signature: SignatureJson,
@@ -75,8 +77,8 @@ impl<'a> VerifiySignatureTrait<'a> for EncryptionParametersPayload {
         vec![HashableMessage::from("encryption parameters")]
     }
 
-    fn get_certificate_authority(&self) -> CertificateAuthority {
-        CertificateAuthority::SdmConfig
+    fn get_certificate_authority(&self) -> Result<String, Self::Error> {
+        Ok(String::from(&CertificateAuthority::SdmConfig))
     }
 
     fn get_signature(&self) -> ByteArray {
@@ -99,10 +101,11 @@ mod test {
             "q": "0xab",
             "g": "0x2"
         }"#;
-        let eg: EncryptionGroup = serde_json::from_str(json).unwrap();
-        assert_eq!(eg.p, 10usize.to_biguint().unwrap());
-        assert_eq!(eg.q, 171usize.to_biguint().unwrap());
-        assert_eq!(eg.g, 2usize.to_biguint().unwrap());
+        let mut de = serde_json::Deserializer::from_str(json);
+        let eg = EncryptionParametersDef::deserialize(&mut de).unwrap();
+        assert_eq!(eg.p(), &10usize.to_biguint().unwrap());
+        assert_eq!(eg.q(), &171usize.to_biguint().unwrap());
+        assert_eq!(eg.g(), &2usize.to_biguint().unwrap());
     }
 
     #[test]
@@ -127,9 +130,9 @@ mod test {
         
         "#;
         let eg: EncryptionParametersPayload = serde_json::from_str(json).unwrap();
-        assert_eq!(eg.encryption_group.p, 10usize.to_biguint().unwrap());
-        assert_eq!(eg.encryption_group.q, 171usize.to_biguint().unwrap());
-        assert_eq!(eg.encryption_group.g, 2usize.to_biguint().unwrap());
+        assert_eq!(eg.encryption_group.p(), &10usize.to_biguint().unwrap());
+        assert_eq!(eg.encryption_group.q(), &171usize.to_biguint().unwrap());
+        assert_eq!(eg.encryption_group.g(), &2usize.to_biguint().unwrap());
         assert_eq!(eg.seed, "toto");
         assert_eq!(eg.small_primes, vec![5, 17, 19]);
         assert_eq!(eg.signature.signature_contents, "fifi")

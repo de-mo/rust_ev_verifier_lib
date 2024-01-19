@@ -3,14 +3,14 @@ use super::super::super::result::{
 };
 use crate::{
     config::Config,
-    data_structures::common_types::{EncryptionGroup, Proof},
+    data_structures::common_types::Proof,
     file_structure::{setup_directory::SetupDirectoryTrait, VerificationDirectoryTrait},
 };
 use anyhow::anyhow;
 use log::debug;
 use num_bigint::BigUint;
 use rayon::prelude::*;
-use rust_ev_crypto_primitives::zero_knowledge_proof::verify_schnorr;
+use rust_ev_crypto_primitives::{verify_schnorr, EncryptionParameters};
 use std::iter::zip;
 
 pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
@@ -130,7 +130,7 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
 }
 
 fn run_verify_schnorr_proofs(
-    eg: &EncryptionGroup,
+    eg: &EncryptionParameters,
     pks: &Vec<BigUint>,
     pis: &Vec<Proof>,
     i_aux: &Vec<String>,
@@ -162,7 +162,7 @@ fn run_verify_schnorr_proofs(
 
 #[allow(clippy::too_many_arguments)]
 fn run_verify_schnorr_proof(
-    eg: &EncryptionGroup,
+    eg: &EncryptionParameters,
     schnorr: &Proof,
     y: &BigUint,
     i_aux: &Vec<String>,
@@ -175,7 +175,7 @@ fn run_verify_schnorr_proof(
         "Verification {} at pos {} for cc {:?}",
         test_name, pos, node
     );
-    match verify_schnorr(eg.as_tuple(), schnorr.as_tuple(), y, i_aux) {
+    match verify_schnorr(eg, schnorr.as_tuple(), y, i_aux) {
         Err(e) => return Some(VerificationEvent::Failure { source: anyhow::anyhow!(e) }),
         Ok(b) => {
             if !b {

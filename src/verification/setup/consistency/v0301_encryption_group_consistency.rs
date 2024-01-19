@@ -3,7 +3,6 @@ use super::super::super::result::{
 };
 use crate::{
     config::Config,
-    data_structures::common_types::EncryptionGroup,
     file_structure::{
         setup_directory::{SetupDirectoryTrait, VCSDirectoryTrait},
         VerificationDirectoryTrait,
@@ -11,26 +10,27 @@ use crate::{
 };
 use anyhow::anyhow;
 use log::debug;
+use rust_ev_crypto_primitives::EncryptionParameters;
 
 fn verify_encryption_group(
-    eg: &EncryptionGroup,
-    expected: &EncryptionGroup,
+    eg: &EncryptionParameters,
+    expected: &EncryptionParameters,
     name: &str,
     result: &mut VerificationResult,
 ) {
-    if eg.p != expected.p {
+    if eg.p() != expected.p() {
         result.push(create_verification_failure!(format!(
             "p not equal in {}",
             name
         )));
     }
-    if eg.q != expected.q {
+    if eg.q() != expected.q() {
         result.push(create_verification_failure!(format!(
             "q not equal in {}",
             name
         )));
     }
-    if eg.g != expected.g {
+    if eg.g() != expected.g() {
         result.push(create_verification_failure!(format!(
             "g not equal in {}",
             name
@@ -40,7 +40,7 @@ fn verify_encryption_group(
 
 fn verify_encryption_group_for_vcs_dir<V: VCSDirectoryTrait>(
     dir: &V,
-    eg: &EncryptionGroup,
+    eg: &EncryptionParameters,
     result: &mut VerificationResult,
 ) {
     match dir.setup_component_tally_data_payload() {
@@ -200,34 +200,34 @@ mod test {
 
     #[test]
     fn test_verify_encryption_group() {
-        let eg_expected = EncryptionGroup {
-            p: BigUint::from(10usize),
-            q: BigUint::from(15usize),
-            g: BigUint::from(3usize),
-        };
+        let eg_expected = EncryptionParameters::from((
+            &BigUint::from(10usize),
+            &BigUint::from(15usize),
+            &BigUint::from(3usize),
+        ));
         let mut result = VerificationResult::new();
-        let eg = EncryptionGroup {
-            p: BigUint::from(10usize),
-            q: BigUint::from(15usize),
-            g: BigUint::from(3usize),
-        };
+        let eg = EncryptionParameters::from((
+            &BigUint::from(10usize),
+            &BigUint::from(15usize),
+            &BigUint::from(3usize),
+        ));
         verify_encryption_group(&eg, &eg_expected, "toto", &mut result);
         assert!(result.is_ok().unwrap());
         let mut result = VerificationResult::new();
-        let eg = EncryptionGroup {
-            p: BigUint::from(11usize),
-            q: BigUint::from(15usize),
-            g: BigUint::from(3usize),
-        };
+        let eg = EncryptionParameters::from((
+            &BigUint::from(11usize),
+            &BigUint::from(15usize),
+            &BigUint::from(3usize),
+        ));
         verify_encryption_group(&eg, &eg_expected, "toto", &mut result);
         assert!(!result.has_errors().unwrap());
         assert_eq!(result.failures().len(), 1);
         let mut result = VerificationResult::new();
-        let eg = EncryptionGroup {
-            p: BigUint::from(11usize),
-            q: BigUint::from(16usize),
-            g: BigUint::from(4usize),
-        };
+        let eg = EncryptionParameters::from((
+            &BigUint::from(11usize),
+            &BigUint::from(16usize),
+            &BigUint::from(4usize),
+        ));
         verify_encryption_group(&eg, &eg_expected, "toto", &mut result);
         assert!(!result.has_errors().unwrap());
         assert_eq!(result.failures().len(), 3)
@@ -243,7 +243,7 @@ mod test {
             .unwrap_setup()
             .election_event_context_payload()
             .unwrap();
-        eec.encryption_group.p = BigUint::from(1234usize);
+        eec.encryption_group.set_p(&BigUint::from(1234usize));
         mock_dir
             .unwrap_setup_mut()
             .mock_election_event_context_payload(&Ok(&eec));
@@ -262,8 +262,8 @@ mod test {
             .get_data()
             .map(|d| Box::new(d.control_component_public_keys_payload().unwrap().clone()))
             .unwrap();
-        cc_pk.encryption_group.p = BigUint::from(1234usize);
-        cc_pk.encryption_group.q = BigUint::from(1234usize);
+        cc_pk.encryption_group.set_p(&BigUint::from(1234usize));
+        cc_pk.encryption_group.set_q(&BigUint::from(1234usize));
         mock_dir
             .unwrap_setup_mut()
             .mock_control_component_public_keys_payloads(2, &Ok(&cc_pk));

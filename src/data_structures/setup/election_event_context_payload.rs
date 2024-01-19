@@ -1,20 +1,20 @@
 use super::super::{
-    common_types::{EncryptionGroup, SignatureJson},
-    deserialize_string_string_to_datetime, implement_trait_verifier_data_json_decode,
-    VerifierDataDecode,
+    common_types::{SignatureJson, EncryptionParametersDef}, deserialize_string_string_to_datetime,
+    implement_trait_verifier_data_json_decode, VerifierDataDecode,
 };
+use crate::direct_trust::CertificateAuthority;
 use anyhow::anyhow;
 use chrono::NaiveDateTime;
 use rust_ev_crypto_primitives::{
-    byte_array::ByteArray, direct_trust::CertificateAuthority, hashing::HashableMessage,
-    signature::VerifiySignatureTrait,
+    ByteArray, EncryptionParameters, HashableMessage, VerifiySignatureTrait,
 };
 use serde::Deserialize;
 
 #[derive(Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct ElectionEventContextPayload {
-    pub encryption_group: EncryptionGroup,
+    #[serde(with = "EncryptionParametersDef")]
+    pub encryption_group: EncryptionParameters,
     pub election_event_context: ElectionEventContext,
     pub signature: SignatureJson,
 }
@@ -99,7 +99,7 @@ impl<'a> From<&'a ElectionEventContextPayload> for HashableMessage<'a> {
 }
 
 impl<'a> VerifiySignatureTrait<'a> for ElectionEventContextPayload {
-    type Error=std::convert::Infallible;
+    type Error = std::convert::Infallible;
 
     fn get_hashable(&'a self) -> Result<HashableMessage<'a>, Self::Error> {
         Ok(HashableMessage::from(self))
@@ -112,8 +112,8 @@ impl<'a> VerifiySignatureTrait<'a> for ElectionEventContextPayload {
         ]
     }
 
-    fn get_certificate_authority(&self) -> CertificateAuthority {
-        CertificateAuthority::SdmConfig
+    fn get_certificate_authority(&self) -> Result<String, Self::Error> {
+        Ok(String::from(&CertificateAuthority::SdmConfig))
     }
 
     fn get_signature(&self) -> ByteArray {

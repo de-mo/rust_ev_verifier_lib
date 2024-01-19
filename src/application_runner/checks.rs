@@ -5,7 +5,6 @@ use crate::{
     verification::{meta_data::VerificationMetaDataList, VerificationPeriod},
 };
 use anyhow::{anyhow, ensure};
-use rust_ev_crypto_primitives::direct_trust::DirectTrust;
 
 /// Check some elements at start of the application.
 ///
@@ -19,14 +18,8 @@ pub fn start_check(config: &'static VerifierConfig) -> anyhow::Result<()> {
             md_list_check.unwrap_err()
         )
     );
-    ensure!(
-        config.direct_trust_dir_path().is_dir(),
-        format!(
-            "Direct trust directory {:?} does not exist, or is not a directory",
-            config.direct_trust_dir_path().to_str()
-        )
-    );
-    DirectTrust::new(&config.direct_trust_dir_path())
+    config
+        .keystore()
         .map_err(|e| anyhow!("Cannot read keystore").context(e))?;
     Ok(())
 }

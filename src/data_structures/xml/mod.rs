@@ -9,7 +9,7 @@ use quick_xml::{
     reader::Reader,
     Writer,
 };
-use rust_ev_crypto_primitives::hashing::HashableMessage;
+use rust_ev_crypto_primitives::HashableMessage;
 use std::io::BufRead;
 
 pub use schema::SchemaKind;

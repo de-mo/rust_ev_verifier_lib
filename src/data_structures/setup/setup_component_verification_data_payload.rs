@@ -1,13 +1,13 @@
 use super::super::{
-    common_types::{EncryptionGroup, ExponentiatedEncryptedElement, SignatureJson},
+    common_types::{ExponentiatedEncryptedElement, SignatureJson, EncryptionParametersDef},
     deserialize_seq_string_hex_to_seq_bigunit, implement_trait_verifier_data_json_decode,
     VerifierDataDecode,
 };
+use crate::direct_trust::CertificateAuthority;
 use anyhow::anyhow;
 use num_bigint::BigUint;
 use rust_ev_crypto_primitives::{
-    byte_array::ByteArray, direct_trust::CertificateAuthority, hashing::HashableMessage,
-    signature::VerifiySignatureTrait,
+    ByteArray, EncryptionParameters, HashableMessage, VerifiySignatureTrait,
 };
 use serde::Deserialize;
 
@@ -18,7 +18,8 @@ pub struct SetupComponentVerificationDataPayload {
     pub verification_card_set_id: String,
     pub partial_choice_return_codes_allow_list: Vec<String>,
     pub chunk_id: usize,
-    pub encryption_group: EncryptionGroup,
+    #[serde(with = "EncryptionParametersDef")]
+    pub encryption_group: EncryptionParameters,
     pub setup_component_verification_data: Vec<SetupComponentVerificationDataInner>,
     pub combined_correctness_information: CombinedCorrectnessInformation,
     pub signature: SignatureJson,
@@ -71,7 +72,7 @@ pub struct CorrectnessInformationElt {
 }
 
 impl<'a> VerifiySignatureTrait<'a> for SetupComponentVerificationDataPayload {
-    type Error=std::convert::Infallible;
+    type Error = std::convert::Infallible;
 
     fn get_hashable(&'a self) -> Result<HashableMessage<'a>, Self::Error> {
         Ok(HashableMessage::from(self))
@@ -85,8 +86,8 @@ impl<'a> VerifiySignatureTrait<'a> for SetupComponentVerificationDataPayload {
         ]
     }
 
-    fn get_certificate_authority(&self) -> CertificateAuthority {
-        CertificateAuthority::SdmConfig
+    fn get_certificate_authority(&self) -> Result<String, Self::Error> {
+        Ok(String::from(&CertificateAuthority::SdmConfig))
     }
 
     fn get_signature(&self) -> ByteArray {

@@ -10,10 +10,10 @@ pub mod verifications;
 use self::result::{
     create_verification_error, create_verification_failure, VerificationEvent, VerificationResult,
 };
-use anyhow::{anyhow, bail};
+use anyhow::{anyhow, bail, Result};
 use log::debug;
-use rust_ev_crypto_primitives::{hashing::HashableMessage, signature::VerifiySignatureTrait};
-use std::{fmt::Display, path::Path};
+use rust_ev_crypto_primitives::{HashableMessage, Keystore, VerifiySignatureTrait};
+use std::fmt::Display;
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
 pub enum VerificationCategory {
@@ -51,24 +51,32 @@ impl VerificationPeriod {
 fn verify_signature_for_object<'a, T>(
     obj: &'a T,
     result: &mut VerificationResult,
-    direct_trust_pah: &Path,
+    keystore: &Result<Keystore>,
     name: &str,
 ) where
     T: VerifiySignatureTrait<'a>,
     HashableMessage<'a>: From<&'a T>,
 {
-    match obj.verifiy_signature(direct_trust_pah) {
-        Ok(t) => {
-            if !t {
-                result.push(create_verification_failure!(format!(
-                    "Wrong signature for {}",
-                    name
-                )))
+    match keystore {
+        Ok(ks) => match obj.verifiy_signature(ks) {
+            Ok(t) => {
+                if !t {
+                    result.push(create_verification_failure!(format!(
+                        "Wrong signature for {}",
+                        name
+                    )))
+                }
             }
-        }
+            Err(e) => {
+                result.push(create_verification_error!(
+                    format!("Error testing signature of {}", name),
+                    e
+                ));
+            }
+        },
         Err(e) => {
             result.push(create_verification_error!(
-                format!("Error testing signature of {}", name),
+                format!("Error reading keystore for testing signature of {}", name),
                 e
             ));
         }

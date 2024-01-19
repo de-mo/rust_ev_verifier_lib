@@ -1,63 +1,54 @@
 //! Type that are used in many structures
 
-use super::{deserialize_seq_string_hex_to_seq_bigunit, deserialize_string_hex_to_bigunit, CheckDomainTrait};
+use super::{
+    deserialize_seq_string_hex_to_seq_bigunit, deserialize_string_hex_to_bigunit, CheckDomainTrait,
+};
 use num_bigint::BigUint;
 use rust_ev_crypto_primitives::{
-    byte_array::{ByteArray, Decode},
-    hashing::HashableMessage, elgamal::{check_p, check_q, check_g},
+    check_g, check_p, check_q, ByteArray, Decode, EncryptionParameters, HashableMessage,
 };
 use serde::Deserialize;
 
 /// Struct representing an encryption group
 #[derive(Deserialize, Debug, Clone)]
-pub struct EncryptionGroup {
-    #[serde(deserialize_with = "deserialize_string_hex_to_bigunit")]
+#[serde(remote = "EncryptionParameters")]
+pub struct EncryptionParametersDef {
+    #[serde(
+        deserialize_with = "deserialize_string_hex_to_bigunit",
+        getter = "EncryptionParameters::p"
+    )]
     pub p: BigUint,
-    #[serde(deserialize_with = "deserialize_string_hex_to_bigunit")]
+    #[serde(
+        deserialize_with = "deserialize_string_hex_to_bigunit",
+        getter = "EncryptionParameters::q"
+    )]
     pub q: BigUint,
-    #[serde(deserialize_with = "deserialize_string_hex_to_bigunit")]
+    #[serde(
+        deserialize_with = "deserialize_string_hex_to_bigunit",
+        getter = "EncryptionParameters::g"
+    )]
     pub g: BigUint,
 }
 
-impl<'a> From<&'a EncryptionGroup> for HashableMessage<'a> {
-    fn from(value: &'a EncryptionGroup) -> Self {
-        Self::from(vec![
-            Self::from(&value.p),
-            Self::from(&value.q),
-            Self::from(&value.g),
-        ])
+impl From<EncryptionParametersDef> for EncryptionParameters {
+    fn from(def: EncryptionParametersDef) -> Self {
+        Self::from((&def.p, &def.q, &def.g))
     }
 }
 
-impl From<&(BigUint, BigUint, BigUint)> for EncryptionGroup {
-    fn from((p, q, g): &(BigUint, BigUint, BigUint)) -> Self {
-        EncryptionGroup {
-            p: p.clone(),
-            q: q.clone(),
-            g: g.clone(),
-        }
-    }
-}
-
-impl CheckDomainTrait for EncryptionGroup {
+impl CheckDomainTrait for EncryptionParameters {
     fn check_domain(&self) -> Vec<anyhow::Error> {
         let mut res = vec![];
-        if let Some(e) = check_p(&self.p) {
+        if let Some(e) = check_p(&self.p()) {
             res.push(anyhow::anyhow!(e))
         }
-        if let Some(e) = check_q(&self.p,&self.q) {
+        if let Some(e) = check_q(&self.p(), &self.q()) {
             res.push(anyhow::anyhow!(e))
         }
-        if let Some(e) = check_g(&self.p,&self.g) {
+        if let Some(e) = check_g(&self.p(), &self.g()) {
             res.push(anyhow::anyhow!(e))
         }
         res
-    }
-}
-
-impl EncryptionGroup {
-    pub fn as_tuple(&self) -> (&BigUint, &BigUint, &BigUint) {
-        (&self.p, &self.q, &self.g)
     }
 }
 

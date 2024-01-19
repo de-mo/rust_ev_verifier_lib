@@ -1,17 +1,19 @@
 use super::super::{
-    common_types::{EncryptionGroup, ExponentiatedEncryptedElement, SignatureJson},
+    common_types::{EncryptionParametersDef, ExponentiatedEncryptedElement, SignatureJson},
     deserialize_seq_string_hex_to_seq_bigunit, deserialize_string_hex_to_bigunit,
     implement_trait_verifier_data_json_decode, VerifierDataDecode,
 };
 use crate::data_structures::common_types::DecryptionProof;
 use anyhow::anyhow;
 use num_bigint::BigUint;
+use rust_ev_crypto_primitives::EncryptionParameters;
 use serde::Deserialize;
 
 #[derive(Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct TallyComponentShufflePayload {
-    pub encryption_group: EncryptionGroup,
+    #[serde(with = "EncryptionParametersDef")]
+    pub encryption_group: EncryptionParameters,
     pub election_event_id: String,
     pub ballot_box_id: String,
     pub verifiable_shuffle: VerifiableShuffle,
