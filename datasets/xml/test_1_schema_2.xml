@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<tests xmlns="http://www.evoting.ch/xmlns/test1/2">
+  <valueString>test</valueString>
+  <valueBoolean>0</valueBoolean>
+  <complexType>
+    <ctString>12345</ctString>
+    <csToto>toto</csToto>
+  </complexType>
+  <valueList>5</valueList>
+  <valueInt>10</valueInt>
+</tests>

@@ -105,7 +105,7 @@ impl<'a> VerifiySignatureTrait<'a> for ElectionEventConfiguration {
     type Error = anyhow::Error;
 
     fn get_hashable(&'a self) -> Result<HashableMessage<'a>, Self::Error> {
-        let hashable = XMLFileHashable::new(&self.path, &SchemaKind::config);
+        let hashable = XMLFileHashable::new(&self.path, &SchemaKind::Config);
         let hash = hashable.try_hash()?;
         Ok(HashableMessage::Hashed(hash))
     }

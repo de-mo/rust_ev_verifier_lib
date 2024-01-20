@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<toto:tests xmlns:toto="http://www.evoting.ch/xmlns/test1/1">
+  <toto:valueString>test</toto:valueString>
+  <toto:valueBoolean>0</toto:valueBoolean>
+  <toto:valueInt>10</toto:valueInt>
+</toto:tests>

@@ -24,25 +24,27 @@ static SCHEMA_CELL_ECH_CONFIG: OnceLock<Schema> = OnceLock::new();
 const XML_SCHEMA_URI: &str = "http://www.w3.org/2001/XMLSchema";
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
+#[allow(dead_code)]
 /// Enumarate for the kind of schemas.
 pub enum SchemaKind {
-    ech_0006,
-    ech_0007,
-    ech_0008,
-    ech_0010,
-    ech_0044,
-    ech_0058,
-    ech_0110,
-    ech_0155,
-    ech_0222,
-    decrypt,
-    config,
+    Ech0006,
+    Ech0007,
+    Ech0008,
+    Ech0010,
+    Ech0044,
+    Ech0058,
+    Ech0110,
+    Ech0155,
+    Ech0222,
+    Decrypt,
+    Config,
 }
 
 /// Schema containing the structure of the schema
+#[allow(dead_code)]
 pub struct Schema<'a> {
     document: Document<'a>,
-    schema_kind: SchemaKind,
+    schema_kind: Option<SchemaKind>,
     target_namespace_name: String,
     target_namespace_uri: String,
     xml_schema_name: String,
@@ -53,38 +55,38 @@ impl SchemaKind {
     /// Get the schema structure
     pub fn get_schema(&self) -> &Schema {
         match self {
-            SchemaKind::ech_0006 => {
-                SCHEMA_CELL_ECH_0006.get_or_init(|| Schema::new(self, resources::XSD_ECH_0006))
+            SchemaKind::Ech0006 => {
+                SCHEMA_CELL_ECH_0006.get_or_init(|| Schema::new(Some(*self), resources::XSD_ECH_0006))
             }
-            SchemaKind::ech_0007 => {
-                SCHEMA_CELL_ECH_0007.get_or_init(|| Schema::new(self, resources::XSD_ECH_0007))
+            SchemaKind::Ech0007 => {
+                SCHEMA_CELL_ECH_0007.get_or_init(|| Schema::new(Some(*self), resources::XSD_ECH_0007))
             }
-            SchemaKind::ech_0008 => {
-                SCHEMA_CELL_ECH_0008.get_or_init(|| Schema::new(self, resources::XSD_ECH_0008))
+            SchemaKind::Ech0008 => {
+                SCHEMA_CELL_ECH_0008.get_or_init(|| Schema::new(Some(*self), resources::XSD_ECH_0008))
             }
-            SchemaKind::ech_0010 => {
-                SCHEMA_CELL_ECH_0010.get_or_init(|| Schema::new(self, resources::XSD_ECH_0010))
+            SchemaKind::Ech0010 => {
+                SCHEMA_CELL_ECH_0010.get_or_init(|| Schema::new(Some(*self), resources::XSD_ECH_0010))
             }
-            SchemaKind::ech_0044 => {
-                SCHEMA_CELL_ECH_0044.get_or_init(|| Schema::new(self, resources::XSD_ECH_0044))
+            SchemaKind::Ech0044 => {
+                SCHEMA_CELL_ECH_0044.get_or_init(|| Schema::new(Some(*self), resources::XSD_ECH_0044))
             }
-            SchemaKind::ech_0058 => {
-                SCHEMA_CELL_ECH_0058.get_or_init(|| Schema::new(self, resources::XSD_ECH_0058))
+            SchemaKind::Ech0058 => {
+                SCHEMA_CELL_ECH_0058.get_or_init(|| Schema::new(Some(*self), resources::XSD_ECH_0058))
             }
-            SchemaKind::ech_0110 => {
-                SCHEMA_CELL_ECH_0110.get_or_init(|| Schema::new(self, resources::XSD_ECH_0110))
+            SchemaKind::Ech0110 => {
+                SCHEMA_CELL_ECH_0110.get_or_init(|| Schema::new(Some(*self), resources::XSD_ECH_0110))
             }
-            SchemaKind::ech_0155 => {
-                SCHEMA_CELL_ECH_0155.get_or_init(|| Schema::new(self, resources::XSD_ECH_0155))
+            SchemaKind::Ech0155 => {
+                SCHEMA_CELL_ECH_0155.get_or_init(|| Schema::new(Some(*self), resources::XSD_ECH_0155))
             }
-            SchemaKind::ech_0222 => {
-                SCHEMA_CELL_ECH_0222.get_or_init(|| Schema::new(self, resources::XSD_ECH_0222))
+            SchemaKind::Ech0222 => {
+                SCHEMA_CELL_ECH_0222.get_or_init(|| Schema::new(Some(*self), resources::XSD_ECH_0222))
             }
-            SchemaKind::decrypt => {
-                SCHEMA_CELL_ECH_DECRYPT.get_or_init(|| Schema::new(self, resources::XSD_DECRYPT))
+            SchemaKind::Decrypt => {
+                SCHEMA_CELL_ECH_DECRYPT.get_or_init(|| Schema::new(Some(*self), resources::XSD_DECRYPT))
             }
-            SchemaKind::config => {
-                SCHEMA_CELL_ECH_CONFIG.get_or_init(|| Schema::new(self, resources::XSD_CONFIG))
+            SchemaKind::Config => {
+                SCHEMA_CELL_ECH_CONFIG.get_or_init(|| Schema::new(Some(*self), resources::XSD_CONFIG))
             }
         }
     }
@@ -96,7 +98,7 @@ impl<'a> Schema<'a> {
     /// Return an error in the following cases:
     /// - It is not possible to create it
     /// - Targetnamespace is missing
-    pub fn try_new(schema_kind: &SchemaKind, xsd_str: &'static str) -> Result<Self> {
+    pub fn try_new(schema_kind: Option<SchemaKind>, xsd_str: &'static str) -> Result<Self> {
         let doc = Document::parse(xsd_str).with_context(|| "Failed to read the schema")?;
         let root = doc.root_element();
         let target_ns_uri = root
@@ -128,14 +130,14 @@ impl<'a> Schema<'a> {
             target_namespace_name: target_ns_name.clone(),
             xml_schema_name: schema_ns_name.clone(),
             namespaces: hm,
-            schema_kind: *schema_kind,
+            schema_kind,
         })
     }
 
     /// Try to create a new schema of kind [schema_kind] with the static str [xsd_str]
     ///
     /// Panic if it is not possible to create it
-    pub fn new(schema_kind: &SchemaKind, xsd_str: &'static str) -> Self {
+    pub fn new(schema_kind: Option<SchemaKind>, xsd_str: &'static str) -> Self {
         Self::try_new(schema_kind, xsd_str).unwrap()
     }
 
@@ -145,6 +147,7 @@ impl<'a> Schema<'a> {
     }
 
     /// The source document of type [Document]
+    #[allow(dead_code)]
     pub fn document(&self) -> &Document {
         &self.document
     }
@@ -166,7 +169,7 @@ mod test {
 
     #[test]
     fn test_schema_decrypt() {
-        let xsd = SchemaKind::decrypt.get_schema();
+        let xsd = SchemaKind::Decrypt.get_schema();
         assert_eq!(
             xsd.target_namespace_uri,
             "http://www.evoting.ch/xmlns/decrypt/1"
@@ -184,7 +187,7 @@ mod test {
 
     #[test]
     fn test_schema_config() {
-        let xsd = SchemaKind::config.get_schema();
+        let xsd = SchemaKind::Config.get_schema();
         assert_eq!(
             xsd.target_namespace_uri,
             "http://www.evoting.ch/xmlns/config/5"
@@ -202,13 +205,30 @@ mod test {
 
     #[test]
     fn test_target_namespace_name() {
-        let xsd = SchemaKind::config.get_schema();
+        let xsd = SchemaKind::Config.get_schema();
         assert_eq!(xsd.target_namespace_name(), "config");
     }
 
     #[test]
     fn test_xmlschema_namespace_name() {
-        let xsd = SchemaKind::config.get_schema();
+        let xsd = SchemaKind::Config.get_schema();
         assert_eq!(xsd.xmlschema_namespace_name(), "xs");
+    }
+}
+
+#[cfg(test)]
+pub(super) mod test_schemas {
+    use super::*;
+    use crate::resources::test_resources::{SCHEMA_TEST_1, SCHEMA_TEST_2};
+
+    static SCHEMA_CELL_TEST_1: OnceLock<Schema> = OnceLock::new();
+    static SCHEMA_CELL_TEST_2: OnceLock<Schema> = OnceLock::new();
+
+    pub fn get_schema_test_1<'a>() -> &'a Schema<'a> {
+        SCHEMA_CELL_TEST_1.get_or_init(|| Schema::new(None, SCHEMA_TEST_1))
+    }
+
+    pub fn get_schema_test_2<'a>() -> &'a Schema<'a> {
+        SCHEMA_CELL_TEST_2.get_or_init(|| Schema::new(None, SCHEMA_TEST_2))
     }
 }

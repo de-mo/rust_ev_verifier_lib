@@ -1,5 +1,3 @@
-use crate::data_structures::xml::{hashable, schema};
-
 use super::{
     hashable_no_value,
     schema::{Schema, SchemaKind},
@@ -8,12 +6,10 @@ use super::{
 use anyhow::{anyhow, Context};
 use quick_xml::{
     events::Event,
-    name::{self, Namespace, ResolveResult::*},
+    name::{Namespace, ResolveResult::*},
     reader::NsReader,
 };
-use rust_ev_crypto_primitives::{
-    ByteArray, Decode, HashTrait, HashableMessage,
-};
+use rust_ev_crypto_primitives::{ByteArray, Decode, HashTrait, HashableMessage};
 use std::{
     collections::HashMap,
     fs::File,
@@ -35,9 +31,13 @@ struct NodeHashable<'a> {
 
 impl<'a> XMLFileHashable<'a> {
     pub fn new(xml: &Path, schema_kind: &'a SchemaKind) -> Self {
+        Self::new_with_schema(xml, schema_kind.get_schema())
+    }
+
+    pub fn new_with_schema(xml: &Path, schema: &'a Schema<'a>) -> Self {
         Self {
             file: xml.to_path_buf(),
-            schema: schema_kind.get_schema(),
+            schema,
         }
     }
 }
@@ -54,11 +54,11 @@ impl<'a> HashTrait for XMLFileHashable<'a> {
         })?;
         let mut buf = Vec::new();
         let schema_node = ElementNode::from(self.schema);
-        let ns = self.schema.target_namespace_name().as_bytes();
+        let _ns = self.schema.target_namespace_name().as_bytes();
         loop {
             //match reader.read_resolved_event_into(/*&mut buf*/).unwrap() {
             match reader.read_resolved_event_into(&mut buf) {
-                Ok((Bound(Namespace(ns)), Event::Start(e))) => {
+                Ok((Bound(Namespace(_ns)), Event::Start(e))) => {
                     let tag_local_name = e.local_name();
                     let tag_name = str::from_utf8(tag_local_name.as_ref()).unwrap();
                     if tag_name == schema_node.name() {
@@ -120,9 +120,11 @@ impl<'a> NodeHashable<'a> {
                 let values = hashed_children.get(c.name()).unwrap();
                 if values.len() == 1 {
                     hashable.push(HashableMessage::Hashed(values[0].clone()));
-                }
-                else {
-                    let l: Vec<HashableMessage> = values.iter().map(|e| HashableMessage::Hashed(e.clone())).collect();
+                } else {
+                    let l: Vec<HashableMessage> = values
+                        .iter()
+                        .map(|e| HashableMessage::Hashed(e.clone()))
+                        .collect();
                     hashable.push(HashableMessage::Hashed(HashableMessage::from(l).hash()));
                 }
             } else {
@@ -137,7 +139,7 @@ impl<'a> NodeHashable<'a> {
         let mut hm: HashMap<String, Vec<ByteArray>> = HashMap::new();
         loop {
             match self.reader.read_resolved_event_into(&mut buf) {
-                Ok((Bound(Namespace(ns)), Event::Start(e))) => {
+                Ok((Bound(Namespace(_ns)), Event::Start(e))) => {
                     let tag_local_name = e.local_name();
                     let tag_name = str::from_utf8(tag_local_name.as_ref())?;
                     let hash = self.get_hash_from_child(tag_name)?;
@@ -146,21 +148,14 @@ impl<'a> NodeHashable<'a> {
                     }
                     hm.get_mut(tag_name).unwrap().push(hash);
                 }
-                Ok((Bound(Namespace(ns)), Event::End(e))) => {
+                Ok((Bound(Namespace(_ns)), Event::End(e))) => {
                     if e.local_name().as_ref() == self.tag_name.as_bytes() {
                         break;
-                    } else {
-                        return Err(anyhow!(
-                            "something goes wrong. End tag not found. Found {}",
-                            str::from_utf8(e.local_name().as_ref()).unwrap()
-                        ));
                     }
                 }
-                Ok(e) => {
-                    return Err(anyhow!("Text expected. {:?} found", e));
-                }
+                Ok(_) => {}
                 Err(e) => {
-                    return Err(anyhow!(e).context("Error in hash_native_type getting the type"));
+                    return Err(anyhow!(e).context("Error in hash_complex_type getting the type"));
                 }
             }
             buf.clear();
@@ -207,7 +202,12 @@ impl NativeTypeConverter {
             "string" => Self::String(res),
             "normalizedString" => Self::String(res),
             "token" => Self::String(res),
-            _ => return Err(anyhow!("type {} unknowm", native_type)),
+            _ => {
+                return Err(anyhow!(
+                    "Error creating NativeTypeConverter: type {} unknowm",
+                    native_type
+                ))
+            }
         })
     }
 
@@ -237,7 +237,105 @@ impl NativeTypeConverter {
 }
 
 #[cfg(test)]
-mod test {}
+mod test {
+    use super::super::schema::test_schemas::{get_schema_test_1, get_schema_test_2};
+    use super::*;
+    use crate::config::test::test_xml_path;
+
+    #[test]
+    fn test_1_schema_1() {
+        let xml = test_xml_path().join("test_1_schema_1.xml");
+        let xml_hashable = XMLFileHashable::new_with_schema(&xml, get_schema_test_1());
+        let expected = HashableMessage::from(vec![
+            HashableMessage::from("test"),
+            HashableMessage::from("true"),
+            HashableMessage::from(10usize),
+        ])
+        .hash();
+        assert_eq!(xml_hashable.try_hash().unwrap(), expected)
+    }
+
+    #[test]
+    fn test_1_schema_1_qualified() {
+        let xml = test_xml_path().join("test_1_schema_1_qualified.xml");
+        let xml_hashable = XMLFileHashable::new_with_schema(&xml, get_schema_test_1());
+        let expected = HashableMessage::from(vec![
+            HashableMessage::from("test"),
+            HashableMessage::from("true"),
+            HashableMessage::from(10usize),
+        ])
+        .hash();
+        assert_eq!(xml_hashable.try_hash().unwrap(), expected)
+    }
+
+    #[test]
+    fn test_2_schema_1() {
+        let xml = test_xml_path().join("test_2_schema_1.xml");
+        let xml_hashable = XMLFileHashable::new_with_schema(&xml, get_schema_test_1());
+        let expected = HashableMessage::from(vec![
+            HashableMessage::from("test"),
+            HashableMessage::from("no valueBoolean value"),
+            HashableMessage::from(10usize),
+        ])
+        .hash();
+        assert_eq!(xml_hashable.try_hash().unwrap(), expected)
+    }
+
+    #[test]
+    fn test_3_schema_1() {
+        let xml = test_xml_path().join("test_3_schema_1.xml");
+        let xml_hashable = XMLFileHashable::new_with_schema(&xml, get_schema_test_1());
+        let expected = HashableMessage::from(vec![
+            HashableMessage::from("test"),
+            HashableMessage::from("true"),
+            HashableMessage::from(10usize),
+        ])
+        .hash();
+        assert_eq!(xml_hashable.try_hash().unwrap(), expected)
+    }
+
+    #[test]
+    fn test_1_schema_2() {
+        let xml = test_xml_path().join("test_1_schema_2.xml");
+        let xml_hashable = XMLFileHashable::new_with_schema(&xml, get_schema_test_2());
+        let expected = HashableMessage::from(vec![
+            HashableMessage::from("test"),
+            HashableMessage::from("true"),
+            HashableMessage::from(vec![
+                HashableMessage::from("12345"),
+                HashableMessage::from("toto"),
+            ]),
+            HashableMessage::from(5usize),
+            HashableMessage::from(10usize),
+        ])
+        .hash();
+        assert_eq!(xml_hashable.try_hash().unwrap(), expected)
+    }
+
+    #[test]
+    fn test_2_schema_2() {
+        let xml = test_xml_path().join("test_2_schema_2.xml");
+        let xml_hashable = XMLFileHashable::new_with_schema(&xml, get_schema_test_2());
+        let expected = HashableMessage::from(vec![
+            HashableMessage::from("test"),
+            HashableMessage::from("true"),
+            HashableMessage::from(vec![
+                HashableMessage::from("12345"),
+                HashableMessage::from("toto"),
+            ]),
+            HashableMessage::from(vec![
+                HashableMessage::from(1usize),
+                HashableMessage::from(2usize),
+                HashableMessage::from(3usize),
+                HashableMessage::from(4usize),
+                HashableMessage::from(5usize),
+            ]),
+            HashableMessage::from(10usize),
+        ])
+        .hash();
+        assert_eq!(xml_hashable.try_hash().unwrap(), expected)
+    }
+}
 
 #[cfg(test)]
 mod test_converter {

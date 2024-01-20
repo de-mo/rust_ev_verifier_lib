@@ -13,6 +13,7 @@ use std::str;
 pub struct ElementNode<'a> {
     schema: &'a Schema<'a>,
     ro_node: RoNode<'a, 'a>,
+    #[allow(dead_code)]
     parent: Option<&'a ElementNode<'a>>,
 }
 
@@ -33,11 +34,13 @@ impl<'a> NodeKind<'a> {
     }
 
     /// Is the node a simple type
+    #[allow(dead_code)]
     fn is_simple_type(&self) -> bool {
         self.unwrap_simple_type().is_ok()
     }
 
     /// Is the node a native type
+    #[allow(dead_code)]
     fn is_native(&self) -> bool {
         self.unwrap_native().is_ok()
     }
@@ -95,18 +98,20 @@ impl<'a> NodeKind<'a> {
     }
 }
 
-impl<'a, 'input> ElementNode<'a> {
+impl<'a> ElementNode<'a> {
     /// Name of the nome (attribute `"name"`, not the name of the tag)
     pub fn name(&'a self) -> &'a str {
         self.ro_node.find_attribute("name").unwrap()
     }
 
     /// Is the element optional ?
+    #[allow(dead_code)]
     pub fn is_optional(&self) -> bool {
         self.ro_node.min_occurs() == 0
     }
 
     /// Is the element a list (many elements allowed)
+    #[allow(dead_code)]
     pub fn is_list(&self) -> bool {
         self.ro_node.max_occurs() > 1
     }
@@ -291,7 +296,7 @@ mod test {
     use super::*;
 
     fn schema<'a>() -> &'a Schema<'a> {
-        SchemaKind::config.get_schema()
+        SchemaKind::Config.get_schema()
     }
 
     #[test]
@@ -509,7 +514,7 @@ mod test_additional_method_node {
     use super::*;
 
     fn schema<'a>() -> &'a Schema<'a> {
-        SchemaKind::config.get_schema()
+        SchemaKind::Config.get_schema()
     }
 
     #[test]

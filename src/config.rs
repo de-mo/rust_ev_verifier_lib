@@ -148,6 +148,10 @@ pub(crate) mod test {
         test_datasets_path().join("dataset1-setup-tally")
     }
 
+    pub(crate) fn test_xml_path() -> PathBuf {
+        test_datasets_path().join("xml")
+    }
+
     pub(crate) fn get_test_verifier_tally_dir() -> VerificationDirectory {
         VerificationDirectory::new(&VerificationPeriod::Tally, &test_dataset_tally_path())
     }
