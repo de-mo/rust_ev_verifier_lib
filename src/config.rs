@@ -61,14 +61,17 @@ impl Config {
     }
 
     /// Maximum number of write-in options according to the specification
+    #[allow(dead_code)]
     pub fn maximum_number_of_write_in_options() -> usize {
         consts::MAXIMUM_NUMBER_OF_WRITE_IN_OPTIONS
     }
 
+    #[allow(dead_code)]
     pub fn maximum_write_in_option_length() -> usize {
         consts::MAXIMUM_WRITE_IN_OPTION_LENGTH
     }
 
+    #[allow(dead_code)]
     pub fn maximum_actual_voting_option_length() -> usize {
         consts::MAXIMUM_ACTUAL_VOTING_OPTION_LENGTH
     }

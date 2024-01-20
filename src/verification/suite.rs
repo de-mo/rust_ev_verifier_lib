@@ -14,8 +14,7 @@ pub fn get_not_implemented_verifications_id(
     config: &'static Config,
 ) -> Vec<String> {
     let metadata =
-        VerificationMetaDataList::load_period(&config.get_verification_list_str(), &period)
-            .unwrap();
+        VerificationMetaDataList::load_period(config.get_verification_list_str(), &period).unwrap();
     let all_id = metadata.id_list();
     let verifs_id = VerificationSuite::new(&period, &metadata, &[], config).collect_id();
     let mut diff: Vec<String> = all_id
@@ -164,7 +163,7 @@ mod test {
     #[test]
     fn test_setup_verifications() {
         let metadata_list =
-            VerificationMetaDataList::load(&CONFIG_TEST.get_verification_list_str()).unwrap();
+            VerificationMetaDataList::load(CONFIG_TEST.get_verification_list_str()).unwrap();
         let verifs = VerificationSuite::new(
             &VerificationPeriod::Setup,
             &metadata_list,
@@ -182,7 +181,7 @@ mod test {
     #[test]
     fn test_tally_verifications() {
         let metadata_list =
-            VerificationMetaDataList::load(&CONFIG_TEST.get_verification_list_str()).unwrap();
+            VerificationMetaDataList::load(CONFIG_TEST.get_verification_list_str()).unwrap();
         let verifs = VerificationSuite::new(
             &VerificationPeriod::Tally,
             &metadata_list,
@@ -200,7 +199,7 @@ mod test {
     #[test]
     fn test_with_exclusion() {
         let metadata_list =
-            VerificationMetaDataList::load(&CONFIG_TEST.get_verification_list_str()).unwrap();
+            VerificationMetaDataList::load(CONFIG_TEST.get_verification_list_str()).unwrap();
         let verifs = VerificationSuite::new(
             &VerificationPeriod::Setup,
             &metadata_list,

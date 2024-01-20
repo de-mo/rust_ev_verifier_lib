@@ -38,6 +38,7 @@ pub enum VerificationPeriod {
 }
 
 impl VerificationPeriod {
+    #[allow(dead_code)]
     pub fn is_setup(&self) -> bool {
         self == &VerificationPeriod::Setup
     }

@@ -321,8 +321,6 @@ impl VCSDirectoryTrait for VCSDirectory {
 
 #[cfg(test)]
 mod test {
-    use std::ops::Index;
-
     use super::*;
     use crate::config::test::test_dataset_tally_path as get_location;
 

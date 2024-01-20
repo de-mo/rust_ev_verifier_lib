@@ -50,7 +50,7 @@ impl<'a> VerifiySignatureTrait<'a> for ControlComponentPublicKeysPayload {
 
     fn get_certificate_authority(&self) -> Result<String, Self::Error> {
         Ok(String::from(
-            &CertificateAuthority::get_ca_cc(&self.control_component_public_keys.node_id).context(
+            CertificateAuthority::get_ca_cc(&self.control_component_public_keys.node_id).context(
                 format!(
                     "verifiy signature for ControlComponentPublicKeysPayload for node {}",
                     self.control_component_public_keys.node_id

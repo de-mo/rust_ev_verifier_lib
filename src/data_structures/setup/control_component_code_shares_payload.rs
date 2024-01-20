@@ -93,7 +93,7 @@ impl<'a> VerifiySignatureTrait<'a> for ControlComponentCodeSharesPayloadInner {
 
     fn get_certificate_authority(&self) -> Result<String, Self::Error> {
         Ok(String::from(
-            &CertificateAuthority::get_ca_cc(&self.node_id).context(format!(
+            CertificateAuthority::get_ca_cc(&self.node_id).context(format!(
                 "verifiy signature for ControlComponentCodeSharesPayloadInner for node {}",
                 self.node_id
             ))?,

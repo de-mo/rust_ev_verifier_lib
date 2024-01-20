@@ -39,13 +39,13 @@ impl From<EncryptionParametersDef> for EncryptionParameters {
 impl CheckDomainTrait for EncryptionParameters {
     fn check_domain(&self) -> Vec<anyhow::Error> {
         let mut res = vec![];
-        if let Some(e) = check_p(&self.p()) {
+        if let Some(e) = check_p(self.p()) {
             res.push(anyhow::anyhow!(e))
         }
-        if let Some(e) = check_q(&self.p(), &self.q()) {
+        if let Some(e) = check_q(self.p(), self.q()) {
             res.push(anyhow::anyhow!(e))
         }
-        if let Some(e) = check_g(&self.p(), &self.g()) {
+        if let Some(e) = check_g(self.p(), self.g()) {
             res.push(anyhow::anyhow!(e))
         }
         res

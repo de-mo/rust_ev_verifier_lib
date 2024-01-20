@@ -23,9 +23,11 @@ pub struct VerificationMetaData {
     name: String,
 
     /// Algorithm in the specifications
+    #[allow(dead_code)]
     algorithm: String,
 
     /// Description of the verification
+    #[allow(dead_code)]
     description: String,
 
     /// Period (Set or Tally) of the verification
@@ -62,6 +64,7 @@ impl VerificationMetaDataList {
         self.0.iter().map(|e| e.id.clone()).collect::<Vec<String>>()
     }
 
+    #[allow(dead_code)]
     pub fn id_list_for_period(&self, period: &VerificationPeriod) -> Vec<String> {
         self.0
             .iter()
@@ -96,10 +99,12 @@ impl VerificationMetaData {
         &self.name
     }
 
+    #[allow(dead_code)]
     pub fn algorithm(&self) -> &String {
         &self.algorithm
     }
 
+    #[allow(dead_code)]
     pub fn description(&self) -> &String {
         &self.description
     }

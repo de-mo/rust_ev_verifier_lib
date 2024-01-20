@@ -1,5 +1,5 @@
 /// List of valide Certificate authorities
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum CertificateAuthority {
     Canton,
     SdmConfig,
@@ -23,8 +23,8 @@ impl CertificateAuthority {
     }
 }
 
-impl From<&CertificateAuthority> for String {
-    fn from(value: &CertificateAuthority) -> Self {
+impl From<CertificateAuthority> for String {
+    fn from(value: CertificateAuthority) -> Self {
         match value {
             CertificateAuthority::Canton => "canton".to_string(),
             CertificateAuthority::SdmConfig => "sdm_config".to_string(),
@@ -40,35 +40,30 @@ impl From<&CertificateAuthority> for String {
 
 #[cfg(test)]
 mod test {
-    use super::*;
-    /*
-    use std::path::PathBuf;
+    use crate::config::test::CONFIG_TEST;
 
-    fn get_location() -> PathBuf {
-        Path::new("./").join("test_data").join("direct-trust")
-    }
+    use super::*;
 
     #[test]
     fn test_create() {
-        let dt = DirectTrust::new(&get_location().join(Path(KEYSTORE_FILE_NAME))).unwrap();
-        //let dt = DirectTrustCertificate::new(, &CertificateAuthority::Canton);
-        assert!(dt.certificate(&CertificateAuthority::Canton).is_ok());
-        assert!(dt.certificate(&CertificateAuthority::SdmConfig).is_ok());
-        assert!(dt.certificate(&CertificateAuthority::SdmTally).is_ok());
-        assert!(dt.certificate(&CertificateAuthority::VotingServer).is_ok());
+        let dt = CONFIG_TEST.keystore().unwrap();
+        //let dt = DirectTrustCertificate::new(, CertificateAuthority::Canton);
+        assert!(dt.certificate(String::from(CertificateAuthority::Canton).as_str()).is_ok());
+        assert!(dt.certificate(String::from(CertificateAuthority::SdmConfig).as_str()).is_ok());
+        assert!(dt.certificate(String::from(CertificateAuthority::SdmTally).as_str()).is_ok());
+        assert!(dt.certificate(String::from(CertificateAuthority::VotingServer).as_str()).is_ok());
         assert!(dt
-            .certificate(&CertificateAuthority::ControlComponent1)
+            .certificate(String::from(CertificateAuthority::ControlComponent1).as_str())
             .is_ok());
         assert!(dt
-            .certificate(&CertificateAuthority::ControlComponent2)
+            .certificate(String::from(CertificateAuthority::ControlComponent2).as_str())
             .is_ok());
         assert!(dt
-            .certificate(&CertificateAuthority::ControlComponent3)
+            .certificate(String::from(CertificateAuthority::ControlComponent3).as_str())
             .is_ok());
         assert!(dt
-            .certificate(&CertificateAuthority::ControlComponent4)
+            .certificate(String::from(CertificateAuthority::ControlComponent4).as_str())
             .is_ok());
-        let dt_err = DirectTrust::new(Path::new("./toto"));
-        assert!(dt_err.is_err());
-    } */
+    }
+
 }

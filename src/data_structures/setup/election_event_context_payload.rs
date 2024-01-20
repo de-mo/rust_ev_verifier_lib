@@ -113,7 +113,7 @@ impl<'a> VerifiySignatureTrait<'a> for ElectionEventContextPayload {
     }
 
     fn get_certificate_authority(&self) -> Result<String, Self::Error> {
-        Ok(String::from(&CertificateAuthority::SdmConfig))
+        Ok(String::from(CertificateAuthority::SdmConfig))
     }
 
     fn get_signature(&self) -> ByteArray {

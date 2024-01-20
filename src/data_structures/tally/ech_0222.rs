@@ -30,7 +30,7 @@ impl<'a> VerifiySignatureTrait<'a> for ECH0222 {
     }
 
     fn get_certificate_authority(&self) -> Result<String, Self::Error> {
-        Ok(String::from(&CertificateAuthority::Canton))
+        Ok(String::from(CertificateAuthority::Canton))
     }
 
     fn get_signature(&self) -> ByteArray {
