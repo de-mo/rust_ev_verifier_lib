@@ -3,11 +3,11 @@ use super::super::{
     deserialize_seq_string_hex_to_seq_bigunit, implement_trait_verifier_data_json_decode,
     VerifierDataDecode,
 };
-use crate::direct_trust::CertificateAuthority;
+use crate::direct_trust::{CertificateAuthority, VerifiySignatureTrait};
 use anyhow::anyhow;
 use num_bigint::BigUint;
 use rust_ev_crypto_primitives::{
-    ByteArray, EncryptionParameters, HashableMessage, VerifiySignatureTrait,
+    ByteArray, EncryptionParameters, HashableMessage,
 };
 use serde::Deserialize;
 
@@ -72,9 +72,8 @@ pub struct CorrectnessInformationElt {
 }
 
 impl<'a> VerifiySignatureTrait<'a> for SetupComponentVerificationDataPayload {
-    type Error = std::convert::Infallible;
 
-    fn get_hashable(&'a self) -> Result<HashableMessage<'a>, Self::Error> {
+    fn get_hashable(&'a self) -> anyhow::Result<HashableMessage<'a>> {
         Ok(HashableMessage::from(self))
     }
 
@@ -86,7 +85,7 @@ impl<'a> VerifiySignatureTrait<'a> for SetupComponentVerificationDataPayload {
         ]
     }
 
-    fn get_certificate_authority(&self) -> Result<String, Self::Error> {
+    fn get_certificate_authority(&self) -> anyhow::Result<String> {
         Ok(String::from(CertificateAuthority::SdmConfig))
     }
 

@@ -2,11 +2,11 @@ use super::super::{
     common_types::{SignatureJson, EncryptionParametersDef}, deserialize_seq_seq_string_hex_to_seq_seq_bigunit,
     implement_trait_verifier_data_json_decode, VerifierDataDecode,
 };
-use crate::direct_trust::CertificateAuthority;
+use crate::direct_trust::{CertificateAuthority, VerifiySignatureTrait};
 use anyhow::anyhow;
 use num_bigint::BigUint;
 use rust_ev_crypto_primitives::{
-    ByteArray, EncryptionParameters, HashableMessage, VerifiySignatureTrait,
+    ByteArray, EncryptionParameters, HashableMessage,
 };
 use serde::Deserialize;
 
@@ -46,9 +46,8 @@ impl<'a> From<&'a SetupComponentTallyDataPayload> for HashableMessage<'a> {
 }
 
 impl<'a> VerifiySignatureTrait<'a> for SetupComponentTallyDataPayload {
-    type Error = std::convert::Infallible;
 
-    fn get_hashable(&'a self) -> Result<HashableMessage<'a>, Self::Error> {
+    fn get_hashable(&'a self) -> anyhow::Result<HashableMessage<'a>> {
         Ok(HashableMessage::from(self))
     }
 
@@ -60,7 +59,7 @@ impl<'a> VerifiySignatureTrait<'a> for SetupComponentTallyDataPayload {
         ]
     }
 
-    fn get_certificate_authority(&self) -> Result<String, Self::Error> {
+    fn get_certificate_authority(&self) -> anyhow::Result<String> {
         Ok(String::from(CertificateAuthority::SdmConfig))
     }
 

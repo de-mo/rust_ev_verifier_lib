@@ -2,9 +2,9 @@ use super::super::VerifierDataDecode;
 use roxmltree::Document;
 use rust_ev_crypto_primitives::{
     ByteArray,HashableMessage,
-    VerifiySignatureTrait,
 };
-use crate::direct_trust::CertificateAuthority;
+use crate::direct_trust::{CertificateAuthority, VerifiySignatureTrait};
+
 
 #[derive(Debug, Clone)]
 pub struct ECH0222 {}
@@ -16,9 +16,8 @@ impl VerifierDataDecode for ECH0222 {
 }
 
 impl<'a> VerifiySignatureTrait<'a> for ECH0222 {
-    type Error=anyhow::Error;
 
-    fn get_hashable(&'a self) -> Result<HashableMessage<'a>, Self::Error> {
+    fn get_hashable(&'a self) -> anyhow::Result<HashableMessage<'a>> {
         //let hashable = XMLFileHashable::new(&self.path, &SchemaKind::config);
         //let hash = hashable.try_hash()?;
         //Ok(HashableMessage::Hashed(hash))
@@ -29,7 +28,7 @@ impl<'a> VerifiySignatureTrait<'a> for ECH0222 {
         vec![HashableMessage::from("eCH 0222")]
     }
 
-    fn get_certificate_authority(&self) -> Result<String, Self::Error> {
+    fn get_certificate_authority(&self) -> anyhow::Result<String> {
         Ok(String::from(CertificateAuthority::Canton))
     }
 

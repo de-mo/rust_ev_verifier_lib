@@ -6,11 +6,10 @@ use super::super::{
 use anyhow::anyhow;
 use rust_ev_crypto_primitives::{EncryptionParameters,
     ByteArray,  HashableMessage,
-    VerifiySignatureTrait,
 };
 use serde::Deserialize;
 use crate::config::Config as VerifierConfig;
-use crate::direct_trust::CertificateAuthority;
+use crate::direct_trust::{CertificateAuthority, VerifiySignatureTrait};
 
 #[derive(Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -67,9 +66,8 @@ impl<'a> From<&'a EncryptionParametersPayload> for HashableMessage<'a> {
 }
 
 impl<'a> VerifiySignatureTrait<'a> for EncryptionParametersPayload {
-    type Error=std::convert::Infallible;
 
-    fn get_hashable(&'a self) -> Result<HashableMessage<'a>, Self::Error> {
+    fn get_hashable(&'a self) -> anyhow::Result<HashableMessage<'a>> {
         Ok(HashableMessage::from(self))
     }
 
@@ -77,7 +75,7 @@ impl<'a> VerifiySignatureTrait<'a> for EncryptionParametersPayload {
         vec![HashableMessage::from("encryption parameters")]
     }
 
-    fn get_certificate_authority(&self) -> Result<String, Self::Error> {
+    fn get_certificate_authority(&self) -> anyhow::Result<String> {
         Ok(String::from(CertificateAuthority::SdmConfig))
     }
 

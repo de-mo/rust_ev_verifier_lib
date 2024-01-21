@@ -3,11 +3,11 @@ use super::super::{
     deserialize_seq_string_hex_to_seq_bigunit, implement_trait_verifier_data_json_decode,
     VerifierDataDecode,
 };
-use crate::direct_trust::CertificateAuthority;
+use crate::direct_trust::{CertificateAuthority, VerifiySignatureTrait};
 use anyhow::{anyhow, Context};
 use num_bigint::BigUint;
 use rust_ev_crypto_primitives::{
-    ByteArray, EncryptionParameters, HashableMessage, VerifiySignatureTrait,
+    ByteArray, EncryptionParameters, HashableMessage,
 };
 use serde::Deserialize;
 
@@ -34,9 +34,8 @@ impl<'a> From<&'a ControlComponentPublicKeysPayload> for HashableMessage<'a> {
 }
 
 impl<'a> VerifiySignatureTrait<'a> for ControlComponentPublicKeysPayload {
-    type Error = anyhow::Error;
 
-    fn get_hashable(&'a self) -> Result<HashableMessage<'a>, Self::Error> {
+    fn get_hashable(&'a self) -> anyhow::Result<HashableMessage<'a>> {
         Ok(HashableMessage::from(self))
     }
 
@@ -48,7 +47,7 @@ impl<'a> VerifiySignatureTrait<'a> for ControlComponentPublicKeysPayload {
         ]
     }
 
-    fn get_certificate_authority(&self) -> Result<String, Self::Error> {
+    fn get_certificate_authority(&self) -> anyhow::Result<String> {
         Ok(String::from(
             CertificateAuthority::get_ca_cc(&self.control_component_public_keys.node_id).context(
                 format!(

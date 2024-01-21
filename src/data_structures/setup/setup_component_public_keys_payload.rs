@@ -6,11 +6,11 @@ use super::{
     },
     control_component_public_keys_payload::ControlComponentPublicKeys,
 };
-use crate::direct_trust::CertificateAuthority;
+use crate::direct_trust::{CertificateAuthority, VerifiySignatureTrait};
 use anyhow::anyhow;
 use num_bigint::BigUint;
 use rust_ev_crypto_primitives::{
-    ByteArray, EncryptionParameters, HashableMessage, VerifiySignatureTrait,
+    ByteArray, EncryptionParameters, HashableMessage,
 };
 use serde::Deserialize;
 
@@ -36,9 +36,8 @@ impl<'a> From<&'a SetupComponentPublicKeysPayload> for HashableMessage<'a> {
 }
 
 impl<'a> VerifiySignatureTrait<'a> for SetupComponentPublicKeysPayload {
-    type Error = std::convert::Infallible;
 
-    fn get_hashable(&'a self) -> Result<HashableMessage<'a>, Self::Error> {
+    fn get_hashable(&'a self) -> anyhow::Result<HashableMessage<'a>> {
         Ok(HashableMessage::from(self))
     }
 
@@ -50,7 +49,7 @@ impl<'a> VerifiySignatureTrait<'a> for SetupComponentPublicKeysPayload {
         ]
     }
 
-    fn get_certificate_authority(&self) -> Result<String, Self::Error> {
+    fn get_certificate_authority(&self) -> anyhow::Result<String> {
         Ok(String::from(CertificateAuthority::SdmConfig))
     }
 
