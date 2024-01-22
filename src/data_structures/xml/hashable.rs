@@ -9,7 +9,7 @@ use quick_xml::{
     name::{Namespace, ResolveResult::*},
     reader::NsReader,
 };
-use rust_ev_crypto_primitives::{ByteArray, Decode, HashTrait, HashableMessage};
+use rust_ev_crypto_primitives::{ByteArray, Decode, RecursiveHashTrait, HashableMessage};
 use std::{
     collections::HashMap,
     fs::File,
@@ -42,7 +42,7 @@ impl<'a> XMLFileHashable<'a> {
     }
 }
 
-impl<'a> HashTrait for XMLFileHashable<'a> {
+impl<'a> RecursiveHashTrait for XMLFileHashable<'a> {
     type Error = anyhow::Error;
 
     fn try_hash(&self) -> Result<ByteArray, Self::Error> {

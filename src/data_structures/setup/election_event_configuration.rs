@@ -7,7 +7,7 @@ use quick_xml::{
     events::{BytesStart, Event},
     Reader,
 };
-use rust_ev_crypto_primitives::{ByteArray, HashTrait, HashableMessage};
+use rust_ev_crypto_primitives::{ByteArray, RecursiveHashTrait, HashableMessage};
 use serde::Deserialize;
 use std::path::PathBuf;
 
