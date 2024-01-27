@@ -4,7 +4,7 @@ use super::schema::{self, Schema};
 use anyhow::{anyhow, Context, Result};
 use quick_xml::name::QName;
 use roxmltree::Node as RoNode;
-use std::str;
+use std::{collections::HashMap, str};
 
 /// Node in the schema
 ///
@@ -15,6 +15,7 @@ pub struct ElementNode<'a> {
     ro_node: RoNode<'a, 'a>,
     #[allow(dead_code)]
     parent: Option<&'a ElementNode<'a>>,
+    sub_schema_nodes: HashMap<String, RoNode<'a, 'a>>,
 }
 
 /// Kind of the node (complex type, simple type or xsd native type)
@@ -74,7 +75,7 @@ impl<'a> NodeKind<'a> {
         }
         Err(anyhow!("The node is not a complex type"))
     }
-    
+
     fn native_type(&'a self) -> Result<String> {
         match self {
             NodeKind::ComplexType(_) => {
@@ -91,7 +92,9 @@ impl<'a> NodeKind<'a> {
                         .ok_or(anyhow!("The atribute base is missing for restriction."))?
                         .as_bytes(),
                 );
-                Ok(str::from_utf8(base.local_name().as_ref()).unwrap().to_string())
+                Ok(str::from_utf8(base.local_name().as_ref())
+                    .unwrap()
+                    .to_string())
             }
             NodeKind::Native(s) => Ok(s.clone()),
         }
@@ -120,12 +123,15 @@ impl<'a> ElementNode<'a> {
     pub fn is_complex_type(&self) -> bool {
         match self.node_kind() {
             Ok(k) => k.is_complex_type(),
-            Err(_) => false
+            Err(_) => false,
         }
     }
 
     /// Get the kind of the node
     ///
+    /// If the namespace of the type of the node is in the import, the node of the sub schema will be returned
+    ///
+    /// # Error
     /// Return an error if the [NodeKind] cannot be built or is empty
     fn node_kind(&'a self) -> Result<NodeKind<'a>> {
         let mut res_node = None;
@@ -133,25 +139,42 @@ impl<'a> ElementNode<'a> {
         if let Some(q_name) = self.ro_node.schema_node_type() {
             // The type name is qualified with prefix
             if let Some(prefix) = q_name.prefix() {
-                // The prefix is for xmlschema
-                if prefix.as_ref() == self.schema.xmlschema_namespace_name().as_bytes() {
-                    return Ok(NodeKind::Native(
-                        str::from_utf8(q_name.local_name().as_ref())
-                            .unwrap()
-                            .to_string(),
-                    ));
-                }
-                // The prefix is for target namespace (e.g. in the current schema)
-                if prefix.as_ref() == self.schema.target_namespace_name().as_bytes() {
-                    let n = self
-                        .ro_node
-                        .find_node_with_name(str::from_utf8(q_name.local_name().as_ref()).unwrap());
-                    if n.is_some() {
-                        res_node = Some(n.unwrap());
+                match prefix.as_ref() {
+                    // The prefix is for xmlschema
+                    s if s == self.schema.xmlschema_namespace_name().as_bytes() => {
+                        return Ok(NodeKind::Native(
+                            str::from_utf8(q_name.local_name().as_ref())
+                                .unwrap()
+                                .to_string(),
+                        ));
                     }
+                    // The prefix is for target namespace (e.g. in the current schema)
+                    s if s == self.schema.target_namespace_name().as_bytes() => {
+                        let n = self.ro_node.find_node_with_name(
+                            str::from_utf8(q_name.local_name().as_ref()).unwrap(),
+                        );
+                        if n.is_some() {
+                            res_node = Some(n.unwrap());
+                        }
+                    }
+                    // The prefix is another namespace in the import
+                    s if self
+                        .sub_schema_nodes
+                        .contains_key(str::from_utf8(s).unwrap()) =>
+                    {
+                        let ns_name = str::from_utf8(s).unwrap();
+                        let root = self.sub_schema_nodes.get(ns_name).unwrap();
+                        let n = root.find_node_with_name(
+                            str::from_utf8(q_name.local_name().as_ref()).unwrap(),
+                        );
+                        if n.is_some() {
+                            res_node = Some(n.unwrap());
+                        }
+                    }
+                    // Not qualified -> the result remains none
+                    _ => (),
                 }
             }
-            // Not qualified -> the result remains none
         }
         // Type not in the attribute. Take the first child
         else if let Some(fcn) = self.ro_node.first_element_child() {
@@ -182,7 +205,7 @@ impl<'a> ElementNode<'a> {
     pub fn native_type(&'a self) -> Result<Option<String>> {
         let kind = self.node_kind().context("Error getting the node kind")?;
         if kind.is_complex_type() {
-            return Ok(None)
+            return Ok(None);
         }
         kind.native_type().map(Some)
     }
@@ -194,17 +217,19 @@ impl<'a> ElementNode<'a> {
     pub fn children(&'a self) -> Result<Vec<Self>> {
         let mut res = vec![];
         let kind = self.node_kind().context("Error getting the node kind")?;
-        if let Ok(n) = kind.unwrap_complex_type() {
-            let seq = n
-                .first_element_child()
-                .ok_or(anyhow!("Missing first child"))?;
-            for e in seq.children().filter(|e| e.is_schema_element()) {
-                res.push(Self {
-                    schema: self.schema,
-                    ro_node: e,
-                    parent: Some(self),
-                })
-            }
+        let node_complex = kind
+            .unwrap_complex_type()
+            .context("The node is not a complex node type")?;
+        let seq = node_complex
+            .first_element_child()
+            .ok_or(anyhow!("Missing first child"))?;
+        for e in seq.children().filter(|e| e.is_schema_element()) {
+            res.push(Self {
+                schema: self.schema,
+                ro_node: e,
+                parent: Some(self),
+                sub_schema_nodes: self.schema.sub_schema_nodes_with_name(),
+            })
         }
         Ok(res)
     }
@@ -218,6 +243,7 @@ impl<'a> From<&'a schema::Schema<'a>> for ElementNode<'a> {
             schema: value,
             ro_node: node,
             parent: None,
+            sub_schema_nodes: value.sub_schema_nodes_with_name(),
         }
     }
 }
@@ -295,13 +321,17 @@ mod test {
     use super::super::schema::SchemaKind;
     use super::*;
 
-    fn schema<'a>() -> &'a Schema<'a> {
+    fn schema_config<'a>() -> &'a Schema<'a> {
         SchemaKind::Config.get_schema()
+    }
+
+    fn schema_ech_0222<'a>() -> &'a Schema<'a> {
+        SchemaKind::Ech0222.get_schema()
     }
 
     #[test]
     fn test_from_schema() {
-        let xsd = schema();
+        let xsd = schema_config();
         let node = ElementNode::from(xsd);
         assert!(node.parent.is_none());
         assert_eq!(node.ro_node.node_tag_name(), "element");
@@ -310,7 +340,7 @@ mod test {
 
     #[test]
     fn test_node_type_complex() {
-        let xsd = schema();
+        let xsd = schema_config();
         let n1 = xsd
             .root_element()
             .children()
@@ -320,6 +350,7 @@ mod test {
             schema: xsd,
             ro_node: n1,
             parent: None,
+            sub_schema_nodes: HashMap::new(),
         };
         let r_k1 = node1.node_kind();
         assert!(r_k1.is_ok());
@@ -336,6 +367,7 @@ mod test {
             schema: xsd,
             ro_node: n2,
             parent: None,
+            sub_schema_nodes: HashMap::new(),
         };
         let r_k2 = node2.node_kind();
         assert!(r_k2.is_ok());
@@ -352,7 +384,7 @@ mod test {
 
     #[test]
     fn test_node_type_simple() {
-        let xsd = schema();
+        let xsd = schema_config();
         let root = xsd.root_element();
         let n1 = root
             .find_node_with_name("adminBoardType")
@@ -365,6 +397,7 @@ mod test {
             schema: xsd,
             ro_node: n1,
             parent: None,
+            sub_schema_nodes: HashMap::new(),
         };
         let r_k1 = node1.node_kind();
         assert!(r_k1.is_ok());
@@ -382,6 +415,7 @@ mod test {
             schema: xsd,
             ro_node: n2,
             parent: None,
+            sub_schema_nodes: HashMap::new(),
         };
         let r_k2 = node2.node_kind();
         assert!(r_k2.is_ok());
@@ -392,7 +426,7 @@ mod test {
 
     #[test]
     fn test_children_1() {
-        let xsd = schema();
+        let xsd = schema_config();
         let n1 = xsd
             .root_element()
             .children()
@@ -402,6 +436,7 @@ mod test {
             schema: xsd,
             ro_node: n1,
             parent: None,
+            sub_schema_nodes: HashMap::new(),
         };
         let r_cs = node1.children();
         assert!(r_cs.is_ok());
@@ -421,7 +456,7 @@ mod test {
 
     #[test]
     fn test_children_2() {
-        let xsd = schema();
+        let xsd = schema_config();
         let root = xsd.root_element();
         let n1 = root
             .find_node_with_name("contestType")
@@ -438,6 +473,7 @@ mod test {
             schema: xsd,
             ro_node: n1,
             parent: None,
+            sub_schema_nodes: HashMap::new(),
         };
         let r_cs = node1.children();
         assert!(r_cs.is_ok());
@@ -457,7 +493,7 @@ mod test {
 
     #[test]
     fn test_native_type() {
-        let xsd = schema();
+        let xsd = schema_config();
         let root = xsd.root_element();
         let n1 = root
             .find_node_with_name("contestType")
@@ -474,20 +510,33 @@ mod test {
             schema: xsd,
             ro_node: n1,
             parent: None,
+            sub_schema_nodes: HashMap::new(),
         };
         let r_cs = node1.children();
         assert!(r_cs.is_ok());
         let cs = r_cs.unwrap();
-        assert_eq!(cs[0].node_kind().unwrap().native_type().unwrap().as_str(), "token");
-        assert_eq!(cs[1].node_kind().unwrap().native_type().unwrap().as_str(), "token");
-        assert_eq!(cs[2].node_kind().unwrap().native_type().unwrap().as_str(), "token");
-        assert_eq!(cs[3].node_kind().unwrap().native_type().unwrap().as_str(), "integer");
+        assert_eq!(
+            cs[0].node_kind().unwrap().native_type().unwrap().as_str(),
+            "token"
+        );
+        assert_eq!(
+            cs[1].node_kind().unwrap().native_type().unwrap().as_str(),
+            "token"
+        );
+        assert_eq!(
+            cs[2].node_kind().unwrap().native_type().unwrap().as_str(),
+            "token"
+        );
+        assert_eq!(
+            cs[3].node_kind().unwrap().native_type().unwrap().as_str(),
+            "integer"
+        );
         assert!(cs[4].node_kind().unwrap().native_type().is_err());
     }
 
     #[test]
     fn test_native_type_2() {
-        let xsd = schema();
+        let xsd = schema_config();
         let n1 = xsd
             .root_element()
             .children()
@@ -497,6 +546,7 @@ mod test {
             schema: xsd,
             ro_node: n1,
             parent: None,
+            sub_schema_nodes: HashMap::new(),
         };
         let r_cs = node1.children();
         assert!(r_cs.is_ok());
@@ -505,8 +555,74 @@ mod test {
         assert!(cs[1].node_kind().unwrap().native_type().is_err());
         assert!(cs[2].node_kind().unwrap().native_type().is_err());
         assert!(cs[3].node_kind().unwrap().native_type().is_err());
-        assert_eq!(cs[4].node_kind().unwrap().native_type().unwrap().as_str(), "base64Binary");
-    }}
+        assert_eq!(
+            cs[4].node_kind().unwrap().native_type().unwrap().as_str(),
+            "base64Binary"
+        );
+    }
+
+    #[test]
+    fn test_sub_schema_1() {
+        let xsd = schema_ech_0222();
+        let root = xsd.root_element();
+        let n1 = root
+            .find_node_with_name("reportingBodyType")
+            .unwrap()
+            .first_element_child()
+            .unwrap()
+            .children()
+            .find(|e| {
+                e.find_attribute("name").is_some()
+                    && e.find_attribute("name").unwrap() == "reportingBodyIdentification"
+            })
+            .unwrap();
+        let mut node1 = ElementNode::from(xsd);
+        node1.ro_node = n1;
+        let r_k1 = node1.node_kind();
+        assert!(r_k1.is_ok());
+        let k1 = r_k1.unwrap();
+        assert!(k1.is_simple_type());
+        assert_eq!(
+            k1.unwrap_simple_type()
+                .unwrap()
+                .find_attribute("name")
+                .unwrap(),
+            "identifierType"
+        );
+    }
+
+    #[test]
+    fn test_sub_schema_2() {
+        let xsd = schema_ech_0222();
+        let root = xsd.root_element();
+        let n1 = root
+            .find_node_with_name("delivery")
+            .unwrap()
+            .first_element_child()
+            .unwrap()
+            .first_element_child()
+            .unwrap()
+            .children()
+            .find(|e| {
+                e.find_attribute("name").is_some()
+                    && e.find_attribute("name").unwrap() == "deliveryHeader"
+            })
+            .unwrap();
+        let mut node1 = ElementNode::from(xsd);
+        node1.ro_node = n1;
+        let r_k1 = node1.node_kind();
+        assert!(r_k1.is_ok());
+        let k1 = r_k1.unwrap();
+        assert!(k1.is_complex_type());
+        let r_cs = node1.children();
+        assert!(r_cs.is_ok());
+        let cs = r_cs.unwrap();
+        assert_eq!(cs[0].name(), "senderId");
+        assert!(cs[0].node_kind().unwrap().is_simple_type());
+        assert_eq!(cs[1].name(), "originalSenderId");
+        assert!(cs[1].node_kind().unwrap().is_simple_type());
+    }
+}
 
 #[cfg(test)]
 mod test_additional_method_node {
