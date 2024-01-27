@@ -6,10 +6,10 @@ use super::{
 use anyhow::{anyhow, Context};
 use quick_xml::{
     events::Event,
-    name::{Namespace, ResolveResult::*},
+    name::{Namespace, QName, ResolveResult::*},
     reader::NsReader,
 };
-use rust_ev_crypto_primitives::{ByteArray, Decode, RecursiveHashTrait, HashableMessage};
+use rust_ev_crypto_primitives::{ByteArray, Decode, HashableMessage, RecursiveHashTrait};
 use std::{
     collections::HashMap,
     fs::File,
@@ -21,23 +21,26 @@ use std::{
 pub struct XMLFileHashable<'a> {
     file: PathBuf,
     schema: &'a Schema<'a>,
+    exclusion: String,
 }
 
 struct NodeHashable<'a> {
     reader: &'a mut NsReader<BufReader<File>>,
     tag_name: &'a str,
     schema_node: &'a ElementNode<'a>,
+    exclusion: String,
 }
 
 impl<'a> XMLFileHashable<'a> {
-    pub fn new(xml: &Path, schema_kind: &'a SchemaKind) -> Self {
-        Self::new_with_schema(xml, schema_kind.get_schema())
+    pub fn new(xml: &Path, schema_kind: &'a SchemaKind, exclusion: &str) -> Self {
+        Self::new_with_schema(xml, schema_kind.get_schema(), exclusion)
     }
 
-    pub fn new_with_schema(xml: &Path, schema: &'a Schema<'a>) -> Self {
+    pub fn new_with_schema(xml: &Path, schema: &'a Schema<'a>, exclusion: &str) -> Self {
         Self {
             file: xml.to_path_buf(),
             schema,
+            exclusion: exclusion.to_string(),
         }
     }
 }
@@ -62,7 +65,13 @@ impl<'a> RecursiveHashTrait for XMLFileHashable<'a> {
                     let tag_local_name = e.local_name();
                     let tag_name = str::from_utf8(tag_local_name.as_ref()).unwrap();
                     if tag_name == schema_node.name() {
-                        return NodeHashable::new(&schema_node, tag_name, &mut reader).try_hash();
+                        return NodeHashable::new(
+                            &schema_node,
+                            tag_name,
+                            &mut reader,
+                            &self.exclusion,
+                        )
+                        .try_hash();
                     }
                 }
                 Ok((_, Event::Eof)) => panic!("tag {} not found", schema_node.name()),
@@ -79,11 +88,13 @@ impl<'a> NodeHashable<'a> {
         schema_node: &'a ElementNode<'a>,
         tag_name: &'a str,
         reader: &'a mut NsReader<BufReader<File>>,
+        exclusion: &str,
     ) -> Self {
         Self {
             reader,
             tag_name,
             schema_node,
+            exclusion: exclusion.to_string(),
         }
     }
 
@@ -107,7 +118,13 @@ impl<'a> NodeHashable<'a> {
             .iter()
             .find(|e| e.name() == tag_name)
             .ok_or(anyhow!("tag {} not found in xsd", tag_name))?;
-        NodeHashable::new(schema_node, schema_node.name(), self.reader).try_hash()
+        NodeHashable::new(
+            schema_node,
+            schema_node.name(),
+            self.reader,
+            &self.exclusion,
+        )
+        .try_hash()
     }
 
     fn hash_hashed_childern(
@@ -128,7 +145,11 @@ impl<'a> NodeHashable<'a> {
                     hashable.push(HashableMessage::Hashed(HashableMessage::from(l).hash()));
                 }
             } else {
-                hashable.push(HashableMessage::Hashed(hashable_no_value(c.name()).hash()));
+                let exclusion_local_name = QName(self.exclusion.as_bytes()).local_name();
+                let exclusion_name = str::from_utf8(exclusion_local_name.as_ref()).unwrap();
+                if exclusion_name != c.name() {
+                    hashable.push(HashableMessage::Hashed(hashable_no_value(c.name()).hash()));
+                }
             }
         }
         Ok(HashableMessage::from(hashable).hash())
@@ -138,17 +159,19 @@ impl<'a> NodeHashable<'a> {
         let mut buf = Vec::new();
         let mut hm: HashMap<String, Vec<ByteArray>> = HashMap::new();
         loop {
-            match self.reader.read_resolved_event_into(&mut buf) {
-                Ok((Bound(Namespace(_ns)), Event::Start(e))) => {
+            match self.reader.read_event_into(&mut buf) {
+                Ok(Event::Start(e)) => {
                     let tag_local_name = e.local_name();
                     let tag_name = str::from_utf8(tag_local_name.as_ref())?;
-                    let hash = self.get_hash_from_child(tag_name)?;
-                    if !hm.contains_key(tag_name) {
-                        hm.insert(tag_name.to_string(), vec![]);
+                    if e.name() != QName(self.exclusion.as_bytes()) {
+                        let hash = self.get_hash_from_child(tag_name)?;
+                        if !hm.contains_key(tag_name) {
+                            hm.insert(tag_name.to_string(), vec![]);
+                        }
+                        hm.get_mut(tag_name).unwrap().push(hash);
                     }
-                    hm.get_mut(tag_name).unwrap().push(hash);
                 }
-                Ok((Bound(Namespace(_ns)), Event::End(e))) => {
+                Ok(Event::End(e)) => {
                     if e.local_name().as_ref() == self.tag_name.as_bytes() {
                         break;
                     }
@@ -245,11 +268,23 @@ mod test {
     #[test]
     fn test_1_schema_1() {
         let xml = test_xml_path().join("test_1_schema_1.xml");
-        let xml_hashable = XMLFileHashable::new_with_schema(&xml, get_schema_test_1());
+        let xml_hashable = XMLFileHashable::new_with_schema(&xml, get_schema_test_1(), "");
         let expected = HashableMessage::from(vec![
             HashableMessage::from("test"),
             HashableMessage::from("true"),
             HashableMessage::from(10usize),
+        ])
+        .hash();
+        assert_eq!(xml_hashable.try_hash().unwrap(), expected)
+    }
+
+    #[test]
+    fn test_1_schema_1_with_exclusion() {
+        let xml = test_xml_path().join("test_1_schema_1.xml");
+        let xml_hashable = XMLFileHashable::new_with_schema(&xml, get_schema_test_1(), "valueInt");
+        let expected = HashableMessage::from(vec![
+            HashableMessage::from("test"),
+            HashableMessage::from("true"),
         ])
         .hash();
         assert_eq!(xml_hashable.try_hash().unwrap(), expected)
@@ -258,7 +293,7 @@ mod test {
     #[test]
     fn test_1_schema_1_qualified() {
         let xml = test_xml_path().join("test_1_schema_1_qualified.xml");
-        let xml_hashable = XMLFileHashable::new_with_schema(&xml, get_schema_test_1());
+        let xml_hashable = XMLFileHashable::new_with_schema(&xml, get_schema_test_1(), "");
         let expected = HashableMessage::from(vec![
             HashableMessage::from("test"),
             HashableMessage::from("true"),
@@ -269,9 +304,22 @@ mod test {
     }
 
     #[test]
+    fn test_1_schema_1_qualified_with_exclusion() {
+        let xml = test_xml_path().join("test_1_schema_1_qualified.xml");
+        let xml_hashable = XMLFileHashable::new_with_schema(&xml, get_schema_test_1(), "toto:valueBoolean");
+        let expected = HashableMessage::from(vec![
+            HashableMessage::from("test"),
+            HashableMessage::from(10usize),
+        ])
+        .hash();
+        assert_eq!(xml_hashable.try_hash().unwrap(), expected)
+    }
+
+
+    #[test]
     fn test_2_schema_1() {
         let xml = test_xml_path().join("test_2_schema_1.xml");
-        let xml_hashable = XMLFileHashable::new_with_schema(&xml, get_schema_test_1());
+        let xml_hashable = XMLFileHashable::new_with_schema(&xml, get_schema_test_1(), "");
         let expected = HashableMessage::from(vec![
             HashableMessage::from("test"),
             HashableMessage::from("no valueBoolean value"),
@@ -284,7 +332,7 @@ mod test {
     #[test]
     fn test_3_schema_1() {
         let xml = test_xml_path().join("test_3_schema_1.xml");
-        let xml_hashable = XMLFileHashable::new_with_schema(&xml, get_schema_test_1());
+        let xml_hashable = XMLFileHashable::new_with_schema(&xml, get_schema_test_1(), "");
         let expected = HashableMessage::from(vec![
             HashableMessage::from("test"),
             HashableMessage::from("true"),
@@ -297,7 +345,7 @@ mod test {
     #[test]
     fn test_1_schema_2() {
         let xml = test_xml_path().join("test_1_schema_2.xml");
-        let xml_hashable = XMLFileHashable::new_with_schema(&xml, get_schema_test_2());
+        let xml_hashable = XMLFileHashable::new_with_schema(&xml, get_schema_test_2(), "");
         let expected = HashableMessage::from(vec![
             HashableMessage::from("test"),
             HashableMessage::from("true"),
@@ -315,7 +363,7 @@ mod test {
     #[test]
     fn test_2_schema_2() {
         let xml = test_xml_path().join("test_2_schema_2.xml");
-        let xml_hashable = XMLFileHashable::new_with_schema(&xml, get_schema_test_2());
+        let xml_hashable = XMLFileHashable::new_with_schema(&xml, get_schema_test_2(), "");
         let expected = HashableMessage::from(vec![
             HashableMessage::from("test"),
             HashableMessage::from("true"),
