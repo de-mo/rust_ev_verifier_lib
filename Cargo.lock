@@ -676,9 +676,9 @@ checksum = "3cd14fd5e3b777a7422cca79358c57a8f6e3a703d9ac187448d0daf220c2407f"
 
 [[package]]
 name = "rust_ev_crypto_primitives"
-version = "0.1.1"
+version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "edfaa0e70fa92c70895fdc2493d4db95bc032a13d88ff6d6144adde149cd80f4"
+checksum = "3532971223f26ebd75cb276a7dd956925c18f1d9a8e6a59b9f246bac8ea6df32"
 dependencies = [
  "chrono",
  "data-encoding",
