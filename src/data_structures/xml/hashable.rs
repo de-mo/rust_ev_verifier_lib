@@ -18,12 +18,15 @@ use std::{
     str,
 };
 
+/// An struct to hash the xml file according to the specification of Swiss Post
+/// TODO: the options (xs:choice) are missing
 pub struct XMLFileHashable<'a> {
     file: PathBuf,
     schema: &'a Schema<'a>,
     exclusion: String,
 }
 
+/// An struct to hash a node in an xml file according to the specification of Swiss Post
 struct NodeHashable<'a> {
     reader: &'a mut NsReader<BufReader<File>>,
     tag_name: &'a str,
@@ -32,6 +35,10 @@ struct NodeHashable<'a> {
 }
 
 impl<'a> XMLFileHashable<'a> {
+    /// Create a new [XMLFileHashable]
+    /// 
+    /// `exclusion` contains the name of the tag to be excluded. The tag should be exactly
+    /// the same than in xml file (with or without namespaces)
     pub fn new(xml: &Path, schema_kind: &'a SchemaKind, exclusion: &str) -> Self {
         Self::new_with_schema(xml, schema_kind.get_schema(), exclusion)
     }
@@ -84,6 +91,10 @@ impl<'a> RecursiveHashTrait for XMLFileHashable<'a> {
 }
 
 impl<'a> NodeHashable<'a> {
+    /// Create a new [NodeHashable]
+    /// 
+    /// `exclusion` contains the name of the tag to be excluded. The tag should be exactly
+    /// the same than in xml file (with or without namespaces)
     fn new(
         schema_node: &'a ElementNode<'a>,
         tag_name: &'a str,
@@ -98,6 +109,7 @@ impl<'a> NodeHashable<'a> {
         }
     }
 
+    /// Hash a native type
     fn hash_native_type(&mut self, native_type: &str) -> anyhow::Result<ByteArray> {
         let mut buf = Vec::new();
         match self.reader.read_event_into(&mut buf) {
@@ -112,6 +124,10 @@ impl<'a> NodeHashable<'a> {
         }
     }
 
+    /// Calculate the hash value of the child of the node given by `tag_name`
+    /// 
+    /// # Error
+    /// If the child is not found or an error during the calulation
     fn get_hash_from_child(&mut self, tag_name: &str) -> anyhow::Result<ByteArray> {
         let children = self.schema_node.children()?;
         let schema_node = children
@@ -127,6 +143,13 @@ impl<'a> NodeHashable<'a> {
         .try_hash()
     }
 
+    /// Calculate the hash value from all the hashed children, according to the specification of Swiss Post
+    /// 
+    /// It reads the schema in parallel in order to get the correct order of elements, and to add the value for
+    /// missing entries.
+    /// 
+    /// # Error
+    /// If an error occured during the calculation
     fn hash_hashed_childern(
         &self,
         hashed_children: &HashMap<String, Vec<ByteArray>>,
@@ -155,6 +178,7 @@ impl<'a> NodeHashable<'a> {
         Ok(HashableMessage::from(hashable).hash())
     }
 
+   /// Hash a complex type
     fn hash_complex_type(&mut self) -> anyhow::Result<ByteArray> {
         let mut buf = Vec::new();
         let mut hm: HashMap<String, Vec<ByteArray>> = HashMap::new();
@@ -186,6 +210,7 @@ impl<'a> NodeHashable<'a> {
         self.hash_hashed_childern(&hm)
     }
 
+    /// Try to hash the node
     fn try_hash(&mut self) -> anyhow::Result<ByteArray> {
         if self.schema_node.is_complex_type() {
             self.hash_complex_type()

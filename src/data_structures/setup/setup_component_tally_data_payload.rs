@@ -1,5 +1,5 @@
 use super::super::{
-    common_types::{SignatureJson, EncryptionParametersDef}, deserialize_seq_seq_string_hex_to_seq_seq_bigunit,
+    common_types::{Signature, EncryptionParametersDef}, deserialize_seq_seq_string_hex_to_seq_seq_bigunit,
     implement_trait_verifier_data_json_decode, VerifierDataDecode,
 };
 use crate::direct_trust::{CertificateAuthority, VerifiySignatureTrait};
@@ -21,7 +21,7 @@ pub struct SetupComponentTallyDataPayload {
     pub verification_card_ids: Vec<String>,
     #[serde(deserialize_with = "deserialize_seq_seq_string_hex_to_seq_seq_bigunit")]
     pub verification_card_public_keys: Vec<Vec<BigUint>>,
-    pub signature: SignatureJson,
+    pub signature: Signature,
 }
 
 implement_trait_verifier_data_json_decode!(SetupComponentTallyDataPayload);

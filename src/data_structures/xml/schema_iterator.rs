@@ -10,6 +10,8 @@ use std::{collections::HashMap, str};
 ///
 /// The construction is thought, that only tags `xs:element` are built in this structure. The children are also
 /// these kind of nodes.
+/// 
+/// TODO: the options (xs:choice) are missing
 pub struct ElementNode<'a> {
     schema: &'a Schema<'a>,
     ro_node: RoNode<'a, 'a>,

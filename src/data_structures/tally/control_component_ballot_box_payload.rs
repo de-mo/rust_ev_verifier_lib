@@ -1,5 +1,5 @@
 use super::super::{
-    common_types::{ExponentiatedEncryptedElement, SignatureJson, EncryptionParametersDef},
+    common_types::{ExponentiatedEncryptedElement, Signature, EncryptionParametersDef},
     implement_trait_verifier_data_json_decode, VerifierDataDecode,
 };
 use crate::data_structures::common_types::{DecryptionProof, Proof};
@@ -16,7 +16,7 @@ pub struct ControlComponentBallotBoxPayload {
     pub ballot_box_id: String,
     pub node_id: usize,
     pub confirmed_encrypted_votes: Vec<ConfirmedEncryptedVote>,
-    pub signature: SignatureJson,
+    pub signature: Signature,
 }
 implement_trait_verifier_data_json_decode!(ControlComponentBallotBoxPayload);
 

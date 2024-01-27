@@ -45,21 +45,35 @@ fn fn_verification_0201<D: VerificationDirectoryTrait>(
             return;
         }
     };
-    let ks = match config.keystore() {
-        Ok(ks) => ks,
+    verify_signature_for_object(
+        eg.as_ref(),
+        result,
+        config,
+        "encryption_parameters_payload",
+    )
+}
+
+fn fn_verification_0202<D: VerificationDirectoryTrait>(
+    dir: &D,
+    config: &'static Config,
+    result: &mut VerificationResult,
+) {
+    let setup_dir = dir.unwrap_setup();
+    let ee_config = match setup_dir.election_event_configuration() {
+        Ok(p) => p,
         Err(e) => {
             result.push(create_verification_error!(
-                "Cannot read keystore in encryption_parameters_payload",
+                format!("{} cannot be read", "election_event_configuration"),
                 e
             ));
             return;
         }
     };
     verify_signature_for_object(
-        eg.as_ref(),
+        ee_config.as_ref(),
         result,
-        &ks,
-        "encryption_parameters_payload",
+        config,
+        "election_event_configuration",
     )
 }
 
@@ -79,20 +93,10 @@ fn fn_verification_0203<D: VerificationDirectoryTrait>(
             return;
         }
     };
-    let ks = match config.keystore() {
-        Ok(ks) => ks,
-        Err(e) => {
-            result.push(create_verification_error!(
-                "Cannot read keystore in setup_component_public_keys_payload",
-                e
-            ));
-            return;
-        }
-    };
     verify_signature_for_object(
         eg.as_ref(),
         result,
-        &ks,
+        config,
         "setup_component_public_keys_payload",
     )
 }
@@ -103,23 +107,13 @@ fn fn_verification_0204<D: VerificationDirectoryTrait>(
     result: &mut VerificationResult,
 ) {
     let setup_dir = dir.unwrap_setup();
-    let ks = match config.keystore() {
-        Ok(ks) => ks,
-        Err(e) => {
-            result.push(create_verification_error!(
-                "Cannot read keystore in control_component_public_keys_payload_",
-                e
-            ));
-            return;
-        }
-    };
     for (i, cc) in setup_dir.control_component_public_keys_payload_iter() {
         debug!("Verification 2.04 for cc {}", i);
         match cc {
             Ok(cc) => verify_signature_for_object(
                 cc.as_ref(),
                 result,
-                &ks,
+                config,
                 &format!("control_component_public_keys_payload_{}", i),
             ),
             Err(e) => result.push(create_verification_error!(
@@ -136,16 +130,6 @@ fn fn_verification_0205<D: VerificationDirectoryTrait>(
     result: &mut VerificationResult,
 ) {
     let setup_dir = dir.unwrap_setup();
-    let ks = match config.keystore() {
-        Ok(ks) => ks,
-        Err(e) => {
-            result.push(create_verification_error!(
-                "Cannot read keystore in setup_component_verification_data_payload_iter",
-                e
-            ));
-            return;
-        }
-    };
     for d in setup_dir.vcs_directories() {
         debug!("Verification 2.05 for vcs_dir {}", d.get_name());
         for (i, ps) in d.setup_component_verification_data_payload_iter() {
@@ -153,7 +137,7 @@ fn fn_verification_0205<D: VerificationDirectoryTrait>(
                 Ok(p) => verify_signature_for_object(
                     p.as_ref(),
                     result,
-                    &ks,
+                    config,
                     &format!(
                         "{}/setup_component_verification_data_payload_iter.{}.json",
                         d.get_name(),
@@ -179,16 +163,6 @@ fn fn_verification_0206<D: VerificationDirectoryTrait>(
     result: &mut VerificationResult,
 ) {
     let setup_dir = dir.unwrap_setup();
-    let ks = match config.keystore() {
-        Ok(ks) => ks,
-        Err(e) => {
-            result.push(create_verification_error!(
-                "Cannot read keystore in control_component_code_shares_payload",
-                e
-            ));
-            return;
-        }
-    };
     for d in setup_dir.vcs_directories() {
         debug!("Verification 2.06 for vcs_dir {}", d.get_name());
         for (i, rps) in d.control_component_code_shares_payload_iter() {
@@ -198,7 +172,7 @@ fn fn_verification_0206<D: VerificationDirectoryTrait>(
                         verify_signature_for_object(
                             p,
                             result,
-                            &ks,
+                            config,
                             &format!(
                                 "{}/control_component_code_shares_payload.{}.json[{}]",
                                 d.get_name(),
@@ -227,23 +201,13 @@ fn fn_verification_0207<D: VerificationDirectoryTrait>(
     result: &mut VerificationResult,
 ) {
     let setup_dir = dir.unwrap_setup();
-    let ks = match config.keystore() {
-        Ok(ks) => ks,
-        Err(e) => {
-            result.push(create_verification_error!(
-                "Cannot read keystore in setup_component_tally_data_payload",
-                e
-            ));
-            return;
-        }
-    };
     for d in setup_dir.vcs_directories() {
         debug!("Verification 2.07 for vcs_dir {}", d.get_name());
         match d.setup_component_tally_data_payload() {
             Ok(p) => verify_signature_for_object(
                 p.as_ref(),
                 result,
-                &ks,
+                config,
                 &format!("{}/setup_component_tally_data_payload.json", d.get_name(),),
             ),
             Err(e) => result.push(create_verification_error!(
@@ -271,20 +235,10 @@ fn fn_verification_0208<D: VerificationDirectoryTrait>(
             return;
         }
     };
-    let ks = match config.keystore() {
-        Ok(ks) => ks,
-        Err(e) => {
-            result.push(create_verification_error!(
-                "Cannot read keystore in election_event_context_payload",
-                e
-            ));
-            return;
-        }
-    };
     verify_signature_for_object(
         rp.as_ref(),
         result,
-        &ks,
+        config,
         "election_event_context_payload",
     )
 }
@@ -299,6 +253,16 @@ mod test {
         let dir = get_verifier_dir();
         let mut result = VerificationResult::new();
         fn_verification_0201(&dir, &CONFIG_TEST, &mut result);
+        assert!(result.is_ok().unwrap());
+    }
+
+    #[test]
+    #[ignore]
+    fn test_0202() {
+        let dir = get_verifier_dir();
+        let mut result = VerificationResult::new();
+        fn_verification_0202(&dir, &CONFIG_TEST, &mut result);
+        println!("{:?}", result);
         assert!(result.is_ok().unwrap());
     }
 

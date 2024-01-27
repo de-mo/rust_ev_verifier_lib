@@ -10,10 +10,10 @@ pub mod verifications;
 use self::result::{
     create_verification_error, create_verification_failure, VerificationEvent, VerificationResult,
 };
+use crate::{config::Config, direct_trust::VerifiySignatureTrait};
 use anyhow::{anyhow, bail, Result};
 use log::debug;
 use rust_ev_crypto_primitives::{HashableMessage, Keystore};
-use crate::direct_trust::VerifiySignatureTrait;
 use std::fmt::Display;
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
@@ -53,13 +53,22 @@ impl VerificationPeriod {
 fn verify_signature_for_object<'a, T>(
     obj: &'a T,
     result: &mut VerificationResult,
-    keystore: &Keystore,
+    config: &'static Config,
     name: &str,
 ) where
     T: VerifiySignatureTrait<'a>,
-    HashableMessage<'a>: From<&'a T>,
 {
-    match obj.verifiy_signature(keystore) {
+    let ks = match config.keystore() {
+        Ok(ks) => ks,
+        Err(e) => {
+            result.push(create_verification_error!(
+                "Cannot read keystore in election_event_configuration",
+                e
+            ));
+            return;
+        }
+    };
+    match obj.verifiy_signature(&ks) {
         Ok(t) => {
             if !t {
                 result.push(create_verification_failure!(format!(

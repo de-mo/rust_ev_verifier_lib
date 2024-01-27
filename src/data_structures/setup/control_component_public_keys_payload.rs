@@ -1,5 +1,5 @@
 use super::super::{
-    common_types::{EncryptionParametersDef, ProofUnderline, SignatureJson},
+    common_types::{EncryptionParametersDef, ProofUnderline, Signature},
     deserialize_seq_string_hex_to_seq_bigunit, implement_trait_verifier_data_json_decode,
     VerifierDataDecode,
 };
@@ -18,7 +18,7 @@ pub struct ControlComponentPublicKeysPayload {
     pub encryption_group: EncryptionParameters,
     pub election_event_id: String,
     pub control_component_public_keys: ControlComponentPublicKeys,
-    pub signature: SignatureJson,
+    pub signature: Signature,
 }
 
 implement_trait_verifier_data_json_decode!(ControlComponentPublicKeysPayload);

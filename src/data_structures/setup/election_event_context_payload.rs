@@ -1,5 +1,5 @@
 use super::super::{
-    common_types::{SignatureJson, EncryptionParametersDef}, deserialize_string_string_to_datetime,
+    common_types::{Signature, EncryptionParametersDef}, deserialize_string_string_to_datetime,
     implement_trait_verifier_data_json_decode, VerifierDataDecode,
 };
 use crate::direct_trust::{CertificateAuthority, VerifiySignatureTrait};
@@ -16,7 +16,7 @@ pub struct ElectionEventContextPayload {
     #[serde(with = "EncryptionParametersDef")]
     pub encryption_group: EncryptionParameters,
     pub election_event_context: ElectionEventContext,
-    pub signature: SignatureJson,
+    pub signature: Signature,
 }
 
 implement_trait_verifier_data_json_decode!(ElectionEventContextPayload);

@@ -1,5 +1,5 @@
 use super::super::{
-    common_types::{EncryptionParametersDef, SignatureJson},
+    common_types::{EncryptionParametersDef, Signature},
     implement_trait_verifier_data_json_decode, VerifierDataDecode,
 };
 use rust_ev_crypto_primitives::EncryptionParameters;
@@ -17,7 +17,7 @@ pub struct TallyComponentVotesPayload {
     pub votes: Vec<Vec<usize>>,
     pub actual_selected_voting_options: Vec<Vec<String>>,
     pub decoded_write_in_votes: Vec<Vec<String>>,
-    pub signature: SignatureJson,
+    pub signature: Signature,
 }
 
 implement_trait_verifier_data_json_decode!(TallyComponentVotesPayload);

@@ -1,5 +1,5 @@
 use super::super::{
-    common_types::{EncryptionParametersDef, ExponentiatedEncryptedElement, Proof, SignatureJson},
+    common_types::{EncryptionParametersDef, ExponentiatedEncryptedElement, Proof, Signature},
     deserialize_seq_string_hex_to_seq_bigunit, implement_trait_verifier_data_json_decode,
     VerifierDataDecode,
 };
@@ -25,7 +25,7 @@ pub struct ControlComponentCodeSharesPayloadInner {
     #[serde(with = "EncryptionParametersDef")]
     pub encryption_group: EncryptionParameters,
     pub node_id: usize,
-    pub signature: SignatureJson,
+    pub signature: Signature,
 }
 
 #[derive(Deserialize, Debug, Clone)]

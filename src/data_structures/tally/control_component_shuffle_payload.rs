@@ -1,5 +1,5 @@
 use super::super::{
-    common_types::{ExponentiatedEncryptedElement, SignatureJson, EncryptionParametersDef},
+    common_types::{ExponentiatedEncryptedElement, Signature, EncryptionParametersDef},
     implement_trait_verifier_data_json_decode, VerifierDataDecode,
 };
 use super::tally_component_shuffle_payload::VerifiableShuffle;
@@ -18,7 +18,7 @@ pub struct ControlComponentShufflePayload {
     pub node_id: usize,
     pub verifiable_decryptions: VerifiableDecryptions,
     pub verifiable_shuffle: VerifiableShuffle,
-    pub signature: SignatureJson,
+    pub signature: Signature,
 }
 implement_trait_verifier_data_json_decode!(ControlComponentShufflePayload);
 

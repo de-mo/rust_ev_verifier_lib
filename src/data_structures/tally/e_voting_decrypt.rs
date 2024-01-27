@@ -21,7 +21,7 @@ impl VerifierDataDecode for EVotingDecrypt {
 
 impl<'a> VerifiySignatureTrait<'a> for EVotingDecrypt {
     fn get_hashable(&'a self) -> anyhow::Result<HashableMessage<'a>> {
-        let hashable = XMLFileHashable::new(&self.path, &SchemaKind::Decrypt);
+        let hashable = XMLFileHashable::new(&self.path, &SchemaKind::Decrypt, "signature");
         let hash = hashable.try_hash()?;
         Ok(HashableMessage::Hashed(hash))
     }

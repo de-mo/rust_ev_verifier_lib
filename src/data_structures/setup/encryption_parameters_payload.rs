@@ -1,5 +1,5 @@
 use super::super::{
-    common_types::{SignatureJson, EncryptionParametersDef},
+    common_types::{Signature, EncryptionParametersDef},
     implement_trait_verifier_data_json_decode, VerifierDataDecode,
     CheckDomainTrait
 };
@@ -18,7 +18,7 @@ pub struct EncryptionParametersPayload {
     pub encryption_group: EncryptionParameters,
     pub seed: String,
     pub small_primes: Vec<usize>,
-    pub signature: SignatureJson,
+    pub signature: Signature,
 }
 
 implement_trait_verifier_data_json_decode!(EncryptionParametersPayload);

@@ -1,5 +1,5 @@
 use super::super::{
-    common_types::{EncryptionParametersDef, ExponentiatedEncryptedElement, SignatureJson},
+    common_types::{EncryptionParametersDef, ExponentiatedEncryptedElement, Signature},
     deserialize_seq_string_hex_to_seq_bigunit, deserialize_string_hex_to_bigunit,
     implement_trait_verifier_data_json_decode, VerifierDataDecode,
 };
@@ -18,7 +18,7 @@ pub struct TallyComponentShufflePayload {
     pub ballot_box_id: String,
     pub verifiable_shuffle: VerifiableShuffle,
     pub verifiable_plaintext_decryption: VerifiablePlaintextDecryption,
-    pub signature: SignatureJson,
+    pub signature: Signature,
 }
 implement_trait_verifier_data_json_decode!(TallyComponentShufflePayload);
 

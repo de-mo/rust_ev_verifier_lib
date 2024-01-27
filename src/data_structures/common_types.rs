@@ -55,11 +55,11 @@ impl CheckDomainTrait for EncryptionParameters {
 /// Struct representing the signature of a json file
 #[derive(Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
-pub struct SignatureJson {
+pub struct Signature {
     pub signature_contents: String,
 }
 
-impl SignatureJson {
+impl Signature {
     /// Get the signature as ByteArray
     pub fn get_signature(&self) -> ByteArray {
         ByteArray::base64_decode(&self.signature_contents).unwrap()
