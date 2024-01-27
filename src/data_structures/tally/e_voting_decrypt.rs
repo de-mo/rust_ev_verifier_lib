@@ -1,24 +1,29 @@
-use super::super::VerifierDataDecode;
+use super::super::{
+    xml::{hashable::XMLFileHashable, SchemaKind},
+    VerifierDataDecode,
+};
 use crate::direct_trust::{CertificateAuthority, VerifiySignatureTrait};
-use roxmltree::Document;
-use rust_ev_crypto_primitives::{ByteArray, HashableMessage};
+use rust_ev_crypto_primitives::{ByteArray, HashableMessage, RecursiveHashTrait};
+use std::path::{Path, PathBuf};
 
 #[derive(Debug, Clone)]
-pub struct EVotingDecrypt {}
+pub struct EVotingDecrypt {
+    pub path: PathBuf,
+}
 
 impl VerifierDataDecode for EVotingDecrypt {
-    fn from_roxmltree<'a>(_: &'a Document<'a>) -> anyhow::Result<Self> {
-        Ok(EVotingDecrypt {})
+    fn from_xml_file(p: &Path) -> anyhow::Result<Self> {
+        Ok(EVotingDecrypt {
+            path: p.to_path_buf(),
+        })
     }
 }
 
 impl<'a> VerifiySignatureTrait<'a> for EVotingDecrypt {
-
     fn get_hashable(&'a self) -> anyhow::Result<HashableMessage<'a>> {
-        //let hashable = XMLFileHashable::new(&self.path, &SchemaKind::config);
-        //let hash = hashable.try_hash()?;
-        //Ok(HashableMessage::Hashed(hash))
-        todo!()
+        let hashable = XMLFileHashable::new(&self.path, &SchemaKind::Decrypt);
+        let hash = hashable.try_hash()?;
+        Ok(HashableMessage::Hashed(hash))
     }
 
     fn get_context_data(&self) -> Vec<HashableMessage<'a>> {
@@ -38,15 +43,13 @@ impl<'a> VerifiySignatureTrait<'a> for EVotingDecrypt {
 mod test {
     use super::*;
     use crate::config::test::test_dataset_tally_path;
-    use std::fs;
 
     #[test]
     fn read_data_set() {
         let path = test_dataset_tally_path()
             .join("tally")
             .join("evoting-decrypt_Post_E2E_DEV.xml");
-        let xml = fs::read_to_string(path).unwrap();
-        let config = EVotingDecrypt::from_roxmltree(&Document::parse(&xml).unwrap());
-        assert!(config.is_ok())
+        let decrypt = EVotingDecrypt::from_xml_file(&path);
+        assert!(decrypt.is_ok())
     }
 }

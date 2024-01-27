@@ -1,5 +1,7 @@
-use super::super::xml::{hashable::XMLFileHashable, SchemaKind};
-use super::super::{xml::xml_read_to_end_into_buffer, VerifierDataDecode};
+use super::super::{
+    xml::{hashable::XMLFileHashable, xml_read_to_end_into_buffer, SchemaKind},
+    VerifierDataDecode,
+};
 use crate::direct_trust::{CertificateAuthority, VerifiySignatureTrait};
 use anyhow::anyhow;
 use quick_xml::{
@@ -7,9 +9,9 @@ use quick_xml::{
     events::{BytesStart, Event},
     Reader,
 };
-use rust_ev_crypto_primitives::{ByteArray, RecursiveHashTrait, HashableMessage};
+use rust_ev_crypto_primitives::{ByteArray, HashableMessage, RecursiveHashTrait};
 use serde::Deserialize;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 #[derive(Debug, Clone)]
 pub struct ElectionEventConfiguration {
@@ -33,7 +35,7 @@ pub struct PartialDelivery {
 }
 
 impl VerifierDataDecode for ElectionEventConfiguration {
-    fn from_xml_file(p: &std::path::Path) -> anyhow::Result<Self> {
+    fn from_xml_file(p: &Path) -> anyhow::Result<Self> {
         let mut reader = Reader::from_file(p).map_err(|e| {
             anyhow!(e).context(format!(
                 "Error creating xml reader for file {}",
@@ -78,31 +80,7 @@ impl VerifierDataDecode for ElectionEventConfiguration {
     }
 }
 
-/*
-impl<'a> From<&'a ConfigHeader> for HashableMessage<'a> {
-    fn from(value: &'a ConfigHeader) -> Self {
-        Self::from(vec![
-            Self::from(&value.file_date),
-            Self::from(&value.voter_total),
-            match &value.partial_delivery {
-                Some(v) => Self::from(v),
-                None => hashable_no_value("partialDelivery"),
-            },
-        ])
-    }
-}
-
-impl<'a> From<&'a PartialDelivery> for HashableMessage<'a> {
-    fn from(value: &'a PartialDelivery) -> Self {
-        Self::from(vec![
-            Self::from(&value.voter_from),
-            Self::from(&value.voter_to),
-        ])
-    }
-}
- */
 impl<'a> VerifiySignatureTrait<'a> for ElectionEventConfiguration {
-
     fn get_hashable(&'a self) -> anyhow::Result<HashableMessage<'a>> {
         let hashable = XMLFileHashable::new(&self.path, &SchemaKind::Config);
         let hash = hashable.try_hash()?;
