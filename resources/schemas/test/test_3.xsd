@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:test="http://www.evoting.ch/xmlns/test2/1"
+					 xmlns:xs="http://www.w3.org/2001/XMLSchema" targetNamespace="http://www.evoting.ch/xmlns/test2/1"
+					 elementFormDefault="qualified" attributeFormDefault="qualified">
+
+	<xs:simpleType name="isTestBoolean">
+		<xs:restriction base="xs:boolean"/>
+	</xs:simpleType>
+
+	<xs:complexType name="testComplexType">
+		<xs:sequence>
+			<xs:element name="ctString" type="xs:string"/>
+			<xs:sequence>
+				<xs:element name="seqString1" type="xs:string"/>
+				<xs:element name="seqString2" type="xs:string"/>
+			</xs:sequence>
+			<xs:choice>
+				<xs:element name="choiceString1" type="xs:string"/>
+				<xs:element name="choiceString2" type="xs:string"/>
+			</xs:choice>
+			<xs:element name="ctToto" type="xs:string"/>
+		</xs:sequence>
+	</xs:complexType>
+
+	<xs:element name="tests">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element name="valueString" type="xs:string"/>
+				<xs:element name="complexType" type="test:testComplexType"/>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+
+</xs:schema>

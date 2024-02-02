@@ -15,4 +15,5 @@ pub static XSD_DECRYPT: &str = include_str!("../resources/schemas/evoting-decryp
 pub(crate) mod test_resources {
     pub static SCHEMA_TEST_1: &str = include_str!("../resources/schemas/test/test_1.xsd");
     pub static SCHEMA_TEST_2: &str = include_str!("../resources/schemas/test/test_2.xsd");
+    pub static SCHEMA_TEST_3: &str = include_str!("../resources/schemas/test/test_3.xsd");
 }

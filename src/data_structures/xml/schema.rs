@@ -342,10 +342,11 @@ mod test {
 #[cfg(test)]
 pub(super) mod test_schemas {
     use super::*;
-    use crate::resources::test_resources::{SCHEMA_TEST_1, SCHEMA_TEST_2};
+    use crate::resources::test_resources::{SCHEMA_TEST_1, SCHEMA_TEST_2, SCHEMA_TEST_3};
 
     static SCHEMA_CELL_TEST_1: OnceLock<Schema> = OnceLock::new();
     static SCHEMA_CELL_TEST_2: OnceLock<Schema> = OnceLock::new();
+    static SCHEMA_CELL_TEST_3: OnceLock<Schema> = OnceLock::new();
 
     pub fn get_schema_test_1<'a>() -> &'a Schema<'a> {
         SCHEMA_CELL_TEST_1.get_or_init(|| Schema::new(None, SCHEMA_TEST_1))
@@ -353,5 +354,9 @@ pub(super) mod test_schemas {
 
     pub fn get_schema_test_2<'a>() -> &'a Schema<'a> {
         SCHEMA_CELL_TEST_2.get_or_init(|| Schema::new(None, SCHEMA_TEST_2))
+    }
+
+    pub fn get_schema_test_3<'a>() -> &'a Schema<'a> {
+        SCHEMA_CELL_TEST_3.get_or_init(|| Schema::new(None, SCHEMA_TEST_3))
     }
 }

@@ -1,5 +1,6 @@
 //! Module to manage the schemas used for the verifier
 mod schema;
+mod schema_tree;
 mod schema_iterator;
 pub mod hashable;
 
