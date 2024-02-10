@@ -1,8 +1,7 @@
 //! Module to manage the schemas used for the verifier
+pub mod hashable;
 mod schema;
 mod schema_tree;
-mod schema_iterator;
-pub mod hashable;
 
 use anyhow::anyhow;
 use quick_xml::{
@@ -14,7 +13,6 @@ use rust_ev_crypto_primitives::HashableMessage;
 use std::io::BufRead;
 
 pub use schema::SchemaKind;
-
 
 // reads from a start tag all the way to the corresponding end tag,
 // returns the bytes of the whole tag

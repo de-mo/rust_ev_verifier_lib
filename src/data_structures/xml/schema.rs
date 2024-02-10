@@ -62,7 +62,7 @@ pub struct Schema<'a> {
 
 impl SchemaKind {
     /// Get the schema structure
-    pub fn get_schema(&self) -> &Schema {
+    pub fn get_schema(&self) -> &'static Schema<'static> {
         match self {
             SchemaKind::Ech0006 => SCHEMA_CELL_ECH_0006
                 .get_or_init(|| Schema::new(Some(*self), resources::XSD_ECH_0006)),

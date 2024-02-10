@@ -16,7 +16,7 @@ pub struct ElementNode {
 }
 
 /// Kind of the element node (complex type or native type)
-enum ElementNodeKind {
+pub enum ElementNodeKind {
     /// Node complex type. It stores the [RoNode] of the location of the information
     ComplexType(Vec<ComplexTypeChildKind>),
     /// Native type. It store the name of the type, without prefix
@@ -24,10 +24,10 @@ enum ElementNodeKind {
 }
 
 /// Kind of the children of a complex type.
-/// 
+///
 /// The enum is necessary to manage the possibility to have a sequence or a choice a child. Other children
 /// are [ElementNode]
-enum ComplexTypeChildKind {
+pub enum ComplexTypeChildKind {
     Element(ElementNode),
     /// Node sequnece. It stores the [RoNode] of the location of the information
     Sequence(Vec<ElementNode>),
@@ -36,20 +36,20 @@ enum ComplexTypeChildKind {
 
 impl ElementNodeKind {
     /// Is the node a complex type
-    fn is_complex_type(&self) -> bool {
+    pub fn is_complex_type(&self) -> bool {
         self.try_unwrap_complex_type().is_ok()
     }
 
     /// Is the node a native type
     #[allow(dead_code)]
-    fn is_native(&self) -> bool {
+    pub fn is_native(&self) -> bool {
         self.try_unwrap_native().is_ok()
     }
 
     /// Unwrap the [ElementNode] to the list of the children under the complex type
     ///
     /// Return error if the node is not complex
-    fn try_unwrap_complex_type(&self) -> anyhow::Result<&Vec<ComplexTypeChildKind>> {
+    pub fn try_unwrap_complex_type(&self) -> anyhow::Result<&Vec<ComplexTypeChildKind>> {
         if let Self::ComplexType(n) = self {
             return Ok(n);
         }
@@ -59,7 +59,7 @@ impl ElementNodeKind {
     /// Unwrap the [ElementNode] to the native type
     ///
     /// Return `None` if the node is not native
-    fn try_unwrap_native(&self) -> anyhow::Result<&str> {
+    pub fn try_unwrap_native(&self) -> anyhow::Result<&str> {
         if let Self::Native(s) = self {
             return Ok(s.as_str());
         }
@@ -69,7 +69,7 @@ impl ElementNodeKind {
     /// Unwrap the [ElementNode] to the list of the children under the complex type
     ///
     /// Panic if the node is not complex
-    fn unwrap_complex_type(&self) -> &Vec<ComplexTypeChildKind> {
+    pub fn unwrap_complex_type(&self) -> &Vec<ComplexTypeChildKind> {
         let res = self.try_unwrap_complex_type();
         if let Err(e) = res {
             panic!("{}", e);
@@ -80,7 +80,7 @@ impl ElementNodeKind {
     /// Unwrap the [ElementNode] to the native type
     ///
     /// Panic if the node is not native
-    fn unwrap_native(&self) -> &str {
+    pub fn unwrap_native(&self) -> &str {
         let res = self.try_unwrap_native();
         if let Err(e) = res {
             panic!("{}", e);
@@ -88,8 +88,37 @@ impl ElementNodeKind {
         res.unwrap()
     }
 
+    pub fn try_find_child_with_tag_name(
+        &self,
+        tag_name: &str,
+    ) -> anyhow::Result<Option<&ElementNode>> {
+        let children = self.try_unwrap_complex_type()?;
+        for c in children {
+            match c {
+                ComplexTypeChildKind::Element(e) => {
+                    if e.has_name(tag_name) {
+                        return Ok(Some(e));
+                    }
+                }
+                ComplexTypeChildKind::Sequence(seq) => {
+                    match seq.iter().find(|e| e.has_name(tag_name)) {
+                        Some(e) => return Ok(Some(e)),
+                        None => (),
+                    }
+                }
+                ComplexTypeChildKind::Choice(choices) => {
+                    match choices.iter().find(|e| e.has_name(tag_name)) {
+                        Some(e) => return Ok(Some(e)),
+                        None => (),
+                    }
+                }
+            }
+        }
+        Ok(None)
+    }
+
     /// Transform a [RoNode] to an [ElementNode]
-    /// 
+    ///
     /// The function take care of the namespaces and also provide the elements from imported schemas
     fn try_from_roxml_node(
         node: &RoNode<'_, '_>,
@@ -137,8 +166,8 @@ impl ElementNodeKind {
                 }
             }
         }
-        // Type not in the attribute. Take the first child
-        else if let Some(fcn) = node.first_element_child() {
+        // Type not in the attribute. Take the first relevant child
+        else if let Some(fcn) = node.children().find(|n| n.is_used_schema_tag()) {
             res_node = Some(fcn);
         }
         match res_node {
@@ -245,7 +274,7 @@ impl ComplexTypeChildKind {
     }
 
     /// Transform a [RoNode] to a [ComplexTypeChildKind]
-    /// 
+    ///
     /// The entry should be the child under the sequence under the complex type
     fn try_from_roxml_node(
         node: &RoNode<'_, '_>,
@@ -296,8 +325,23 @@ impl TryFrom<&'static Schema<'static>> for ElementNode {
 }
 
 impl ElementNode {
+    /// Get kind of node
+    pub fn node_kind(&self) -> &ElementNodeKind {
+        &self.node_kind
+    }
+
+    /// get name of node
+    pub fn name(&self) -> &str {
+        self.name.as_str()
+    }
+
+    /// Check if the node has the name given
+    pub fn has_name(&self, name: &str) -> bool {
+        self.name() == name
+    }
+
     /// Transform a [RoNode] to an [ElementNode]
-    /// 
+    ///
     /// The entry should be a complexType, a native Element or a simple Type
     pub fn try_from_roxml_node(
         node: &RoNode<'_, '_>,
@@ -355,6 +399,14 @@ trait AdditionalMethodsRoxmlNode<'a>: Sized {
     /// Is a node with tag `complexType`
     fn is_schema_sequence(&self) -> bool {
         self.node_tag_name() == "sequence"
+    }
+
+    fn is_used_schema_tag(&self) -> bool {
+        self.is_schema_element()
+            || self.is_schema_choice()
+            || self.is_schema_complex_type()
+            || self.is_schema_simple_type()
+            || self.is_schema_sequence()
     }
 
     /// Is a node with tag `simpleType`, `complexType`, e.g. not a native type
@@ -567,6 +619,76 @@ mod tests {
         assert_eq!(choice[1].name, "choiceString2");
         assert!(cs2[3].is_element());
         assert_eq!(cs2[3].try_unwrap_element().unwrap().name, "ctToto");
+    }
+
+    #[test]
+    fn test_has_name() {
+        let tree_res = ElementNode::try_from(get_schema_test_3());
+        let tree = tree_res.unwrap();
+        assert!(tree.has_name("tests"));
+        assert!(!tree.has_name("toto"))
+    }
+
+    #[test]
+    fn test_try_find_child_with_tag_name() {
+        let tree_res = ElementNode::try_from(get_schema_test_3());
+        let tree = tree_res.unwrap();
+        assert!(tree
+            .node_kind
+            .try_find_child_with_tag_name("valueString")
+            .unwrap()
+            .unwrap()
+            .has_name("valueString"));
+        assert!(tree
+            .node_kind
+            .try_find_child_with_tag_name("complexType")
+            .unwrap()
+            .unwrap()
+            .has_name("complexType"));
+        assert!(tree
+            .node_kind
+            .try_find_child_with_tag_name("toto")
+            .unwrap()
+            .is_none());
+        let ct = tree.node_kind.try_unwrap_complex_type().unwrap()[1]
+            .try_unwrap_element()
+            .unwrap();
+        assert!(ct
+            .node_kind
+            .try_find_child_with_tag_name("ctString")
+            .unwrap()
+            .unwrap()
+            .has_name("ctString"));
+        assert!(ct
+            .node_kind
+            .try_find_child_with_tag_name("seqString1")
+            .unwrap()
+            .unwrap()
+            .has_name("seqString1"));
+        assert!(ct
+            .node_kind
+            .try_find_child_with_tag_name("seqString2")
+            .unwrap()
+            .unwrap()
+            .has_name("seqString2"));
+        assert!(ct
+            .node_kind
+            .try_find_child_with_tag_name("choiceString1")
+            .unwrap()
+            .unwrap()
+            .has_name("choiceString1"));
+        assert!(ct
+            .node_kind
+            .try_find_child_with_tag_name("choiceString2")
+            .unwrap()
+            .unwrap()
+            .has_name("choiceString2"));
+        assert!(ct
+            .node_kind
+            .try_find_child_with_tag_name("ctToto")
+            .unwrap()
+            .unwrap()
+            .has_name("ctToto"));
     }
 }
 
