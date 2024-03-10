@@ -40,7 +40,7 @@ impl XMLFileHashable {
     /// `exclusion` contains the name of the tag to be excluded. The tag should be exactly
     /// the same than in xml file (with or without namespaces)
     pub fn new(xml: &Path, schema_kind: &SchemaKind, exclusion: &str) -> Self {
-        Self::new_with_schema(xml, schema_kind.get_schema(), exclusion)
+        Self::new_with_schema(xml, schema_kind.schema(), exclusion)
     }
 
     pub fn new_with_schema(xml: &Path, schema: &'static Schema<'static>, exclusion: &str) -> Self {
@@ -135,7 +135,13 @@ impl<'a> NodeHashable<'a> {
             .try_find_child_with_tag_name(tag_name)?
         {
             Some(e) => e,
-            None => return Err(anyhow!("tag {} not found in xsd", tag_name)),
+            None => {
+                return Err(anyhow!(
+                    "tag {} not found in xsd with schema node {:?}",
+                    tag_name,
+                    self.schema_node
+                ))
+            }
         };
         NodeHashable::new(
             schema_node,
@@ -188,16 +194,30 @@ impl<'a> NodeHashable<'a> {
     fn push_hashed_from_choices(
         &self,
         hashables: &mut Vec<HashableMessage>,
-        element_nodes: &[ElementNode],
+        element_nodes: &[ComplexTypeChildKind],
         hashed_children: &HashMap<String, Vec<ByteArray>>,
     ) {
         match element_nodes
             .iter()
-            .find(|e| hashed_children.contains_key(e.name()))
+            .find(|e| e.is_element() && hashed_children.contains_key(e.unwrap_element().name()))
         {
-            Some(e) => self.push_hashed_from_element_node(hashables, e, hashed_children),
+            Some(e) => {
+                self.push_hashed_from_element_node(hashables, e.unwrap_element(), hashed_children)
+            }
             None => {
-                self.push_hashed_from_element_node(hashables, &element_nodes[0], hashed_children)
+                match element_nodes.iter().find(|e| {
+                    e.is_sequence()
+                        && e.unwrap_sequence()
+                            .iter()
+                            .any(|e| hashed_children.contains_key(e.name()))
+                }) {
+                    Some(e) => self.push_hashed_from_sequence(
+                        hashables,
+                        e.unwrap_sequence(),
+                        hashed_children,
+                    ),
+                    None => (),
+                }
             }
         }
     }
@@ -234,20 +254,28 @@ impl<'a> NodeHashable<'a> {
     fn hash_complex_type(&mut self) -> anyhow::Result<ByteArray> {
         let mut buf = Vec::new();
         let mut hm: HashMap<String, Vec<ByteArray>> = HashMap::new();
+        let mut is_in_exclusion = false;
         loop {
             match self.reader.read_event_into(&mut buf) {
                 Ok(Event::Start(e)) => {
-                    let tag_local_name = e.local_name();
-                    let tag_name = str::from_utf8(tag_local_name.as_ref())?;
-                    if e.name() != QName(self.exclusion.as_bytes()) {
-                        let hash = self.get_hash_from_child(tag_name)?;
-                        if !hm.contains_key(tag_name) {
-                            hm.insert(tag_name.to_string(), vec![]);
+                    if !is_in_exclusion {
+                        let tag_local_name = e.local_name();
+                        let tag_name = str::from_utf8(tag_local_name.as_ref())?;
+                        if e.name() == QName(self.exclusion.as_bytes()) {
+                            is_in_exclusion = true;
+                        } else {
+                            let hash = self.get_hash_from_child(tag_name)?;
+                            if !hm.contains_key(tag_name) {
+                                hm.insert(tag_name.to_string(), vec![]);
+                            }
+                            hm.get_mut(tag_name).unwrap().push(hash);
                         }
-                        hm.get_mut(tag_name).unwrap().push(hash);
                     }
                 }
                 Ok(Event::End(e)) => {
+                    if e.name() == QName(self.exclusion.as_bytes()) {
+                        is_in_exclusion = false;
+                    }
                     if e.local_name().as_ref() == self.tag_name.as_bytes() {
                         break;
                     }
@@ -303,6 +331,7 @@ impl NativeTypeConverter {
             "normalizedString" => Self::String(res),
             "dateTime" => Self::String(res),
             "date" => Self::String(res),
+            "anyURI" => Self::String(res),
             "token" => Self::String(res),
             _ => {
                 return Err(anyhow!(
@@ -345,7 +374,7 @@ mod test {
         SchemaKind,
     };
     use super::*;
-    use crate::config::test::{test_dataset_setup_path, test_xml_path};
+    use crate::config::test::{test_dataset_setup_path, test_dataset_tally_path, test_xml_path};
 
     #[test]
     fn test_1_schema_1() {
@@ -561,11 +590,59 @@ mod test {
         let xml = test_dataset_setup_path()
             .join("setup")
             .join("configuration-anonymized.xml");
-        let xml_hashable =
-            XMLFileHashable::new_with_schema(&xml, SchemaKind::Config.get_schema(), "");
+        let xml_hashable = XMLFileHashable::new_with_schema(&xml, SchemaKind::Config.schema(), "");
         let hash = xml_hashable.try_hash();
-        println!("{:?}", hash.err());
-        assert!(xml_hashable.try_hash().is_ok())
+        let is_ok = hash.is_ok();
+        if hash.is_err() {
+            println!("{:?}", hash.err());
+        }
+        assert!(is_ok)
+    }
+
+    #[test]
+    fn test_decrypt() {
+        let xml = test_dataset_tally_path()
+            .join("tally")
+            .join("evoting-decrypt_Post_E2E_DEV.xml");
+        let xml_hashable = XMLFileHashable::new_with_schema(&xml, SchemaKind::Decrypt.schema(), "");
+        let hash = xml_hashable.try_hash();
+        let is_ok = hash.is_ok();
+        if hash.is_err() {
+            println!("{:?}", hash.err());
+        }
+        assert!(is_ok)
+    }
+
+    #[test]
+    fn test_0222() {
+        let xml = test_dataset_tally_path()
+            .join("tally")
+            .join("eCH-0222_Post_E2E_DEV.xml");
+        let xml_hashable = XMLFileHashable::new_with_schema(
+            &xml,
+            SchemaKind::Ech0222.schema(),
+            "eCH-0222:extension",
+        );
+        let hash = xml_hashable.try_hash();
+        let is_ok = hash.is_ok();
+        if hash.is_err() {
+            println!("{:?}", hash.err());
+        }
+        assert!(is_ok)
+    }
+
+    #[test]
+    fn test_0110() {
+        let xml = test_dataset_tally_path()
+            .join("tally")
+            .join("eCH-0110_Post_E2E_DEV.xml");
+        let xml_hashable = XMLFileHashable::new_with_schema(&xml, SchemaKind::Ech0110.schema(), "");
+        let hash = xml_hashable.try_hash();
+        let is_ok = hash.is_ok();
+        if hash.is_err() {
+            println!("{:?}", hash.err());
+        }
+        assert!(is_ok)
     }
 }
 

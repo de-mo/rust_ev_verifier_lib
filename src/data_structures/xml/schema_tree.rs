@@ -2,6 +2,7 @@
 
 use super::schema::Schema;
 use anyhow::anyhow;
+use core::fmt;
 use quick_xml::name::QName;
 use roxmltree::{Document as RoDocument, Node as RoNode};
 use std::str;
@@ -15,7 +16,17 @@ pub struct ElementNode {
     node_kind: ElementNodeKind,
 }
 
+impl fmt::Debug for ElementNode {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("ElementNode")
+            .field("name", &self.name)
+            .field("node_kind", &self.node_kind)
+            .finish()
+    }
+}
+
 /// Kind of the element node (complex type or native type)
+#[derive(Debug)]
 pub enum ElementNodeKind {
     /// Node complex type. It stores the [RoNode] of the location of the information
     ComplexType(Vec<ComplexTypeChildKind>),
@@ -27,11 +38,12 @@ pub enum ElementNodeKind {
 ///
 /// The enum is necessary to manage the possibility to have a sequence or a choice a child. Other children
 /// are [ElementNode]
+#[derive(Debug)]
 pub enum ComplexTypeChildKind {
     Element(ElementNode),
     /// Node sequnece. It stores the [RoNode] of the location of the information
     Sequence(Vec<ElementNode>),
-    Choice(Vec<ElementNode>),
+    Choice(Vec<ComplexTypeChildKind>),
 }
 
 impl ElementNodeKind {
@@ -101,15 +113,16 @@ impl ElementNodeKind {
                     }
                 }
                 ComplexTypeChildKind::Sequence(seq) => {
-                    match seq.iter().find(|e| e.has_name(tag_name)) {
-                        Some(e) => return Ok(Some(e)),
-                        None => (),
+                    if let Some(e) = seq.iter().find(|e| e.has_name(tag_name)) {
+                        return Ok(Some(e));
                     }
                 }
                 ComplexTypeChildKind::Choice(choices) => {
-                    match choices.iter().find(|e| e.has_name(tag_name)) {
-                        Some(e) => return Ok(Some(e)),
-                        None => (),
+                    if let Some(e) = choices
+                        .iter()
+                        .find(|e| e.is_element() && e.unwrap_element().has_name(tag_name))
+                    {
+                        return Ok(Some(e.unwrap_element()));
                     }
                 }
             }
@@ -125,9 +138,17 @@ impl ElementNodeKind {
         schema: &'static Schema<'static>,
     ) -> anyhow::Result<Self> {
         let mut res_node = None;
+        let mut res_schema = schema;
+        //println!("Schema node type {:?}", node.schema_node_type());
         if let Some(q_name) = node.schema_node_type() {
             // The type name is qualified with prefix
             if let Some(prefix) = q_name.prefix() {
+                //println!("Prefix {:?}", prefix);
+                //if prefix.as_ref() == "eCH-0010".as_bytes() {
+                    //println!("eCH-0010");
+                    //println!("Schema: {}", schema.target_namespace_name());
+                    //print!("Subschema: {:?}", schema.sub_schema_nodes_with_name());
+                //}
                 match prefix.as_ref() {
                     // The prefix is for xmlschema
                     s if s == schema.xmlschema_namespace_name().as_bytes() => {
@@ -159,6 +180,7 @@ impl ElementNodeKind {
                         );
                         if n.is_some() {
                             res_node = Some(n.unwrap());
+                            res_schema = sub_schema;
                         }
                     }
                     // Not qualified -> the result remains none
@@ -171,19 +193,25 @@ impl ElementNodeKind {
             res_node = Some(fcn);
         }
         match res_node {
-            None => Err(anyhow!("No type found")),
+            None => Err(anyhow!(
+                "No type found for node {:?} with attributes: {:?}",
+                node.node_tag_name(),
+                node.attributes()
+            )),
             Some(n) => {
                 if n.is_schema_complex_type() {
                     let mut res = vec![];
                     // First children is the sequence containing the children
                     let seq_node = n.first_element_child().unwrap();
                     for c in seq_node.children().filter(|e| e.is_child_of_complex_type()) {
-                        res.push(ComplexTypeChildKind::try_from_roxml_node(&c, schema)?)
+                        res.push(ComplexTypeChildKind::try_from_roxml_node(&c, res_schema)?)
                     }
                     return Ok(Self::ComplexType(res));
                 }
                 if n.is_schema_simple_type() {
-                    return Ok(ElementNodeKind::Native(n.native_type_from_simple_type()?));
+                    return Ok(ElementNodeKind::Native(
+                        n.native_type_from_simple_type(res_schema)?,
+                    ));
                 }
                 Err(anyhow!(
                     "The node {} ist not a simple type or a complex type",
@@ -196,17 +224,17 @@ impl ElementNodeKind {
 
 impl ComplexTypeChildKind {
     /// Is the child an element
-    fn is_element(&self) -> bool {
+    pub fn is_element(&self) -> bool {
         self.try_unwrap_element().is_ok()
     }
 
     /// Is the child a sequence
-    fn is_sequence(&self) -> bool {
+    pub fn is_sequence(&self) -> bool {
         self.try_unwrap_sequence().is_ok()
     }
 
     /// Is the child a choice
-    fn is_choice(&self) -> bool {
+    pub fn is_choice(&self) -> bool {
         self.try_unwrap_choice().is_ok()
     }
 
@@ -233,7 +261,7 @@ impl ComplexTypeChildKind {
     /// Unwrap the [ComplexTypeChildKind] to a list of [ElementNode]
     ///
     /// Return error if the child is not an choice
-    fn try_unwrap_choice(&self) -> anyhow::Result<&Vec<ElementNode>> {
+    fn try_unwrap_choice(&self) -> anyhow::Result<&Vec<ComplexTypeChildKind>> {
         if let Self::Choice(n) = self {
             return Ok(n);
         }
@@ -243,7 +271,7 @@ impl ComplexTypeChildKind {
     /// Unwrap the [ComplexTypeChildKind] to an [ElementNode]
     ///
     /// Panic if the child is not an element
-    fn unwrap_element(&self) -> &ElementNode {
+    pub fn unwrap_element(&self) -> &ElementNode {
         let res = self.try_unwrap_element();
         if let Err(e) = res {
             panic!("{}", e);
@@ -254,7 +282,7 @@ impl ComplexTypeChildKind {
     /// Unwrap the [ComplexTypeChildKind] to a list of [ElementNode]
     ///
     /// Panic if the child is not an sequence
-    fn unwrap_sequence(&self) -> &Vec<ElementNode> {
+    pub fn unwrap_sequence(&self) -> &Vec<ElementNode> {
         let res = self.try_unwrap_sequence();
         if let Err(e) = res {
             panic!("{}", e);
@@ -265,7 +293,7 @@ impl ComplexTypeChildKind {
     /// Unwrap the [ComplexTypeChildKind] to a list of [ElementNode]
     ///
     /// Panic if the child is not an choice
-    fn unwrap_choice(&self) -> &Vec<ElementNode> {
+    fn unwrap_choice(&self) -> &Vec<ComplexTypeChildKind> {
         let res = self.try_unwrap_choice();
         if let Err(e) = res {
             panic!("{}", e);
@@ -291,7 +319,7 @@ impl ComplexTypeChildKind {
         if node.is_schema_choice() {
             let mut res = vec![];
             for c in node.children().filter(|e| e.is_child_of_complex_type()) {
-                res.push(ElementNode::try_from_roxml_node(&c, schema)?);
+                res.push(ComplexTypeChildKind::try_from_roxml_node(&c, schema)?);
             }
             return Ok(Self::Choice(res));
         }
@@ -456,7 +484,10 @@ trait AdditionalMethodsRoxmlNode<'a>: Sized {
     ///
     /// # Error
     /// If the children cannot be found
-    fn native_type_from_simple_type(&self) -> anyhow::Result<String>;
+    fn native_type_from_simple_type(
+        &self,
+        schema: &'static Schema<'static>,
+    ) -> anyhow::Result<String>;
 }
 
 impl<'a> AdditionalMethodsRoxmlDocument<'a> for RoDocument<'a> {
@@ -510,7 +541,10 @@ impl<'a> AdditionalMethodsRoxmlNode<'a> for RoNode<'a, 'a> {
             .collect())
     }
 
-    fn native_type_from_simple_type(&self) -> anyhow::Result<String> {
+    fn native_type_from_simple_type(
+        &self,
+        schema: &'static Schema<'static>,
+    ) -> anyhow::Result<String> {
         if !self.is_schema_simple_type() {
             return Err(anyhow!(
                 "The tag {} must be a simple type",
@@ -527,16 +561,67 @@ impl<'a> AdditionalMethodsRoxmlNode<'a> for RoNode<'a, 'a> {
                 .ok_or(anyhow!("The atribute base is missing for restriction."))?
                 .as_bytes(),
         );
-        Ok(str::from_utf8(base.local_name().as_ref())
-            .unwrap()
-            .to_string())
+        if let Some(prefix) = base.prefix() {
+            match prefix.as_ref() {
+                // The prefix of base is for xmlschema
+                s if s == schema.xmlschema_namespace_name().as_bytes() => {
+                    return Ok(str::from_utf8(base.local_name().as_ref())
+                        .unwrap()
+                        .to_string());
+                }
+                // The prefix is for target namespace (e.g. in the current schema)
+                s if s == schema.target_namespace_name().as_bytes() => {
+                    match schema
+                        .document()
+                        .find_node_with_name(str::from_utf8(base.local_name().as_ref()).unwrap())
+                    {
+                        Some(n) => return n.native_type_from_simple_type(schema),
+                        None => {
+                            return Err(anyhow!(
+                                "Simple Type {:?} not found in schema {}",
+                                base,
+                                schema.xmlschema_namespace_name()
+                            ))
+                        }
+                    }
+                }
+                // The prefix is another namespace in the import
+                s if schema
+                    .sub_schema_nodes_with_name()
+                    .contains_key(str::from_utf8(s).unwrap()) =>
+                {
+                    let ns_name = str::from_utf8(s).unwrap();
+                    let sub_schema = schema.sub_schema_name(ns_name)?;
+                    let doc = sub_schema.document();
+                    match doc
+                        .find_node_with_name(str::from_utf8(base.local_name().as_ref()).unwrap())
+                    {
+                        Some(n) => return n.native_type_from_simple_type(sub_schema),
+                        None => {
+                            return Err(anyhow!(
+                                "Simple Type {:?} not found in schema {}",
+                                base,
+                                schema.xmlschema_namespace_name()
+                            ))
+                        }
+                    }
+                }
+                // Not qualified -> the result remains none
+                _ => return Err(anyhow!("Simple Type {:?} has no valid prefix", base)),
+            }
+        }
+        Err(anyhow!(
+            "Simple Type {:?} has no prefix. Prefix expected",
+            base
+        ))
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::super::schema::test_schemas::{
-        get_schema_test_1, get_schema_test_2, get_schema_test_3,
+    use super::super::schema::{
+        test_schemas::{get_schema_test_1, get_schema_test_2, get_schema_test_3},
+        SchemaKind,
     };
     use super::*;
 
@@ -613,10 +698,12 @@ mod tests {
         assert!(cs2[2].is_choice());
         let choice = cs2[2].try_unwrap_choice().unwrap();
         assert_eq!(choice.len(), 2);
-        assert!(choice[0].node_kind.is_native());
-        assert_eq!(choice[0].name, "choiceString1");
-        assert!(choice[1].node_kind.is_native());
-        assert_eq!(choice[1].name, "choiceString2");
+        assert!(choice[0].is_element());
+        assert!(choice[0].unwrap_element().node_kind.is_native());
+        assert_eq!(choice[0].unwrap_element().name, "choiceString1");
+        assert!(choice[0].is_element());
+        assert!(choice[0].unwrap_element().node_kind.is_native());
+        assert_eq!(choice[0].unwrap_element().name, "choiceString2");
         assert!(cs2[3].is_element());
         assert_eq!(cs2[3].try_unwrap_element().unwrap().name, "ctToto");
     }
@@ -690,6 +777,51 @@ mod tests {
             .unwrap()
             .has_name("ctToto"));
     }
+
+    #[test]
+    fn test_config() {
+        let node_res = ElementNode::try_from(SchemaKind::Config.schema());
+        if let Err(e) = &node_res {
+            println!("{}", e)
+        }
+        assert!(node_res.is_ok());
+    }
+
+    #[test]
+    fn test_decrypt() {
+        let node_res = ElementNode::try_from(SchemaKind::Decrypt.schema());
+        if let Err(e) = &node_res {
+            println!("{}", e)
+        }
+        assert!(node_res.is_ok());
+    }
+
+    #[test]
+    fn test_0222() {
+        let node_res = ElementNode::try_from(SchemaKind::Ech0222.schema());
+        if let Err(e) = &node_res {
+            println!("{}", e)
+        }
+        assert!(node_res.is_ok());
+    }
+
+    #[test]
+    fn test_0110() {
+        let node_res = ElementNode::try_from(SchemaKind::Ech0110.schema());
+        if let Err(e) = &node_res {
+            println!("{}", e)
+        }
+        assert!(node_res.is_ok());
+    }
+
+    #[test]
+    fn test_0010() {
+        let node_res = ElementNode::try_from(SchemaKind::Ech0010.schema());
+        if let Err(e) = &node_res {
+            println!("{}", e)
+        }
+        assert!(node_res.is_ok());
+    }
 }
 
 #[cfg(test)]
@@ -698,7 +830,7 @@ mod test_additional_method_node {
     use super::*;
 
     fn schema_config<'a>() -> &'a Schema<'a> {
-        SchemaKind::Config.get_schema()
+        SchemaKind::Config.schema()
     }
 
     #[test]
@@ -917,12 +1049,35 @@ mod test_additional_method_node {
         let xsd = schema_config();
         let n1 = xsd.root_element().first_element_child().unwrap();
         assert_eq!(
-            n1.native_type_from_simple_type().unwrap(),
+            n1.native_type_from_simple_type(xsd).unwrap(),
             "string".to_string()
         );
         let n2 = n1.next_sibling_element().unwrap();
         assert_eq!(
-            n2.native_type_from_simple_type().unwrap(),
+            n2.native_type_from_simple_type(xsd).unwrap(),
+            "token".to_string()
+        );
+    }
+
+    #[test]
+    fn test_native_type_from_simple_type_2() {
+        let xsd = SchemaKind::Ech0155.schema();
+        let n1 = xsd
+            .root_element()
+            .children()
+            .find(|e| e.find_attribute("name") == Some("identifierType"))
+            .unwrap();
+        assert_eq!(
+            n1.native_type_from_simple_type(xsd).unwrap(),
+            "token".to_string()
+        );
+        let n2 = xsd
+            .root_element()
+            .children()
+            .find(|e| e.find_attribute("name") == Some("domainOfInfluenceIdentificationType"))
+            .unwrap();
+        assert_eq!(
+            n2.native_type_from_simple_type(xsd).unwrap(),
             "token".to_string()
         );
     }

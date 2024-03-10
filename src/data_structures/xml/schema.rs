@@ -5,6 +5,7 @@
 
 use crate::resources;
 use anyhow::{anyhow, Context, Result};
+use core::fmt;
 use roxmltree::{Document, Node as RoNode};
 use std::collections::HashMap;
 use std::sync::OnceLock;
@@ -16,6 +17,7 @@ const NS_ECH_0010: &str = "http://www.ech.ch/xmlns/eCH-0010/6";
 const NS_ECH_0044: &str = "http://www.ech.ch/xmlns/eCH-0044/4";
 const NS_ECH_0058: &str = "http://www.ech.ch/xmlns/eCH-0058/5";
 const NS_ECH_0155: &str = "http://www.ech.ch/xmlns/eCH-0155/4";
+const NS_ECH_0222: &str = "http://www.ech.ch/xmlns/eCH-0222/1";
 
 static SCHEMA_CELL_ECH_0006: OnceLock<Schema> = OnceLock::new();
 static SCHEMA_CELL_ECH_0007: OnceLock<Schema> = OnceLock::new();
@@ -60,44 +62,89 @@ pub struct Schema<'a> {
     sub_schemas: HashMap<String, &'a Schema<'a>>,
 }
 
+impl<'a> fmt::Debug for Schema<'a> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("Schema")
+            .field("schema_kind", &self.schema_kind)
+            .field("target_namespace_name", &self.target_namespace_name)
+            .field("target_namespace_uri", &self.target_namespace_uri)
+            .field("xml_schema_name", &self.xml_schema_name)
+            .field("namespaces", &self.namespaces)
+            .field("sub_schemas", &self.sub_schemas)
+            .finish()
+    }
+}
+
 impl SchemaKind {
     /// Get the schema structure
-    pub fn get_schema(&self) -> &'static Schema<'static> {
+    ///
+    /// Error if a nerror occurs
+    pub fn try_schema(&self) -> anyhow::Result<&'static Schema<'static>> {
         match self {
-            SchemaKind::Ech0006 => SCHEMA_CELL_ECH_0006
-                .get_or_init(|| Schema::new(Some(*self), resources::XSD_ECH_0006)),
-            SchemaKind::Ech0007 => SCHEMA_CELL_ECH_0007
-                .get_or_init(|| Schema::new(Some(*self), resources::XSD_ECH_0007)),
-            SchemaKind::Ech0008 => SCHEMA_CELL_ECH_0008
-                .get_or_init(|| Schema::new(Some(*self), resources::XSD_ECH_0008)),
-            SchemaKind::Ech0010 => SCHEMA_CELL_ECH_0010
-                .get_or_init(|| Schema::new(Some(*self), resources::XSD_ECH_0010)),
-            SchemaKind::Ech0044 => SCHEMA_CELL_ECH_0044
-                .get_or_init(|| Schema::new(Some(*self), resources::XSD_ECH_0044)),
-            SchemaKind::Ech0058 => SCHEMA_CELL_ECH_0058
-                .get_or_init(|| Schema::new(Some(*self), resources::XSD_ECH_0058)),
-            SchemaKind::Ech0110 => SCHEMA_CELL_ECH_0110
-                .get_or_init(|| Schema::new(Some(*self), resources::XSD_ECH_0110)),
-            SchemaKind::Ech0155 => SCHEMA_CELL_ECH_0155
-                .get_or_init(|| Schema::new(Some(*self), resources::XSD_ECH_0155)),
-            SchemaKind::Ech0222 => SCHEMA_CELL_ECH_0222
-                .get_or_init(|| Schema::new(Some(*self), resources::XSD_ECH_0222)),
-            SchemaKind::Decrypt => SCHEMA_CELL_ECH_DECRYPT
-                .get_or_init(|| Schema::new(Some(*self), resources::XSD_DECRYPT)),
-            SchemaKind::Config => SCHEMA_CELL_ECH_CONFIG
-                .get_or_init(|| Schema::new(Some(*self), resources::XSD_CONFIG)),
+            SchemaKind::Ech0006 => {
+                let xsd = Schema::try_new(Some(*self), resources::XSD_ECH_0006)?;
+                Ok(SCHEMA_CELL_ECH_0006.get_or_init(|| xsd))
+            }
+            SchemaKind::Ech0007 => {
+                let xsd = Schema::try_new(Some(*self), resources::XSD_ECH_0007)?;
+                Ok(SCHEMA_CELL_ECH_0007.get_or_init(|| xsd))
+            }
+            SchemaKind::Ech0008 => {
+                let xsd = Schema::try_new(Some(*self), resources::XSD_ECH_0008)?;
+                Ok(SCHEMA_CELL_ECH_0008.get_or_init(|| xsd))
+            }
+            SchemaKind::Ech0010 => {
+                let xsd = Schema::try_new(Some(*self), resources::XSD_ECH_0010)?;
+                Ok(SCHEMA_CELL_ECH_0010.get_or_init(|| xsd))
+            }
+            SchemaKind::Ech0044 => {
+                let xsd = Schema::try_new(Some(*self), resources::XSD_ECH_0044)?;
+                Ok(SCHEMA_CELL_ECH_0044.get_or_init(|| xsd))
+            }
+            SchemaKind::Ech0058 => {
+                let xsd = Schema::try_new(Some(*self), resources::XSD_ECH_0058)?;
+                Ok(SCHEMA_CELL_ECH_0058.get_or_init(|| xsd))
+            }
+            SchemaKind::Ech0110 => {
+                let xsd = Schema::try_new(Some(*self), resources::XSD_ECH_0110)?;
+                Ok(SCHEMA_CELL_ECH_0110.get_or_init(|| xsd))
+            }
+            SchemaKind::Ech0155 => {
+                let xsd = Schema::try_new(Some(*self), resources::XSD_ECH_0155)?;
+                Ok(SCHEMA_CELL_ECH_0155.get_or_init(|| xsd))
+            }
+            SchemaKind::Ech0222 => {
+                let xsd = Schema::try_new(Some(*self), resources::XSD_ECH_0222)?;
+                Ok(SCHEMA_CELL_ECH_0222.get_or_init(|| xsd))
+            }
+            SchemaKind::Decrypt => {
+                let xsd = Schema::try_new(Some(*self), resources::XSD_DECRYPT)?;
+                Ok(SCHEMA_CELL_ECH_DECRYPT.get_or_init(|| xsd))
+            }
+            SchemaKind::Config => {
+                let xsd = Schema::try_new(Some(*self), resources::XSD_CONFIG)?;
+                Ok(SCHEMA_CELL_ECH_CONFIG.get_or_init(|| xsd))
+            }
         }
+    }
+
+    /// Get the schema structure
+    ///
+    /// Panic if a nerror occurs
+    pub fn schema(&self) -> &'static Schema<'static> {
+        self.try_schema().unwrap()
     }
 
     pub fn get_schema_from_namespace(ns: &str) -> Result<&'static Schema<'static>> {
         match ns {
-            NS_ECH_0006 => Ok(SchemaKind::Ech0006.get_schema()),
-            NS_ECH_0007 => Ok(SchemaKind::Ech0007.get_schema()),
-            NS_ECH_0008 => Ok(SchemaKind::Ech0008.get_schema()),
-            NS_ECH_0010 => Ok(SchemaKind::Ech0010.get_schema()),
-            NS_ECH_0044 => Ok(SchemaKind::Ech0044.get_schema()),
-            NS_ECH_0058 => Ok(SchemaKind::Ech0058.get_schema()),
-            NS_ECH_0155 => Ok(SchemaKind::Ech0155.get_schema()),
+            NS_ECH_0006 => Ok(SchemaKind::Ech0006.schema()),
+            NS_ECH_0007 => Ok(SchemaKind::Ech0007.schema()),
+            NS_ECH_0008 => Ok(SchemaKind::Ech0008.schema()),
+            NS_ECH_0010 => Ok(SchemaKind::Ech0010.schema()),
+            NS_ECH_0044 => Ok(SchemaKind::Ech0044.schema()),
+            NS_ECH_0058 => Ok(SchemaKind::Ech0058.schema()),
+            NS_ECH_0155 => Ok(SchemaKind::Ech0155.schema()),
+            NS_ECH_0222 => Ok(SchemaKind::Ech0222.schema()),
             _ => Err(anyhow!("No schema for namespace {} found", ns)),
         }
     }
@@ -176,6 +223,7 @@ impl<'a> Schema<'a> {
     /// Try to create a new schema of kind [schema_kind] with the static str [xsd_str]
     ///
     /// Panic if it is not possible to create it
+    #[allow(dead_code)]
     pub fn new(schema_kind: Option<SchemaKind>, xsd_str: &'static str) -> Self {
         Self::try_new(schema_kind, xsd_str).unwrap()
     }
@@ -264,7 +312,12 @@ mod test {
 
     #[test]
     fn test_schema_decrypt() {
-        let xsd = SchemaKind::Decrypt.get_schema();
+        let xsd_res = SchemaKind::Decrypt.try_schema();
+        if let Err(e) = &xsd_res {
+            println!("{:?}", e)
+        }
+        assert!(xsd_res.is_ok());
+        let xsd = xsd_res.unwrap();
         assert_eq!(
             xsd.target_namespace_uri,
             "http://www.evoting.ch/xmlns/decrypt/1"
@@ -282,7 +335,12 @@ mod test {
 
     #[test]
     fn test_schema_config() {
-        let xsd = SchemaKind::Config.get_schema();
+        let xsd_res = SchemaKind::Config.try_schema();
+        if let Err(e) = &xsd_res {
+            println!("{:?}", e)
+        }
+        assert!(xsd_res.is_ok());
+        let xsd = xsd_res.unwrap();
         assert_eq!(
             xsd.target_namespace_uri,
             "http://www.evoting.ch/xmlns/config/5"
@@ -299,20 +357,38 @@ mod test {
     }
 
     #[test]
+    fn test_schema_ech_0110() {
+        let xsd_res = SchemaKind::Ech0110.try_schema();
+        if let Err(e) = &xsd_res {
+            println!("{:?}", e)
+        }
+        assert!(xsd_res.is_ok());
+    }
+
+    #[test]
+    fn test_schema_ech_0222() {
+        let xsd_res = SchemaKind::Ech0222.try_schema();
+        if let Err(e) = &xsd_res {
+            println!("{:?}", e)
+        }
+        assert!(xsd_res.is_ok());
+    }
+
+    #[test]
     fn test_target_namespace_name() {
-        let xsd = SchemaKind::Config.get_schema();
+        let xsd = SchemaKind::Config.schema();
         assert_eq!(xsd.target_namespace_name(), "config");
     }
 
     #[test]
     fn test_xmlschema_namespace_name() {
-        let xsd = SchemaKind::Config.get_schema();
+        let xsd = SchemaKind::Config.schema();
         assert_eq!(xsd.xmlschema_namespace_name(), "xs");
     }
 
     #[test]
     fn test_sub_schema() {
-        let xsd = SchemaKind::Ech0222.get_schema();
+        let xsd = SchemaKind::Ech0222.schema();
         assert_eq!(xsd.sub_schemas.len(), 2);
         assert_eq!(
             xsd.sub_schemas
