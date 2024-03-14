@@ -7,7 +7,7 @@ use crate::{
 };
 use anyhow::anyhow;
 use log::debug;
-use num_bigint::BigUint;
+use rug::Integer;
 use rust_ev_crypto_primitives::{Constants, Operations};
 
 pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
@@ -16,11 +16,11 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
     result: &mut VerificationResult,
 ) {
     let setup_dir = dir.unwrap_setup();
-    let eg = match setup_dir.encryption_parameters_payload() {
+    let eg = match setup_dir.election_event_context_payload() {
         Ok(o) => o.encryption_group,
         Err(e) => {
             result.push(create_verification_error!(
-                "Cannot extract encryption_parameters_payload",
+                "Cannot extract election_event_context_payload",
                 e
             ));
             return;
@@ -47,7 +47,7 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
         let product_ccr = combined_cc_pk
             .iter()
             .map(|e| &e.ccrj_choice_return_codes_encryption_public_key[i])
-            .fold(BigUint::one().clone(), |acc, x| acc.mod_multiply(x, eg.p()));
+            .fold(Integer::one().clone(), |acc, x| acc.mod_multiply(x, eg.p()));
         if &product_ccr != ccr {
             result.push(create_verification_failure!(format!(
                 "The ccr at position {} is not the product of the cc ccr",

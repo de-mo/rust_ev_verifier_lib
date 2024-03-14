@@ -1,11 +1,11 @@
 use super::super::{
     common_types::{EncryptionParametersDef, ExponentiatedEncryptedElement, Signature},
-    deserialize_seq_string_hex_to_seq_bigunit, deserialize_string_hex_to_bigunit,
+    deserialize_seq_string_hex_to_seq_integer, deserialize_string_hex_to_integer,
     implement_trait_verifier_data_json_decode, VerifierDataDecode,
 };
 use crate::data_structures::common_types::DecryptionProof;
 use anyhow::anyhow;
-use num_bigint::BigUint;
+use rug::Integer;
 use rust_ev_crypto_primitives::EncryptionParameters;
 use serde::Deserialize;
 
@@ -38,12 +38,12 @@ pub struct VerifiablePlaintextDecryption {
 
 #[derive(Deserialize, Debug, Clone)]
 pub struct ShuffleArgument {
-    #[serde(deserialize_with = "deserialize_seq_string_hex_to_seq_bigunit")]
+    #[serde(deserialize_with = "deserialize_seq_string_hex_to_seq_integer")]
     #[serde(rename = "c_A")]
-    pub c_a: Vec<BigUint>,
-    #[serde(deserialize_with = "deserialize_seq_string_hex_to_seq_bigunit")]
+    pub c_a: Vec<Integer>,
+    #[serde(deserialize_with = "deserialize_seq_string_hex_to_seq_integer")]
     #[serde(rename = "c_B")]
-    pub c_b: Vec<BigUint>,
+    pub c_b: Vec<Integer>,
     #[serde(rename = "productArgument")]
     pub product_argument: ProductArgument,
     #[serde(rename = "multiExponentiationArgument")]
@@ -58,44 +58,44 @@ pub struct ProductArgument {
 
 #[derive(Deserialize, Debug, Clone)]
 pub struct SingleValueProductArgument {
-    #[serde(deserialize_with = "deserialize_string_hex_to_bigunit")]
-    pub c_d: BigUint,
-    #[serde(deserialize_with = "deserialize_string_hex_to_bigunit")]
-    pub c_delta: BigUint,
-    #[serde(deserialize_with = "deserialize_string_hex_to_bigunit")]
+    #[serde(deserialize_with = "deserialize_string_hex_to_integer")]
+    pub c_d: Integer,
+    #[serde(deserialize_with = "deserialize_string_hex_to_integer")]
+    pub c_delta: Integer,
+    #[serde(deserialize_with = "deserialize_string_hex_to_integer")]
     #[serde(rename = "c_Delta")]
-    pub c_delta_upper: BigUint,
-    #[serde(deserialize_with = "deserialize_seq_string_hex_to_seq_bigunit")]
-    pub a_tilde: Vec<BigUint>,
-    #[serde(deserialize_with = "deserialize_seq_string_hex_to_seq_bigunit")]
-    pub b_tilde: Vec<BigUint>,
-    #[serde(deserialize_with = "deserialize_string_hex_to_bigunit")]
-    pub r_tilde: BigUint,
-    #[serde(deserialize_with = "deserialize_string_hex_to_bigunit")]
-    pub s_tilde: BigUint,
+    pub c_delta_upper: Integer,
+    #[serde(deserialize_with = "deserialize_seq_string_hex_to_seq_integer")]
+    pub a_tilde: Vec<Integer>,
+    #[serde(deserialize_with = "deserialize_seq_string_hex_to_seq_integer")]
+    pub b_tilde: Vec<Integer>,
+    #[serde(deserialize_with = "deserialize_string_hex_to_integer")]
+    pub r_tilde: Integer,
+    #[serde(deserialize_with = "deserialize_string_hex_to_integer")]
+    pub s_tilde: Integer,
 }
 
 #[derive(Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct MultiExponentiationArgument {
-    #[serde(deserialize_with = "deserialize_string_hex_to_bigunit")]
+    #[serde(deserialize_with = "deserialize_string_hex_to_integer")]
     #[serde(rename = "c_A_0")]
-    pub c_a_0: BigUint,
-    #[serde(deserialize_with = "deserialize_seq_string_hex_to_seq_bigunit")]
+    pub c_a_0: Integer,
+    #[serde(deserialize_with = "deserialize_seq_string_hex_to_seq_integer")]
     #[serde(rename = "c_B")]
-    pub c_b: Vec<BigUint>,
+    pub c_b: Vec<Integer>,
     #[serde(rename = "E")]
     pub e: Vec<ExponentiatedEncryptedElement>,
-    #[serde(deserialize_with = "deserialize_seq_string_hex_to_seq_bigunit")]
-    pub a: Vec<BigUint>,
-    #[serde(deserialize_with = "deserialize_string_hex_to_bigunit")]
-    pub r: BigUint,
-    #[serde(deserialize_with = "deserialize_string_hex_to_bigunit")]
-    pub b: BigUint,
-    #[serde(deserialize_with = "deserialize_string_hex_to_bigunit")]
-    pub s: BigUint,
-    #[serde(deserialize_with = "deserialize_string_hex_to_bigunit")]
-    pub tau: BigUint,
+    #[serde(deserialize_with = "deserialize_seq_string_hex_to_seq_integer")]
+    pub a: Vec<Integer>,
+    #[serde(deserialize_with = "deserialize_string_hex_to_integer")]
+    pub r: Integer,
+    #[serde(deserialize_with = "deserialize_string_hex_to_integer")]
+    pub b: Integer,
+    #[serde(deserialize_with = "deserialize_string_hex_to_integer")]
+    pub s: Integer,
+    #[serde(deserialize_with = "deserialize_string_hex_to_integer")]
+    pub tau: Integer,
 }
 
 #[derive(Deserialize, Debug, Clone)]

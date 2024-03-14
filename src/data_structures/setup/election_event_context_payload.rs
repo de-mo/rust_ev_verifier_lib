@@ -1,13 +1,16 @@
 use super::super::{
-    common_types::{Signature, EncryptionParametersDef}, deserialize_string_string_to_datetime,
-    implement_trait_verifier_data_json_decode, VerifierDataDecode,
+    common_types::{EncryptionParametersDef, Signature},
+    deserialize_string_string_to_datetime, implement_trait_verifier_data_json_decode,
+    VerifierDataDecode,
 };
-use crate::direct_trust::{CertificateAuthority, VerifiySignatureTrait};
+use crate::config::Config as VerifierConfig;
+use crate::{
+    data_structures::CheckDomainTrait,
+    direct_trust::{CertificateAuthority, VerifiySignatureTrait},
+};
 use anyhow::anyhow;
 use chrono::NaiveDateTime;
-use rust_ev_crypto_primitives::{
-    ByteArray, EncryptionParameters, HashableMessage,
-};
+use rust_ev_crypto_primitives::{ByteArray, EncryptionParameters, HashableMessage};
 use serde::Deserialize;
 
 #[derive(Deserialize, Debug, Clone)]
@@ -15,6 +18,8 @@ use serde::Deserialize;
 pub struct ElectionEventContextPayload {
     #[serde(with = "EncryptionParametersDef")]
     pub encryption_group: EncryptionParameters,
+    pub seed: String,
+    pub small_primes: Vec<usize>,
     pub election_event_context: ElectionEventContext,
     pub signature: Signature,
 }
@@ -39,15 +44,14 @@ pub struct ElectionEventContext {
 #[warn(dead_code)]
 pub struct VerificationCardSetContext {
     pub verification_card_set_id: String,
-    //pub verification_card_set_alias: String,
-    //pub verification_card_set_description: String,
+    pub verification_card_set_alias: String,
+    pub verification_card_set_description: String,
     pub ballot_box_id: String,
-    //#[serde(deserialize_with = "deserialize_string_string_to_datetime")]
-    //pub ballot_box_start_time: NaiveDateTime,
-    //#[serde(deserialize_with = "deserialize_string_string_to_datetime")]
-    //pub ballot_box_finish_time: NaiveDateTime,
+    #[serde(deserialize_with = "deserialize_string_string_to_datetime")]
+    pub ballot_box_start_time: NaiveDateTime,
+    #[serde(deserialize_with = "deserialize_string_string_to_datetime")]
+    pub ballot_box_finish_time: NaiveDateTime,
     pub test_ballot_box: bool,
-    pub number_of_write_in_fields: usize,
     pub number_of_voting_cards: usize,
     pub grace_period: usize,
     pub primes_mapping_table: PrimesMappingTable,
@@ -56,7 +60,10 @@ pub struct VerificationCardSetContext {
 #[derive(Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct PrimesMappingTable {
+    #[serde(with = "EncryptionParametersDef")]
+    pub encryption_group: EncryptionParameters,
     pub p_table: Vec<PTableElement>,
+    pub number_of_voting_options: usize,
 }
 
 #[derive(Deserialize, Debug, Clone)]
@@ -65,7 +72,8 @@ pub struct PrimesMappingTable {
 pub struct PTableElement {
     pub actual_voting_option: String,
     pub encoded_voting_option: usize,
-    //pub semantic_information: String,
+    pub semantic_information: String,
+    pub correctness_information: String,
 }
 
 impl VerificationCardSetContext {
@@ -89,17 +97,55 @@ impl ElectionEventContext {
     }
 }
 
+impl CheckDomainTrait for ElectionEventContextPayload {
+    fn check_domain(&self) -> Vec<anyhow::Error> {
+        let mut res = vec![];
+        res.append(&mut self.encryption_group.check_domain());
+        // For 5.02
+        if !self.small_primes.len() == VerifierConfig::maximum_number_of_voting_options() {
+            res.push(
+                anyhow!(
+                    format!(
+                        "The list of small primes {} is not equal to the maximal number of voting options {}",
+                        self.small_primes.len(),
+                        VerifierConfig::maximum_number_of_voting_options()
+                    )
+                )
+            );
+        }
+        // for 5.02
+        let mut sp = self.small_primes.clone();
+        sp.sort();
+        if sp != self.small_primes {
+            res.push(anyhow!("Small primes list is not in ascending order"));
+        }
+        // for 5.02
+        if sp[0] < 5 {
+            res.push(anyhow!(
+                "The small primes contain 2 or 3, what is not allowed"
+            ));
+        }
+        res
+    }
+}
+
 impl<'a> From<&'a ElectionEventContextPayload> for HashableMessage<'a> {
     fn from(value: &'a ElectionEventContextPayload) -> Self {
+        let sp_hash: Vec<HashableMessage> = value
+            .small_primes
+            .iter()
+            .map(HashableMessage::from)
+            .collect();
         Self::from(vec![
             Self::from(&value.encryption_group),
+            Self::from(&value.seed),
+            Self::from(sp_hash),
             Self::from(&value.election_event_context),
         ])
     }
 }
 
 impl<'a> VerifiySignatureTrait<'a> for ElectionEventContextPayload {
-
     fn get_hashable(&'a self) -> anyhow::Result<HashableMessage<'a>> {
         Ok(HashableMessage::from(self))
     }
@@ -141,7 +187,6 @@ impl<'a> From<&'a VerificationCardSetContext> for HashableMessage<'a> {
             Self::from(&value.verification_card_set_id),
             Self::from(&value.ballot_box_id),
             Self::from(value.test_ballot_box),
-            Self::from(&value.number_of_write_in_fields),
             Self::from(&value.number_of_voting_cards),
             Self::from(&value.grace_period),
         ];
@@ -178,7 +223,9 @@ mod test {
             .join("electionEventContextPayload.json");
         let json = fs::read_to_string(path).unwrap();
         let r_eec = ElectionEventContextPayload::from_json(&json);
-        //println!("{:?}", r_eec.unwrap_err())
+        if r_eec.is_err() {
+            println!("{:?}", r_eec.as_ref().unwrap_err());
+        }
         assert!(r_eec.is_ok())
     }
 }

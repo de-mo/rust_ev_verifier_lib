@@ -158,7 +158,6 @@ impl VerificationDirectoryTrait for VerificationDirectory {
 impl GetFileNameTrait for VerifierSetupDataType {
     fn get_raw_file_name(&self) -> String {
         let s = match self {
-            Self::EncryptionParametersPayload => "encryptionParametersPayload.json",
             Self::ElectionEventContextPayload => "electionEventContextPayload.json",
             Self::SetupComponentPublicKeysPayload => "setupComponentPublicKeysPayload.json",
             Self::ControlComponentPublicKeysPayload => "controlComponentPublicKeysPayload.{}.json",
@@ -207,12 +206,6 @@ mod test {
         let path = test_dataset_tally_path().join("setup");
         assert!(path
             .join(
-                VerifierDataType::Setup(VerifierSetupDataType::EncryptionParametersPayload)
-                    .get_file_name(None)
-            )
-            .exists());
-        assert!(path
-            .join(
                 VerifierDataType::Setup(VerifierSetupDataType::ElectionEventContextPayload)
                     .get_file_name(None)
             )
@@ -246,13 +239,18 @@ mod test {
                     .get_file_name(None)
             )
             .exists());
-        println!("{:?}", VerifierDataType::Tally(VerifierTallyDataType::TallyComponentShufflePayload)
-        .get_file_name(None));
-        println!("{:?}", path2
-        .join(
+        println!(
+            "{:?}",
             VerifierDataType::Tally(VerifierTallyDataType::TallyComponentShufflePayload)
                 .get_file_name(None)
-        ));
+        );
+        println!(
+            "{:?}",
+            path2.join(
+                VerifierDataType::Tally(VerifierTallyDataType::TallyComponentShufflePayload)
+                    .get_file_name(None)
+            )
+        );
         assert!(path2
             .join(
                 VerifierDataType::Tally(VerifierTallyDataType::TallyComponentShufflePayload)

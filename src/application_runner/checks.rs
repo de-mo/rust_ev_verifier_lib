@@ -60,11 +60,11 @@ mod test {
     use std::path::{Path, PathBuf};
 
     pub(crate) fn dataset_setup_path() -> PathBuf {
-        test_datasets_path().join("dataset1-setup")
+        test_datasets_path().join("dataset-setup")
     }
 
     pub(crate) fn dataset_tally_path() -> PathBuf {
-        test_datasets_path().join("dataset1-setup-tally")
+        test_datasets_path().join("dataset-tally")
     }
 
     #[test]

@@ -20,40 +20,45 @@ pub fn get_verifications<'a>(
     config: &'static Config,
 ) -> VerificationList<'a> {
     VerificationList(vec![
-        Verification::new("02.01", fn_verification_0201, metadata_list, config).unwrap(),
-        Verification::new("02.03", fn_verification_0203, metadata_list, config).unwrap(),
-        Verification::new("02.04", fn_verification_0204, metadata_list, config).unwrap(),
-        Verification::new("02.05", fn_verification_0205, metadata_list, config).unwrap(),
-        Verification::new("02.06", fn_verification_0206, metadata_list, config).unwrap(),
-        Verification::new("02.07", fn_verification_0207, metadata_list, config).unwrap(),
+        Verification::new(
+            "02.01",
+            fn_0201_verify_signature_canton_config,
+            metadata_list,
+            config,
+        )
+        .unwrap(),
+        Verification::new(
+            "02.02",
+            fn_0202_verify_signature_setup_component_public_keys,
+            metadata_list,
+            config,
+        )
+        .unwrap(),
+        Verification::new(
+            "02.03",
+            fn_0203_verify_signature_control_component_public_keys,
+            metadata_list,
+            config,
+        )
+        .unwrap(),
+        Verification::new(
+            "02.04",
+            fn_0204_verify_signature_setup_component_tally_data,
+            metadata_list,
+            config,
+        )
+        .unwrap(),
+        Verification::new(
+            "02.05",
+            fn_0205_verify_signature_election_event_context,
+            metadata_list,
+            config,
+        )
+        .unwrap(),
     ])
 }
 
-fn fn_verification_0201<D: VerificationDirectoryTrait>(
-    dir: &D,
-    config: &'static Config,
-    result: &mut VerificationResult,
-) {
-    let setup_dir = dir.unwrap_setup();
-    let eg = match setup_dir.encryption_parameters_payload() {
-        Ok(p) => p,
-        Err(e) => {
-            result.push(create_verification_error!(
-                format!("{} cannot be read", "encryption_parameters_payload"),
-                e
-            ));
-            return;
-        }
-    };
-    verify_signature_for_object(
-        eg.as_ref(),
-        result,
-        config,
-        "encryption_parameters_payload",
-    )
-}
-
-fn fn_verification_0202<D: VerificationDirectoryTrait>(
+fn fn_0201_verify_signature_canton_config<D: VerificationDirectoryTrait>(
     dir: &D,
     config: &'static Config,
     result: &mut VerificationResult,
@@ -77,7 +82,7 @@ fn fn_verification_0202<D: VerificationDirectoryTrait>(
     )
 }
 
-fn fn_verification_0203<D: VerificationDirectoryTrait>(
+fn fn_0202_verify_signature_setup_component_public_keys<D: VerificationDirectoryTrait>(
     dir: &D,
     config: &'static Config,
     result: &mut VerificationResult,
@@ -101,7 +106,7 @@ fn fn_verification_0203<D: VerificationDirectoryTrait>(
     )
 }
 
-fn fn_verification_0204<D: VerificationDirectoryTrait>(
+fn fn_0203_verify_signature_control_component_public_keys<D: VerificationDirectoryTrait>(
     dir: &D,
     config: &'static Config,
     result: &mut VerificationResult,
@@ -124,7 +129,7 @@ fn fn_verification_0204<D: VerificationDirectoryTrait>(
     }
 }
 
-fn fn_verification_0205<D: VerificationDirectoryTrait>(
+fn fn_0204_verify_signature_setup_component_tally_data<D: VerificationDirectoryTrait>(
     dir: &D,
     config: &'static Config,
     result: &mut VerificationResult,
@@ -157,6 +162,31 @@ fn fn_verification_0205<D: VerificationDirectoryTrait>(
     }
 }
 
+fn fn_0205_verify_signature_election_event_context<D: VerificationDirectoryTrait>(
+    dir: &D,
+    config: &'static Config,
+    result: &mut VerificationResult,
+) {
+    let setup_dir = dir.unwrap_setup();
+    let rp = match setup_dir.election_event_context_payload() {
+        Ok(p) => p,
+        Err(e) => {
+            result.push(create_verification_error!(
+                format!("{} cannot be read", "election_event_context_payload"),
+                e
+            ));
+            return;
+        }
+    };
+    verify_signature_for_object(
+        rp.as_ref(),
+        result,
+        config,
+        "election_event_context_payload",
+    )
+}
+
+/*
 fn fn_verification_0206<D: VerificationDirectoryTrait>(
     dir: &D,
     config: &'static Config,
@@ -216,32 +246,7 @@ fn fn_verification_0207<D: VerificationDirectoryTrait>(
             )),
         }
     }
-}
-
-#[allow(dead_code)]
-fn fn_verification_0208<D: VerificationDirectoryTrait>(
-    dir: &D,
-    config: &'static Config,
-    result: &mut VerificationResult,
-) {
-    let setup_dir = dir.unwrap_setup();
-    let rp = match setup_dir.election_event_context_payload() {
-        Ok(p) => p,
-        Err(e) => {
-            result.push(create_verification_error!(
-                format!("{} cannot be read", "election_event_context_payload"),
-                e
-            ));
-            return;
-        }
-    };
-    verify_signature_for_object(
-        rp.as_ref(),
-        result,
-        config,
-        "election_event_context_payload",
-    )
-}
+} */
 
 #[cfg(test)]
 mod test {
@@ -252,7 +257,7 @@ mod test {
     fn test_0201() {
         let dir = get_verifier_dir();
         let mut result = VerificationResult::new();
-        fn_verification_0201(&dir, &CONFIG_TEST, &mut result);
+        fn_0201_verify_signature_canton_config(&dir, &CONFIG_TEST, &mut result);
         assert!(result.is_ok().unwrap());
     }
 
@@ -261,7 +266,7 @@ mod test {
     fn test_0202() {
         let dir = get_verifier_dir();
         let mut result = VerificationResult::new();
-        fn_verification_0202(&dir, &CONFIG_TEST, &mut result);
+        fn_0202_verify_signature_setup_component_public_keys(&dir, &CONFIG_TEST, &mut result);
         println!("{:?}", result);
         assert!(result.is_ok().unwrap());
     }
@@ -270,7 +275,7 @@ mod test {
     fn test_0203() {
         let dir = get_verifier_dir();
         let mut result = VerificationResult::new();
-        fn_verification_0203(&dir, &CONFIG_TEST, &mut result);
+        fn_0203_verify_signature_control_component_public_keys(&dir, &CONFIG_TEST, &mut result);
         assert!(result.is_ok().unwrap());
     }
 
@@ -278,7 +283,7 @@ mod test {
     fn test_0204() {
         let dir = get_verifier_dir();
         let mut result = VerificationResult::new();
-        fn_verification_0204(&dir, &CONFIG_TEST, &mut result);
+        fn_0204_verify_signature_setup_component_tally_data(&dir, &CONFIG_TEST, &mut result);
         assert!(result.is_ok().unwrap());
     }
 
@@ -286,32 +291,7 @@ mod test {
     fn test_0205() {
         let dir = get_verifier_dir();
         let mut result = VerificationResult::new();
-        fn_verification_0205(&dir, &CONFIG_TEST, &mut result);
-        assert!(result.is_ok().unwrap());
-    }
-
-    #[test]
-    fn test_0206() {
-        let dir = get_verifier_dir();
-        let mut result = VerificationResult::new();
-        fn_verification_0206(&dir, &CONFIG_TEST, &mut result);
-        assert!(result.is_ok().unwrap());
-    }
-
-    #[test]
-    fn test_0207() {
-        let dir = get_verifier_dir();
-        let mut result = VerificationResult::new();
-        fn_verification_0207(&dir, &CONFIG_TEST, &mut result);
-        assert!(result.is_ok().unwrap());
-    }
-
-    #[test]
-    #[ignore]
-    fn test_0208() {
-        let dir = get_verifier_dir();
-        let mut result = VerificationResult::new();
-        fn_verification_0208(&dir, &CONFIG_TEST, &mut result);
+        fn_0205_verify_signature_election_event_context(&dir, &CONFIG_TEST, &mut result);
         assert!(result.is_ok().unwrap());
     }
 }

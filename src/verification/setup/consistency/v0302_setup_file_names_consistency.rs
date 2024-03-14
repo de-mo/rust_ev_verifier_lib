@@ -25,7 +25,6 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
     result: &mut VerificationResult,
 ) {
     let setup_dir = dir.unwrap_setup();
-    test_file_exists(setup_dir.encryption_parameters_payload_file(), result);
     test_file_exists(setup_dir.election_event_context_payload_file(), result);
     test_file_exists(setup_dir.setup_component_public_keys_payload_file(), result);
     let mut cc_group_numbers = setup_dir

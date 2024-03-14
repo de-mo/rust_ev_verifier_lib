@@ -1,17 +1,15 @@
 use super::{
     super::{
         common_types::{EncryptionParametersDef, ProofUnderline, Signature},
-        deserialize_seq_string_hex_to_seq_bigunit, implement_trait_verifier_data_json_decode,
+        deserialize_seq_string_base64_to_seq_integer, implement_trait_verifier_data_json_decode,
         VerifierDataDecode,
     },
     control_component_public_keys_payload::ControlComponentPublicKeys,
 };
 use crate::direct_trust::{CertificateAuthority, VerifiySignatureTrait};
 use anyhow::anyhow;
-use num_bigint::BigUint;
-use rust_ev_crypto_primitives::{
-    ByteArray, EncryptionParameters, HashableMessage,
-};
+use rug::Integer;
+use rust_ev_crypto_primitives::{ByteArray, EncryptionParameters, HashableMessage};
 use serde::Deserialize;
 
 #[derive(Deserialize, Debug, Clone)]
@@ -36,7 +34,6 @@ impl<'a> From<&'a SetupComponentPublicKeysPayload> for HashableMessage<'a> {
 }
 
 impl<'a> VerifiySignatureTrait<'a> for SetupComponentPublicKeysPayload {
-
     fn get_hashable(&'a self) -> anyhow::Result<HashableMessage<'a>> {
         Ok(HashableMessage::from(self))
     }
@@ -62,13 +59,13 @@ impl<'a> VerifiySignatureTrait<'a> for SetupComponentPublicKeysPayload {
 #[serde(rename_all = "camelCase")]
 pub struct SetupComponentPublicKeys {
     pub combined_control_component_public_keys: Vec<ControlComponentPublicKeys>,
-    #[serde(deserialize_with = "deserialize_seq_string_hex_to_seq_bigunit")]
-    pub electoral_board_public_key: Vec<BigUint>,
+    #[serde(deserialize_with = "deserialize_seq_string_base64_to_seq_integer")]
+    pub electoral_board_public_key: Vec<Integer>,
     pub electoral_board_schnorr_proofs: Vec<ProofUnderline>,
-    #[serde(deserialize_with = "deserialize_seq_string_hex_to_seq_bigunit")]
-    pub election_public_key: Vec<BigUint>,
-    #[serde(deserialize_with = "deserialize_seq_string_hex_to_seq_bigunit")]
-    pub choice_return_codes_encryption_public_key: Vec<BigUint>,
+    #[serde(deserialize_with = "deserialize_seq_string_base64_to_seq_integer")]
+    pub election_public_key: Vec<Integer>,
+    #[serde(deserialize_with = "deserialize_seq_string_base64_to_seq_integer")]
+    pub choice_return_codes_encryption_public_key: Vec<Integer>,
 }
 
 impl<'a> From<&'a SetupComponentPublicKeys> for HashableMessage<'a> {
@@ -106,6 +103,9 @@ mod test {
             .join("setupComponentPublicKeysPayload.json");
         let json = fs::read_to_string(path).unwrap();
         let r_eec = SetupComponentPublicKeysPayload::from_json(&json);
+        if r_eec.is_err() {
+            println!("{:?}", r_eec.as_ref().unwrap_err())
+        }
         assert!(r_eec.is_ok())
     }
 }

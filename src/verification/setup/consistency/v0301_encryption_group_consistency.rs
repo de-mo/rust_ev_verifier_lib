@@ -115,28 +115,16 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
     result: &mut VerificationResult,
 ) {
     let setup_dir = dir.unwrap_setup();
-    let eg = match setup_dir.encryption_parameters_payload() {
+    let eg = match setup_dir.election_event_context_payload() {
         Ok(p) => p.encryption_group,
         Err(e) => {
             result.push(create_verification_error!(
-                "encryption_parameters_payload cannot be read",
+                "election_event_context_payload cannot be read",
                 e
             ));
             return;
         }
     };
-    match setup_dir.election_event_context_payload() {
-        Ok(p) => verify_encryption_group(
-            &p.encryption_group,
-            &eg,
-            "election_event_context_payload",
-            result,
-        ),
-        Err(e) => result.push(create_verification_error!(
-            "election_event_context_payload has wrong format",
-            e
-        )),
-    }
     match setup_dir.setup_component_public_keys_payload() {
         Ok(p) => verify_encryption_group(
             &p.encryption_group,
@@ -173,7 +161,7 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
 
 #[cfg(test)]
 mod test {
-    use num_bigint::BigUint;
+    use rug::Integer;
 
     use super::{
         super::super::super::{result::VerificationResultTrait, VerificationPeriod},
@@ -201,32 +189,32 @@ mod test {
     #[test]
     fn test_verify_encryption_group() {
         let eg_expected = EncryptionParameters::from((
-            &BigUint::from(10usize),
-            &BigUint::from(15usize),
-            &BigUint::from(3usize),
+            &Integer::from(10usize),
+            &Integer::from(15usize),
+            &Integer::from(3usize),
         ));
         let mut result = VerificationResult::new();
         let eg = EncryptionParameters::from((
-            &BigUint::from(10usize),
-            &BigUint::from(15usize),
-            &BigUint::from(3usize),
+            &Integer::from(10usize),
+            &Integer::from(15usize),
+            &Integer::from(3usize),
         ));
         verify_encryption_group(&eg, &eg_expected, "toto", &mut result);
         assert!(result.is_ok().unwrap());
         let mut result = VerificationResult::new();
         let eg = EncryptionParameters::from((
-            &BigUint::from(11usize),
-            &BigUint::from(15usize),
-            &BigUint::from(3usize),
+            &Integer::from(11usize),
+            &Integer::from(15usize),
+            &Integer::from(3usize),
         ));
         verify_encryption_group(&eg, &eg_expected, "toto", &mut result);
         assert!(!result.has_errors().unwrap());
         assert_eq!(result.failures().len(), 1);
         let mut result = VerificationResult::new();
         let eg = EncryptionParameters::from((
-            &BigUint::from(11usize),
-            &BigUint::from(16usize),
-            &BigUint::from(4usize),
+            &Integer::from(11usize),
+            &Integer::from(16usize),
+            &Integer::from(4usize),
         ));
         verify_encryption_group(&eg, &eg_expected, "toto", &mut result);
         assert!(!result.has_errors().unwrap());
@@ -243,7 +231,7 @@ mod test {
             .unwrap_setup()
             .election_event_context_payload()
             .unwrap();
-        eec.encryption_group.set_p(&BigUint::from(1234usize));
+        eec.encryption_group.set_p(&Integer::from(1234usize));
         mock_dir
             .unwrap_setup_mut()
             .mock_election_event_context_payload(&Ok(&eec));
@@ -262,8 +250,8 @@ mod test {
             .get_data()
             .map(|d| Box::new(d.control_component_public_keys_payload().unwrap().clone()))
             .unwrap();
-        cc_pk.encryption_group.set_p(&BigUint::from(1234usize));
-        cc_pk.encryption_group.set_q(&BigUint::from(1234usize));
+        cc_pk.encryption_group.set_p(&Integer::from(1234usize));
+        cc_pk.encryption_group.set_q(&Integer::from(1234usize));
         mock_dir
             .unwrap_setup_mut()
             .mock_control_component_public_keys_payloads(2, &Ok(&cc_pk));

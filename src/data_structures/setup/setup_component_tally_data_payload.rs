@@ -1,13 +1,12 @@
 use super::super::{
-    common_types::{Signature, EncryptionParametersDef}, deserialize_seq_seq_string_hex_to_seq_seq_bigunit,
+    common_types::{EncryptionParametersDef, Signature},
+    deserialize_seq_seq_string_base64_to_seq_seq_integer,
     implement_trait_verifier_data_json_decode, VerifierDataDecode,
 };
 use crate::direct_trust::{CertificateAuthority, VerifiySignatureTrait};
 use anyhow::anyhow;
-use num_bigint::BigUint;
-use rust_ev_crypto_primitives::{
-    ByteArray, EncryptionParameters, HashableMessage,
-};
+use rug::Integer;
+use rust_ev_crypto_primitives::{ByteArray, EncryptionParameters, HashableMessage};
 use serde::Deserialize;
 
 #[derive(Deserialize, Debug, Clone)]
@@ -19,8 +18,8 @@ pub struct SetupComponentTallyDataPayload {
     #[serde(with = "EncryptionParametersDef")]
     pub encryption_group: EncryptionParameters,
     pub verification_card_ids: Vec<String>,
-    #[serde(deserialize_with = "deserialize_seq_seq_string_hex_to_seq_seq_bigunit")]
-    pub verification_card_public_keys: Vec<Vec<BigUint>>,
+    #[serde(deserialize_with = "deserialize_seq_seq_string_base64_to_seq_seq_integer")]
+    pub verification_card_public_keys: Vec<Vec<Integer>>,
     pub signature: Signature,
 }
 
@@ -46,7 +45,6 @@ impl<'a> From<&'a SetupComponentTallyDataPayload> for HashableMessage<'a> {
 }
 
 impl<'a> VerifiySignatureTrait<'a> for SetupComponentTallyDataPayload {
-
     fn get_hashable(&'a self) -> anyhow::Result<HashableMessage<'a>> {
         Ok(HashableMessage::from(self))
     }
@@ -71,18 +69,21 @@ impl<'a> VerifiySignatureTrait<'a> for SetupComponentTallyDataPayload {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::config::test::test_dataset_tally_path;
+    use crate::config::test::test_dataset_setup_path;
     use std::fs;
 
     #[test]
     fn read_data_set() {
-        let path = test_dataset_tally_path()
+        let path = test_dataset_setup_path()
             .join("setup")
             .join("verification_card_sets")
-            .join("681B3488DE4CD4AD7FCED14B7A654169")
+            .join("1B3775CB351C64AC33B754BA3A02AED2")
             .join("setupComponentTallyDataPayload.json");
         let json = fs::read_to_string(path).unwrap();
         let r_eec = SetupComponentTallyDataPayload::from_json(&json);
+        if r_eec.is_err() {
+            println!("{:?}", r_eec.as_ref().unwrap_err());
+        }
         assert!(r_eec.is_ok())
     }
 }

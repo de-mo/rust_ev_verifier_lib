@@ -8,8 +8,8 @@ use crate::{
 };
 use anyhow::anyhow;
 use log::debug;
-use num_bigint::BigUint;
 use rayon::prelude::*;
+use rug::Integer;
 use rust_ev_crypto_primitives::{verify_schnorr, EncryptionParameters};
 use std::iter::zip;
 
@@ -19,16 +19,6 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
     result: &mut VerificationResult,
 ) {
     let setup_dir = dir.unwrap_setup();
-    let eg = match setup_dir.encryption_parameters_payload() {
-        Ok(eg) => eg,
-        Err(e) => {
-            result.push(create_verification_error!(
-                "encryption_parameters_payload cannot be read",
-                e
-            ));
-            return;
-        }
-    };
     let ee_context = match setup_dir.election_event_context_payload() {
         Ok(eg) => eg,
         Err(e) => {
@@ -70,7 +60,7 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
             .collect();
 
         let mut res = run_verify_schnorr_proofs(
-            &eg.encryption_group,
+            &ee_context.encryption_group,
             &combined_cc_pk.ccrj_choice_return_codes_encryption_public_key,
             &proofs,
             &i_aux_ccr_j,
@@ -93,7 +83,7 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
             .collect();
 
         let mut res = run_verify_schnorr_proofs(
-            &eg.encryption_group,
+            &ee_context.encryption_group,
             &combined_cc_pk.ccmj_election_public_key,
             &proofs,
             &i_aux_ccm_j,
@@ -116,7 +106,7 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
         .map(Proof::from)
         .collect();
     let mut res = run_verify_schnorr_proofs(
-        &eg.encryption_group,
+        &ee_context.encryption_group,
         &setup_ppk
             .setup_component_public_keys
             .electoral_board_public_key,
@@ -131,7 +121,7 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
 
 fn run_verify_schnorr_proofs(
     eg: &EncryptionParameters,
-    pks: &Vec<BigUint>,
+    pks: &Vec<Integer>,
     pis: &Vec<Proof>,
     i_aux: &Vec<String>,
     test_name: &str,
@@ -164,7 +154,7 @@ fn run_verify_schnorr_proofs(
 fn run_verify_schnorr_proof(
     eg: &EncryptionParameters,
     schnorr: &Proof,
-    y: &BigUint,
+    y: &Integer,
     i_aux: &Vec<String>,
     test_name: &str,
     proof_name: &str,
@@ -176,7 +166,11 @@ fn run_verify_schnorr_proof(
         test_name, pos, node
     );
     match verify_schnorr(eg, schnorr.as_tuple(), y, i_aux) {
-        Err(e) => return Some(VerificationEvent::Failure { source: anyhow::anyhow!(e) }),
+        Err(e) => {
+            return Some(VerificationEvent::Failure {
+                source: anyhow::anyhow!(e),
+            })
+        }
         Ok(b) => {
             if !b {
                 let mut text = format!(

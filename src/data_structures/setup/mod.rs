@@ -4,7 +4,6 @@ pub mod control_component_code_shares_payload;
 pub mod control_component_public_keys_payload;
 pub mod election_event_configuration;
 pub mod election_event_context_payload;
-pub mod encryption_parameters_payload;
 pub mod setup_component_public_keys_payload;
 pub mod setup_component_tally_data_payload;
 pub mod setup_component_verification_data_payload;
@@ -14,7 +13,6 @@ use self::{
     control_component_public_keys_payload::ControlComponentPublicKeysPayload,
     election_event_configuration::ElectionEventConfiguration,
     election_event_context_payload::ElectionEventContextPayload,
-    encryption_parameters_payload::EncryptionParametersPayload,
     setup_component_public_keys_payload::SetupComponentPublicKeysPayload,
     setup_component_tally_data_payload::SetupComponentTallyDataPayload,
     setup_component_verification_data_payload::SetupComponentVerificationDataPayload,
@@ -28,7 +26,6 @@ use enum_kinds::EnumKind;
 #[derive(Clone, EnumKind)]
 #[enum_kind(VerifierSetupDataType)]
 pub enum VerifierSetupData {
-    EncryptionParametersPayload(EncryptionParametersPayload),
     ElectionEventContextPayload(ElectionEventContextPayload),
     SetupComponentPublicKeysPayload(SetupComponentPublicKeysPayload),
     ControlComponentPublicKeysPayload(ControlComponentPublicKeysPayload),
@@ -42,7 +39,6 @@ impl VerifierSetupDataType {
     /// Get the type of the file for the [VerifierSetupData]
     pub fn get_file_type(&self) -> FileType {
         match self {
-            Self::EncryptionParametersPayload => FileType::Json,
             Self::ElectionEventContextPayload => FileType::Json,
             Self::SetupComponentPublicKeysPayload => FileType::Json,
             Self::ControlComponentPublicKeysPayload => FileType::Json,
@@ -56,7 +52,6 @@ impl VerifierSetupDataType {
     /// Get the read mode of the file for the [VerifierSetupData]
     pub fn get_file_read_mode(&self) -> FileReadMode {
         match self {
-            Self::EncryptionParametersPayload => FileReadMode::Memory,
             Self::ElectionEventContextPayload => FileReadMode::Memory,
             Self::SetupComponentPublicKeysPayload => FileReadMode::Memory,
             Self::ControlComponentPublicKeysPayload => FileReadMode::Memory,
@@ -72,14 +67,6 @@ impl VerifierSetupDataType {
     /// All the types have to oimplement the trait [VerifierDataDecode]
     pub fn verifier_data_from_file(&self, f: &File) -> anyhow::Result<VerifierSetupData> {
         match self {
-            VerifierSetupDataType::EncryptionParametersPayload => {
-                EncryptionParametersPayload::from_file(
-                    f,
-                    &self.get_file_type(),
-                    &self.get_file_read_mode(),
-                )
-                .map(VerifierSetupData::EncryptionParametersPayload)
-            }
             VerifierSetupDataType::ElectionEventContextPayload => {
                 ElectionEventContextPayload::from_file(
                     f,
@@ -141,13 +128,6 @@ impl VerifierSetupDataType {
 }
 
 impl VerifierSetupDataTrait for VerifierSetupData {
-    fn encryption_parameters_payload(&self) -> Option<&EncryptionParametersPayload> {
-        if let VerifierSetupData::EncryptionParametersPayload(d) = self {
-            return Some(d);
-        }
-        None
-    }
-
     fn setup_component_public_keys_payload(&self) -> Option<&SetupComponentPublicKeysPayload> {
         if let VerifierSetupData::SetupComponentPublicKeysPayload(d) = self {
             return Some(d);

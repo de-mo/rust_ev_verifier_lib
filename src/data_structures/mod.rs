@@ -14,7 +14,6 @@ use self::{
         control_component_public_keys_payload::ControlComponentPublicKeysPayload,
         election_event_configuration::ElectionEventConfiguration,
         election_event_context_payload::ElectionEventContextPayload,
-        encryption_parameters_payload::EncryptionParametersPayload,
         setup_component_public_keys_payload::SetupComponentPublicKeysPayload,
         setup_component_tally_data_payload::SetupComponentTallyDataPayload,
         setup_component_verification_data_payload::SetupComponentVerificationDataPayload,
@@ -32,8 +31,8 @@ use self::{
 use crate::file_structure::{file::File, FileReadMode, FileType};
 use anyhow::{anyhow, bail};
 use chrono::NaiveDateTime;
-use num_bigint::BigUint;
 use roxmltree::Document;
+use rug::Integer;
 use rust_ev_crypto_primitives::{ByteArray, Decode, Hexa};
 use serde::de::{Deserialize, Deserializer, Error};
 use setup_or_tally::SetupOrTally;
@@ -61,10 +60,6 @@ pub(crate) use create_verifier_tally_data_type;
 
 /// Trait implementing the collection of the specific setup data type from the enum object
 pub trait VerifierSetupDataTrait {
-    /// Get the EncryptionParametersPayload is the enum is from correct type. Else give None
-    fn encryption_parameters_payload(&self) -> Option<&EncryptionParametersPayload> {
-        None
-    }
     fn setup_component_public_keys_payload(&self) -> Option<&SetupComponentPublicKeysPayload> {
         None
     }
@@ -222,13 +217,6 @@ macro_rules! implement_trait_verifier_data_json_decode {
 use implement_trait_verifier_data_json_decode;
 
 impl VerifierSetupDataTrait for VerifierData {
-    fn encryption_parameters_payload(&self) -> Option<&EncryptionParametersPayload> {
-        match self {
-            VerifierData::Setup(d) => d.encryption_parameters_payload(),
-            VerifierData::Tally(_) => None,
-        }
-    }
-
     fn setup_component_public_keys_payload(&self) -> Option<&SetupComponentPublicKeysPayload> {
         match self {
             VerifierData::Setup(d) => d.setup_component_public_keys_payload(),
@@ -342,13 +330,24 @@ impl VerifierDataType {
     }
 }
 
-fn deserialize_string_hex_to_bigunit<'de, D>(deserializer: D) -> Result<BigUint, D::Error>
+fn deserialize_string_hex_to_integer<'de, D>(deserializer: D) -> Result<Integer, D::Error>
 where
     D: Deserializer<'de>,
 {
     let buf = String::deserialize(deserializer)?;
 
-    BigUint::from_hexa_string(&buf).map_err(|e| Error::custom(e.to_string()))
+    Integer::from_hexa_string(&buf).map_err(|e| Error::custom(e.to_string()))
+}
+
+fn deserialize_string_base64_to_integer<'de, D>(deserializer: D) -> Result<Integer, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    let buf = String::deserialize(deserializer)?;
+
+    ByteArray::base64_decode(&buf)
+        .map_err(|e| Error::custom(e.to_string()))
+        .map(|e| e.into_mp_integer())
 }
 
 fn deserialize_string_string_to_datetime<'de, D>(deserializer: D) -> Result<NaiveDateTime, D::Error>
@@ -361,16 +360,16 @@ where
         .map_err(|e| Error::custom(e.to_string()))
 }
 
-fn deserialize_seq_string_hex_to_seq_bigunit<'de, D>(
+fn deserialize_seq_string_hex_to_seq_integer<'de, D>(
     deserializer: D,
-) -> Result<Vec<BigUint>, D::Error>
+) -> Result<Vec<Integer>, D::Error>
 where
     D: Deserializer<'de>,
 {
     struct Visitor;
 
     impl<'de> ::serde::de::Visitor<'de> for Visitor {
-        type Value = Vec<BigUint>;
+        type Value = Vec<Integer>;
 
         fn expecting(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
             write!(f, "a sequence of string")
@@ -383,7 +382,7 @@ where
             let mut vec = <Self::Value>::new();
 
             while let Some(v) = (seq.next_element())? {
-                let r_b = BigUint::from_hexa_string(v).map_err(A::Error::custom)?;
+                let r_b = Integer::from_hexa_string(v).map_err(A::Error::custom)?;
                 vec.push(r_b);
             }
             Ok(vec)
@@ -393,7 +392,7 @@ where
 }
 
 #[allow(dead_code)]
-fn deserialize_seq_string_64_to_seq_bytearray<'de, D>(
+fn deserialize_seq_string_base64_to_seq_bytearray<'de, D>(
     deserializer: D,
 ) -> Result<Vec<ByteArray>, D::Error>
 where
@@ -424,16 +423,48 @@ where
     deserializer.deserialize_seq(Visitor)
 }
 
-fn deserialize_seq_seq_string_hex_to_seq_seq_bigunit<'de, D>(
+#[allow(dead_code)]
+fn deserialize_seq_string_base64_to_seq_integer<'de, D>(
     deserializer: D,
-) -> Result<Vec<Vec<BigUint>>, D::Error>
+) -> Result<Vec<Integer>, D::Error>
 where
     D: Deserializer<'de>,
 {
     struct Visitor;
 
     impl<'de> ::serde::de::Visitor<'de> for Visitor {
-        type Value = Vec<Vec<BigUint>>;
+        type Value = Vec<Integer>;
+
+        fn expecting(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
+            write!(f, "a sequence of string")
+        }
+
+        fn visit_seq<A>(self, mut seq: A) -> Result<Self::Value, A::Error>
+        where
+            A: serde::de::SeqAccess<'de>,
+        {
+            let mut vec = <Self::Value>::new();
+
+            while let Some(v) = (seq.next_element())? {
+                let r_b = ByteArray::base64_decode(v).map_err(A::Error::custom)?;
+                vec.push(r_b.into_mp_integer());
+            }
+            Ok(vec)
+        }
+    }
+    deserializer.deserialize_seq(Visitor)
+}
+
+fn deserialize_seq_seq_string_hex_to_seq_seq_integer<'de, D>(
+    deserializer: D,
+) -> Result<Vec<Vec<Integer>>, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    struct Visitor;
+
+    impl<'de> ::serde::de::Visitor<'de> for Visitor {
+        type Value = Vec<Vec<Integer>>;
 
         fn expecting(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
             write!(f, "a sequence of string")
@@ -448,8 +479,43 @@ where
             while let Some(v) = (seq.next_element::<Vec<String>>())? {
                 let mut inner_vec = Vec::new();
                 for x in v {
-                    let r_b = BigUint::from_hexa_string(&x).map_err(A::Error::custom)?;
+                    let r_b = Integer::from_hexa_string(&x).map_err(A::Error::custom)?;
                     inner_vec.push(r_b);
+                }
+                vec.push(inner_vec.to_owned());
+            }
+            Ok(vec)
+        }
+    }
+    deserializer.deserialize_seq(Visitor)
+}
+
+fn deserialize_seq_seq_string_base64_to_seq_seq_integer<'de, D>(
+    deserializer: D,
+) -> Result<Vec<Vec<Integer>>, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    struct Visitor;
+
+    impl<'de> ::serde::de::Visitor<'de> for Visitor {
+        type Value = Vec<Vec<Integer>>;
+
+        fn expecting(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
+            write!(f, "a sequence of string")
+        }
+
+        fn visit_seq<A>(self, mut seq: A) -> Result<Self::Value, A::Error>
+        where
+            A: serde::de::SeqAccess<'de>,
+        {
+            let mut vec = <Self::Value>::new();
+
+            while let Some(v) = (seq.next_element::<Vec<String>>())? {
+                let mut inner_vec = Vec::new();
+                for x in v {
+                    let r_b = ByteArray::base64_decode(&x).map_err(A::Error::custom)?;
+                    inner_vec.push(r_b.into_mp_integer());
                 }
                 vec.push(inner_vec.to_owned());
             }

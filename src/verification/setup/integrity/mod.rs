@@ -5,12 +5,12 @@ use super::super::{
 };
 use crate::{
     config::Config,
+    data_structures::CheckDomainTrait,
     file_structure::{
         setup_directory::{SetupDirectoryTrait, VCSDirectoryTrait},
         VerificationDirectoryTrait,
     },
     verification::meta_data::VerificationMetaDataList,
-    data_structures::CheckDomainTrait
 };
 use anyhow::anyhow;
 use log::debug;
@@ -71,15 +71,6 @@ fn fn_verification_0401<D: VerificationDirectoryTrait>(
     result: &mut VerificationResult,
 ) {
     let setup_dir = dir.unwrap_setup();
-    match setup_dir.encryption_parameters_payload() {
-        Ok(ep) => {
-            result.append_failures(&ep.check_domain())
-        },
-        Err(e) => result.push(create_verification_failure!(
-            "encryption_parameters_payload has wrong format",
-            e
-        )),
-    }
     match setup_dir.election_event_context_payload() {
         Ok(_) => (),
         Err(e) => result.push(create_verification_failure!(

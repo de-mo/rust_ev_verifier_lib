@@ -1,14 +1,12 @@
 use super::super::{
     common_types::{EncryptionParametersDef, ProofUnderline, Signature},
-    deserialize_seq_string_hex_to_seq_bigunit, implement_trait_verifier_data_json_decode,
+    deserialize_seq_string_base64_to_seq_integer, implement_trait_verifier_data_json_decode,
     VerifierDataDecode,
 };
 use crate::direct_trust::{CertificateAuthority, VerifiySignatureTrait};
 use anyhow::{anyhow, Context};
-use num_bigint::BigUint;
-use rust_ev_crypto_primitives::{
-    ByteArray, EncryptionParameters, HashableMessage,
-};
+use rug::Integer;
+use rust_ev_crypto_primitives::{ByteArray, EncryptionParameters, HashableMessage};
 use serde::Deserialize;
 
 #[derive(Deserialize, Debug, Clone)]
@@ -34,7 +32,6 @@ impl<'a> From<&'a ControlComponentPublicKeysPayload> for HashableMessage<'a> {
 }
 
 impl<'a> VerifiySignatureTrait<'a> for ControlComponentPublicKeysPayload {
-
     fn get_hashable(&'a self) -> anyhow::Result<HashableMessage<'a>> {
         Ok(HashableMessage::from(self))
     }
@@ -67,11 +64,11 @@ impl<'a> VerifiySignatureTrait<'a> for ControlComponentPublicKeysPayload {
 #[serde(rename_all = "camelCase")]
 pub struct ControlComponentPublicKeys {
     pub node_id: usize,
-    #[serde(deserialize_with = "deserialize_seq_string_hex_to_seq_bigunit")]
-    pub ccrj_choice_return_codes_encryption_public_key: Vec<BigUint>,
+    #[serde(deserialize_with = "deserialize_seq_string_base64_to_seq_integer")]
+    pub ccrj_choice_return_codes_encryption_public_key: Vec<Integer>,
     pub ccrj_schnorr_proofs: Vec<ProofUnderline>,
-    #[serde(deserialize_with = "deserialize_seq_string_hex_to_seq_bigunit")]
-    pub ccmj_election_public_key: Vec<BigUint>,
+    #[serde(deserialize_with = "deserialize_seq_string_base64_to_seq_integer")]
+    pub ccmj_election_public_key: Vec<Integer>,
     pub ccmj_schnorr_proofs: Vec<ProofUnderline>,
 }
 

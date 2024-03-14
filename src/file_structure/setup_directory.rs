@@ -16,7 +16,6 @@ use crate::{
             control_component_public_keys_payload::ControlComponentPublicKeysPayload,
             election_event_configuration::ElectionEventConfiguration,
             election_event_context_payload::ElectionEventContextPayload,
-            encryption_parameters_payload::EncryptionParametersPayload,
             setup_component_public_keys_payload::SetupComponentPublicKeysPayload,
             setup_component_tally_data_payload::SetupComponentTallyDataPayload,
             setup_component_verification_data_payload::SetupComponentVerificationDataPayload,
@@ -34,7 +33,6 @@ use std::{
 #[derive(Clone)]
 pub struct SetupDirectory {
     location: PathBuf,
-    encryption_parameters_payload_file: File,
     setup_component_public_keys_payload_file: File,
     election_event_context_payload_file: File,
     election_event_configuration_file: File,
@@ -63,13 +61,11 @@ pub trait SetupDirectoryTrait {
         ControlComponentPublicKeysPayloadAsResult
     );
 
-    fn encryption_parameters_payload_file(&self) -> &File;
     fn setup_component_public_keys_payload_file(&self) -> &File;
     fn election_event_context_payload_file(&self) -> &File;
     fn election_event_configuration_file(&self) -> &File;
     fn control_component_public_keys_payload_group(&self) -> &FileGroup;
     fn vcs_directories(&self) -> &Vec<Self::VCSDirType>;
-    fn encryption_parameters_payload(&self) -> anyhow::Result<Box<EncryptionParametersPayload>>;
     fn setup_component_public_keys_payload(
         &self,
     ) -> anyhow::Result<Box<SetupComponentPublicKeysPayload>>;
@@ -141,11 +137,6 @@ impl SetupDirectory {
         let location = data_location.join(Config::setup_dir_name());
         let mut res = Self {
             location: location.to_path_buf(),
-            encryption_parameters_payload_file: create_file!(
-                location,
-                Setup,
-                VerifierSetupDataType::EncryptionParametersPayload
-            ),
             setup_component_public_keys_payload_file: create_file!(
                 location,
                 Setup,
@@ -191,9 +182,6 @@ impl SetupDirectoryTrait for SetupDirectory {
     type ControlComponentPublicKeysPayloadAsResultIterType =
         ControlComponentPublicKeysPayloadAsResultIter;
 
-    fn encryption_parameters_payload_file(&self) -> &File {
-        &self.encryption_parameters_payload_file
-    }
     fn setup_component_public_keys_payload_file(&self) -> &File {
         &self.setup_component_public_keys_payload_file
     }
@@ -208,12 +196,6 @@ impl SetupDirectoryTrait for SetupDirectory {
     }
     fn vcs_directories(&self) -> &Vec<VCSDirectory> {
         &self.vcs_directories
-    }
-    fn encryption_parameters_payload(&self) -> anyhow::Result<Box<EncryptionParametersPayload>> {
-        self.encryption_parameters_payload_file
-            .get_data()
-            .map_err(|e| e.context("in encryption_parameters_payload"))
-            .map(|d| Box::new(d.encryption_parameters_payload().unwrap().clone()))
     }
 
     fn setup_component_public_keys_payload(
@@ -331,7 +313,6 @@ mod test {
         let vcs_location = setup_location.join("verification_card_sets");
         let dir = SetupDirectory::new(&location);
         assert_eq!(dir.get_location(), setup_location);
-        assert!(dir.encryption_parameters_payload().is_ok());
         assert!(dir.setup_component_public_keys_payload().is_ok());
         assert!(dir.election_event_context_payload().is_ok());
         for (i, p) in dir.control_component_public_keys_payload_iter() {
@@ -423,13 +404,10 @@ pub mod mock {
     /// Mock for [SetupDirectory]
     pub struct MockSetupDirectory {
         dir: SetupDirectory,
-        mocked_encryption_parameters_payload_file: Option<File>,
         mocked_setup_component_public_keys_payload_file: Option<File>,
         mocked_election_event_context_payload_file: Option<File>,
         mocked_election_event_configuration_file: Option<File>,
         mocked_control_component_public_keys_payload_group: Option<FileGroup>,
-        mocked_encryption_parameters_payload:
-            Option<anyhow::Result<Box<EncryptionParametersPayload>>>,
         mocked_setup_component_public_keys_payload:
             Option<anyhow::Result<Box<SetupComponentPublicKeysPayload>>>,
         mocked_election_event_context_payload:
@@ -503,11 +481,6 @@ pub mod mock {
             MockControlComponentPublicKeysPayloadAsResultIter;
 
         wrap_file_group_getter!(
-            encryption_parameters_payload_file,
-            mocked_encryption_parameters_payload_file,
-            File
-        );
-        wrap_file_group_getter!(
             setup_component_public_keys_payload_file,
             mocked_setup_component_public_keys_payload_file,
             File
@@ -532,11 +505,6 @@ pub mod mock {
             &self.vcs_directories
         }
 
-        wrap_payload_getter!(
-            encryption_parameters_payload,
-            mocked_encryption_parameters_payload,
-            EncryptionParametersPayload
-        );
         wrap_payload_getter!(
             setup_component_public_keys_payload,
             mocked_setup_component_public_keys_payload,
@@ -619,12 +587,10 @@ pub mod mock {
                 .collect();
             MockSetupDirectory {
                 dir: setup_dir,
-                mocked_encryption_parameters_payload_file: None,
                 mocked_setup_component_public_keys_payload_file: None,
                 mocked_election_event_context_payload_file: None,
                 mocked_election_event_configuration_file: None,
                 mocked_control_component_public_keys_payload_group: None,
-                mocked_encryption_parameters_payload: None,
                 mocked_setup_component_public_keys_payload: None,
                 mocked_election_event_context_payload: None,
                 mocked_election_event_configuration: None,
@@ -638,9 +604,6 @@ pub mod mock {
             self.vcs_directories.iter_mut().collect()
         }
 
-        pub fn mock_encryption_parameters_payload_file(&mut self, data: &File) {
-            self.mocked_encryption_parameters_payload_file = Some(data.clone());
-        }
         pub fn mock_setup_component_public_keys_payload_file(&mut self, data: &File) {
             self.mocked_setup_component_public_keys_payload_file = Some(data.clone());
         }
@@ -654,11 +617,6 @@ pub mod mock {
             self.mocked_control_component_public_keys_payload_group = Some(data.clone());
         }
 
-        mock_payload!(
-            mock_encryption_parameters_payload,
-            mocked_encryption_parameters_payload,
-            EncryptionParametersPayload
-        );
         mock_payload!(
             mock_setup_component_public_keys_payload,
             mocked_setup_component_public_keys_payload,

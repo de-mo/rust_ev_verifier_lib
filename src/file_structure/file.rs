@@ -97,7 +97,7 @@ mod test {
         let location = get_location();
         let f = File::new(
             &location,
-            &VerifierDataType::Setup(VerifierSetupDataType::EncryptionParametersPayload),
+            &VerifierDataType::Setup(VerifierSetupDataType::ElectionEventContextPayload),
             None,
         );
         assert!(f.exists());
@@ -108,7 +108,7 @@ mod test {
         );
         let data = f.get_data().unwrap();
         assert!(data.is_setup());
-        let enc_data = data.encryption_parameters_payload();
+        let enc_data = data.election_event_context_payload();
         assert!(enc_data.is_some())
     }
 
@@ -118,7 +118,7 @@ mod test {
         let f = create_file!(
             &location,
             Setup,
-            VerifierSetupDataType::EncryptionParametersPayload
+            VerifierSetupDataType::ElectionEventContextPayload
         );
         assert!(f.exists());
         assert_eq!(f.get_location(), location);
@@ -128,7 +128,7 @@ mod test {
         );
         let data = f.get_data().unwrap();
         assert!(data.is_setup());
-        let enc_data = data.encryption_parameters_payload();
+        let enc_data = data.election_event_context_payload();
         assert!(enc_data.is_some())
     }
 
@@ -137,14 +137,14 @@ mod test {
         let location = get_location().join("toto");
         let f = File::new(
             &location,
-            &VerifierDataType::Setup(VerifierSetupDataType::EncryptionParametersPayload),
+            &VerifierDataType::Setup(VerifierSetupDataType::ElectionEventContextPayload),
             None,
         );
         assert!(!f.exists());
         assert_eq!(f.get_location(), location);
         assert_eq!(
             f.get_path(),
-            location.join("encryptionParametersPayload.json")
+            location.join("electionEventContextPayload.json")
         );
         let data = f.get_data();
         assert!(data.is_err())

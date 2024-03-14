@@ -7,9 +7,7 @@ use crate::{
 };
 use anyhow::anyhow;
 use log::debug;
-use rust_ev_crypto_primitives::{
-    EncryptionParameters, get_small_prime_group_members,
-};
+use rust_ev_crypto_primitives::{get_small_prime_group_members, EncryptionParameters};
 
 pub(super) fn fn_verification_0501<D: VerificationDirectoryTrait>(
     dir: &D,
@@ -17,11 +15,13 @@ pub(super) fn fn_verification_0501<D: VerificationDirectoryTrait>(
     result: &mut VerificationResult,
 ) {
     let setup_dir = dir.unwrap_setup();
-    let eg = match setup_dir.encryption_parameters_payload() {
+    let eg: Box<
+        crate::data_structures::setup::election_event_context_payload::ElectionEventContextPayload,
+    > = match setup_dir.election_event_context_payload() {
         Ok(eg) => eg,
         Err(e) => {
             result.push(create_verification_error!(
-                "encryption_parameters_payload cannot be read",
+                "election_event_context_payload cannot be read",
                 e
             ));
             return;
@@ -43,19 +43,22 @@ pub(super) fn fn_verification_0501<D: VerificationDirectoryTrait>(
     if eg_test.p() != eg.encryption_group.p() {
         result.push(create_verification_failure!(format!(
             "payload p and calculated p are equal: payload: {} / calculated: {}",
-            eg.encryption_group.p(), eg_test.p()
+            eg.encryption_group.p(),
+            eg_test.p()
         )))
     }
     if eg_test.q() != eg.encryption_group.q() {
         result.push(create_verification_failure!(format!(
             "payload q and calculated q are equal: payload: {} / calculated: {}",
-            eg.encryption_group.q(), eg_test.q()
+            eg.encryption_group.q(),
+            eg_test.q()
         )))
     }
     if eg_test.g() != eg.encryption_group.g() {
         result.push(create_verification_failure!(format!(
             "payload g and calculated g are equal: payload: {} / calculated: {}",
-            eg.encryption_group.g(), eg_test.g()
+            eg.encryption_group.g(),
+            eg_test.g()
         )))
     }
 }
@@ -66,18 +69,18 @@ pub(super) fn fn_verification_0502<D: VerificationDirectoryTrait>(
     result: &mut VerificationResult,
 ) {
     let setup_dir = dir.unwrap_setup();
-    let eg = match setup_dir.encryption_parameters_payload() {
+    let eg = match setup_dir.election_event_context_payload() {
         Ok(eg) => eg,
         Err(e) => {
             result.push(create_verification_error!(
-                "encryption_parameters_payload cannot be read",
+                "election_event_context_payload cannot be read",
                 e
             ));
             return;
         }
     };
     let primes = match get_small_prime_group_members(
-        eg.encryption_group.p(),
+        &eg.encryption_group,
         Config::maximum_number_of_voting_options(),
     ) {
         Ok(p) => p,

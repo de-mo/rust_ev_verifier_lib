@@ -1,14 +1,12 @@
 use super::super::{
-    common_types::{ExponentiatedEncryptedElement, Signature, EncryptionParametersDef},
-    deserialize_seq_string_hex_to_seq_bigunit, implement_trait_verifier_data_json_decode,
+    common_types::{EncryptionParametersDef, ExponentiatedEncryptedElement, Signature},
+    deserialize_seq_string_base64_to_seq_integer, implement_trait_verifier_data_json_decode,
     VerifierDataDecode,
 };
 use crate::direct_trust::{CertificateAuthority, VerifiySignatureTrait};
 use anyhow::anyhow;
-use num_bigint::BigUint;
-use rust_ev_crypto_primitives::{
-    ByteArray, EncryptionParameters, HashableMessage,
-};
+use rug::Integer;
+use rust_ev_crypto_primitives::{ByteArray, EncryptionParameters, HashableMessage};
 use serde::Deserialize;
 
 #[derive(Deserialize, Debug, Clone)]
@@ -21,7 +19,6 @@ pub struct SetupComponentVerificationDataPayload {
     #[serde(with = "EncryptionParametersDef")]
     pub encryption_group: EncryptionParameters,
     pub setup_component_verification_data: Vec<SetupComponentVerificationDataInner>,
-    pub combined_correctness_information: CombinedCorrectnessInformation,
     pub signature: Signature,
 }
 
@@ -52,8 +49,8 @@ pub struct SetupComponentVerificationDataInner {
     pub verification_card_id: String,
     pub encrypted_hashed_squared_confirmation_key: ExponentiatedEncryptedElement,
     pub encrypted_hashed_squared_partial_choice_return_codes: ExponentiatedEncryptedElement,
-    #[serde(deserialize_with = "deserialize_seq_string_hex_to_seq_bigunit")]
-    pub verification_card_public_key: Vec<BigUint>,
+    #[serde(deserialize_with = "deserialize_seq_string_base64_to_seq_integer")]
+    pub verification_card_public_key: Vec<Integer>,
 }
 
 #[derive(Deserialize, Debug, Clone)]
@@ -72,7 +69,6 @@ pub struct CorrectnessInformationElt {
 }
 
 impl<'a> VerifiySignatureTrait<'a> for SetupComponentVerificationDataPayload {
-
     fn get_hashable(&'a self) -> anyhow::Result<HashableMessage<'a>> {
         Ok(HashableMessage::from(self))
     }
@@ -109,7 +105,6 @@ impl<'a> From<&'a SetupComponentVerificationDataPayload> for HashableMessage<'a>
             .map(Self::from)
             .collect();
         elts.push(Self::from(l));
-        elts.push(Self::from(&value.combined_correctness_information));
         Self::from(elts)
     }
 }
@@ -150,18 +145,21 @@ impl<'a> From<&'a CorrectnessInformationElt> for HashableMessage<'a> {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::config::test::test_dataset_tally_path;
+    use crate::config::test::test_dataset_setup_path;
     use std::fs;
 
     #[test]
     fn read_data_set() {
-        let path = test_dataset_tally_path()
+        let path = test_dataset_setup_path()
             .join("setup")
             .join("verification_card_sets")
-            .join("681B3488DE4CD4AD7FCED14B7A654169")
+            .join("1B3775CB351C64AC33B754BA3A02AED2")
             .join("setupComponentVerificationDataPayload.0.json");
         let json = fs::read_to_string(path).unwrap();
         let r_eec = SetupComponentVerificationDataPayload::from_json(&json);
+        if r_eec.is_err() {
+            println!("{:?}", r_eec.as_ref().unwrap_err());
+        }
         assert!(r_eec.is_ok())
     }
 }

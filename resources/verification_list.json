@@ -9,64 +9,40 @@
     },
     {
         "id": "02.01",
-        "name": "VerifySignatureSetupComponentEncryptionParameters",
-        "algorithm": "Verification 2.01",
-        "period": "setup",
-        "category": "authenticity",
-        "description": "The signature of EncryptionParametersPayload is valid"
-    },
-    {
-        "id": "02.02",
         "name": "VerifySignatureCantonConfig",
-        "algorithm": "Verification 2.02",
+        "algorithm": "Verification 2.01",
         "period": "setup",
         "category": "authenticity",
         "description": "The signature of ElectionEventConfiguration is valid"
     },
     {
-        "id": "02.03",
+        "id": "02.02",
         "name": "VerifySignatureSetupComponentPublicKeys",
-        "algorithm": "Verification 2.03",
+        "algorithm": "Verification 2.02",
         "period": "setup",
         "category": "authenticity",
         "description": "The signature of SetupComponentPublicKeysPayload is valid"
     },
     {
-        "id": "02.04",
+        "id": "02.03",
         "name": "VerifySignatureControlComponentPublicKeys",
-        "algorithm": "Verification 2.04",
+        "algorithm": "Verification 2.03",
         "period": "setup",
         "category": "authenticity",
         "description": "The signature of ControlComponentPublicKeysPayload is valid"
     },
     {
-        "id": "02.05",
-        "name": "VerifySignatureSetupComponentVerificationData",
-        "algorithm": "",
-        "period": "setup",
-        "category": "authenticity",
-        "description": ""
-    },
-    {
-        "id": "02.06",
-        "name": "VerifySignatureControlComponentCodeShares",
-        "algorithm": "",
-        "period": "setup",
-        "category": "authenticity",
-        "description": ""
-    },
-    {
-        "id": "02.07",
+        "id": "02.04",
         "name": "VerifySignatureSetupComponentTallyData",
-        "algorithm": "",
+        "algorithm": "Verification 2.04",
         "period": "setup",
         "category": "authenticity",
         "description": ""
     },
     {
-        "id": "02.08",
+        "id": "02.05",
         "name": "VerifySignatureElectionEventContext",
-        "algorithm": "",
+        "algorithm": "Verification 2.05",
         "period": "setup",
         "category": "authenticity",
         "description": ""
@@ -225,7 +201,7 @@
     },
     {
         "id": "05.04",
-        "name": "VerifyKeyGenerationSchnorrProofs",
+        "name": "VerifySchnorrProofs",
         "algorithm": "",
         "period": "setup",
         "category": "evidence",
@@ -233,15 +209,7 @@
     },
     {
         "id": "05.21",
-        "name": "VerifyEncryptedPCCExponentiationProofs",
-        "algorithm": "",
-        "period": "setup",
-        "category": "evidence",
-        "description": ""
-    },
-    {
-        "id": "05.22",
-        "name": "VerifyEncryptedCKExponentiationProofs",
+        "name": "VerifySignatureVerificationDataAndCodeProofs",
         "algorithm": "",
         "period": "setup",
         "category": "evidence",
@@ -297,7 +265,7 @@
     },
     {
         "id": "07.06",
-        "name": "VerifySignatureTallyComponentEch0110",
+        "name": "VerifySignatureTallyComponentEch0222",
         "algorithm": "",
         "period": "tally",
         "category": "authenticity",
@@ -305,7 +273,7 @@
     },
     {
         "id": "07.07",
-        "name": "VerifySignatureTallyComponentEch0222",
+        "name": "VerifySignatureTallyComponentEch0110",
         "algorithm": "",
         "period": "tally",
         "category": "authenticity",

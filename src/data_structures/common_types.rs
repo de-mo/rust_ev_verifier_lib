@@ -1,9 +1,10 @@
 //! Type that are used in many structures
 
 use super::{
-    deserialize_seq_string_hex_to_seq_bigunit, deserialize_string_hex_to_bigunit, CheckDomainTrait,
+    deserialize_seq_string_base64_to_seq_integer, deserialize_seq_string_hex_to_seq_integer,
+    deserialize_string_base64_to_integer, deserialize_string_hex_to_integer, CheckDomainTrait,
 };
-use num_bigint::BigUint;
+use rug::Integer;
 use rust_ev_crypto_primitives::{
     check_g, check_p, check_q, ByteArray, Decode, EncryptionParameters, HashableMessage,
 };
@@ -14,20 +15,20 @@ use serde::Deserialize;
 #[serde(remote = "EncryptionParameters")]
 pub struct EncryptionParametersDef {
     #[serde(
-        deserialize_with = "deserialize_string_hex_to_bigunit",
+        deserialize_with = "deserialize_string_base64_to_integer",
         getter = "EncryptionParameters::p"
     )]
-    pub p: BigUint,
+    pub p: Integer,
     #[serde(
-        deserialize_with = "deserialize_string_hex_to_bigunit",
+        deserialize_with = "deserialize_string_base64_to_integer",
         getter = "EncryptionParameters::q"
     )]
-    pub q: BigUint,
+    pub q: Integer,
     #[serde(
-        deserialize_with = "deserialize_string_hex_to_bigunit",
+        deserialize_with = "deserialize_string_base64_to_integer",
         getter = "EncryptionParameters::g"
     )]
-    pub g: BigUint,
+    pub g: Integer,
 }
 
 impl From<EncryptionParametersDef> for EncryptionParameters {
@@ -69,12 +70,12 @@ impl Signature {
 /// A proof (e,z) where the keys are _e and _z in json
 #[derive(Deserialize, Debug, Clone)]
 pub struct ProofUnderline {
-    #[serde(deserialize_with = "deserialize_string_hex_to_bigunit")]
+    #[serde(deserialize_with = "deserialize_string_base64_to_integer")]
     #[serde(rename = "_e")]
-    pub e: BigUint,
-    #[serde(deserialize_with = "deserialize_string_hex_to_bigunit")]
+    pub e: Integer,
+    #[serde(deserialize_with = "deserialize_string_base64_to_integer")]
     #[serde(rename = "_z")]
-    pub z: BigUint,
+    pub z: Integer,
 }
 
 impl<'a> From<&'a ProofUnderline> for HashableMessage<'a> {
@@ -86,10 +87,10 @@ impl<'a> From<&'a ProofUnderline> for HashableMessage<'a> {
 /// A proof (e,z) where the keys are e and z in json
 #[derive(Deserialize, Debug, Clone)]
 pub struct Proof {
-    #[serde(deserialize_with = "deserialize_string_hex_to_bigunit")]
-    pub e: BigUint,
-    #[serde(deserialize_with = "deserialize_string_hex_to_bigunit")]
-    pub z: BigUint,
+    #[serde(deserialize_with = "deserialize_string_base64_to_integer")]
+    pub e: Integer,
+    #[serde(deserialize_with = "deserialize_string_base64_to_integer")]
+    pub z: Integer,
 }
 
 /// The possibility to transorm a [ProofUnderline] to [Proof]
@@ -109,7 +110,7 @@ impl<'a> From<&'a Proof> for HashableMessage<'a> {
 }
 
 impl Proof {
-    pub fn as_tuple(&self) -> (&BigUint, &BigUint) {
+    pub fn as_tuple(&self) -> (&Integer, &Integer) {
         (&self.e, &self.z)
     }
 }
@@ -117,10 +118,10 @@ impl Proof {
 /// A decryption proof (e,z) where the keys are _e and _z in json
 #[derive(Deserialize, Debug, Clone)]
 pub struct DecryptionProof {
-    #[serde(deserialize_with = "deserialize_string_hex_to_bigunit")]
-    pub e: BigUint,
-    #[serde(deserialize_with = "deserialize_seq_string_hex_to_seq_bigunit")]
-    pub z: Vec<BigUint>,
+    #[serde(deserialize_with = "deserialize_string_base64_to_integer")]
+    pub e: Integer,
+    #[serde(deserialize_with = "deserialize_seq_string_base64_to_seq_integer")]
+    pub z: Vec<Integer>,
 }
 
 impl<'a> From<&'a DecryptionProof> for HashableMessage<'a> {
@@ -132,10 +133,10 @@ impl<'a> From<&'a DecryptionProof> for HashableMessage<'a> {
 /// A exponentieted encrypted element (gamman, phi)
 #[derive(Deserialize, Debug, Clone)]
 pub struct ExponentiatedEncryptedElement {
-    #[serde(deserialize_with = "deserialize_string_hex_to_bigunit")]
-    pub gamma: BigUint,
-    #[serde(deserialize_with = "deserialize_seq_string_hex_to_seq_bigunit")]
-    pub phis: Vec<BigUint>,
+    #[serde(deserialize_with = "deserialize_string_base64_to_integer")]
+    pub gamma: Integer,
+    #[serde(deserialize_with = "deserialize_seq_string_base64_to_seq_integer")]
+    pub phis: Vec<Integer>,
 }
 
 impl<'a> From<&'a ExponentiatedEncryptedElement> for HashableMessage<'a> {

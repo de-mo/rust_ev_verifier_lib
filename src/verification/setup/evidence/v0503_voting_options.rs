@@ -7,7 +7,7 @@ use crate::{
 };
 use anyhow::anyhow;
 use log::debug;
-use num_bigint::BigUint;
+use rug::Integer;
 use rust_ev_crypto_primitives::Constants;
 
 pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
@@ -16,16 +16,6 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
     result: &mut VerificationResult,
 ) {
     let setup_dir = dir.unwrap_setup();
-    let eg = match setup_dir.encryption_parameters_payload() {
-        Ok(eg) => eg,
-        Err(e) => {
-            result.push(create_verification_error!(
-                "encryption_parameters_payload cannot be read",
-                e
-            ));
-            return;
-        }
-    };
     let ee_context = match setup_dir.election_event_context_payload() {
         Ok(eg) => eg,
         Err(e) => {
@@ -51,7 +41,7 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
     }
     p_tilde.sort(); // Sort the primes
     p_tilde.dedup(); // remove duplicates
-    let p_prime: Vec<usize> = eg
+    let p_prime: Vec<usize> = ee_context
         .small_primes
         .iter()
         .take(p_tilde.len())
@@ -62,14 +52,14 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
             "VerifA: prime group members and encoding voting options are not the same"
         ))
     }
-    let mut verifb: BigUint = BigUint::zero().clone();
+    let mut verifb = Integer::zero().clone();
     for i in (Config::maximum_number_of_voting_options()
         - Config::maximum_number_of_selectable_voting_options())
         ..Config::maximum_number_of_selectable_voting_options()
     {
-        verifb = &verifb * BigUint::from(eg.small_primes[i]);
+        verifb *= ee_context.small_primes[i];
     }
-    if &verifb >= eg.encryption_group.p() {
+    if &verifb >= ee_context.encryption_group.p() {
         result.push(create_verification_failure!(
             "VerifB: The product of the phi last primes (the largest possible encoded vote) must be smaller than p"
         ))

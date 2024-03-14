@@ -57,11 +57,6 @@ fn fn_verification_0101<D: VerificationDirectoryTrait>(
     result: &mut VerificationResult,
 ) {
     let setup_dir = dir.unwrap_setup();
-    if !setup_dir.encryption_parameters_payload_file().exists() {
-        result.push(create_verification_failure!(
-            "encryption_parameters_payload does not exist"
-        ))
-    }
     if !setup_dir.election_event_context_payload_file().exists() {
         result.push(create_verification_failure!(
             "election_event_context_payload does not exist"
