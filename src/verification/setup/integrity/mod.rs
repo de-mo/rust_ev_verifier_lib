@@ -5,7 +5,6 @@ use super::super::{
 };
 use crate::{
     config::Config,
-    data_structures::CheckDomainTrait,
     file_structure::{
         setup_directory::{SetupDirectoryTrait, VCSDirectoryTrait},
         VerificationDirectoryTrait,
@@ -14,6 +13,7 @@ use crate::{
 };
 use anyhow::anyhow;
 use log::debug;
+use rust_ev_crypto_primitives::VerifyDomainTrait;
 
 pub fn get_verifications<'a>(
     metadata_list: &'a VerificationMetaDataList,

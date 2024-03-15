@@ -1,13 +1,8 @@
 //! Type that are used in many structures
 
-use super::{
-    deserialize_seq_string_base64_to_seq_integer, deserialize_seq_string_hex_to_seq_integer,
-    deserialize_string_base64_to_integer, deserialize_string_hex_to_integer, CheckDomainTrait,
-};
+use super::{deserialize_seq_string_base64_to_seq_integer, deserialize_string_base64_to_integer};
 use rug::Integer;
-use rust_ev_crypto_primitives::{
-    check_g, check_p, check_q, ByteArray, Decode, EncryptionParameters, HashableMessage,
-};
+use rust_ev_crypto_primitives::{ByteArray, Decode, EncryptionParameters, HashableMessage};
 use serde::Deserialize;
 
 /// Struct representing an encryption group
@@ -34,22 +29,6 @@ pub struct EncryptionParametersDef {
 impl From<EncryptionParametersDef> for EncryptionParameters {
     fn from(def: EncryptionParametersDef) -> Self {
         Self::from((&def.p, &def.q, &def.g))
-    }
-}
-
-impl CheckDomainTrait for EncryptionParameters {
-    fn check_domain(&self) -> Vec<anyhow::Error> {
-        let mut res = vec![];
-        if let Some(e) = check_p(self.p()) {
-            res.push(anyhow::anyhow!(e))
-        }
-        if let Some(e) = check_q(self.p(), self.q()) {
-            res.push(anyhow::anyhow!(e))
-        }
-        if let Some(e) = check_g(self.p(), self.g()) {
-            res.push(anyhow::anyhow!(e))
-        }
-        res
     }
 }
 

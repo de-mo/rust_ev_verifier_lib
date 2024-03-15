@@ -197,12 +197,6 @@ pub trait VerifierDataDecode: Sized {
     }
 }
 
-/// Trait to implement a check that the domain of the data is correct
-/// according to the specifications of Swiss Post
-pub trait CheckDomainTrait {
-    fn check_domain(&self) -> Vec<anyhow::Error>;
-}
-
 /// Macro to automatically implement the DataStructureTrait for a type
 macro_rules! implement_trait_verifier_data_json_decode {
     ($s: ty) => {

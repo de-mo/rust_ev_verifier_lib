@@ -7,7 +7,7 @@ use crate::{
 };
 use anyhow::anyhow;
 use log::debug;
-use rust_ev_crypto_primitives::{get_small_prime_group_members, EncryptionParameters};
+use rust_ev_crypto_primitives::EncryptionParameters;
 
 pub(super) fn fn_verification_0501<D: VerificationDirectoryTrait>(
     dir: &D,
@@ -79,10 +79,10 @@ pub(super) fn fn_verification_0502<D: VerificationDirectoryTrait>(
             return;
         }
     };
-    let primes = match get_small_prime_group_members(
-        &eg.encryption_group,
-        Config::maximum_number_of_voting_options(),
-    ) {
+    let primes = match eg
+        .encryption_group
+        .get_small_prime_group_members(Config::maximum_number_of_voting_options())
+    {
         Ok(p) => p,
         Err(e) => {
             result.push(create_verification_error!(

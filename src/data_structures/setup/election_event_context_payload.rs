@@ -4,13 +4,12 @@ use super::super::{
     VerifierDataDecode,
 };
 use crate::config::Config as VerifierConfig;
-use crate::{
-    data_structures::CheckDomainTrait,
-    direct_trust::{CertificateAuthority, VerifiySignatureTrait},
-};
+use crate::direct_trust::{CertificateAuthority, VerifiySignatureTrait};
 use anyhow::anyhow;
 use chrono::NaiveDateTime;
-use rust_ev_crypto_primitives::{ByteArray, EncryptionParameters, HashableMessage};
+use rust_ev_crypto_primitives::{
+    ByteArray, EncryptionParameters, HashableMessage, VerifyDomainTrait,
+};
 use serde::Deserialize;
 
 #[derive(Deserialize, Debug, Clone)]
@@ -97,10 +96,9 @@ impl ElectionEventContext {
     }
 }
 
-impl CheckDomainTrait for ElectionEventContextPayload {
-    fn check_domain(&self) -> Vec<anyhow::Error> {
-        let mut res = vec![];
-        res.append(&mut self.encryption_group.check_domain());
+impl VerifyDomainTrait for ElectionEventContextPayload {
+    fn verifiy_domain(&self) -> Vec<anyhow::Error> {
+        let mut res = self.encryption_group.verifiy_domain();
         // For 5.02
         if !self.small_primes.len() == VerifierConfig::maximum_number_of_voting_options() {
             res.push(
