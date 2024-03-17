@@ -22,6 +22,7 @@ pub fn get_verifications<'a>(
     VerificationList(vec![
         Verification::new(
             "02.01",
+            "VerifySignatureCantonConfig",
             fn_0201_verify_signature_canton_config,
             metadata_list,
             config,
@@ -29,6 +30,7 @@ pub fn get_verifications<'a>(
         .unwrap(),
         Verification::new(
             "02.02",
+            "verifySignatureSetupComponentPublicKeys",
             fn_0202_verify_signature_setup_component_public_keys,
             metadata_list,
             config,
@@ -36,6 +38,7 @@ pub fn get_verifications<'a>(
         .unwrap(),
         Verification::new(
             "02.03",
+            "verifySignatureControlComponentPublicKeys",
             fn_0203_verify_signature_control_component_public_keys,
             metadata_list,
             config,
@@ -43,6 +46,7 @@ pub fn get_verifications<'a>(
         .unwrap(),
         Verification::new(
             "02.04",
+            "verifySignatureSetupComponentTallyData",
             fn_0204_verify_signature_setup_component_tally_data,
             metadata_list,
             config,
@@ -50,6 +54,7 @@ pub fn get_verifications<'a>(
         .unwrap(),
         Verification::new(
             "02.05",
+            "verifySignatureElectionEventContext",
             fn_0205_verify_signature_election_event_context,
             metadata_list,
             config,

@@ -21,7 +21,8 @@ pub fn get_verifications<'a>(
 ) -> VerificationList<'a> {
     VerificationList(vec![Verification::new(
         "04.01",
-        fn_verification_0401,
+        "VerifySetupIntegrity",
+        fn_0401_verify_setup_integrity,
         metadata_list,
         config,
     )
@@ -65,7 +66,7 @@ fn validate_vcs_dir<V: VCSDirectoryTrait>(dir: &V, result: &mut VerificationResu
     }
 }
 
-fn fn_verification_0401<D: VerificationDirectoryTrait>(
+fn fn_0401_verify_setup_integrity<D: VerificationDirectoryTrait>(
     dir: &D,
     _config: &'static Config,
     result: &mut VerificationResult,
@@ -117,7 +118,7 @@ mod test {
     fn test_ok() {
         let dir = get_verifier_dir();
         let mut result = VerificationResult::new();
-        fn_verification_0401(&dir, &CONFIG_TEST, &mut result);
+        fn_0401_verify_setup_integrity(&dir, &CONFIG_TEST, &mut result);
         println!("{:?}", result);
         assert!(result.is_ok().unwrap());
     }

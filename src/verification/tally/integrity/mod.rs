@@ -20,7 +20,8 @@ pub fn get_verifications<'a>(
 ) -> VerificationList<'a> {
     VerificationList(vec![Verification::new(
         "09.01",
-        fn_verification_0901,
+        "VerifyTallyIntegrity",
+        fn_0901_verify_tally_integrity,
         metadata_list,
         config,
     )
@@ -74,7 +75,7 @@ fn validate_bb_dir<B: BBDirectoryTrait>(dir: &B, result: &mut VerificationResult
     }
 }
 
-fn fn_verification_0901<D: VerificationDirectoryTrait>(
+fn fn_0901_verify_tally_integrity<D: VerificationDirectoryTrait>(
     dir: &D,
     _config: &'static Config,
     result: &mut VerificationResult,
@@ -97,7 +98,7 @@ mod test {
     fn test_ok() {
         let dir = get_verifier_dir();
         let mut result = VerificationResult::new();
-        fn_verification_0901(&dir, &CONFIG_TEST, &mut result);
+        fn_0901_verify_tally_integrity(&dir, &CONFIG_TEST, &mut result);
         assert!(result.is_ok().unwrap());
     }
 }

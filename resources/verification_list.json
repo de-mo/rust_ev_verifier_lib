@@ -369,7 +369,7 @@
     },
     {
         "id": "09.01",
-        "name": "VerifySetupIntegrity",
+        "name": "VerifyTallyIntegrity",
         "algorithm": "",
         "period": "tally",
         "category": "integrity",

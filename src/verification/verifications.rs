@@ -51,6 +51,7 @@ impl<'a> Verification<'a, VerificationDirectory> {
     /// and not the structs. Then it is possible to mock the data
     pub fn new(
         id: &str,
+        name: &str,
         verification_fn: impl Fn(&VerificationDirectory, &'static Config, &mut VerificationResult)
             + Send
             + Sync
@@ -64,6 +65,14 @@ impl<'a> Verification<'a, VerificationDirectory> {
                 bail!(format!("metadata for verification id {} not found", id))
             }
         };
+        if name != meta_data.name() {
+            bail!(format!(
+                "name {} for verification id {} doesn't match with give name {}",
+                meta_data.name(),
+                id,
+                name
+            ))
+        }
         Ok(Verification {
             id: id.to_string(),
             meta_data,
@@ -188,11 +197,42 @@ mod test {
     use std::path::Path;
 
     #[test]
+    fn test_creation() {
+        fn ok(_: &VerificationDirectory, _: &'static Config, _: &mut VerificationResult) {}
+        let md_list =
+            VerificationMetaDataList::load(CONFIG_TEST.get_verification_list_str()).unwrap();
+        assert!(Verification::new(
+            "01.01",
+            "VerifySetupCompleteness",
+            ok,
+            &md_list,
+            &CONFIG_TEST,
+        )
+        .is_ok());
+        assert!(Verification::new(
+            "20.01",
+            "VerifySetupCompleteness",
+            ok,
+            &md_list,
+            &CONFIG_TEST,
+        )
+        .is_err());
+        assert!(Verification::new("01.01", "Toto", ok, &md_list, &CONFIG_TEST,).is_err());
+    }
+
+    #[test]
     fn run_ok() {
         fn ok(_: &VerificationDirectory, _: &'static Config, _: &mut VerificationResult) {}
         let md_list =
             VerificationMetaDataList::load(CONFIG_TEST.get_verification_list_str()).unwrap();
-        let mut verif = Verification::new("01.01", ok, &md_list, &CONFIG_TEST).unwrap();
+        let mut verif = Verification::new(
+            "01.01",
+            "VerifySetupCompleteness",
+            ok,
+            &md_list,
+            &CONFIG_TEST,
+        )
+        .unwrap();
         assert_eq!(verif.status, VerificationStatus::Stopped);
         assert!(verif.is_ok().is_none());
         assert!(verif.has_errors().is_none());
@@ -216,7 +256,14 @@ mod test {
         }
         let md_list =
             VerificationMetaDataList::load(CONFIG_TEST.get_verification_list_str()).unwrap();
-        let mut verif = Verification::new("01.01", error, &md_list, &CONFIG_TEST).unwrap();
+        let mut verif = Verification::new(
+            "01.01",
+            "VerifySetupCompleteness",
+            error,
+            &md_list,
+            &CONFIG_TEST,
+        )
+        .unwrap();
         assert_eq!(verif.status, VerificationStatus::Stopped);
         assert!(verif.is_ok().is_none());
         assert!(verif.has_errors().is_none());
@@ -241,7 +288,14 @@ mod test {
         }
         let md_list =
             VerificationMetaDataList::load(CONFIG_TEST.get_verification_list_str()).unwrap();
-        let mut verif = Verification::new("01.01", failure, &md_list, &CONFIG_TEST).unwrap();
+        let mut verif = Verification::new(
+            "01.01",
+            "VerifySetupCompleteness",
+            failure,
+            &md_list,
+            &CONFIG_TEST,
+        )
+        .unwrap();
         assert_eq!(verif.status, VerificationStatus::Stopped);
         assert!(verif.is_ok().is_none());
         assert!(verif.has_errors().is_none());

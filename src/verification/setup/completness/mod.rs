@@ -20,7 +20,8 @@ pub fn get_verifications<'a>(
 ) -> VerificationList<'a> {
     VerificationList(vec![Verification::new(
         "01.01",
-        fn_verification_0101,
+        "VerifySetupCompleteness",
+        fn_0101_verify_setup_completeness,
         metadata_list,
         config,
     )
@@ -51,7 +52,7 @@ fn validate_vcs_dir<B: VCSDirectoryTrait>(dir: &B, result: &mut VerificationResu
     }
 }
 
-fn fn_verification_0101<D: VerificationDirectoryTrait>(
+fn fn_0101_verify_setup_completeness<D: VerificationDirectoryTrait>(
     dir: &D,
     _config: &'static Config,
     result: &mut VerificationResult,
@@ -101,7 +102,7 @@ mod test {
     fn test_ok() {
         let dir = get_verifier_dir();
         let mut result = VerificationResult::new();
-        fn_verification_0101(&dir, &CONFIG_TEST, &mut result);
+        fn_0101_verify_setup_completeness(&dir, &CONFIG_TEST, &mut result);
         assert!(result.is_ok().unwrap());
     }
 }

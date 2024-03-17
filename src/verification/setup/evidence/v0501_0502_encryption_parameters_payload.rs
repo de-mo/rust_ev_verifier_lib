@@ -9,7 +9,7 @@ use anyhow::anyhow;
 use log::debug;
 use rust_ev_crypto_primitives::EncryptionParameters;
 
-pub(super) fn fn_verification_0501<D: VerificationDirectoryTrait>(
+pub(super) fn fn_0501_verify_encryption_parameters<D: VerificationDirectoryTrait>(
     dir: &D,
     _config: &'static Config,
     result: &mut VerificationResult,
@@ -63,7 +63,7 @@ pub(super) fn fn_verification_0501<D: VerificationDirectoryTrait>(
     }
 }
 
-pub(super) fn fn_verification_0502<D: VerificationDirectoryTrait>(
+pub(super) fn fn_0502_verify_small_prime_group_members<D: VerificationDirectoryTrait>(
     dir: &D,
     _config: &'static Config,
     result: &mut VerificationResult,
@@ -115,7 +115,7 @@ mod test {
     fn test_500_ok() {
         let dir = get_verifier_dir();
         let mut result = VerificationResult::new();
-        fn_verification_0501(&dir, &CONFIG_TEST, &mut result);
+        fn_0501_verify_encryption_parameters(&dir, &CONFIG_TEST, &mut result);
         assert!(result.is_ok().unwrap());
     }
 
@@ -123,7 +123,7 @@ mod test {
     fn test_501_ok() {
         let dir = get_verifier_dir();
         let mut result = VerificationResult::new();
-        fn_verification_0502(&dir, &CONFIG_TEST, &mut result);
+        fn_0502_verify_small_prime_group_members(&dir, &CONFIG_TEST, &mut result);
         assert!(result.is_ok().unwrap());
     }
 }

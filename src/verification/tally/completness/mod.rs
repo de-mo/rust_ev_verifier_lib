@@ -21,7 +21,8 @@ pub fn get_verifications<'a>(
 ) -> VerificationList<'a> {
     VerificationList(vec![Verification::new(
         "06.01",
-        fn_verification_0601,
+        "VerifyTallyCompleteness",
+        fn_0601_verify_tally_completeness,
         metadata_list,
         config,
     )
@@ -54,7 +55,7 @@ fn validate_bb_dir<B: BBDirectoryTrait>(dir: &B, result: &mut VerificationResult
     }
 }
 
-fn fn_verification_0601<D: VerificationDirectoryTrait>(
+fn fn_0601_verify_tally_completeness<D: VerificationDirectoryTrait>(
     dir: &D,
     _config: &'static Config,
     result: &mut VerificationResult,
@@ -85,7 +86,7 @@ mod test {
     fn test_ok() {
         let dir = get_test_verifier_tally_dir();
         let mut result = VerificationResult::new();
-        fn_verification_0601(&dir, &CONFIG_TEST, &mut result);
+        fn_0601_verify_tally_completeness(&dir, &CONFIG_TEST, &mut result);
         assert!(result.is_ok().unwrap());
     }
 }
