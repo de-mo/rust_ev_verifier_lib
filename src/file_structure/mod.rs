@@ -199,7 +199,7 @@ impl GetFileNameTrait for VerifierDataType {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::config::test::test_dataset_tally_path;
+    use crate::config::test::{test_dataset_setup_path, test_dataset_tally_path};
 
     #[test]
     fn test_setup_files_exist() {
@@ -218,7 +218,7 @@ mod test {
             .exists());
         let path2 = path
             .join("verification_card_sets")
-            .join("681B3488DE4CD4AD7FCED14B7A654169");
+            .join("1B3775CB351C64AC33B754BA3A02AED2");
         assert!(path2
             .join(
                 VerifierDataType::Setup(VerifierSetupDataType::SetupComponentTallyDataPayload)
@@ -232,7 +232,7 @@ mod test {
         let path = test_dataset_tally_path().join("tally");
         let path2 = path
             .join("ballot_boxes")
-            .join("4AB4F95B8114C1DFEDB9586ADBFE36B3");
+            .join("5E70613C80C92E6AC48227492099DF7D");
         assert!(path2
             .join(
                 VerifierDataType::Tally(VerifierTallyDataType::TallyComponentVotesPayload)
@@ -261,7 +261,7 @@ mod test {
 
     #[test]
     fn test_setup_groups_exist() {
-        let path = test_dataset_tally_path().join("setup");
+        let path = test_dataset_setup_path().join("setup");
         assert!(path
             .join(
                 VerifierDataType::Setup(VerifierSetupDataType::ControlComponentPublicKeysPayload)
@@ -270,7 +270,7 @@ mod test {
             .exists());
         let path2 = path
             .join("verification_card_sets")
-            .join("3800FC91D8652090731C69F807565BEF");
+            .join("1B3775CB351C64AC33B754BA3A02AED2");
         assert!(path2
             .join(
                 VerifierDataType::Setup(VerifierSetupDataType::ControlComponentCodeSharesPayload)

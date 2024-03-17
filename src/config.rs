@@ -150,6 +150,20 @@ pub(crate) mod test {
         test_datasets_path().join("dataset-tally")
     }
 
+    pub(crate) fn test_ballot_box_path() -> PathBuf {
+        test_dataset_tally_path()
+            .join("tally")
+            .join("ballot_boxes")
+            .join("5E70613C80C92E6AC48227492099DF7D")
+    }
+
+    pub(crate) fn test_verification_card_set_path() -> PathBuf {
+        test_dataset_setup_path()
+            .join("setup")
+            .join("verification_card_sets")
+            .join("1B3775CB351C64AC33B754BA3A02AED2")
+    }
+
     pub(crate) fn test_xml_path() -> PathBuf {
         test_datasets_path().join("xml")
     }

@@ -104,7 +104,7 @@ mod test {
         assert_eq!(f.get_location(), location);
         assert_eq!(
             f.get_path(),
-            location.join("encryptionParametersPayload.json")
+            location.join("electionEventContextPayload.json")
         );
         let data = f.get_data().unwrap();
         assert!(data.is_setup());
@@ -124,7 +124,7 @@ mod test {
         assert_eq!(f.get_location(), location);
         assert_eq!(
             f.get_path(),
-            location.join("encryptionParametersPayload.json")
+            location.join("electionEventContextPayload.json")
         );
         let data = f.get_data().unwrap();
         assert!(data.is_setup());

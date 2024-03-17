@@ -1,5 +1,5 @@
 use super::super::{
-    common_types::{ExponentiatedEncryptedElement, Signature, EncryptionParametersDef},
+    common_types::{EncryptionParametersDef, ExponentiatedEncryptedElement, Signature},
     implement_trait_verifier_data_json_decode, VerifierDataDecode,
 };
 use super::tally_component_shuffle_payload::VerifiableShuffle;
@@ -32,16 +32,12 @@ pub struct VerifiableDecryptions {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::config::test::test_dataset_tally_path;
+    use crate::config::test::test_ballot_box_path;
     use std::fs;
 
     #[test]
     fn read_data_set() {
-        let path = test_dataset_tally_path()
-            .join("tally")
-            .join("ballot_boxes")
-            .join("4AB4F95B8114C1DFEDB9586ADBFE36B3")
-            .join("controlComponentShufflePayload_1.json");
+        let path = test_ballot_box_path().join("controlComponentShufflePayload_1.json");
         let json = fs::read_to_string(path).unwrap();
         let r_eec = ControlComponentShufflePayload::from_json(&json);
         println!("{:?}", r_eec.as_ref().err());

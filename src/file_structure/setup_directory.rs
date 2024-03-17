@@ -304,7 +304,9 @@ impl VCSDirectoryTrait for VCSDirectory {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::config::test::test_dataset_tally_path as get_location;
+    use crate::config::test::{
+        test_dataset_tally_path as get_location, test_verification_card_set_path,
+    };
 
     #[test]
     fn test_setup_dir() {
@@ -320,10 +322,10 @@ mod test {
             assert_eq!(p.unwrap().control_component_public_keys.node_id, i)
         }
         let expected = [
-            "A4C66F60561BE5EEFD017E5EF6650563",
-            "C165B503B8A3DDD99402EF4DC4267079",
-            "681B3488DE4CD4AD7FCED14B7A654169",
-            "3800FC91D8652090731C69F807565BEF",
+            "1B3775CB351C64AC33B754BA3A02AED2",
+            "6F00E7676CF3D20E19346C7CBDF62A0A",
+            "01983BA322FAA6C9365267EDF16DD323",
+            "E29CAEF477BD4AE4519025542D510985",
         ];
         for d in dir.vcs_directories().iter() {
             let j = expected.iter().position(|l| &d.get_name() == l).unwrap();
@@ -333,10 +335,7 @@ mod test {
 
     #[test]
     fn test_vcs_dir() {
-        let location = get_location()
-            .join("setup")
-            .join("verification_card_sets")
-            .join("3800FC91D8652090731C69F807565BEF");
+        let location = test_verification_card_set_path();
         let dir = VCSDirectory::new(&location);
         assert_eq!(dir.get_location(), location);
         assert!(dir.setup_component_tally_data_payload().is_ok());
