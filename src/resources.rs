@@ -8,7 +8,7 @@ pub static XSD_ECH_0058: &str = include_str!("../resources/schemas/eCH-0058-5-0.
 pub static XSD_ECH_0110: &str = include_str!("../resources/schemas/eCH-0110-4-0.xsd");
 pub static XSD_ECH_0155: &str = include_str!("../resources/schemas/eCH-0155-4-0.xsd");
 pub static XSD_ECH_0222: &str = include_str!("../resources/schemas/eCH-0222-1-0.xsd");
-pub static XSD_CONFIG: &str = include_str!("../resources/schemas/evoting-config-5-0.xsd");
+pub static XSD_CONFIG: &str = include_str!("../resources/schemas/evoting-config-6-0.xsd");
 pub static XSD_DECRYPT: &str = include_str!("../resources/schemas/evoting-decrypt-1-3.xsd");
 
 #[cfg(test)]
