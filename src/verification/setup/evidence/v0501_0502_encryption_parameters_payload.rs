@@ -45,14 +45,14 @@ pub(super) fn fn_0501_verify_encryption_parameters<D: VerificationDirectoryTrait
             "payload p and calculated p are equal: payload: {} / calculated: {}",
             eg.encryption_group.p(),
             eg_test.p()
-        )))
+        )));
     }
     if eg_test.q() != eg.encryption_group.q() {
         result.push(create_verification_failure!(format!(
             "payload q and calculated q are equal: payload: {} / calculated: {}",
             eg.encryption_group.q(),
             eg_test.q()
-        )))
+        )));
     }
     if eg_test.g() != eg.encryption_group.g() {
         result.push(create_verification_failure!(format!(
@@ -99,9 +99,20 @@ pub(super) fn fn_0502_verify_small_prime_group_members<D: VerificationDirectoryT
             eg.small_primes.len()
         )))
     } else if eg.small_primes != primes {
-        result.push(create_verification_failure!(
-            "Small prime group members are not the same"
-        ))
+        let mut i = 0usize;
+        while eg.small_primes[i] == primes[i] {
+            i += 1;
+        }
+        result.push(
+            create_verification_failure!(
+                format!(
+                    "Small prime group members are not the same. First error at position {}: calculated {} / expected {}",
+                    i + 1,
+                    primes[i],
+                    eg.small_primes[i]
+                )
+            )
+        )
     }
 }
 
@@ -112,7 +123,7 @@ mod test {
 
     #[test]
     #[ignore]
-    fn test_500_ok() {
+    fn test_0501_ok() {
         let dir = get_verifier_dir();
         let mut result = VerificationResult::new();
         fn_0501_verify_encryption_parameters(&dir, &CONFIG_TEST, &mut result);
@@ -120,10 +131,18 @@ mod test {
     }
 
     #[test]
-    fn test_501_ok() {
+    fn test_0502_ok() {
         let dir = get_verifier_dir();
         let mut result = VerificationResult::new();
         fn_0502_verify_small_prime_group_members(&dir, &CONFIG_TEST, &mut result);
+        if !result.is_ok().unwrap() {
+            for e in result.errors() {
+                println!("{:?}", e);
+            }
+            for f in result.failures() {
+                println!("{:?}", f);
+            }
+        }
         assert!(result.is_ok().unwrap());
     }
 }
