@@ -28,6 +28,7 @@ impl<'a> From<&'a SetupComponentPublicKeysPayload> for HashableMessage<'a> {
     fn from(value: &'a SetupComponentPublicKeysPayload) -> Self {
         Self::from(vec![
             Self::from(&value.encryption_group),
+            Self::from(&value.election_event_id),
             Self::from(&value.setup_component_public_keys),
         ])
     }

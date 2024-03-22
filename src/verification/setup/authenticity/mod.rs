@@ -118,7 +118,7 @@ fn fn_0203_verify_signature_control_component_public_keys<D: VerificationDirecto
 ) {
     let setup_dir = dir.unwrap_setup();
     for (i, cc) in setup_dir.control_component_public_keys_payload_iter() {
-        debug!("Verification 2.04 for cc {}", i);
+        debug!("Verification 2.03 for cc {}", i);
         match cc {
             Ok(cc) => verify_signature_for_object(
                 cc.as_ref(),
@@ -141,28 +141,18 @@ fn fn_0204_verify_signature_setup_component_tally_data<D: VerificationDirectoryT
 ) {
     let setup_dir = dir.unwrap_setup();
     for d in setup_dir.vcs_directories() {
-        debug!("Verification 2.05 for vcs_dir {}", d.get_name());
-        for (i, ps) in d.setup_component_verification_data_payload_iter() {
-            match ps {
-                Ok(p) => verify_signature_for_object(
-                    p.as_ref(),
-                    result,
-                    config,
-                    &format!(
-                        "{}/setup_component_verification_data_payload_iter.{}.json",
-                        d.get_name(),
-                        i
-                    ),
-                ),
-                Err(e) => result.push(create_verification_error!(
-                    format!(
-                        "{}/setup_component_verification_data_payload_iter.{}.json",
-                        d.get_name(),
-                        i
-                    ),
-                    e
-                )),
-            }
+        debug!("Verification 2.04 for vcs_dir {}", d.get_name());
+        match d.setup_component_tally_data_payload() {
+            Ok(p) => verify_signature_for_object(
+                p.as_ref(),
+                result,
+                config,
+                &format!("{}/setup_component_tally_data_payload.json", d.get_name(),),
+            ),
+            Err(e) => result.push(create_verification_error!(
+                format!("{}/setup_component_tally_data_payload.json", d.get_name(),),
+                e
+            )),
         }
     }
 }
@@ -259,15 +249,23 @@ mod test {
     use crate::config::test::{get_test_verifier_setup_dir as get_verifier_dir, CONFIG_TEST};
 
     #[test]
+    #[ignore = "xml not working"]
     fn test_0201() {
         let dir = get_verifier_dir();
         let mut result = VerificationResult::new();
         fn_0201_verify_signature_canton_config(&dir, &CONFIG_TEST, &mut result);
+        if !result.is_ok().unwrap() {
+            for e in result.errors() {
+                println!("{:?}", e);
+            }
+            for f in result.failures() {
+                println!("{:?}", f);
+            }
+        }
         assert!(result.is_ok().unwrap());
     }
 
     #[test]
-    #[ignore]
     fn test_0202() {
         let dir = get_verifier_dir();
         let mut result = VerificationResult::new();

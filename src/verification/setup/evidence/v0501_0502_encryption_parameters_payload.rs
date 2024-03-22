@@ -122,7 +122,6 @@ mod test {
     use crate::config::test::{get_test_verifier_setup_dir as get_verifier_dir, CONFIG_TEST};
 
     #[test]
-    #[ignore]
     fn test_0501_ok() {
         let dir = get_verifier_dir();
         let mut result = VerificationResult::new();

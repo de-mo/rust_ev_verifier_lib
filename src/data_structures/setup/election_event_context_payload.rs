@@ -29,13 +29,16 @@ implement_trait_verifier_data_json_decode!(ElectionEventContextPayload);
 #[serde(rename_all = "camelCase")]
 pub struct ElectionEventContext {
     pub election_event_id: String,
-    //pub election_event_alias: String,
-    //pub election_event_description: String,
+    pub election_event_alias: String,
+    pub election_event_description: String,
     pub verification_card_set_contexts: Vec<VerificationCardSetContext>,
     #[serde(deserialize_with = "deserialize_string_string_to_datetime")]
     pub start_time: NaiveDateTime,
     #[serde(deserialize_with = "deserialize_string_string_to_datetime")]
     pub finish_time: NaiveDateTime,
+    pub maximum_number_of_voting_options: usize,
+    pub maximum_number_of_selections: usize,
+    pub maximum_number_of_write_ins_plus_one: usize,
 }
 
 #[derive(Deserialize, Debug, Clone)]
@@ -167,6 +170,8 @@ impl<'a> VerifiySignatureTrait<'a> for ElectionEventContextPayload {
 impl<'a> From<&'a ElectionEventContext> for HashableMessage<'a> {
     fn from(value: &'a ElectionEventContext) -> Self {
         let mut elts = vec![Self::from(&value.election_event_id)];
+        elts.push(Self::from(&value.election_event_alias));
+        elts.push(Self::from(&value.election_event_description));
         let l: Vec<HashableMessage> = value
             .verification_card_set_contexts
             .iter()
@@ -175,6 +180,9 @@ impl<'a> From<&'a ElectionEventContext> for HashableMessage<'a> {
         elts.push(Self::from(l));
         elts.push(Self::from(&value.start_time));
         elts.push(Self::from(&value.finish_time));
+        elts.push(Self::from(&value.maximum_number_of_voting_options));
+        elts.push(Self::from(&value.maximum_number_of_selections));
+        elts.push(Self::from(&value.maximum_number_of_write_ins_plus_one));
         Self::from(elts)
     }
 }
@@ -183,19 +191,24 @@ impl<'a> From<&'a VerificationCardSetContext> for HashableMessage<'a> {
     fn from(value: &'a VerificationCardSetContext) -> Self {
         let mut elts = vec![
             Self::from(&value.verification_card_set_id),
+            Self::from(&value.verification_card_set_alias),
+            Self::from(&value.verification_card_set_description),
             Self::from(&value.ballot_box_id),
+            Self::from(&value.ballot_box_start_time),
+            Self::from(&value.ballot_box_finish_time),
             Self::from(value.test_ballot_box),
             Self::from(&value.number_of_voting_cards),
             Self::from(&value.grace_period),
+            Self::from(&value.primes_mapping_table),
         ];
-        let l: Vec<HashableMessage> = value
-            .primes_mapping_table
-            .p_table
-            .iter()
-            .map(Self::from)
-            .collect();
-        elts.push(Self::from(l));
         Self::from(elts)
+    }
+}
+
+impl<'a> From<&'a PrimesMappingTable> for HashableMessage<'a> {
+    fn from(value: &'a PrimesMappingTable) -> Self {
+        let l: Vec<HashableMessage> = value.p_table.iter().map(Self::from).collect();
+        Self::from(vec![Self::from(&value.encryption_group), Self::from(l)])
     }
 }
 
@@ -204,6 +217,8 @@ impl<'a> From<&'a PTableElement> for HashableMessage<'a> {
         Self::from(vec![
             Self::from(&value.actual_voting_option),
             Self::from(&value.encoded_voting_option),
+            Self::from(&value.semantic_information),
+            Self::from(&value.correctness_information),
         ])
     }
 }

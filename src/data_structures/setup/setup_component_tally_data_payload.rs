@@ -27,19 +27,21 @@ implement_trait_verifier_data_json_decode!(SetupComponentTallyDataPayload);
 
 impl<'a> From<&'a SetupComponentTallyDataPayload> for HashableMessage<'a> {
     fn from(value: &'a SetupComponentTallyDataPayload) -> Self {
-        let mut elts = vec![
+        let elts = vec![
             Self::from(&value.election_event_id),
             Self::from(&value.verification_card_set_id),
             Self::from(&value.ballot_box_default_title),
             Self::from(&value.encryption_group),
             Self::from(&value.verification_card_ids),
+            Self::from(&value.verification_card_public_keys),
         ];
-        let l: Vec<HashableMessage> = value
+        /*
+        let l: Vec<Self> = value
             .verification_card_public_keys
             .iter()
-            .map(HashableMessage::from)
+            .map(Self::from)
             .collect();
-        elts.push(Self::from(l));
+        elts.push(Self::from(l)); */
         Self::from(elts)
     }
 }
