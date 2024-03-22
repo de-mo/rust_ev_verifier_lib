@@ -178,9 +178,9 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
 /// Supporting algorithm
 fn verify_encrypted_pccexponentiation_proofs(
     context: &Context,
-    verification_card_ids: &Vec<&String>,
-    setup_verif_data: &Vec<SetupComponentVerificationDataInner>,
-    cc_code_shares: &Vec<ControlComponentCodeShare>,
+    verification_card_ids: &[&String],
+    setup_verif_data: &[SetupComponentVerificationDataInner],
+    cc_code_shares: &[ControlComponentCodeShare],
 ) -> VerificationResult {
     let mut result: VerificationResult = VerificationResult::new();
     debug!(
