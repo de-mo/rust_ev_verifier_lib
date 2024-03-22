@@ -284,14 +284,10 @@ fn verify_encrypted_pccexponentiation_proofs_for_one_vc(
         let pi_exp_pcc_j = cc_code_share
             .encrypted_partial_choice_return_code_exponentiation_proof
             .clone();
-        match verify_exponentiation(
-            context.eg,
-            &gs,
-            &ys,
-            pi_exp_pcc_j.as_tuple(),
-            &i_aux,
-        ) {
-            Err(e) => failures.push(VerificationEvent::Failure { source: anyhow::anyhow!(e) }),
+        match verify_exponentiation(context.eg, &gs, &ys, pi_exp_pcc_j.as_tuple(), &i_aux) {
+            Err(e) => failures.push(VerificationEvent::Failure {
+                source: anyhow::anyhow!(e),
+            }),
             Ok(b) => {
                 if !b {
                     failures.push(create_verification_failure!(format!(
@@ -334,7 +330,6 @@ mod test {
     use crate::config::test::{get_test_verifier_setup_dir as get_verifier_dir, CONFIG_TEST};
 
     #[test]
-    #[ignore]
     fn test_ok() {
         let dir = get_verifier_dir();
         let mut result = VerificationResult::new();

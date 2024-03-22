@@ -532,7 +532,7 @@ mod test {
     }
 
     #[test]
-    #[ignore = "error"]
+    #[ignore = "error with XML"]
     fn test_3_schema_3() {
         let xml = test_xml_path().join("test_3_schema_3.xml");
         let xml_hashable = XMLFileHashable::new_with_schema(&xml, get_schema_test_3(), "");
@@ -551,7 +551,7 @@ mod test {
     }
 
     #[test]
-    #[ignore = "error"]
+    #[ignore = "error with XML"]
     fn test_4_schema_3() {
         let xml = test_xml_path().join("test_4_schema_3.xml");
         let xml_hashable = XMLFileHashable::new_with_schema(&xml, get_schema_test_3(), "");
@@ -570,7 +570,7 @@ mod test {
     }
 
     #[test]
-    #[ignore = "error"]
+    #[ignore = "error with XML"]
     fn test_5_schema_3() {
         let xml = test_xml_path().join("test_5_schema_3.xml");
         let xml_hashable = XMLFileHashable::new_with_schema(&xml, get_schema_test_3(), "");
@@ -589,7 +589,7 @@ mod test {
     }
 
     #[test]
-    #[ignore = "error"]
+    #[ignore = "error with XML"]
     fn test_config() {
         let xml = test_dataset_setup_path()
             .join("setup")
@@ -604,7 +604,7 @@ mod test {
     }
 
     #[test]
-    #[ignore = "error"]
+    #[ignore = "error with XML"]
     fn test_decrypt() {
         let xml = test_dataset_tally_path()
             .join("tally")
@@ -637,7 +637,7 @@ mod test {
     }
 
     #[test]
-    #[ignore = "error"]
+    #[ignore = "error with XML"]
     fn test_0110() {
         let xml = test_dataset_tally_path()
             .join("tally")

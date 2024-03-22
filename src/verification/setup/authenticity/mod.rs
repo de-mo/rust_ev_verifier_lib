@@ -249,7 +249,7 @@ mod test {
     use crate::config::test::{get_test_verifier_setup_dir as get_verifier_dir, CONFIG_TEST};
 
     #[test]
-    #[ignore = "xml not working"]
+    #[ignore = "error with XML"]
     fn test_0201() {
         let dir = get_verifier_dir();
         let mut result = VerificationResult::new();
