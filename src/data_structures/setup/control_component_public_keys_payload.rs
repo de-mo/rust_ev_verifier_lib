@@ -6,7 +6,9 @@ use super::super::{
 use crate::direct_trust::{CertificateAuthority, VerifiySignatureTrait};
 use anyhow::{anyhow, Context};
 use rug::Integer;
-use rust_ev_crypto_primitives::{ByteArray, EncryptionParameters, HashableMessage};
+use rust_ev_crypto_primitives::{
+    ByteArray, EncryptionParameters, HashableMessage, VerifyDomainTrait,
+};
 use serde::Deserialize;
 
 #[derive(Deserialize, Debug, Clone)]
@@ -20,6 +22,8 @@ pub struct ControlComponentPublicKeysPayload {
 }
 
 implement_trait_verifier_data_json_decode!(ControlComponentPublicKeysPayload);
+
+impl VerifyDomainTrait for ControlComponentPublicKeysPayload {}
 
 impl<'a> From<&'a ControlComponentPublicKeysPayload> for HashableMessage<'a> {
     fn from(value: &'a ControlComponentPublicKeysPayload) -> Self {

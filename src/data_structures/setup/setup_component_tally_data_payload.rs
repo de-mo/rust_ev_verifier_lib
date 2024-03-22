@@ -6,7 +6,9 @@ use super::super::{
 use crate::direct_trust::{CertificateAuthority, VerifiySignatureTrait};
 use anyhow::anyhow;
 use rug::Integer;
-use rust_ev_crypto_primitives::{ByteArray, EncryptionParameters, HashableMessage};
+use rust_ev_crypto_primitives::{
+    ByteArray, EncryptionParameters, HashableMessage, VerifyDomainTrait,
+};
 use serde::Deserialize;
 
 #[derive(Deserialize, Debug, Clone)]
@@ -24,6 +26,8 @@ pub struct SetupComponentTallyDataPayload {
 }
 
 implement_trait_verifier_data_json_decode!(SetupComponentTallyDataPayload);
+
+impl VerifyDomainTrait for SetupComponentTallyDataPayload {}
 
 impl<'a> From<&'a SetupComponentTallyDataPayload> for HashableMessage<'a> {
     fn from(value: &'a SetupComponentTallyDataPayload) -> Self {

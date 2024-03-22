@@ -12,7 +12,9 @@ use quick_xml::{
     events::{BytesEnd, BytesStart, Event},
     Reader,
 };
-use rust_ev_crypto_primitives::{ByteArray, HashableMessage, RecursiveHashTrait};
+use rust_ev_crypto_primitives::{
+    ByteArray, HashableMessage, RecursiveHashTrait, VerifyDomainTrait,
+};
 use serde::Deserialize;
 use std::path::{Path, PathBuf};
 
@@ -37,6 +39,8 @@ pub struct PartialDelivery {
     pub voter_from: usize,
     pub voter_to: usize,
 }
+
+impl VerifyDomainTrait for ElectionEventConfiguration {}
 
 impl VerifierDataDecode for ElectionEventConfiguration {
     fn from_xml_file(p: &Path) -> anyhow::Result<Self> {

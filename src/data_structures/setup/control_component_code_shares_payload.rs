@@ -6,7 +6,9 @@ use super::super::{
 use crate::direct_trust::{CertificateAuthority, VerifiySignatureTrait};
 use anyhow::{anyhow, Context};
 use rug::Integer;
-use rust_ev_crypto_primitives::{ByteArray, EncryptionParameters, HashableMessage};
+use rust_ev_crypto_primitives::{
+    ByteArray, EncryptionParameters, HashableMessage, VerifyDomainTrait,
+};
 use serde::Deserialize;
 
 pub type ControlComponentCodeSharesPayload = Vec<ControlComponentCodeSharesPayloadInner>;
@@ -39,6 +41,8 @@ pub struct ControlComponentCodeShare {
     pub exponentiated_encrypted_confirmation_key: ExponentiatedEncryptedElement,
     pub encrypted_confirmation_key_exponentiation_proof: Proof,
 }
+
+impl VerifyDomainTrait for ControlComponentCodeSharesPayloadInner {}
 
 impl<'a> From<&'a ControlComponentCodeSharesPayloadInner> for HashableMessage<'a> {
     fn from(value: &'a ControlComponentCodeSharesPayloadInner) -> Self {

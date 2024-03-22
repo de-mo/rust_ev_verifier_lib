@@ -189,7 +189,7 @@ impl<'a> From<&'a ElectionEventContext> for HashableMessage<'a> {
 
 impl<'a> From<&'a VerificationCardSetContext> for HashableMessage<'a> {
     fn from(value: &'a VerificationCardSetContext) -> Self {
-        let mut elts = vec![
+        Self::from(vec![
             Self::from(&value.verification_card_set_id),
             Self::from(&value.verification_card_set_alias),
             Self::from(&value.verification_card_set_description),
@@ -200,8 +200,7 @@ impl<'a> From<&'a VerificationCardSetContext> for HashableMessage<'a> {
             Self::from(&value.number_of_voting_cards),
             Self::from(&value.grace_period),
             Self::from(&value.primes_mapping_table),
-        ];
-        Self::from(elts)
+        ])
     }
 }
 

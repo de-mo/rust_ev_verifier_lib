@@ -6,7 +6,9 @@ use super::super::{
 use crate::direct_trust::{CertificateAuthority, VerifiySignatureTrait};
 use anyhow::anyhow;
 use rug::Integer;
-use rust_ev_crypto_primitives::{ByteArray, EncryptionParameters, HashableMessage};
+use rust_ev_crypto_primitives::{
+    ByteArray, EncryptionParameters, HashableMessage, VerifyDomainTrait,
+};
 use serde::Deserialize;
 
 #[derive(Deserialize, Debug, Clone)]
@@ -67,6 +69,8 @@ pub struct CorrectnessInformationElt {
     pub number_of_voting_options: usize,
     pub list_of_write_in_options: Vec<usize>,
 }
+
+impl VerifyDomainTrait for SetupComponentVerificationDataPayload {}
 
 impl<'a> VerifiySignatureTrait<'a> for SetupComponentVerificationDataPayload {
     fn get_hashable(&'a self) -> anyhow::Result<HashableMessage<'a>> {
