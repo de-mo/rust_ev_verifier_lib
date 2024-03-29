@@ -160,7 +160,7 @@ mod test {
             location.join("controlComponentPublicKeysPayload.2.json")
         );
         let data = f.get_data().unwrap();
-        assert!(data.is_setup());
+        assert!(data.is_context());
     }
 
     #[test]

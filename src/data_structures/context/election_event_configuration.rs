@@ -151,6 +151,6 @@ mod test {
         assert!(config_res.is_ok());
         let config = config_res.unwrap();
         assert_eq!(config.header.voter_total, 43);
-        assert_eq!(config.signature.signature_contents, "uyCNC5CCTXaRh73R1rY1ZFAUvSckAVOSnsXCzfhvyvzIAsZWbdkZ3KSrvsBMYO8HdYNA1z/rxHPc0Q5D86Xh8CefrE5V74IbJO5HF4hfGCw+XdAwZMBDmtzhVkRyk5DP2XSX1I0Z7oN//LYVk6w9I8vi3wniVCRPmDYlFZHST2igc/gNYZ83Msy26CsgV/y6NNeTfr32e9WaDbfu9EpvqRkCqzF42hW4Xrruq48sv2MbW+SqvnbZlR3yCXgmnPWYBiwAwo5pRcGiIGZyPwK7VH0DkbVIxE+LP/MXhZsHO9Gw7KVxYmKRyr3DQmwIvw2/R0Rul7JSWyMn9PVNQ9/1ZsnTAucfR5ey571z0wpoj32rgpw6lXS3VImD4AVg4IrJqw4Cct1pMExh/kFL1PBPHw1OTHWipuzsMRYd9L3yKBscEOXNJNsGiYQShPzt2LkUzN8orewSIr5ARxy7+LO16uqtozYaBQJToCv1xdByptpR4ysOHU4Re8upxZc2IwDQ");
+        assert_eq!(config.signature.signature_contents, "ctgAK+cygZ89QJ/4XGccw4fl4Yc1MCdsywfJuR5AIs/+SnozxB8USh7UJvl64fxuZ6ks+86tRGazABP+Az/0hEmSxihadlYpGe5b2goqo/TSQzC+Z683sHV1O4B8RGjFYt93xIVpsvs4mYiyktz7ma8IanZk0nNhihhgF0Da07Tv4PmhUqAuzd7IQEYTaTz7RXebOHkH4pG4fA2HbSHeUMlBw0Ni51zx5LOO0riX/bHf4ffnmaqibbOdt88VZegQoNp1gy/R29L6mNrSi01WQnDZ3xxzeFJCG1eSb0MoLoDwNSizC63pqKmQbjhsQbqxDpmkhvSqW5EnvY4VH4rYIaONyjZeivJwUwnLEPbE9k/PnZTAlESCFFR3bHnawEKsRCtwynH0u6IRuTW2iMuupl+UE3tfx8WOsqbWBWNCL9/0WSrvdiJLTcScRmU3ZqW+1La0FG/BhZiI0egBA4KIOYAb9McWlIE7QS8hWJjpQP5xYa+s4SHP63YNr0LvQ1dh");
     }
 }

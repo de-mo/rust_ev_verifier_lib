@@ -188,13 +188,13 @@ mod test {
     fn test_setup_dir() {
         let setup_location = test_datasets_setup_path().join("setup");
         let vcs_location = setup_location.join("verificationCardSets");
-        let dir = SetupDirectory::new(&setup_location);
+        let dir = SetupDirectory::new(&setup_location.parent().unwrap());
         assert_eq!(dir.get_location(), setup_location);
         let expected = [
-            "1B3775CB351C64AC33B754BA3A02AED2",
-            "6F00E7676CF3D20E19346C7CBDF62A0A",
-            "01983BA322FAA6C9365267EDF16DD323",
-            "E29CAEF477BD4AE4519025542D510985",
+            "41AEF809A62BF53C7CFF61AA0925F636",
+            "44D54DAF832C90AB4C7F850A08F6D96A",
+            "73EC6188EBC9FF086400FE6D17F10861",
+            "BFFC067693F0505D500A9BF16E7AC0D4",
         ];
         for d in dir.vcs_directories().iter() {
             let j = expected.iter().position(|l| &d.get_name() == l).unwrap();

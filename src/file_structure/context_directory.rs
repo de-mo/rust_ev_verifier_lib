@@ -245,7 +245,7 @@ mod test {
     fn test_context_dir() {
         let context_location = test_datasets_context_path();
         let vcs_location = context_location.join("verificationCardSets");
-        let dir = ContextDirectory::new(&context_location);
+        let dir = ContextDirectory::new(context_location.parent().unwrap());
         assert_eq!(dir.get_location(), context_location);
         assert!(dir.setup_component_public_keys_payload().is_ok());
         assert!(dir.election_event_context_payload().is_ok());
@@ -254,10 +254,10 @@ mod test {
             assert_eq!(p.unwrap().control_component_public_keys.node_id, i)
         }
         let expected = [
-            "1B3775CB351C64AC33B754BA3A02AED2",
-            "6F00E7676CF3D20E19346C7CBDF62A0A",
-            "01983BA322FAA6C9365267EDF16DD323",
-            "E29CAEF477BD4AE4519025542D510985",
+            "41AEF809A62BF53C7CFF61AA0925F636",
+            "44D54DAF832C90AB4C7F850A08F6D96A",
+            "73EC6188EBC9FF086400FE6D17F10861",
+            "BFFC067693F0505D500A9BF16E7AC0D4",
         ];
         for d in dir.vcs_directories().iter() {
             let j = expected.iter().position(|l| &d.get_name() == l).unwrap();
