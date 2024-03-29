@@ -52,13 +52,16 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
             "VerifA: prime group members and encoding voting options are not the same"
         ))
     }
-    let mut verifb = Integer::zero().clone();
-    for i in (Config::maximum_number_of_voting_options()
-        - Config::maximum_number_of_selectable_voting_options())
-        ..Config::maximum_number_of_selectable_voting_options()
-    {
-        verifb *= ee_context.small_primes[i];
-    }
+    let verifb = ee_context
+        .small_primes
+        .iter()
+        .take(Config::maximum_supported_number_of_selections_psi_sup() - 1)
+        .skip(
+            Config::maximum_number_of_supported_voting_options_n_sup()
+                - Config::maximum_supported_number_of_selections_psi_sup()
+                - 1,
+        )
+        .fold(Integer::zero().clone(), |acc, e| acc * e);
     if &verifb >= ee_context.encryption_group.p() {
         result.push(create_verification_failure!(
             "VerifB: The product of the phi last primes (the largest possible encoded vote) must be smaller than p"

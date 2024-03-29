@@ -1,4 +1,5 @@
-mod v0501_0502_encryption_parameters_payload;
+mod v0501_encryption_parameters;
+mod v0502_verify_small_prime_group_members;
 mod v0503_voting_options;
 mod v0504_key_generation_schnorr_proofs;
 mod v0521_encrypted_pcc_exponentiation_proofs;
@@ -14,7 +15,7 @@ pub fn get_verifications<'a>(
         Verification::new(
             "05.01",
             "VerifyEncryptionParameters",
-            v0501_0502_encryption_parameters_payload::fn_0501_verify_encryption_parameters,
+            v0501_encryption_parameters::fn_0501_verify_encryption_parameters,
             metadata_list,
             config,
         )
@@ -22,7 +23,7 @@ pub fn get_verifications<'a>(
         Verification::new(
             "05.02",
             "VerifySmallPrimeGroupMembers",
-            v0501_0502_encryption_parameters_payload::fn_0502_verify_small_prime_group_members,
+            v0502_verify_small_prime_group_members::fn_0502_verify_small_prime_group_members,
             metadata_list,
             config,
         )

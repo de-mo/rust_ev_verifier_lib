@@ -6,6 +6,9 @@ use super::super::{
 };
 use crate::{
     config::Config,
+    data_structures::setup::setup_component_verification_data_payload::{
+        SetupComponentVerificationDataInner, SetupComponentVerificationDataPayload,
+    },
     file_structure::{
         setup_directory::{SetupDirectoryTrait, VCSDirectoryTrait},
         VerificationDirectoryTrait,
@@ -180,68 +183,6 @@ fn fn_0205_verify_signature_election_event_context<D: VerificationDirectoryTrait
         "election_event_context_payload",
     )
 }
-
-/*
-fn fn_verification_0206<D: VerificationDirectoryTrait>(
-    dir: &D,
-    config: &'static Config,
-    result: &mut VerificationResult,
-) {
-    let setup_dir = dir.unwrap_setup();
-    for d in setup_dir.vcs_directories() {
-        debug!("Verification 2.06 for vcs_dir {}", d.get_name());
-        for (i, rps) in d.control_component_code_shares_payload_iter() {
-            match rps {
-                Ok(ps) => {
-                    for p in ps.iter() {
-                        verify_signature_for_object(
-                            p,
-                            result,
-                            config,
-                            &format!(
-                                "{}/control_component_code_shares_payload.{}.json[{}]",
-                                d.get_name(),
-                                i,
-                                p.node_id
-                            ),
-                        )
-                    }
-                }
-                Err(e) => result.push(create_verification_error!(
-                    format!(
-                        "Error reading {}/control_component_code_shares_payload.{}.json",
-                        d.get_name(),
-                        i
-                    ),
-                    e
-                )),
-            }
-        }
-    }
-}
-
-fn fn_verification_0207<D: VerificationDirectoryTrait>(
-    dir: &D,
-    config: &'static Config,
-    result: &mut VerificationResult,
-) {
-    let setup_dir = dir.unwrap_setup();
-    for d in setup_dir.vcs_directories() {
-        debug!("Verification 2.07 for vcs_dir {}", d.get_name());
-        match d.setup_component_tally_data_payload() {
-            Ok(p) => verify_signature_for_object(
-                p.as_ref(),
-                result,
-                config,
-                &format!("{}/setup_component_tally_data_payload.json", d.get_name(),),
-            ),
-            Err(e) => result.push(create_verification_error!(
-                format!("{}/setup_component_tally_data_payload.json", d.get_name(),),
-                e
-            )),
-        }
-    }
-} */
 
 #[cfg(test)]
 mod test {

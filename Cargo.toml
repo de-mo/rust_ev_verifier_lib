@@ -34,3 +34,4 @@ structopt = "0.3"
 rug = "1.24"
 #rust_ev_crypto_primitives = "0.4"
 rust_ev_crypto_primitives = {path = "../rust_ev_crypto_primitives"}
+regex = "1.10.4"

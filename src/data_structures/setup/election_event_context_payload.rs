@@ -6,7 +6,9 @@ use super::super::{
 use crate::config::Config as VerifierConfig;
 use crate::direct_trust::{CertificateAuthority, VerifiySignatureTrait};
 use anyhow::anyhow;
+use chrono::NaiveDate;
 use chrono::NaiveDateTime;
+use regex::Regex;
 use rust_ev_crypto_primitives::{
     ByteArray, EncryptionParameters, HashableMessage, VerifyDomainTrait,
 };
@@ -99,17 +101,54 @@ impl ElectionEventContext {
     }
 }
 
+fn validate_seed(seed: &str) -> Vec<anyhow::Error> {
+    let mut res = vec![];
+    if seed.len() != 16 {
+        return vec![anyhow!(format!(
+            "The seed {} must be of size 16, actual ist {}",
+            seed,
+            seed.len(),
+        ))];
+    }
+    let re = Regex::new(r"[A-Z]{2}_\d{8}_(TT|TP|PP)\d{2}").unwrap();
+    if !re.is_match(seed) {
+        return vec![anyhow!(format!(
+            "The seed {} does not match the format  CT_YYYYMMDD_XYnm",
+            seed,
+        ))];
+    }
+    let date = seed.get(3..11).unwrap();
+    if let Err(e) = NaiveDate::parse_from_str(date, "%Y%m%d") {
+        res.push(anyhow!(format!(
+            "the date {} of the seed {} is not valid: {}",
+            seed, date, e
+        )))
+    }
+    let event_type = seed.get(12..14).unwrap();
+    if event_type != "TT" && event_type != "TP" && event_type != "PP" {
+        res.push(anyhow!(format!(
+            "the event type {} of the seed {} is not valid. Must be TT, TP or PP",
+            seed, event_type
+        )))
+    }
+    res
+}
+
 impl VerifyDomainTrait for ElectionEventContextPayload {
     fn verifiy_domain(&self) -> Vec<anyhow::Error> {
         let mut res = self.encryption_group.verifiy_domain();
+        // For 05.01 (seed)
+        res.extend(validate_seed(&self.seed));
         // For 5.02
-        if !self.small_primes.len() == VerifierConfig::maximum_number_of_voting_options() {
+        if !self.small_primes.len()
+            == VerifierConfig::maximum_number_of_supported_voting_options_n_sup()
+        {
             res.push(
                 anyhow!(
                     format!(
                         "The list of small primes {} is not equal to the maximal number of voting options {}",
                         self.small_primes.len(),
-                        VerifierConfig::maximum_number_of_voting_options()
+                        VerifierConfig::maximum_number_of_supported_voting_options_n_sup()
                     )
                 )
             );
@@ -239,5 +278,17 @@ mod test {
             println!("{:?}", r_eec.as_ref().unwrap_err());
         }
         assert!(r_eec.is_ok())
+    }
+
+    #[test]
+    fn read_validate_seed() {
+        assert!(validate_seed("SG_20230101_TT01").is_empty());
+        assert!(!validate_seed("SG_20230101_TT0").is_empty());
+        assert!(!validate_seed("Sg_20230101_TT01").is_empty());
+        assert!(!validate_seed("SG_202301a1_TT01").is_empty());
+        assert!(!validate_seed("SG_20230101_tt01").is_empty());
+        assert!(!validate_seed("SG_20230101_TT0a").is_empty());
+        assert!(!validate_seed("SG_20231301_TT01").is_empty());
+        assert!(!validate_seed("SG_20231201_AA01").is_empty());
     }
 }

@@ -51,19 +51,25 @@ impl Config {
     }
 
     /// Maximum number of voting options according to the specification
-    pub fn maximum_number_of_voting_options() -> usize {
-        consts::MAXIMUM_NUMBER_OF_VOTING_OPTIONS
+    pub fn maximum_number_of_supported_voting_options_n_sup() -> usize {
+        consts::MAXIMUM_NUMBER_OF_SUPPORTED_VOTING_OPTIONS_N_SUP
     }
 
-    /// Maximum number of selectable voting options according to the specification
-    pub fn maximum_number_of_selectable_voting_options() -> usize {
-        consts::MAXIMUM_NUMBER_OF_SELECTABLE_VOTING_OPTIONS
+    /// Maximum number of of selectable voting options according to the specification
+    pub fn maximum_supported_number_of_selections_psi_sup() -> usize {
+        consts::MAXIMUM_SUPPORTED_NUMBER_OF_SELECTIONS_PSI_SUP
     }
 
-    /// Maximum number of write-in options according to the specification
+    /// Maximum supported number of write-in options according to the specification
     #[allow(dead_code)]
-    pub fn maximum_number_of_write_in_options() -> usize {
-        consts::MAXIMUM_NUMBER_OF_WRITE_IN_OPTIONS
+    pub fn maximum_supported_number_of_write_in_options() -> usize {
+        consts::MAXIMUM_SUPPORTED_NUMBER_OF_WRITE_IN_OPTIONS
+    }
+
+    /// Maximum supported number of write-in options + 1 to the specification
+    #[allow(dead_code)]
+    pub fn delta_sup() -> usize {
+        consts::MAXIMUM_SUPPORTED_NUMBER_OF_WRITE_IN_OPTIONS + 1
     }
 
     #[allow(dead_code)]

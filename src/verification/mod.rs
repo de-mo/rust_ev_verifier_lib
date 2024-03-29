@@ -61,10 +61,7 @@ fn verify_signature_for_object<'a, T>(
     let ks = match config.keystore() {
         Ok(ks) => ks,
         Err(e) => {
-            result.push(create_verification_error!(
-                "Cannot read keystore in election_event_configuration",
-                e
-            ));
+            result.push(create_verification_error!("Cannot read keystore", e));
             return;
         }
     };
