@@ -75,12 +75,13 @@ impl<'a> VerifiySignatureTrait<'a> for SetupComponentTallyDataPayload {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::config::test::test_verification_card_set_path;
+    use crate::config::test::test_context_verification_card_set_path;
     use std::fs;
 
     #[test]
     fn read_data_set() {
-        let path = test_verification_card_set_path().join("setupComponentTallyDataPayload.json");
+        let path =
+            test_context_verification_card_set_path().join("setupComponentTallyDataPayload.json");
         let json = fs::read_to_string(path).unwrap();
         let r_eec = SetupComponentTallyDataPayload::from_json(&json);
         if r_eec.is_err() {

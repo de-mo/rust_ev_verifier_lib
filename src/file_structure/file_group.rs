@@ -236,17 +236,12 @@ impl FileGroup {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::config::test::test_dataset_setup_path;
+    use crate::config::test::test_datasets_context_path;
     use crate::data_structures::context::VerifierContextDataType;
-    use std::path::PathBuf;
-
-    fn get_location() -> PathBuf {
-        test_dataset_setup_path().join("setup")
-    }
 
     #[test]
     fn test_file_group() {
-        let location = get_location();
+        let location = test_datasets_context_path();
         let fg = FileGroup::new(
             &location,
             VerifierDataType::Context(VerifierContextDataType::ControlComponentPublicKeysPayload),
@@ -263,7 +258,7 @@ mod test {
 
     #[test]
     fn test_get_file_with_number() {
-        let location = get_location();
+        let location = test_datasets_context_path();
         let fg = FileGroup::new(
             &location,
             VerifierDataType::Context(VerifierContextDataType::ControlComponentPublicKeysPayload),
@@ -277,7 +272,7 @@ mod test {
 
     #[test]
     fn test_file_group_not_exist() {
-        let location = get_location().join("toto");
+        let location = test_datasets_context_path().join("toto");
         let fg = FileGroup::new(
             &location,
             VerifierDataType::Context(VerifierContextDataType::ControlComponentPublicKeysPayload),

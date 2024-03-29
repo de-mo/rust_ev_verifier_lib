@@ -238,16 +238,15 @@ impl ContextVCSDirectoryTrait for ContextVCSDirectory {
 mod test {
     use super::*;
     use crate::config::test::{
-        test_dataset_tally_path as get_location, test_verification_card_set_path,
+        test_context_verification_card_set_path, test_datasets_context_path,
     };
 
     #[test]
-    fn test_setup_dir() {
-        let location = get_location();
-        let setup_location = location.join("setup");
-        let vcs_location = setup_location.join("verification_card_sets");
-        let dir = ContextDirectory::new(&location);
-        assert_eq!(dir.get_location(), setup_location);
+    fn test_context_dir() {
+        let context_location = test_datasets_context_path();
+        let vcs_location = context_location.join("verification_card_sets");
+        let dir = ContextDirectory::new(&context_location);
+        assert_eq!(dir.get_location(), context_location);
         assert!(dir.setup_component_public_keys_payload().is_ok());
         assert!(dir.election_event_context_payload().is_ok());
         for (i, p) in dir.control_component_public_keys_payload_iter() {
@@ -267,8 +266,8 @@ mod test {
     }
 
     #[test]
-    fn test_vcs_dir() {
-        let location = test_verification_card_set_path();
+    fn test_context_vcs_dir() {
+        let location = test_context_verification_card_set_path();
         let dir = ContextVCSDirectory::new(&location);
         assert_eq!(dir.get_location(), location);
         assert!(dir.setup_component_tally_data_payload().is_ok());

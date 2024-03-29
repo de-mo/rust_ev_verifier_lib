@@ -142,13 +142,11 @@ impl<'a> VerifiySignatureTrait<'a> for ElectionEventConfiguration {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::config::test::test_dataset_tally_path;
+    use crate::config::test::test_datasets_context_path;
 
     #[test]
     fn read_data_set() {
-        let path = test_dataset_tally_path()
-            .join("setup")
-            .join("configuration-anonymized.xml");
+        let path = test_datasets_context_path().join("configuration-anonymized.xml");
         let config_res = ElectionEventConfiguration::from_xml_file(&path);
         assert!(config_res.is_ok());
         let config = config_res.unwrap();

@@ -154,26 +154,34 @@ pub(crate) mod test {
         CONFIG_TEST.root_dir_path().join("datasets")
     }
 
-    pub(crate) fn test_dataset_setup_path() -> PathBuf {
-        test_datasets_path().join("dataset-setup")
+    pub(crate) fn test_datasets_tally_path() -> PathBuf {
+        test_datasets_path().join(TALLY_DIR_NAME)
     }
 
-    pub(crate) fn test_dataset_tally_path() -> PathBuf {
-        test_datasets_path().join("dataset-tally")
+    pub(crate) fn test_datasets_setup_path() -> PathBuf {
+        test_datasets_path().join(SETUP_DIR_NAME)
+    }
+
+    pub(crate) fn test_datasets_context_path() -> PathBuf {
+        test_datasets_path().join(CONTEXT_DIR_NAME)
     }
 
     pub(crate) fn test_ballot_box_path() -> PathBuf {
-        test_dataset_tally_path()
-            .join("tally")
+        test_datasets_tally_path()
             .join("ballot_boxes")
-            .join("5E70613C80C92E6AC48227492099DF7D")
+            .join("915C2B2C9D6631BABDB6069D6CD6496D")
     }
 
-    pub(crate) fn test_verification_card_set_path() -> PathBuf {
-        test_dataset_setup_path()
-            .join("setup")
+    pub(crate) fn test_context_verification_card_set_path() -> PathBuf {
+        test_datasets_context_path()
             .join("verification_card_sets")
-            .join("1B3775CB351C64AC33B754BA3A02AED2")
+            .join("41AEF809A62BF53C7CFF61AA0925F636")
+    }
+
+    pub(crate) fn test_setup_verification_card_set_path() -> PathBuf {
+        test_datasets_setup_path()
+            .join("verification_card_sets")
+            .join("41AEF809A62BF53C7CFF61AA0925F636")
     }
 
     pub(crate) fn test_xml_path() -> PathBuf {
@@ -181,11 +189,11 @@ pub(crate) mod test {
     }
 
     pub(crate) fn get_test_verifier_tally_dir() -> VerificationDirectory {
-        VerificationDirectory::new(&VerificationPeriod::Tally, &test_dataset_tally_path())
+        VerificationDirectory::new(&VerificationPeriod::Tally, &test_datasets_path())
     }
 
     pub(crate) fn get_test_verifier_setup_dir() -> VerificationDirectory {
-        VerificationDirectory::new(&VerificationPeriod::Setup, &test_dataset_setup_path())
+        VerificationDirectory::new(&VerificationPeriod::Setup, &test_datasets_path())
     }
 
     #[test]

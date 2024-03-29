@@ -81,20 +81,15 @@ impl File {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::config::test::{test_dataset_setup_path, test_dataset_tally_path};
+    use crate::config::test::{test_datasets_context_path, test_datasets_tally_path};
     use crate::data_structures::{
         context::VerifierContextDataType, tally::VerifierTallyDataType, VerifierContextDataTrait,
         VerifierDataType,
     };
-    use std::path::PathBuf;
-
-    fn get_location() -> PathBuf {
-        test_dataset_setup_path().join("setup")
-    }
 
     #[test]
     fn test_file() {
-        let location = get_location();
+        let location = test_datasets_context_path();
         let f = File::new(
             &location,
             &VerifierDataType::Context(VerifierContextDataType::ElectionEventContextPayload),
@@ -114,7 +109,7 @@ mod test {
 
     #[test]
     fn test_file_macro() {
-        let location = get_location();
+        let location = test_datasets_context_path();
         let f = create_file!(
             &location,
             Context,
@@ -134,7 +129,7 @@ mod test {
 
     #[test]
     fn test_file_not_exist() {
-        let location = get_location().join("toto");
+        let location = test_datasets_context_path().join("toto");
         let f = File::new(
             &location,
             &VerifierDataType::Context(VerifierContextDataType::ElectionEventContextPayload),
@@ -152,7 +147,7 @@ mod test {
 
     #[test]
     fn test_file_with_nb() {
-        let location = get_location();
+        let location = test_datasets_context_path();
         let f = File::new(
             &location,
             &VerifierDataType::Context(VerifierContextDataType::ControlComponentPublicKeysPayload),
@@ -170,7 +165,7 @@ mod test {
 
     #[test]
     fn test_file_with_astrerix() {
-        let location = test_dataset_tally_path().join("tally");
+        let location = test_datasets_tally_path();
         let f = File::new(
             &location,
             &VerifierDataType::Tally(VerifierTallyDataType::ECH0110),
@@ -183,7 +178,7 @@ mod test {
 
     #[test]
     fn test_file_with_nb_not_exist() {
-        let location = get_location();
+        let location = test_datasets_context_path();
         let f = File::new(
             &location,
             &VerifierDataType::Context(VerifierContextDataType::ControlComponentPublicKeysPayload),
@@ -201,7 +196,7 @@ mod test {
 
     #[test]
     fn test_file_with_nb_macro() {
-        let location = get_location();
+        let location = test_datasets_context_path();
         let f = create_file!(
             &location,
             Context,

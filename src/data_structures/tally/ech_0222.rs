@@ -6,9 +6,10 @@ use crate::direct_trust::{CertificateAuthority, VerifiySignatureTrait};
 use rust_ev_crypto_primitives::{ByteArray, HashableMessage, RecursiveHashTrait};
 use std::path::{Path, PathBuf};
 
-
 #[derive(Debug, Clone)]
-pub struct ECH0222 {pub path: PathBuf,}
+pub struct ECH0222 {
+    pub path: PathBuf,
+}
 
 impl VerifierDataDecode for ECH0222 {
     fn from_xml_file(p: &Path) -> anyhow::Result<Self> {
@@ -41,11 +42,11 @@ impl<'a> VerifiySignatureTrait<'a> for ECH0222 {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::config::test::test_dataset_tally_path;
+    use crate::config::test::test_datasets_tally_path;
 
     #[test]
     fn read_data_set() {
-        let path = test_dataset_tally_path()
+        let path = test_datasets_tally_path()
             .join("tally")
             .join("eCH-0222_Post_E2E_DEV.xml");
         let ech_0222 = ECH0222::from_xml_file(&path);

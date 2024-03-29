@@ -108,13 +108,12 @@ impl<'a> VerifiySignatureTrait<'a> for ControlComponentCodeSharesPayloadInner {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::config::test::test_verification_card_set_path;
+    use crate::config::test::test_datasets_setup_path;
     use std::fs;
 
     #[test]
     fn read_data_set() {
-        let path =
-            test_verification_card_set_path().join("controlComponentCodeSharesPayload.0.json");
+        let path = test_datasets_setup_path().join("controlComponentCodeSharesPayload.0.json");
         let json = fs::read_to_string(path).unwrap();
         let r_eec = ControlComponentCodeSharesPayload::from_json(&json);
         //println!("{:?}", r_eec);

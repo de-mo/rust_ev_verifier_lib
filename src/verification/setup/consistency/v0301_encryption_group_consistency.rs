@@ -183,14 +183,14 @@ mod test {
         *,
     };
     use crate::config::test::{
-        get_test_verifier_setup_dir as get_verifier_dir, test_dataset_setup_path, CONFIG_TEST,
+        get_test_verifier_setup_dir as get_verifier_dir, test_datasets_path, CONFIG_TEST,
     };
     use crate::{
         data_structures::VerifierContextDataTrait, file_structure::mock::MockVerificationDirectory,
     };
 
     fn get_mock_verifier_dir() -> MockVerificationDirectory {
-        MockVerificationDirectory::new(&VerificationPeriod::Setup, &test_dataset_setup_path())
+        MockVerificationDirectory::new(&VerificationPeriod::Setup, &test_datasets_path())
     }
 
     #[test]

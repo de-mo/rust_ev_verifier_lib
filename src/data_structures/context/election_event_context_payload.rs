@@ -264,14 +264,12 @@ impl<'a> From<&'a PTableElement> for HashableMessage<'a> {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::config::test::test_dataset_tally_path;
+    use crate::config::test::test_datasets_context_path;
     use std::fs;
 
     #[test]
     fn read_data_set() {
-        let path = test_dataset_tally_path()
-            .join("setup")
-            .join("electionEventContextPayload.json");
+        let path = test_datasets_context_path().join("electionEventContextPayload.json");
         let json = fs::read_to_string(path).unwrap();
         let r_eec = ElectionEventContextPayload::from_json(&json);
         if r_eec.is_err() {

@@ -374,7 +374,9 @@ mod test {
         SchemaKind,
     };
     use super::*;
-    use crate::config::test::{test_dataset_setup_path, test_dataset_tally_path, test_xml_path};
+    use crate::config::test::{
+        test_datasets_context_path, test_datasets_tally_path, test_xml_path,
+    };
 
     #[test]
     fn test_1_schema_1() {
@@ -591,7 +593,7 @@ mod test {
     #[test]
     #[ignore = "error with XML"]
     fn test_config() {
-        let xml = test_dataset_setup_path()
+        let xml = test_datasets_context_path()
             .join("setup")
             .join("configuration-anonymized.xml");
         let xml_hashable = XMLFileHashable::new_with_schema(&xml, SchemaKind::Config.schema(), "");
@@ -606,7 +608,7 @@ mod test {
     #[test]
     #[ignore = "error with XML"]
     fn test_decrypt() {
-        let xml = test_dataset_tally_path()
+        let xml = test_datasets_tally_path()
             .join("tally")
             .join("evoting-decrypt_Post_E2E_DEV.xml");
         let xml_hashable = XMLFileHashable::new_with_schema(&xml, SchemaKind::Decrypt.schema(), "");
@@ -620,7 +622,7 @@ mod test {
 
     #[test]
     fn test_0222() {
-        let xml = test_dataset_tally_path()
+        let xml = test_datasets_tally_path()
             .join("tally")
             .join("eCH-0222_Post_E2E_DEV.xml");
         let xml_hashable = XMLFileHashable::new_with_schema(
@@ -639,7 +641,7 @@ mod test {
     #[test]
     #[ignore = "error with XML"]
     fn test_0110() {
-        let xml = test_dataset_tally_path()
+        let xml = test_datasets_tally_path()
             .join("tally")
             .join("eCH-0110_Post_E2E_DEV.xml");
         let xml_hashable = XMLFileHashable::new_with_schema(&xml, SchemaKind::Ech0110.schema(), "");

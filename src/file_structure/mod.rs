@@ -236,11 +236,13 @@ impl GetFileNameTrait for VerifierDataType {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::config::test::{test_dataset_setup_path, test_dataset_tally_path};
+    use crate::config::test::{
+        test_datasets_context_path, test_datasets_setup_path, test_datasets_tally_path,
+    };
 
     #[test]
     fn test_context_files_exist() {
-        let path = test_dataset_tally_path().join("context");
+        let path = test_datasets_context_path();
         assert!(path
             .join(
                 VerifierDataType::Context(VerifierContextDataType::ElectionEventContextPayload)
@@ -266,7 +268,7 @@ mod test {
 
     #[test]
     fn test_tally_files_exist() {
-        let path = test_dataset_tally_path().join("tally");
+        let path = test_datasets_tally_path();
         let path2 = path
             .join("ballot_boxes")
             .join("5E70613C80C92E6AC48227492099DF7D");
@@ -298,7 +300,7 @@ mod test {
 
     #[test]
     fn test_context_groups_exist() {
-        let path = test_dataset_setup_path().join("context");
+        let path = test_datasets_context_path();
         assert!(path
             .join(
                 VerifierDataType::Context(
@@ -311,7 +313,7 @@ mod test {
 
     #[test]
     fn test_setup_groups_exist() {
-        let path = test_dataset_setup_path().join("setup");
+        let path = test_datasets_setup_path();
         let path2 = path
             .join("verification_card_sets")
             .join("1B3775CB351C64AC33B754BA3A02AED2");

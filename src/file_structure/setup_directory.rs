@@ -182,16 +182,13 @@ impl SetupVCSDirectoryTrait for SetupVCSDirectory {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::config::test::{
-        test_dataset_tally_path as get_location, test_verification_card_set_path,
-    };
+    use crate::config::test::{test_datasets_setup_path, test_setup_verification_card_set_path};
 
     #[test]
     fn test_setup_dir() {
-        let location = get_location();
-        let setup_location = location.join("setup");
+        let setup_location = test_datasets_setup_path().join("setup");
         let vcs_location = setup_location.join("verification_card_sets");
-        let dir = SetupDirectory::new(&location);
+        let dir = SetupDirectory::new(&setup_location);
         assert_eq!(dir.get_location(), setup_location);
         let expected = [
             "1B3775CB351C64AC33B754BA3A02AED2",
@@ -207,7 +204,7 @@ mod test {
 
     #[test]
     fn test_vcs_dir() {
-        let location = test_verification_card_set_path();
+        let location = test_setup_verification_card_set_path();
         let dir = SetupVCSDirectory::new(&location);
         assert_eq!(dir.get_location(), location);
         for (i, p) in dir.control_component_code_shares_payload_iter() {
