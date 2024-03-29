@@ -1,6 +1,7 @@
 //! Module implementing the structure of files and directories
 //! to collect data for the verifications
 //!
+pub mod context_directory;
 pub mod file;
 pub mod file_group;
 pub mod setup_directory;
@@ -8,7 +9,8 @@ pub mod tally_directory;
 
 use crate::{
     data_structures::{
-        setup::VerifierSetupDataType, tally::VerifierTallyDataType, VerifierDataType,
+        context::VerifierContextDataType, setup::VerifierSetupDataType,
+        tally::VerifierTallyDataType, VerifierDataType,
     },
     verification::VerificationPeriod,
 };
@@ -16,12 +18,17 @@ use setup_directory::SetupDirectory;
 use std::path::Path;
 use tally_directory::TallyDirectory;
 
-use self::{setup_directory::SetupDirectoryTrait, tally_directory::TallyDirectoryTrait};
+use self::{
+    context_directory::{ContextDirectory, ContextDirectoryTrait},
+    setup_directory::SetupDirectoryTrait,
+    tally_directory::TallyDirectoryTrait,
+};
 
 #[derive(Clone)]
-/// Type represending a VerificationDirectory (subdirectory setup or tally)
+/// Type represending a VerificationDirectory (subdirectory context and setup or tally)
 pub struct VerificationDirectory {
-    setup: SetupDirectory,
+    context: ContextDirectory,
+    setup: Option<SetupDirectory>,
     tally: Option<TallyDirectory>,
 }
 
@@ -91,30 +98,37 @@ pub trait GetFileNameTrait {
 /// All the helpers functions called from `fn_verification` have also to take then traits as parameter
 /// and not the structs. Then it is possible to mock the data
 pub trait VerificationDirectoryTrait {
+    type ContextDirType: ContextDirectoryTrait;
     type SetupDirType: SetupDirectoryTrait;
     type TallyDirType: TallyDirectoryTrait;
 
-    /// Unwrap setup and give a reference to S
+    /// Reference to context
+    fn context(&self) -> &Self::ContextDirType;
+
+    /// Unwrap setup and give a reference to the directory
     ///
-    /// panic if type is tally
+    /// panic if other type
     fn unwrap_setup(&self) -> &Self::SetupDirType;
 
-    /// Unwrap tally and give a reference to S
+    /// Unwrap tally and give a reference to the directory
     ///
-    /// panic if type is seup
+    /// panic if other type
     fn unwrap_tally(&self) -> &Self::TallyDirType;
 }
 
 impl VerificationDirectory {
     /// Create a new VerificationDirectory
     pub fn new(period: &VerificationPeriod, location: &Path) -> Self {
+        let context = ContextDirectory::new(location);
         match period {
             VerificationPeriod::Setup => VerificationDirectory {
-                setup: SetupDirectory::new(location),
+                context,
+                setup: Some(SetupDirectory::new(location)),
                 tally: None,
             },
             VerificationPeriod::Tally => VerificationDirectory {
-                setup: SetupDirectory::new(location),
+                context,
+                setup: None,
                 tally: Some(TallyDirectory::new(location)),
             },
         }
@@ -123,25 +137,39 @@ impl VerificationDirectory {
     /// Is setup
     #[allow(dead_code)]
     pub fn is_setup(&self) -> bool {
-        self.tally.is_none()
+        self.setup.is_some()
     }
 
     /// Is tally
     #[allow(dead_code)]
     pub fn is_tally(&self) -> bool {
-        !self.is_setup()
+        self.tally.is_some()
+    }
+
+    /// Are the entries valid
+    #[allow(dead_code)]
+    pub fn is_valid(&self) -> bool {
+        self.is_setup() != self.is_tally()
     }
 }
 
 impl VerificationDirectoryTrait for VerificationDirectory {
+    type ContextDirType = ContextDirectory;
     type SetupDirType = SetupDirectory;
     type TallyDirType = TallyDirectory;
+
+    fn context(&self) -> &ContextDirectory {
+        &self.context
+    }
 
     /// Unwrap setup and give a reference to S
     ///
     /// panic if type is tally
     fn unwrap_setup(&self) -> &SetupDirectory {
-        &self.setup
+        match &self.setup {
+            Some(s) => s,
+            None => panic!("called `unwrap_setup()` on a `Tally` value"),
+        }
     }
 
     /// Unwrap tally and give a reference to S
@@ -155,18 +183,26 @@ impl VerificationDirectoryTrait for VerificationDirectory {
     }
 }
 
-impl GetFileNameTrait for VerifierSetupDataType {
+impl GetFileNameTrait for VerifierContextDataType {
     fn get_raw_file_name(&self) -> String {
         let s = match self {
             Self::ElectionEventContextPayload => "electionEventContextPayload.json",
             Self::SetupComponentPublicKeysPayload => "setupComponentPublicKeysPayload.json",
             Self::ControlComponentPublicKeysPayload => "controlComponentPublicKeysPayload.{}.json",
+            Self::SetupComponentTallyDataPayload => "setupComponentTallyDataPayload.json",
+            Self::ElectionEventConfiguration => "configuration-anonymized.xml",
+        };
+        s.to_string()
+    }
+}
+
+impl GetFileNameTrait for VerifierSetupDataType {
+    fn get_raw_file_name(&self) -> String {
+        let s = match self {
             Self::SetupComponentVerificationDataPayload => {
                 "setupComponentVerificationDataPayload.{}.json"
             }
             Self::ControlComponentCodeSharesPayload => "controlComponentCodeSharesPayload.{}.json",
-            Self::SetupComponentTallyDataPayload => "setupComponentTallyDataPayload.json",
-            Self::ElectionEventConfiguration => "configuration-anonymized.xml",
         };
         s.to_string()
     }
@@ -190,6 +226,7 @@ impl GetFileNameTrait for VerifierTallyDataType {
 impl GetFileNameTrait for VerifierDataType {
     fn get_raw_file_name(&self) -> String {
         match self {
+            VerifierDataType::Context(c) => c.get_raw_file_name(),
             VerifierDataType::Setup(t) => t.get_raw_file_name(),
             VerifierDataType::Tally(t) => t.get_raw_file_name(),
         }
@@ -202,17 +239,17 @@ mod test {
     use crate::config::test::{test_dataset_setup_path, test_dataset_tally_path};
 
     #[test]
-    fn test_setup_files_exist() {
-        let path = test_dataset_tally_path().join("setup");
+    fn test_context_files_exist() {
+        let path = test_dataset_tally_path().join("context");
         assert!(path
             .join(
-                VerifierDataType::Setup(VerifierSetupDataType::ElectionEventContextPayload)
+                VerifierDataType::Context(VerifierContextDataType::ElectionEventContextPayload)
                     .get_file_name(None)
             )
             .exists());
         assert!(path
             .join(
-                VerifierDataType::Setup(VerifierSetupDataType::SetupComponentPublicKeysPayload)
+                VerifierDataType::Context(VerifierContextDataType::SetupComponentPublicKeysPayload)
                     .get_file_name(None)
             )
             .exists());
@@ -221,7 +258,7 @@ mod test {
             .join("1B3775CB351C64AC33B754BA3A02AED2");
         assert!(path2
             .join(
-                VerifierDataType::Setup(VerifierSetupDataType::SetupComponentTallyDataPayload)
+                VerifierDataType::Context(VerifierContextDataType::SetupComponentTallyDataPayload)
                     .get_file_name(None)
             )
             .exists());
@@ -260,14 +297,21 @@ mod test {
     }
 
     #[test]
-    fn test_setup_groups_exist() {
-        let path = test_dataset_setup_path().join("setup");
+    fn test_context_groups_exist() {
+        let path = test_dataset_setup_path().join("context");
         assert!(path
             .join(
-                VerifierDataType::Setup(VerifierSetupDataType::ControlComponentPublicKeysPayload)
-                    .get_file_name(Some(1))
+                VerifierDataType::Context(
+                    VerifierContextDataType::ControlComponentPublicKeysPayload
+                )
+                .get_file_name(Some(1))
             )
             .exists());
+    }
+
+    #[test]
+    fn test_setup_groups_exist() {
+        let path = test_dataset_setup_path().join("setup");
         let path2 = path
             .join("verification_card_sets")
             .join("1B3775CB351C64AC33B754BA3A02AED2");
@@ -311,20 +355,27 @@ pub mod mock {
     //!    fn_verification(&mock_dir, &mut result);
     //! ```
     use super::{
-        setup_directory::mock::MockSetupDirectory, tally_directory::mock::MockTallyDirectory, *,
+        context_directory::mock::MockContextDirectory, setup_directory::mock::MockSetupDirectory,
+        tally_directory::mock::MockTallyDirectory, *,
     };
 
     /// Mock for [VerificationDirectory]
     pub struct MockVerificationDirectory {
-        setup: MockSetupDirectory,
+        context: MockContextDirectory,
+        setup: Option<MockSetupDirectory>,
         tally: Option<MockTallyDirectory>,
     }
 
     impl VerificationDirectoryTrait for MockVerificationDirectory {
+        type ContextDirType = MockContextDirectory;
         type SetupDirType = MockSetupDirectory;
         type TallyDirType = MockTallyDirectory;
+
         fn unwrap_setup(&self) -> &MockSetupDirectory {
-            &self.setup
+            match &self.setup {
+                Some(t) => t,
+                None => panic!("called `unwrap_setup()` on a `Tally` value"),
+            }
         }
 
         fn unwrap_tally(&self) -> &MockTallyDirectory {
@@ -333,26 +384,41 @@ pub mod mock {
                 None => panic!("called `unwrap_tally()` on a `Setup` value"),
             }
         }
+
+        fn context(&self) -> &Self::ContextDirType {
+            &self.context
+        }
     }
 
     impl MockVerificationDirectory {
         /// Create a new [MockVerificationDirectory]
         pub fn new(period: &VerificationPeriod, location: &Path) -> Self {
+            let context = MockContextDirectory::new(location);
             match period {
                 VerificationPeriod::Setup => MockVerificationDirectory {
-                    setup: MockSetupDirectory::new(location),
+                    context,
+                    setup: Some(MockSetupDirectory::new(location)),
                     tally: None,
                 },
                 VerificationPeriod::Tally => MockVerificationDirectory {
-                    setup: MockSetupDirectory::new(location),
+                    context,
+                    setup: None,
                     tally: Some(MockTallyDirectory::new(location)),
                 },
             }
         }
 
+        /// Context mut
+        pub fn context_mut(&mut self) -> &mut MockContextDirectory {
+            &mut self.context
+        }
+
         /// Unwrap [MockSetupDirectory] as mutable
         pub fn unwrap_setup_mut(&mut self) -> &mut MockSetupDirectory {
-            &mut self.setup
+            match &mut self.setup {
+                Some(t) => t,
+                None => panic!("called `unwrap_tally()` on a `Setup` value"),
+            }
         }
 
         /// Unwrap [TallyDirectory] as mutable

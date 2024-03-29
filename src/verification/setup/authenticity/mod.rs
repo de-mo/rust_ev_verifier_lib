@@ -6,11 +6,8 @@ use super::super::{
 };
 use crate::{
     config::Config,
-    data_structures::setup::setup_component_verification_data_payload::{
-        SetupComponentVerificationDataInner, SetupComponentVerificationDataPayload,
-    },
     file_structure::{
-        setup_directory::{SetupDirectoryTrait, VCSDirectoryTrait},
+        context_directory::{ContextDirectoryTrait, ContextVCSDirectoryTrait},
         VerificationDirectoryTrait,
     },
     verification::meta_data::VerificationMetaDataList,
@@ -71,8 +68,8 @@ fn fn_0201_verify_signature_canton_config<D: VerificationDirectoryTrait>(
     config: &'static Config,
     result: &mut VerificationResult,
 ) {
-    let setup_dir = dir.unwrap_setup();
-    let ee_config = match setup_dir.election_event_configuration() {
+    let context_dir = dir.context();
+    let ee_config = match context_dir.election_event_configuration() {
         Ok(p) => p,
         Err(e) => {
             result.push(create_verification_error!(
@@ -95,8 +92,8 @@ fn fn_0202_verify_signature_setup_component_public_keys<D: VerificationDirectory
     config: &'static Config,
     result: &mut VerificationResult,
 ) {
-    let setup_dir = dir.unwrap_setup();
-    let eg = match setup_dir.setup_component_public_keys_payload() {
+    let context_dir = dir.context();
+    let eg = match context_dir.setup_component_public_keys_payload() {
         Ok(p) => p,
         Err(e) => {
             result.push(create_verification_error!(
@@ -119,8 +116,8 @@ fn fn_0203_verify_signature_control_component_public_keys<D: VerificationDirecto
     config: &'static Config,
     result: &mut VerificationResult,
 ) {
-    let setup_dir = dir.unwrap_setup();
-    for (i, cc) in setup_dir.control_component_public_keys_payload_iter() {
+    let context_dir = dir.context();
+    for (i, cc) in context_dir.control_component_public_keys_payload_iter() {
         debug!("Verification 2.03 for cc {}", i);
         match cc {
             Ok(cc) => verify_signature_for_object(
@@ -142,8 +139,8 @@ fn fn_0204_verify_signature_setup_component_tally_data<D: VerificationDirectoryT
     config: &'static Config,
     result: &mut VerificationResult,
 ) {
-    let setup_dir = dir.unwrap_setup();
-    for d in setup_dir.vcs_directories() {
+    let context_dir = dir.context();
+    for d in context_dir.vcs_directories() {
         debug!("Verification 2.04 for vcs_dir {}", d.get_name());
         match d.setup_component_tally_data_payload() {
             Ok(p) => verify_signature_for_object(
@@ -165,8 +162,8 @@ fn fn_0205_verify_signature_election_event_context<D: VerificationDirectoryTrait
     config: &'static Config,
     result: &mut VerificationResult,
 ) {
-    let setup_dir = dir.unwrap_setup();
-    let rp = match setup_dir.election_event_context_payload() {
+    let context_dir = dir.context();
+    let rp = match context_dir.election_event_context_payload() {
         Ok(p) => p,
         Err(e) => {
             result.push(create_verification_error!(

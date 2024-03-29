@@ -83,8 +83,8 @@ mod test {
     use super::*;
     use crate::config::test::{test_dataset_setup_path, test_dataset_tally_path};
     use crate::data_structures::{
-        setup::VerifierSetupDataType, tally::VerifierTallyDataType, VerifierDataType,
-        VerifierSetupDataTrait,
+        context::VerifierContextDataType, tally::VerifierTallyDataType, VerifierContextDataTrait,
+        VerifierDataType,
     };
     use std::path::PathBuf;
 
@@ -97,7 +97,7 @@ mod test {
         let location = get_location();
         let f = File::new(
             &location,
-            &VerifierDataType::Setup(VerifierSetupDataType::ElectionEventContextPayload),
+            &VerifierDataType::Context(VerifierContextDataType::ElectionEventContextPayload),
             None,
         );
         assert!(f.exists());
@@ -107,7 +107,7 @@ mod test {
             location.join("electionEventContextPayload.json")
         );
         let data = f.get_data().unwrap();
-        assert!(data.is_setup());
+        assert!(data.is_context());
         let enc_data = data.election_event_context_payload();
         assert!(enc_data.is_some())
     }
@@ -117,8 +117,8 @@ mod test {
         let location = get_location();
         let f = create_file!(
             &location,
-            Setup,
-            VerifierSetupDataType::ElectionEventContextPayload
+            Context,
+            VerifierContextDataType::ElectionEventContextPayload
         );
         assert!(f.exists());
         assert_eq!(f.get_location(), location);
@@ -127,7 +127,7 @@ mod test {
             location.join("electionEventContextPayload.json")
         );
         let data = f.get_data().unwrap();
-        assert!(data.is_setup());
+        assert!(data.is_context());
         let enc_data = data.election_event_context_payload();
         assert!(enc_data.is_some())
     }
@@ -137,7 +137,7 @@ mod test {
         let location = get_location().join("toto");
         let f = File::new(
             &location,
-            &VerifierDataType::Setup(VerifierSetupDataType::ElectionEventContextPayload),
+            &VerifierDataType::Context(VerifierContextDataType::ElectionEventContextPayload),
             None,
         );
         assert!(!f.exists());
@@ -155,7 +155,7 @@ mod test {
         let location = get_location();
         let f = File::new(
             &location,
-            &VerifierDataType::Setup(VerifierSetupDataType::ControlComponentPublicKeysPayload),
+            &VerifierDataType::Context(VerifierContextDataType::ControlComponentPublicKeysPayload),
             Some(2),
         );
         assert!(f.exists());
@@ -186,7 +186,7 @@ mod test {
         let location = get_location();
         let f = File::new(
             &location,
-            &VerifierDataType::Setup(VerifierSetupDataType::ControlComponentPublicKeysPayload),
+            &VerifierDataType::Context(VerifierContextDataType::ControlComponentPublicKeysPayload),
             Some(6),
         );
         assert!(!f.exists());
@@ -204,8 +204,8 @@ mod test {
         let location = get_location();
         let f = create_file!(
             &location,
-            Setup,
-            VerifierSetupDataType::ControlComponentPublicKeysPayload,
+            Context,
+            VerifierContextDataType::ControlComponentPublicKeysPayload,
             2
         );
         assert!(f.exists());
@@ -215,6 +215,6 @@ mod test {
             location.join("controlComponentPublicKeysPayload.2.json")
         );
         let data = f.get_data().unwrap();
-        assert!(data.is_setup());
+        assert!(data.is_context());
     }
 }

@@ -4,7 +4,8 @@ use super::super::super::result::{
 use crate::{
     config::Config,
     file_structure::{
-        setup_directory::{SetupDirectoryTrait, VCSDirectoryTrait},
+        context_directory::{ContextDirectoryTrait, ContextVCSDirectoryTrait},
+        setup_directory::{SetupDirectoryTrait, SetupVCSDirectoryTrait},
         VerificationDirectoryTrait,
     },
 };
@@ -25,7 +26,7 @@ fn test_election_event_id(
     }
 }
 
-fn test_ee_id_for_vcs_dir<V: VCSDirectoryTrait>(
+fn test_ee_id_for_context_vcs_dir<V: ContextVCSDirectoryTrait>(
     dir: &V,
     expected: &String,
     result: &mut VerificationResult,
@@ -45,6 +46,13 @@ fn test_ee_id_for_vcs_dir<V: VCSDirectoryTrait>(
             e
         )),
     }
+}
+
+fn test_ee_id_for_setup_vcs_dir<V: SetupVCSDirectoryTrait>(
+    dir: &V,
+    expected: &String,
+    result: &mut VerificationResult,
+) {
     for (i, f) in dir.control_component_code_shares_payload_iter() {
         match f {
             Err(e) => result.push(create_verification_error!(
@@ -101,8 +109,9 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
     _config: &'static Config,
     result: &mut VerificationResult,
 ) {
+    let context_dir = dir.context();
     let setup_dir = dir.unwrap_setup();
-    let ee_id = match setup_dir.election_event_context_payload() {
+    let ee_id = match context_dir.election_event_context_payload() {
         Ok(o) => o.election_event_context.election_event_id,
         Err(e) => {
             result.push(create_verification_error!(
@@ -112,7 +121,7 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
             return;
         }
     };
-    match setup_dir.setup_component_public_keys_payload() {
+    match context_dir.setup_component_public_keys_payload() {
         Ok(p) => test_election_event_id(
             &p.election_event_id,
             &ee_id,
@@ -124,7 +133,7 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
             e
         )),
     }
-    for (i, f) in setup_dir.control_component_public_keys_payload_iter() {
+    for (i, f) in context_dir.control_component_public_keys_payload_iter() {
         match f {
             Err(e) => result.push(create_verification_error!(
                 format!(
@@ -141,8 +150,11 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
             ),
         }
     }
+    for vcs in context_dir.vcs_directories().iter() {
+        test_ee_id_for_context_vcs_dir(vcs, &ee_id, result);
+    }
     for vcs in setup_dir.vcs_directories().iter() {
-        test_ee_id_for_vcs_dir(vcs, &ee_id, result);
+        test_ee_id_for_setup_vcs_dir(vcs, &ee_id, result);
     }
 }
 

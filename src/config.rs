@@ -7,6 +7,7 @@ use rust_ev_crypto_primitives::{CertificateExtension, Keystore};
 use std::path::{Path, PathBuf};
 
 // Directory structure
+pub const CONTEXT_DIR_NAME: &str = "context";
 pub const SETUP_DIR_NAME: &str = "setup";
 pub const TALLY_DIR_NAME: &str = "tally";
 const VCS_DIR_NAME: &str = "verification_card_sets";
@@ -80,6 +81,11 @@ impl Config {
     #[allow(dead_code)]
     pub fn maximum_actual_voting_option_length() -> usize {
         consts::MAXIMUM_ACTUAL_VOTING_OPTION_LENGTH
+    }
+
+    /// The name of the context directory
+    pub fn context_dir_name() -> &'static str {
+        CONTEXT_DIR_NAME
     }
 
     /// The name of the setup directory

@@ -13,7 +13,6 @@ use self::result::{
 use crate::{config::Config, direct_trust::VerifiySignatureTrait};
 use anyhow::{anyhow, bail, Result};
 use log::debug;
-use rust_ev_crypto_primitives::{HashableMessage, Keystore};
 use std::fmt::Display;
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]

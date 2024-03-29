@@ -4,7 +4,8 @@ use super::super::super::result::{
 use crate::{
     config::Config,
     file_structure::{
-        setup_directory::{SetupDirectoryTrait, VCSDirectoryTrait},
+        context_directory::{ContextDirectoryTrait, ContextVCSDirectoryTrait},
+        setup_directory::{SetupDirectoryTrait, SetupVCSDirectoryTrait},
         VerificationDirectoryTrait,
     },
 };
@@ -38,7 +39,29 @@ fn verify_encryption_group(
     }
 }
 
-fn verify_encryption_group_for_vcs_dir<V: VCSDirectoryTrait>(
+fn verify_encryption_group_for_context_vcs_dir<V: ContextVCSDirectoryTrait>(
+    dir: &V,
+    eg: &EncryptionParameters,
+    result: &mut VerificationResult,
+) {
+    match dir.setup_component_tally_data_payload() {
+        Ok(p) => verify_encryption_group(
+            &p.encryption_group,
+            eg,
+            &format!("{}/setup_component_tally_data_payload", dir.get_name()),
+            result,
+        ),
+        Err(e) => result.push(create_verification_error!(
+            format!(
+                "{}/setup_component_tally_data_payload has wrong format",
+                dir.get_name()
+            ),
+            e
+        )),
+    }
+}
+
+fn verify_encryption_group_for_setup_vcs_dir<V: SetupVCSDirectoryTrait>(
     dir: &V,
     eg: &EncryptionParameters,
     result: &mut VerificationResult,
@@ -93,21 +116,6 @@ fn verify_encryption_group_for_vcs_dir<V: VCSDirectoryTrait>(
             )),
         }
     }
-    match dir.setup_component_tally_data_payload() {
-        Ok(p) => verify_encryption_group(
-            &p.encryption_group,
-            eg,
-            &format!("{}/setup_component_tally_data_payload", dir.get_name()),
-            result,
-        ),
-        Err(e) => result.push(create_verification_error!(
-            format!(
-                "{}/setup_component_tally_data_payload has wrong format",
-                dir.get_name()
-            ),
-            e
-        )),
-    }
 }
 
 pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
@@ -115,8 +123,9 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
     _config: &'static Config,
     result: &mut VerificationResult,
 ) {
+    let config_dir = dir.context();
     let setup_dir = dir.unwrap_setup();
-    let eg = match setup_dir.election_event_context_payload() {
+    let eg = match config_dir.election_event_context_payload() {
         Ok(p) => p.encryption_group,
         Err(e) => {
             result.push(create_verification_error!(
@@ -126,7 +135,7 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
             return;
         }
     };
-    for (i, f) in setup_dir.control_component_public_keys_payload_iter() {
+    for (i, f) in config_dir.control_component_public_keys_payload_iter() {
         match f {
             Ok(cc) => verify_encryption_group(
                 &cc.encryption_group,
@@ -143,7 +152,7 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
             )),
         }
     }
-    match setup_dir.setup_component_public_keys_payload() {
+    match config_dir.setup_component_public_keys_payload() {
         Ok(p) => verify_encryption_group(
             &p.encryption_group,
             &eg,
@@ -155,8 +164,13 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
             e
         )),
     }
+
+    for vcs in config_dir.vcs_directories().iter() {
+        verify_encryption_group_for_context_vcs_dir(vcs, &eg, result);
+    }
+
     for vcs in setup_dir.vcs_directories().iter() {
-        verify_encryption_group_for_vcs_dir(vcs, &eg, result);
+        verify_encryption_group_for_setup_vcs_dir(vcs, &eg, result);
     }
 }
 
@@ -172,7 +186,7 @@ mod test {
         get_test_verifier_setup_dir as get_verifier_dir, test_dataset_setup_path, CONFIG_TEST,
     };
     use crate::{
-        data_structures::VerifierSetupDataTrait, file_structure::mock::MockVerificationDirectory,
+        data_structures::VerifierContextDataTrait, file_structure::mock::MockVerificationDirectory,
     };
 
     fn get_mock_verifier_dir() -> MockVerificationDirectory {
@@ -228,13 +242,10 @@ mod test {
         let mut mock_dir = get_mock_verifier_dir();
         fn_verification(&mock_dir, &CONFIG_TEST, &mut result);
         assert!(result.is_ok().unwrap());
-        let mut eec = mock_dir
-            .unwrap_setup()
-            .election_event_context_payload()
-            .unwrap();
+        let mut eec = mock_dir.context().election_event_context_payload().unwrap();
         eec.encryption_group.set_p(&Integer::from(1234usize));
         mock_dir
-            .unwrap_setup_mut()
+            .context_mut()
             .mock_election_event_context_payload(&Ok(&eec));
         fn_verification(&mock_dir, &CONFIG_TEST, &mut result);
         assert!(result.has_failures().unwrap());
@@ -245,7 +256,7 @@ mod test {
         let mut result = VerificationResult::new();
         let mut mock_dir = get_mock_verifier_dir();
         let mut cc_pk = mock_dir
-            .unwrap_setup()
+            .context()
             .control_component_public_keys_payload_group()
             .get_file_with_number(2)
             .get_data()
@@ -254,7 +265,7 @@ mod test {
         cc_pk.encryption_group.set_p(&Integer::from(1234usize));
         cc_pk.encryption_group.set_q(&Integer::from(1234usize));
         mock_dir
-            .unwrap_setup_mut()
+            .context_mut()
             .mock_control_component_public_keys_payloads(2, &Ok(&cc_pk));
         fn_verification(&mock_dir, &CONFIG_TEST, &mut result);
         assert!(result.has_failures().unwrap());

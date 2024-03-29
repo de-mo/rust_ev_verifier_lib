@@ -4,7 +4,7 @@ use super::super::super::result::{
 use crate::{
     config::Config,
     data_structures::common_types::Proof,
-    file_structure::{setup_directory::SetupDirectoryTrait, VerificationDirectoryTrait},
+    file_structure::{context_directory::ContextDirectoryTrait, VerificationDirectoryTrait},
 };
 use anyhow::anyhow;
 use log::debug;
@@ -18,8 +18,8 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
     _config: &'static Config,
     result: &mut VerificationResult,
 ) {
-    let setup_dir = dir.unwrap_setup();
-    let ee_context = match setup_dir.election_event_context_payload() {
+    let context_dir = dir.context();
+    let ee_context = match context_dir.election_event_context_payload() {
         Ok(eg) => eg,
         Err(e) => {
             result.push(create_verification_error!(
@@ -29,7 +29,7 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
             return;
         }
     };
-    let setup_ppk = match setup_dir.setup_component_public_keys_payload() {
+    let setup_ppk = match context_dir.setup_component_public_keys_payload() {
         Ok(eg) => eg,
         Err(e) => {
             result.push(create_verification_error!(

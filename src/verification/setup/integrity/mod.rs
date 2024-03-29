@@ -6,7 +6,8 @@ use super::super::{
 use crate::{
     config::Config,
     file_structure::{
-        setup_directory::{SetupDirectoryTrait, VCSDirectoryTrait},
+        context_directory::{ContextDirectoryTrait, ContextVCSDirectoryTrait},
+        setup_directory::{SetupDirectoryTrait, SetupVCSDirectoryTrait},
         VerificationDirectoryTrait,
     },
     verification::meta_data::VerificationMetaDataList,
@@ -29,7 +30,7 @@ pub fn get_verifications<'a>(
     .unwrap()])
 }
 
-fn validate_vcs_dir<V: VCSDirectoryTrait>(dir: &V, result: &mut VerificationResult) {
+fn validate_context_vcs_dir<V: ContextVCSDirectoryTrait>(dir: &V, result: &mut VerificationResult) {
     match dir.setup_component_tally_data_payload() {
         Ok(d) => {
             for e in d.verifiy_domain() {
@@ -50,6 +51,9 @@ fn validate_vcs_dir<V: VCSDirectoryTrait>(dir: &V, result: &mut VerificationResu
             e
         )),
     }
+}
+
+fn validate_setup_vcs_dir<V: SetupVCSDirectoryTrait>(dir: &V, result: &mut VerificationResult) {
     for (i, f) in dir.control_component_code_shares_payload_iter() {
         match f {
             Ok(d) => {
@@ -102,13 +106,14 @@ fn validate_vcs_dir<V: VCSDirectoryTrait>(dir: &V, result: &mut VerificationResu
     }
 }
 
-fn fn_0401_verify_setup_integrity<D: VerificationDirectoryTrait>(
-    dir: &D,
-    _config: &'static Config,
-    result: &mut VerificationResult,
-) {
-    let setup_dir = dir.unwrap_setup();
-    match setup_dir.election_event_context_payload() {
+fn validate_setup_dir<S: SetupDirectoryTrait>(dir: &S, result: &mut VerificationResult) {
+    for d in dir.vcs_directories().iter() {
+        validate_setup_vcs_dir(d, result);
+    }
+}
+
+fn validate_context_dir<C: ContextDirectoryTrait>(dir: &C, result: &mut VerificationResult) {
+    match dir.election_event_context_payload() {
         Ok(d) => {
             for e in d.verifiy_domain() {
                 result.push(create_verification_failure!(
@@ -122,7 +127,7 @@ fn fn_0401_verify_setup_integrity<D: VerificationDirectoryTrait>(
             e
         )),
     }
-    match setup_dir.setup_component_public_keys_payload() {
+    match dir.setup_component_public_keys_payload() {
         Ok(d) => {
             for e in d.verifiy_domain() {
                 result.push(create_verification_failure!(
@@ -136,7 +141,7 @@ fn fn_0401_verify_setup_integrity<D: VerificationDirectoryTrait>(
             e
         )),
     }
-    match setup_dir.election_event_configuration() {
+    match dir.election_event_configuration() {
         Ok(d) => {
             for e in d.verifiy_domain() {
                 result.push(create_verification_failure!(
@@ -150,7 +155,7 @@ fn fn_0401_verify_setup_integrity<D: VerificationDirectoryTrait>(
             e
         )),
     }
-    for (i, f) in setup_dir.control_component_public_keys_payload_iter() {
+    for (i, f) in dir.control_component_public_keys_payload_iter() {
         match f {
             Ok(d) => {
                 for e in d.verifiy_domain() {
@@ -172,9 +177,20 @@ fn fn_0401_verify_setup_integrity<D: VerificationDirectoryTrait>(
             )),
         }
     }
-    for d in setup_dir.vcs_directories().iter() {
-        validate_vcs_dir(d, result);
+    for d in dir.vcs_directories().iter() {
+        validate_context_vcs_dir(d, result);
     }
+}
+
+fn fn_0401_verify_setup_integrity<D: VerificationDirectoryTrait>(
+    dir: &D,
+    _config: &'static Config,
+    result: &mut VerificationResult,
+) {
+    let context_dir = dir.context();
+    validate_context_dir(context_dir, result);
+    let setup_dir = dir.unwrap_setup();
+    validate_setup_dir(setup_dir, result);
 }
 
 #[cfg(test)]

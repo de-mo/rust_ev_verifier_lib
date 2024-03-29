@@ -5,7 +5,7 @@ use crate::{
     config::Config,
     file_structure::{
         file_group::FileGroup,
-        setup_directory::{SetupDirectoryTrait, VCSDirectoryTrait},
+        setup_directory::{SetupDirectoryTrait, SetupVCSDirectoryTrait},
         VerificationDirectoryTrait,
     },
 };

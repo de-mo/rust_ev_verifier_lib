@@ -12,7 +12,8 @@ use crate::{
         VerifierSetupDataTrait,
     },
     file_structure::{
-        setup_directory::{SetupDirectoryTrait, VCSDirectoryTrait},
+        context_directory::ContextDirectoryTrait,
+        setup_directory::{SetupDirectoryTrait, SetupVCSDirectoryTrait},
         VerificationDirectoryTrait,
     },
 };
@@ -38,10 +39,11 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
     _config: &'static Config,
     result: &mut VerificationResult,
 ) {
+    let context_dir = dir.context();
     let setup_dir = dir.unwrap_setup();
 
     // Read ee context for the context of the algorithm
-    let ee_context = match setup_dir.election_event_context_payload() {
+    let ee_context = match context_dir.election_event_context_payload() {
         Ok(p) => p.election_event_context,
         Err(e) => {
             result.push(create_verification_error!(

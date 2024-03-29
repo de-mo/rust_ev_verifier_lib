@@ -4,7 +4,7 @@ use super::super::super::result::{
 use crate::{
     config::Config,
     file_structure::{
-        file::File, setup_directory::SetupDirectoryTrait, VerificationDirectoryTrait,
+        context_directory::ContextDirectoryTrait, file::File, VerificationDirectoryTrait,
     },
 };
 use anyhow::anyhow;
@@ -24,10 +24,13 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
     _config: &'static Config,
     result: &mut VerificationResult,
 ) {
-    let setup_dir = dir.unwrap_setup();
-    test_file_exists(setup_dir.election_event_context_payload_file(), result);
-    test_file_exists(setup_dir.setup_component_public_keys_payload_file(), result);
-    let mut cc_group_numbers = setup_dir
+    let context_dir = dir.context();
+    test_file_exists(context_dir.election_event_context_payload_file(), result);
+    test_file_exists(
+        context_dir.setup_component_public_keys_payload_file(),
+        result,
+    );
+    let mut cc_group_numbers = context_dir
         .control_component_public_keys_payload_group()
         .get_numbers()
         .clone();
@@ -38,7 +41,7 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
             cc_group_numbers
         )))
     }
-    for (_, f) in setup_dir
+    for (_, f) in context_dir
         .control_component_public_keys_payload_group()
         .iter()
     {

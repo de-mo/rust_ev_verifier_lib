@@ -3,19 +3,24 @@
 //! The module is separate in two module: [setup] and [tally]
 //!
 pub mod common_types;
+pub mod context;
+pub mod dataset;
 pub mod setup;
-pub mod setup_or_tally;
 pub mod tally;
 mod xml;
 
 use self::{
-    setup::{
-        control_component_code_shares_payload::ControlComponentCodeSharesPayload,
+    context::{
         control_component_public_keys_payload::ControlComponentPublicKeysPayload,
         election_event_configuration::ElectionEventConfiguration,
         election_event_context_payload::ElectionEventContextPayload,
         setup_component_public_keys_payload::SetupComponentPublicKeysPayload,
-        setup_component_tally_data_payload::SetupComponentTallyDataPayload,
+        setup_component_tally_data_payload::SetupComponentTallyDataPayload, VerifierContextData,
+        VerifierContextDataType,
+    },
+    dataset::DatasetType,
+    setup::{
+        control_component_code_shares_payload::ControlComponentCodeSharesPayload,
         setup_component_verification_data_payload::SetupComponentVerificationDataPayload,
         VerifierSetupData, VerifierSetupDataType,
     },
@@ -35,14 +40,23 @@ use roxmltree::Document;
 use rug::Integer;
 use rust_ev_crypto_primitives::{ByteArray, Decode, Hexa};
 use serde::de::{Deserialize, Deserializer, Error};
-use setup_or_tally::SetupOrTally;
 use std::path::Path;
 
-/// The type VerifierData implement an option between [VerifierSetupData] and [VerifierTallyData]
-pub type VerifierData = SetupOrTally<VerifierSetupData, VerifierTallyData>;
+/// The type VerifierData implement an option between
+/// [VerifierContextData], [VerifierSetupData] and [VerifierTallyData]
+pub type VerifierData = DatasetType<VerifierContextData, VerifierSetupData, VerifierTallyData>;
 
-/// The type VerifierDataType implement an option between [VerifierSetupDataType] and [VerifierTallyDataType]
-pub type VerifierDataType = SetupOrTally<VerifierSetupDataType, VerifierTallyDataType>;
+/// The type VerifierDataType implement an option between
+/// [VerifierContextDataType], [VerifierSetupDataType] and [VerifierTallyDataType]
+pub type VerifierDataType =
+    DatasetType<VerifierContextDataType, VerifierSetupDataType, VerifierTallyDataType>;
+
+macro_rules! create_verifier_context_data_type {
+    ($p: ident, $s: ident) => {
+        VerifierDataType::$p(VerifierContextDataType::$s)
+    };
+}
+pub(crate) use create_verifier_context_data_type;
 
 macro_rules! create_verifier_setup_data_type {
     ($p: ident, $s: ident) => {
@@ -58,8 +72,8 @@ macro_rules! create_verifier_tally_data_type {
 }
 pub(crate) use create_verifier_tally_data_type;
 
-/// Trait implementing the collection of the specific setup data type from the enum object
-pub trait VerifierSetupDataTrait {
+/// Trait implementing the collection of the specific context data type from the enum object
+pub trait VerifierContextDataTrait {
     fn setup_component_public_keys_payload(&self) -> Option<&SetupComponentPublicKeysPayload> {
         None
     }
@@ -72,15 +86,19 @@ pub trait VerifierSetupDataTrait {
     fn control_component_public_keys_payload(&self) -> Option<&ControlComponentPublicKeysPayload> {
         None
     }
+    fn election_event_configuration(&self) -> Option<&ElectionEventConfiguration> {
+        None
+    }
+}
+
+/// Trait implementing the collection of the specific setup data type from the enum object
+pub trait VerifierSetupDataTrait {
     fn setup_component_verification_data_payload(
         &self,
     ) -> Option<&SetupComponentVerificationDataPayload> {
         None
     }
     fn control_component_code_shares_payload(&self) -> Option<&ControlComponentCodeSharesPayload> {
-        None
-    }
-    fn election_event_configuration(&self) -> Option<&ElectionEventConfiguration> {
         None
     }
 }
@@ -210,55 +228,57 @@ macro_rules! implement_trait_verifier_data_json_decode {
 }
 use implement_trait_verifier_data_json_decode;
 
-impl VerifierSetupDataTrait for VerifierData {
+impl VerifierContextDataTrait for VerifierData {
     fn setup_component_public_keys_payload(&self) -> Option<&SetupComponentPublicKeysPayload> {
         match self {
-            VerifierData::Setup(d) => d.setup_component_public_keys_payload(),
-            VerifierData::Tally(_) => None,
+            VerifierData::Context(d) => d.setup_component_public_keys_payload(),
+            _ => None,
         }
     }
 
     fn election_event_context_payload(&self) -> Option<&ElectionEventContextPayload> {
         match self {
-            VerifierData::Setup(d) => d.election_event_context_payload(),
-            VerifierData::Tally(_) => None,
+            VerifierData::Context(d) => d.election_event_context_payload(),
+            _ => None,
         }
     }
 
     fn setup_component_tally_data_payload(&self) -> Option<&SetupComponentTallyDataPayload> {
         match self {
-            VerifierData::Setup(d) => d.setup_component_tally_data_payload(),
-            VerifierData::Tally(_) => None,
+            VerifierData::Context(d) => d.setup_component_tally_data_payload(),
+            _ => None,
         }
     }
 
     fn control_component_public_keys_payload(&self) -> Option<&ControlComponentPublicKeysPayload> {
         match self {
-            VerifierData::Setup(d) => d.control_component_public_keys_payload(),
-            VerifierData::Tally(_) => None,
+            VerifierData::Context(d) => d.control_component_public_keys_payload(),
+            _ => None,
         }
     }
 
+    fn election_event_configuration(&self) -> Option<&ElectionEventConfiguration> {
+        match self {
+            VerifierData::Context(d) => d.election_event_configuration(),
+            _ => None,
+        }
+    }
+}
+
+impl VerifierSetupDataTrait for VerifierData {
     fn setup_component_verification_data_payload(
         &self,
     ) -> Option<&SetupComponentVerificationDataPayload> {
         match self {
             VerifierData::Setup(d) => d.setup_component_verification_data_payload(),
-            VerifierData::Tally(_) => None,
+            _ => None,
         }
     }
 
     fn control_component_code_shares_payload(&self) -> Option<&ControlComponentCodeSharesPayload> {
         match self {
             VerifierData::Setup(d) => d.control_component_code_shares_payload(),
-            VerifierData::Tally(_) => None,
-        }
-    }
-
-    fn election_event_configuration(&self) -> Option<&ElectionEventConfiguration> {
-        match self {
-            VerifierData::Setup(d) => d.election_event_configuration(),
-            VerifierData::Tally(_) => None,
+            _ => None,
         }
     }
 }
@@ -266,44 +286,44 @@ impl VerifierSetupDataTrait for VerifierData {
 impl VerifierTallyDataTrait for VerifierData {
     fn e_voting_decrypt(&self) -> Option<&EVotingDecrypt> {
         match self {
-            VerifierData::Setup(_) => None,
             VerifierData::Tally(d) => d.e_voting_decrypt(),
+            _ => None,
         }
     }
     fn ech_0110(&self) -> Option<&ECH0110> {
         match self {
-            VerifierData::Setup(_) => None,
             VerifierData::Tally(d) => d.ech_0110(),
+            _ => None,
         }
     }
     fn ech_0222(&self) -> Option<&ECH0222> {
         match self {
-            VerifierData::Setup(_) => None,
             VerifierData::Tally(d) => d.ech_0222(),
+            _ => None,
         }
     }
     fn tally_component_votes_payload(&self) -> Option<&TallyComponentVotesPayload> {
         match self {
-            VerifierData::Setup(_) => None,
             VerifierData::Tally(d) => d.tally_component_votes_payload(),
+            _ => None,
         }
     }
     fn tally_component_shuffle_payload(&self) -> Option<&TallyComponentShufflePayload> {
         match self {
-            VerifierData::Setup(_) => None,
             VerifierData::Tally(d) => d.tally_component_shuffle_payload(),
+            _ => None,
         }
     }
     fn control_component_ballot_box_payload(&self) -> Option<&ControlComponentBallotBoxPayload> {
         match self {
-            VerifierData::Setup(_) => None,
             VerifierData::Tally(d) => d.control_component_ballot_box_payload(),
+            _ => None,
         }
     }
     fn control_component_shuffle_payload(&self) -> Option<&ControlComponentShufflePayload> {
         match self {
-            VerifierData::Setup(_) => None,
             VerifierData::Tally(d) => d.control_component_shuffle_payload(),
+            _ => None,
         }
     }
 }
@@ -312,6 +332,10 @@ impl VerifierDataType {
     /// Read VerifierDataType from a String as JSON
     pub fn verifier_data_from_file(&self, f: &File) -> anyhow::Result<VerifierData> {
         match self {
+            VerifierDataType::Context(t) => t
+                .verifier_data_from_file(f)
+                .map_err(|e| e.context("in verifier_data_from_file"))
+                .map(VerifierData::Context),
             VerifierDataType::Setup(t) => t
                 .verifier_data_from_file(f)
                 .map_err(|e| e.context("in verifier_data_from_file"))

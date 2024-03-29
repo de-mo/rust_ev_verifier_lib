@@ -3,7 +3,7 @@ use super::super::super::result::{
 };
 use crate::{
     config::Config,
-    file_structure::{setup_directory::SetupDirectoryTrait, VerificationDirectoryTrait},
+    file_structure::{context_directory::ContextDirectoryTrait, VerificationDirectoryTrait},
 };
 use anyhow::anyhow;
 use log::debug;
@@ -13,8 +13,8 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
     _config: &'static Config,
     result: &mut VerificationResult,
 ) {
-    let setup_dir = dir.unwrap_setup();
-    let vcs_contexts = match setup_dir.election_event_context_payload() {
+    let context_dir = dir.context();
+    let vcs_contexts = match context_dir.election_event_context_payload() {
         Ok(o) => o.election_event_context.verification_card_set_contexts,
         Err(e) => {
             result.push(create_verification_error!(
@@ -24,7 +24,7 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
             return;
         }
     };
-    let total_voter = match setup_dir.election_event_configuration() {
+    let total_voter = match context_dir.election_event_configuration() {
         Ok(o) => o.header.voter_total,
         Err(e) => {
             result.push(create_verification_error!(

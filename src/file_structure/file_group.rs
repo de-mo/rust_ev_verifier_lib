@@ -237,7 +237,7 @@ impl FileGroup {
 mod test {
     use super::*;
     use crate::config::test::test_dataset_setup_path;
-    use crate::data_structures::setup::VerifierSetupDataType;
+    use crate::data_structures::context::VerifierContextDataType;
     use std::path::PathBuf;
 
     fn get_location() -> PathBuf {
@@ -249,7 +249,7 @@ mod test {
         let location = get_location();
         let fg = FileGroup::new(
             &location,
-            VerifierDataType::Setup(VerifierSetupDataType::ControlComponentPublicKeysPayload),
+            VerifierDataType::Context(VerifierContextDataType::ControlComponentPublicKeysPayload),
         );
         assert!(fg.location_exists());
         assert!(fg.has_elements());
@@ -266,7 +266,7 @@ mod test {
         let location = get_location();
         let fg = FileGroup::new(
             &location,
-            VerifierDataType::Setup(VerifierSetupDataType::ControlComponentPublicKeysPayload),
+            VerifierDataType::Context(VerifierContextDataType::ControlComponentPublicKeysPayload),
         );
         let f = fg.get_file_with_number(1);
         assert_eq!(
@@ -280,7 +280,7 @@ mod test {
         let location = get_location().join("toto");
         let fg = FileGroup::new(
             &location,
-            VerifierDataType::Setup(VerifierSetupDataType::ControlComponentPublicKeysPayload),
+            VerifierDataType::Context(VerifierContextDataType::ControlComponentPublicKeysPayload),
         );
         assert!(!fg.location_exists());
         assert!(!fg.has_elements());

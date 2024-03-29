@@ -3,7 +3,7 @@ use super::super::super::result::{
 };
 use crate::{
     config::Config,
-    file_structure::{setup_directory::SetupDirectoryTrait, VerificationDirectoryTrait},
+    file_structure::{context_directory::ContextDirectoryTrait, VerificationDirectoryTrait},
 };
 use anyhow::anyhow;
 use log::debug;
@@ -15,8 +15,8 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
     _config: &'static Config,
     result: &mut VerificationResult,
 ) {
-    let setup_dir = dir.unwrap_setup();
-    let eg = match setup_dir.election_event_context_payload() {
+    let context_dir = dir.context();
+    let eg = match context_dir.election_event_context_payload() {
         Ok(o) => o.encryption_group,
         Err(e) => {
             result.push(create_verification_error!(
@@ -26,7 +26,7 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
             return;
         }
     };
-    let sc_pk = match setup_dir.setup_component_public_keys_payload() {
+    let sc_pk = match context_dir.setup_component_public_keys_payload() {
         Ok(o) => o,
         Err(e) => {
             result.push(create_verification_error!(

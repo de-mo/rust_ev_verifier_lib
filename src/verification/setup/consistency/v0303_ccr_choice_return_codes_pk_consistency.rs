@@ -4,21 +4,21 @@ use super::super::super::result::{
 use crate::{
     config::Config,
     data_structures::{
-        setup::control_component_public_keys_payload::ControlComponentPublicKeys,
-        VerifierSetupDataTrait,
+        context::control_component_public_keys_payload::ControlComponentPublicKeys,
+        VerifierContextDataTrait,
     },
-    file_structure::{setup_directory::SetupDirectoryTrait, VerificationDirectoryTrait},
+    file_structure::{context_directory::ContextDirectoryTrait, VerificationDirectoryTrait},
 };
 use anyhow::anyhow;
 use log::debug;
 
-fn validate_cc_ccr_enc_pk<S: SetupDirectoryTrait>(
-    setup_dir: &S,
+fn validate_cc_ccr_enc_pk<S: ContextDirectoryTrait>(
+    context_dir: &S,
     setup: &ControlComponentPublicKeys,
     node_id: usize,
     result: &mut VerificationResult,
 ) {
-    let f = setup_dir
+    let f = context_dir
         .control_component_public_keys_payload_group()
         .get_file_with_number(node_id);
     let cc_pk = match f
@@ -50,8 +50,8 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
     _config: &'static Config,
     result: &mut VerificationResult,
 ) {
-    let setup_dir = dir.unwrap_setup();
-    let sc_pk = match setup_dir.setup_component_public_keys_payload() {
+    let context_dir = dir.context();
+    let sc_pk = match context_dir.setup_component_public_keys_payload() {
         Ok(o) => o,
         Err(e) => {
             result.push(create_verification_error!(
@@ -65,7 +65,7 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
         .setup_component_public_keys
         .combined_control_component_public_keys
     {
-        validate_cc_ccr_enc_pk(setup_dir, &node, node.node_id, result)
+        validate_cc_ccr_enc_pk(context_dir, &node, node.node_id, result)
     }
 }
 
