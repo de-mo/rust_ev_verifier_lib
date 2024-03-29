@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<tests xmlns="http://www.evoting.ch/xmlns/test1/3">
+  <valueString>test</valueString>
+  <complexType>
+    <ctString>12345</ctString>
+    <seqString1>seq1</seqString1>
+    <ctToto>toto</ctToto>
+  </complexType>
+</tests>

@@ -244,7 +244,7 @@ mod test {
     #[test]
     fn test_context_dir() {
         let context_location = test_datasets_context_path();
-        let vcs_location = context_location.join("verification_card_sets");
+        let vcs_location = context_location.join("verificationCardSets");
         let dir = ContextDirectory::new(&context_location);
         assert_eq!(dir.get_location(), context_location);
         assert!(dir.setup_component_public_keys_payload().is_ok());

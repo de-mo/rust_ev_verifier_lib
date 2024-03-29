@@ -3,22 +3,22 @@
 use super::consts;
 use super::resources::VERIFICATION_LIST;
 use anyhow::{Context, Result};
-use rust_ev_crypto_primitives::{CertificateExtension, Keystore};
+use rust_ev_crypto_primitives::Keystore;
 use std::path::{Path, PathBuf};
 
 // Directory structure
 pub const CONTEXT_DIR_NAME: &str = "context";
 pub const SETUP_DIR_NAME: &str = "setup";
 pub const TALLY_DIR_NAME: &str = "tally";
-const VCS_DIR_NAME: &str = "verification_card_sets";
-const BB_DIR_NAME: &str = "ballot_boxes";
+const VCS_DIR_NAME: &str = "verificationCardSets";
+const BB_DIR_NAME: &str = "ballotBoxes";
 
 // Program structure
 const LOG_DIR_NAME: &str = "log";
 const LOG_FILE_NAME: &str = "log.txt";
 const DIRECT_TRUST_DIR_NAME: &str = "direct-trust";
-// const KEYSTORE_FILE_NAME: &str = "public_keys_keystore_verifier.p12";
-// const KEYSTORE_PASSWORD_FILE_NAME: &str = "public_keys_keystore_verifier_pw.txt";
+const KEYSTORE_FILE_NAME: &str = "public_keys_keystore_verifier.p12";
+const KEYSTORE_PASSWORD_FILE_NAME: &str = "public_keys_keystore_verifier_pw.txt";
 
 /// Structuring getting all the configuration information relevant for the
 /// verifier
@@ -118,7 +118,6 @@ impl Config {
         self.root_dir_path().join(DIRECT_TRUST_DIR_NAME)
     }
 
-    /*
     pub fn direct_trust_keystore_path(&self) -> PathBuf {
         self.direct_trust_dir_path().join(KEYSTORE_FILE_NAME)
     }
@@ -126,7 +125,7 @@ impl Config {
     pub fn direct_trust_keystore_password_path(&self) -> PathBuf {
         self.direct_trust_dir_path()
             .join(KEYSTORE_PASSWORD_FILE_NAME)
-    } */
+    }
 
     /// Get the relative path of the file containing the configuration of the verifications
     pub fn get_verification_list_str(&self) -> &'static str {
@@ -135,8 +134,11 @@ impl Config {
 
     /// Get the keystore
     pub fn keystore(&self) -> Result<Keystore> {
-        Keystore::from_directory(&self.direct_trust_dir_path(), &CertificateExtension::Cer)
-            .context("Problem reading the keystore")
+        Keystore::from_pkcs12(
+            &self.direct_trust_keystore_path(),
+            &self.direct_trust_keystore_password_path(),
+        )
+        .context("Problem reading the keystore")
     }
 }
 
@@ -168,24 +170,24 @@ pub(crate) mod test {
 
     pub(crate) fn test_ballot_box_path() -> PathBuf {
         test_datasets_tally_path()
-            .join("ballot_boxes")
+            .join("ballotBoxes")
             .join("915C2B2C9D6631BABDB6069D6CD6496D")
     }
 
     pub(crate) fn test_context_verification_card_set_path() -> PathBuf {
         test_datasets_context_path()
-            .join("verification_card_sets")
+            .join("verificationCardSets")
             .join("41AEF809A62BF53C7CFF61AA0925F636")
     }
 
     pub(crate) fn test_setup_verification_card_set_path() -> PathBuf {
         test_datasets_setup_path()
-            .join("verification_card_sets")
+            .join("verificationCardSets")
             .join("41AEF809A62BF53C7CFF61AA0925F636")
     }
 
     pub(crate) fn test_xml_path() -> PathBuf {
-        test_datasets_path().join("xml")
+        CONFIG_TEST.root_dir_path().join("xml_tests")
     }
 
     pub(crate) fn get_test_verifier_tally_dir() -> VerificationDirectory {

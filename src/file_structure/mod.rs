@@ -256,8 +256,8 @@ mod test {
             )
             .exists());
         let path2 = path
-            .join("verification_card_sets")
-            .join("1B3775CB351C64AC33B754BA3A02AED2");
+            .join("verificationCardSets")
+            .join("41AEF809A62BF53C7CFF61AA0925F636");
         assert!(path2
             .join(
                 VerifierDataType::Context(VerifierContextDataType::SetupComponentTallyDataPayload)
@@ -270,8 +270,8 @@ mod test {
     fn test_tally_files_exist() {
         let path = test_datasets_tally_path();
         let path2 = path
-            .join("ballot_boxes")
-            .join("5E70613C80C92E6AC48227492099DF7D");
+            .join("ballotBoxes")
+            .join("915C2B2C9D6631BABDB6069D6CD6496D");
         assert!(path2
             .join(
                 VerifierDataType::Tally(VerifierTallyDataType::TallyComponentVotesPayload)
@@ -315,8 +315,9 @@ mod test {
     fn test_setup_groups_exist() {
         let path = test_datasets_setup_path();
         let path2 = path
-            .join("verification_card_sets")
-            .join("1B3775CB351C64AC33B754BA3A02AED2");
+            .join("verificationCardSets")
+            .join("41AEF809A62BF53C7CFF61AA0925F636");
+        println!("{:?}", path2);
         assert!(path2
             .join(
                 VerifierDataType::Setup(VerifierSetupDataType::ControlComponentCodeSharesPayload)

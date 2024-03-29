@@ -187,7 +187,7 @@ mod test {
     #[test]
     fn test_setup_dir() {
         let setup_location = test_datasets_setup_path().join("setup");
-        let vcs_location = setup_location.join("verification_card_sets");
+        let vcs_location = setup_location.join("verificationCardSets");
         let dir = SetupDirectory::new(&setup_location);
         assert_eq!(dir.get_location(), setup_location);
         let expected = [
