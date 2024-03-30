@@ -10,7 +10,9 @@ pub mod verifications;
 use self::result::{
     create_verification_error, create_verification_failure, VerificationEvent, VerificationResult,
 };
-use crate::{config::Config, direct_trust::VerifiySignatureTrait};
+use crate::{
+    config::Config, direct_trust::VerifiySignatureTrait, file_structure::VerificationDirectoryTrait,
+};
 use anyhow::{anyhow, bail, Result};
 use log::debug;
 use std::fmt::Display;
@@ -46,6 +48,16 @@ impl VerificationPeriod {
     pub fn is_tally(&self) -> bool {
         self == &VerificationPeriod::Tally
     }
+}
+
+pub(super) fn verification_unimplemented<D: VerificationDirectoryTrait>(
+    _dir: &D,
+    _config: &'static Config,
+    result: &mut VerificationResult,
+) {
+    result.push(create_verification_error!(anyhow!(
+        "Verification is not implemented"
+    )));
 }
 
 /// Verify the signatue for a given object implementing [VerifiySignatureTrait]

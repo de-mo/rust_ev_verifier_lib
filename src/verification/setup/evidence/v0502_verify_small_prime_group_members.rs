@@ -71,7 +71,7 @@ mod test {
         let dir = get_verifier_dir();
         let mut result = VerificationResult::new();
         fn_0502_verify_small_prime_group_members(&dir, &CONFIG_TEST, &mut result);
-        if !result.is_ok().unwrap() {
+        if !result.is_ok() {
             for e in result.errors() {
                 println!("{:?}", e);
             }
@@ -79,6 +79,6 @@ mod test {
                 println!("{:?}", f);
             }
         }
-        assert!(result.is_ok().unwrap());
+        assert!(result.is_ok());
     }
 }

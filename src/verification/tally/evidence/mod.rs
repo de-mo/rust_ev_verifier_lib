@@ -1,11 +1,27 @@
-use crate::{config::Config, verification::meta_data::VerificationMetaDataList};
-
-use super::super::suite::VerificationList;
+use super::super::{suite::VerificationList, verifications::Verification};
+use crate::{
+    config::Config,
+    verification::{meta_data::VerificationMetaDataList, verification_unimplemented},
+};
 
 pub fn get_verifications<'a>(
-    _metadata_list: &'a VerificationMetaDataList,
-    _config: &'static Config,
-) -> VerificationList<'a> {
-    let res = vec![];
-    VerificationList(res)
+    metadata_list: &'a VerificationMetaDataList,
+    config: &'static Config,
+) -> anyhow::Result<VerificationList<'a>> {
+    Ok(VerificationList(vec![
+        Verification::new(
+            "10.01",
+            "VerifyOnlineControlComponents",
+            verification_unimplemented,
+            metadata_list,
+            config,
+        )?,
+        Verification::new(
+            "10.02",
+            "VerifyTallyControlComponent",
+            verification_unimplemented,
+            metadata_list,
+            config,
+        )?,
+    ]))
 }

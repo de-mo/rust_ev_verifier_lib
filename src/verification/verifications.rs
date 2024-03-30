@@ -105,7 +105,7 @@ impl<'a> Verification<'a, VerificationDirectory> {
         (self.verification_fn)(directory, self.config, self.result.as_mut());
         self.duration = Some(start_time.elapsed().unwrap());
         self.status = VerificationStatus::Finished;
-        if self.is_ok().unwrap() {
+        if self.is_ok() {
             info!(
                 "Verification {} ({}) finished successfully. Duration: {}s",
                 self.meta_data.name(),
@@ -113,7 +113,7 @@ impl<'a> Verification<'a, VerificationDirectory> {
                 self.duration.unwrap().as_secs_f32()
             );
         }
-        if self.has_errors().unwrap() {
+        if self.has_errors() {
             warn!(
                 "Verification {} ({}) finished with errors. Duration: {}s",
                 self.meta_data.name(),
@@ -121,7 +121,7 @@ impl<'a> Verification<'a, VerificationDirectory> {
                 self.duration.unwrap().as_secs_f32()
             );
         }
-        if self.has_failures().unwrap() {
+        if self.has_failures() {
             warn!(
                 "Verification {} ({}) finished with failures. Duration: {}s",
                 self.meta_data.name(),
@@ -133,28 +133,23 @@ impl<'a> Verification<'a, VerificationDirectory> {
 }
 
 impl<'a> VerificationResultTrait for Verification<'a, VerificationDirectory> {
-    fn is_ok(&self) -> Option<bool> {
+    fn is_valid(&self) -> bool {
         match self.status {
-            VerificationStatus::Stopped => None,
-            VerificationStatus::Running => None,
-            VerificationStatus::Finished => self.result.is_ok(),
+            VerificationStatus::Stopped => false,
+            VerificationStatus::Running => false,
+            VerificationStatus::Finished => true,
         }
     }
-
-    fn has_errors(&self) -> Option<bool> {
-        match self.status {
-            VerificationStatus::Stopped => None,
-            VerificationStatus::Running => None,
-            VerificationStatus::Finished => self.result.has_errors(),
-        }
+    fn is_ok(&self) -> bool {
+        self.is_valid() && self.result.is_ok()
     }
 
-    fn has_failures(&self) -> Option<bool> {
-        match self.status {
-            VerificationStatus::Stopped => None,
-            VerificationStatus::Running => None,
-            VerificationStatus::Finished => self.result.has_failures(),
-        }
+    fn has_errors(&self) -> bool {
+        self.is_valid() && self.result.has_errors()
+    }
+
+    fn has_failures(&self) -> bool {
+        self.is_valid() && self.result.has_failures()
     }
 
     fn errors(&self) -> &Vec<VerificationEvent> {
@@ -234,17 +229,19 @@ mod test {
         )
         .unwrap();
         assert_eq!(verif.status, VerificationStatus::Stopped);
-        assert!(verif.is_ok().is_none());
-        assert!(verif.has_errors().is_none());
-        assert!(verif.has_failures().is_none());
+        assert!(!verif.is_valid());
+        assert!(!verif.is_ok());
+        assert!(!verif.has_errors());
+        assert!(!verif.has_failures());
         verif.run(&VerificationDirectory::new(
             &VerificationPeriod::Setup,
             Path::new("."),
         ));
         assert_eq!(verif.status, VerificationStatus::Finished);
-        assert!(verif.is_ok().unwrap());
-        assert!(!verif.has_errors().unwrap());
-        assert!(!verif.has_failures().unwrap());
+        assert!(verif.is_valid());
+        assert!(verif.is_ok());
+        assert!(!verif.has_errors());
+        assert!(!verif.has_failures());
     }
 
     #[test]
@@ -265,17 +262,19 @@ mod test {
         )
         .unwrap();
         assert_eq!(verif.status, VerificationStatus::Stopped);
-        assert!(verif.is_ok().is_none());
-        assert!(verif.has_errors().is_none());
-        assert!(verif.has_failures().is_none());
+        assert!(!verif.is_valid());
+        assert!(!verif.is_ok());
+        assert!(!verif.has_errors());
+        assert!(!verif.has_failures());
         verif.run(&VerificationDirectory::new(
             &VerificationPeriod::Setup,
             Path::new("."),
         ));
         assert_eq!(verif.status, VerificationStatus::Finished);
-        assert!(!verif.is_ok().unwrap());
-        assert!(verif.has_errors().unwrap());
-        assert!(verif.has_failures().unwrap());
+        assert!(verif.is_valid());
+        assert!(!verif.is_ok());
+        assert!(verif.has_errors());
+        assert!(verif.has_failures());
         assert_eq!(verif.errors().len(), 2);
         assert_eq!(verif.failures().len(), 1);
     }
@@ -297,17 +296,19 @@ mod test {
         )
         .unwrap();
         assert_eq!(verif.status, VerificationStatus::Stopped);
-        assert!(verif.is_ok().is_none());
-        assert!(verif.has_errors().is_none());
-        assert!(verif.has_failures().is_none());
+        assert!(!verif.is_valid());
+        assert!(!verif.is_ok());
+        assert!(!verif.has_errors());
+        assert!(!verif.has_failures());
         verif.run(&VerificationDirectory::new(
             &VerificationPeriod::Setup,
             Path::new("."),
         ));
         assert_eq!(verif.status, VerificationStatus::Finished);
-        assert!(!verif.is_ok().unwrap());
-        assert!(!verif.has_errors().unwrap());
-        assert!(verif.has_failures().unwrap());
+        assert!(verif.is_valid());
+        assert!(!verif.is_ok());
+        assert!(!verif.has_errors());
+        assert!(verif.has_failures());
         assert_eq!(verif.errors().len(), 0);
         assert_eq!(verif.failures().len(), 2);
     }

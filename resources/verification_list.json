@@ -65,7 +65,7 @@
     },
     {
         "id": "03.03",
-        "name": "VerifyCCrChoiceReturnCodesPublicKeyConsistency",
+        "name": "VerifyCCRChoiceReturnCodesPublicKeyConsistency",
         "algorithm": "",
         "period": "setup",
         "category": "consistency",
@@ -73,7 +73,7 @@
     },
     {
         "id": "03.04",
-        "name": "VerifyCCmElectionPublicKeyConsistency",
+        "name": "VerifyCCMElectionPublicKeyConsistency",
         "algorithm": "",
         "period": "setup",
         "category": "consistency",
@@ -81,7 +81,7 @@
     },
     {
         "id": "03.05",
-        "name": "VerifyCcmAndCcrSchnorrProofsConsistency",
+        "name": "VerifyCCMAndCCRSchnorrProofsConsistency",
         "algorithm": "",
         "period": "setup",
         "category": "consistency",
@@ -217,7 +217,7 @@
     },
     {
         "id": "06.01",
-        "name": "VerifySetupCompleteness",
+        "name": "VerifyTallyCompleteness",
         "algorithm": "",
         "period": "tally",
         "category": "completness",

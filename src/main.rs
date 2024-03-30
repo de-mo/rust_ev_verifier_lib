@@ -5,15 +5,14 @@
 //! rust_verifier_console --help
 //! ```
 
-
-mod resources;
-mod consts;
 mod application_runner;
 mod config;
+mod consts;
 mod data_structures;
-mod file_structure;
-mod verification;
 mod direct_trust;
+mod file_structure;
+mod resources;
+mod verification;
 
 use anyhow::bail;
 use application_runner::{
@@ -90,11 +89,11 @@ impl SubCommands {
 }
 
 /// Execute the runner for a given period
-/// 
+///
 /// # Argument
 /// * `period`: The Verification Period
 /// * `cmd`: The [VerifierSubCommand] containung the necessary information to run the test
-fn execute_runner(period: &VerificationPeriod, cmd: &VerifierSubCommand) {
+fn execute_runner(period: &VerificationPeriod, cmd: &VerifierSubCommand) -> anyhow::Result<()> {
     let metadata = VerificationMetaDataList::load(CONFIG.get_verification_list_str()).unwrap();
     let mut runner = Runner::new(
         &cmd.dir,
@@ -105,13 +104,15 @@ fn execute_runner(period: &VerificationPeriod, cmd: &VerifierSubCommand) {
         &CONFIG,
         no_action_before_fn,
         no_action_after_fn,
-    );
+    )
+    .map_err(|e| e.context("Error creating the runner"))?;
     runner.run_all(&metadata);
+    Ok(())
 }
 
 /// Execute the verifier
 /// This is the main method called from the console
-/// 
+///
 /// # return
 /// * Nothing if the execution runs correctly
 /// * [anyhow::Result] with the related error by a problem
@@ -126,7 +127,8 @@ fn execute_verifier() -> anyhow::Result<()> {
     if let Err(e) = check_verification_dir(&period, &sub_command.dir) {
         bail!("Application cannot start: {}", e);
     } else {
-        execute_runner(&period, sub_command);
+        execute_runner(&period, sub_command)
+            .map_err(|e| e.context("Error executing the runner"))?;
     }
     info!("Verifier finished");
     Ok(())

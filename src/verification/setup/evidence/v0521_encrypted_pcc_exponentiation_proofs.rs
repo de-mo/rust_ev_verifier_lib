@@ -336,6 +336,6 @@ mod test {
         let dir = get_verifier_dir();
         let mut result = VerificationResult::new();
         fn_verification(&dir, &CONFIG_TEST, &mut result);
-        assert!(result.is_ok().unwrap());
+        assert!(result.is_ok());
     }
 }

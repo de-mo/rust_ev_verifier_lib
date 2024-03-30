@@ -17,15 +17,14 @@ use log::debug;
 pub fn get_verifications<'a>(
     metadata_list: &'a VerificationMetaDataList,
     config: &'static Config,
-) -> VerificationList<'a> {
-    VerificationList(vec![Verification::new(
+) -> anyhow::Result<VerificationList<'a>> {
+    Ok(VerificationList(vec![Verification::new(
         "09.01",
         "VerifyTallyIntegrity",
         fn_0901_verify_tally_integrity,
         metadata_list,
         config,
-    )
-    .unwrap()])
+    )?]))
 }
 
 fn validate_bb_dir<B: BBDirectoryTrait>(dir: &B, result: &mut VerificationResult) {
@@ -99,6 +98,6 @@ mod test {
         let dir = get_verifier_dir();
         let mut result = VerificationResult::new();
         fn_0901_verify_tally_integrity(&dir, &CONFIG_TEST, &mut result);
-        assert!(result.is_ok().unwrap());
+        assert!(result.is_ok());
     }
 }

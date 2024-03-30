@@ -22,20 +22,25 @@ pub struct VerificationResult {
 
 /// Trait defining functions to access the verficiation result
 pub trait VerificationResultTrait {
+    /// Check if the verification results are valid, and can be used
+    ///
+    /// If not, it can mean, that the verifications have not run
+    fn is_valid(&self) -> bool;
+
     /// Is the verification ok ?
     ///
     /// If not run, the output is None
-    fn is_ok(&self) -> Option<bool>;
+    fn is_ok(&self) -> bool;
 
     /// Has the verification errors ?
     ///
     /// If not run, the output is None
-    fn has_errors(&self) -> Option<bool>;
+    fn has_errors(&self) -> bool;
 
     /// Has the verification failures ?
     ///
     /// If not run, the output is None
-    fn has_failures(&self) -> Option<bool>;
+    fn has_failures(&self) -> bool;
 
     /// All the errors
     fn errors(&self) -> &Vec<VerificationEvent>;
@@ -80,7 +85,12 @@ impl VerificationResult {
     /// Append anyhow errors to self as errors
     #[allow(dead_code)]
     pub fn append_errors(&mut self, errors: &[anyhow::Error]) {
-        let events: Vec<VerificationEvent> = errors.iter().map(|e| VerificationEvent::Error { source: anyhow::anyhow!(e.to_string()) }).collect();
+        let events: Vec<VerificationEvent> = errors
+            .iter()
+            .map(|e| VerificationEvent::Error {
+                source: anyhow::anyhow!(e.to_string()),
+            })
+            .collect();
         for e in events {
             self.push(e)
         }
@@ -88,7 +98,12 @@ impl VerificationResult {
 
     /// Append anyhow errors to self as failures
     pub fn append_failures(&mut self, failures: &[anyhow::Error]) {
-        let events: Vec<VerificationEvent> = failures.iter().map(|e| VerificationEvent::Error { source: anyhow::anyhow!(e.to_string()) }).collect();
+        let events: Vec<VerificationEvent> = failures
+            .iter()
+            .map(|e| VerificationEvent::Error {
+                source: anyhow::anyhow!(e.to_string()),
+            })
+            .collect();
         for e in events {
             self.push(e)
         }
@@ -102,16 +117,20 @@ impl Default for VerificationResult {
 }
 
 impl VerificationResultTrait for VerificationResult {
-    fn is_ok(&self) -> Option<bool> {
-        Some(!self.has_errors().unwrap() && !self.has_failures().unwrap())
+    fn is_valid(&self) -> bool {
+        true
     }
 
-    fn has_errors(&self) -> Option<bool> {
-        Some(!self.errors.is_empty())
+    fn is_ok(&self) -> bool {
+        !self.has_errors() && !self.has_failures()
     }
 
-    fn has_failures(&self) -> Option<bool> {
-        Some(!self.failures.is_empty())
+    fn has_errors(&self) -> bool {
+        !self.errors.is_empty()
+    }
+
+    fn has_failures(&self) -> bool {
+        !self.failures.is_empty()
     }
 
     fn errors(&self) -> &Vec<VerificationEvent> {

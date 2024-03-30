@@ -198,7 +198,7 @@ mod test {
         let dir = get_verifier_dir();
         let mut result = VerificationResult::new();
         fn_verification(&dir, &CONFIG_TEST, &mut result);
-        assert!(result.is_ok().unwrap());
+        assert!(result.is_ok());
     }
 
     #[test]
@@ -215,7 +215,7 @@ mod test {
             &Integer::from(3usize),
         ));
         verify_encryption_group(&eg, &eg_expected, "toto", &mut result);
-        assert!(result.is_ok().unwrap());
+        assert!(result.is_ok());
         let mut result = VerificationResult::new();
         let eg = EncryptionParameters::from((
             &Integer::from(11usize),
@@ -223,7 +223,7 @@ mod test {
             &Integer::from(3usize),
         ));
         verify_encryption_group(&eg, &eg_expected, "toto", &mut result);
-        assert!(!result.has_errors().unwrap());
+        assert!(!result.has_errors());
         assert_eq!(result.failures().len(), 1);
         let mut result = VerificationResult::new();
         let eg = EncryptionParameters::from((
@@ -232,7 +232,7 @@ mod test {
             &Integer::from(4usize),
         ));
         verify_encryption_group(&eg, &eg_expected, "toto", &mut result);
-        assert!(!result.has_errors().unwrap());
+        assert!(!result.has_errors());
         assert_eq!(result.failures().len(), 3)
     }
 
@@ -241,14 +241,14 @@ mod test {
         let mut result = VerificationResult::new();
         let mut mock_dir = get_mock_verifier_dir();
         fn_verification(&mock_dir, &CONFIG_TEST, &mut result);
-        assert!(result.is_ok().unwrap());
+        assert!(result.is_ok());
         let mut eec = mock_dir.context().election_event_context_payload().unwrap();
         eec.encryption_group.set_p(&Integer::from(1234usize));
         mock_dir
             .context_mut()
             .mock_election_event_context_payload(&Ok(&eec));
         fn_verification(&mock_dir, &CONFIG_TEST, &mut result);
-        assert!(result.has_failures().unwrap());
+        assert!(result.has_failures());
     }
 
     #[test]
@@ -268,6 +268,6 @@ mod test {
             .context_mut()
             .mock_control_component_public_keys_payloads(2, &Ok(&cc_pk));
         fn_verification(&mock_dir, &CONFIG_TEST, &mut result);
-        assert!(result.has_failures().unwrap());
+        assert!(result.has_failures());
     }
 }

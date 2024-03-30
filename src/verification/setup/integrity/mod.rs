@@ -19,15 +19,14 @@ use rust_ev_crypto_primitives::VerifyDomainTrait;
 pub fn get_verifications<'a>(
     metadata_list: &'a VerificationMetaDataList,
     config: &'static Config,
-) -> VerificationList<'a> {
-    VerificationList(vec![Verification::new(
+) -> anyhow::Result<VerificationList<'a>> {
+    Ok(VerificationList(vec![Verification::new(
         "04.01",
         "VerifySetupIntegrity",
         fn_0401_verify_setup_integrity,
         metadata_list,
         config,
-    )
-    .unwrap()])
+    )?]))
 }
 
 fn validate_context_vcs_dir<V: ContextVCSDirectoryTrait>(dir: &V, result: &mut VerificationResult) {
@@ -204,6 +203,6 @@ mod test {
         let mut result = VerificationResult::new();
         fn_0401_verify_setup_integrity(&dir, &CONFIG_TEST, &mut result);
         println!("{:?}", result);
-        assert!(result.is_ok().unwrap());
+        assert!(result.is_ok());
     }
 }

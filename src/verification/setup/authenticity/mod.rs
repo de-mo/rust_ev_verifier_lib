@@ -18,49 +18,44 @@ use log::debug;
 pub fn get_verifications<'a>(
     metadata_list: &'a VerificationMetaDataList,
     config: &'static Config,
-) -> VerificationList<'a> {
-    VerificationList(vec![
+) -> anyhow::Result<VerificationList<'a>> {
+    Ok(VerificationList(vec![
         Verification::new(
             "02.01",
             "VerifySignatureCantonConfig",
             fn_0201_verify_signature_canton_config,
             metadata_list,
             config,
-        )
-        .unwrap(),
+        )?,
         Verification::new(
             "02.02",
-            "verifySignatureSetupComponentPublicKeys",
+            "VerifySignatureSetupComponentPublicKeys",
             fn_0202_verify_signature_setup_component_public_keys,
             metadata_list,
             config,
-        )
-        .unwrap(),
+        )?,
         Verification::new(
             "02.03",
-            "verifySignatureControlComponentPublicKeys",
+            "VerifySignatureControlComponentPublicKeys",
             fn_0203_verify_signature_control_component_public_keys,
             metadata_list,
             config,
-        )
-        .unwrap(),
+        )?,
         Verification::new(
             "02.04",
-            "verifySignatureSetupComponentTallyData",
+            "VerifySignatureSetupComponentTallyData",
             fn_0204_verify_signature_setup_component_tally_data,
             metadata_list,
             config,
-        )
-        .unwrap(),
+        )?,
         Verification::new(
             "02.05",
-            "verifySignatureElectionEventContext",
+            "VerifySignatureElectionEventContext",
             fn_0205_verify_signature_election_event_context,
             metadata_list,
             config,
-        )
-        .unwrap(),
-    ])
+        )?,
+    ]))
 }
 
 fn fn_0201_verify_signature_canton_config<D: VerificationDirectoryTrait>(
@@ -192,7 +187,7 @@ mod test {
         let dir = get_verifier_dir();
         let mut result = VerificationResult::new();
         fn_0201_verify_signature_canton_config(&dir, &CONFIG_TEST, &mut result);
-        if !result.is_ok().unwrap() {
+        if !result.is_ok() {
             for e in result.errors() {
                 println!("{:?}", e);
             }
@@ -200,7 +195,7 @@ mod test {
                 println!("{:?}", f);
             }
         }
-        assert!(result.is_ok().unwrap());
+        assert!(result.is_ok());
     }
 
     #[test]
@@ -209,7 +204,7 @@ mod test {
         let mut result = VerificationResult::new();
         fn_0202_verify_signature_setup_component_public_keys(&dir, &CONFIG_TEST, &mut result);
         println!("{:?}", result);
-        assert!(result.is_ok().unwrap());
+        assert!(result.is_ok());
     }
 
     #[test]
@@ -217,7 +212,7 @@ mod test {
         let dir = get_verifier_dir();
         let mut result = VerificationResult::new();
         fn_0203_verify_signature_control_component_public_keys(&dir, &CONFIG_TEST, &mut result);
-        assert!(result.is_ok().unwrap());
+        assert!(result.is_ok());
     }
 
     #[test]
@@ -225,7 +220,7 @@ mod test {
         let dir = get_verifier_dir();
         let mut result = VerificationResult::new();
         fn_0204_verify_signature_setup_component_tally_data(&dir, &CONFIG_TEST, &mut result);
-        assert!(result.is_ok().unwrap());
+        assert!(result.is_ok());
     }
 
     #[test]
@@ -233,6 +228,6 @@ mod test {
         let dir = get_verifier_dir();
         let mut result = VerificationResult::new();
         fn_0205_verify_signature_election_event_context(&dir, &CONFIG_TEST, &mut result);
-        assert!(result.is_ok().unwrap());
+        assert!(result.is_ok());
     }
 }
