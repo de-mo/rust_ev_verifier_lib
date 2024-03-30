@@ -11,7 +11,8 @@ use rust_ev_crypto_primitives::{
 };
 use serde::Deserialize;
 
-pub type ControlComponentCodeSharesPayload = Vec<ControlComponentCodeSharesPayloadInner>;
+#[derive(Deserialize, Debug, Clone)]
+pub struct ControlComponentCodeSharesPayload(pub Vec<ControlComponentCodeSharesPayloadInner>);
 
 implement_trait_verifier_data_json_decode!(ControlComponentCodeSharesPayload);
 
@@ -43,6 +44,30 @@ pub struct ControlComponentCodeShare {
 }
 
 impl VerifyDomainTrait for ControlComponentCodeSharesPayloadInner {}
+
+impl VerifyDomainTrait for ControlComponentCodeSharesPayload {
+    fn verifiy_domain(&self) -> Vec<anyhow::Error> {
+        let mut errors: Vec<anyhow::Error> = self
+            .0
+            .iter()
+            .enumerate()
+            .filter(|(j, c)| j + 1 != c.node_id)
+            .map(|(j, c)| {
+                anyhow!(format!(
+                    "The entry at position {} is not correspond to the node id {}",
+                    j + 1,
+                    c.node_id
+                ))
+            })
+            .collect();
+        for (j, c) in self.0.iter().enumerate() {
+            for error in c.verifiy_domain() {
+                errors.push(error.context(format!("node at position {}", j + 1)))
+            }
+        }
+        errors
+    }
+}
 
 impl<'a> From<&'a ControlComponentCodeSharesPayloadInner> for HashableMessage<'a> {
     fn from(value: &'a ControlComponentCodeSharesPayloadInner) -> Self {
@@ -118,6 +143,7 @@ mod test {
         let json = fs::read_to_string(path).unwrap();
         let r_eec = ControlComponentCodeSharesPayload::from_json(&json);
         //println!("{:?}", r_eec);
-        assert!(r_eec.is_ok())
+        assert!(r_eec.is_ok());
+        assert!(r_eec.unwrap().verifiy_domain().is_empty())
     }
 }

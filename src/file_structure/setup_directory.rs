@@ -209,7 +209,7 @@ mod test {
         assert_eq!(dir.get_location(), location);
         for (i, p) in dir.control_component_code_shares_payload_iter() {
             assert!(p.is_ok());
-            for k in p.unwrap().iter() {
+            for k in p.unwrap().0.iter() {
                 assert_eq!(k.chunk_id, i)
             }
         }

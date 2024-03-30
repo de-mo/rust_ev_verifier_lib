@@ -91,7 +91,7 @@ fn verify_encryption_group_for_setup_vcs_dir<V: SetupVCSDirectoryTrait>(
     for (i, f) in dir.control_component_code_shares_payload_iter() {
         match f {
             Ok(cc) => {
-                for (j, p) in cc.iter().enumerate() {
+                for (j, p) in cc.0.iter().enumerate() {
                     verify_encryption_group(
                         &p.encryption_group,
                         eg,

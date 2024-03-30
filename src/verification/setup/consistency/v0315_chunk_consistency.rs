@@ -69,7 +69,7 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
         for (i, elt) in vcs.control_component_code_shares_payload_iter() {
             match elt {
                 Ok(p) => {
-                    for (j, e) in p.iter().enumerate() {
+                    for (j, e) in p.0.iter().enumerate() {
                         if e.chunk_id != i {
                             result.push(create_verification_failure!(format!(
                             "The chunkID nr {} does not matches the chunkID in the file name in {} for control_component_code_shares_payload at pos {}",

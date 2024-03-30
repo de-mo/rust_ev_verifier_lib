@@ -56,17 +56,15 @@ fn validate_setup_vcs_dir<V: SetupVCSDirectoryTrait>(dir: &V, result: &mut Verif
     for (i, f) in dir.control_component_code_shares_payload_iter() {
         match f {
             Ok(d) => {
-                for (j, p) in d.iter().enumerate() {
-                    for e in p.verifiy_domain() {
-                        result.push(create_verification_failure!(
-                            format!(
-                                "Error verifying domain for {}/control_component_public_keys_payload.{} at entry {}",
-                                dir.get_name(),
-                                i, j
-                            ),
-                            e
-                        ))
-                    }
+                for e in d.verifiy_domain() {
+                    result.push(create_verification_failure!(
+                        format!(
+                            "Error verifying domain for {}/control_component_public_keys_payload.{}",
+                            dir.get_name(),
+                            i
+                        ),
+                        e
+                    ))
                 }
             }
             Err(e) => result.push(create_verification_failure!(

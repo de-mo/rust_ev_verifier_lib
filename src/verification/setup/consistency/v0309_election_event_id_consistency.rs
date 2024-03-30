@@ -64,7 +64,7 @@ fn test_ee_id_for_setup_vcs_dir<V: SetupVCSDirectoryTrait>(
                 e
             )),
             Ok(cc) => {
-                for p in cc.iter() {
+                for p in cc.0.iter() {
                     test_election_event_id(
                         &p.election_event_id,
                         expected,
