@@ -18,10 +18,10 @@ test = false
 log = "0.4"
 num-bigint = "0.4"
 chrono = "0.4"
-thiserror = "1.0.40"
+thiserror = "1.0"
 data-encoding = "2.3"
-anyhow = "1.0.71"
-lazy_static = "1.4.0"
+anyhow = "1.0"
+lazy_static = "1.4"
 rayon = "1.7"
 log4rs = "1.2"
 serde = { version = "1.0", features = ["derive"] }
@@ -32,6 +32,6 @@ glob = "0.3"
 quick-xml = { version = "0.31", features = ["serialize"] }
 structopt = "0.3"
 rug = "1.24"
-#rust_ev_crypto_primitives = "0.4"
-rust_ev_crypto_primitives = {path = "../rust_ev_crypto_primitives"}
-regex = "1.10.4"
+rust_ev_crypto_primitives = "0.5"
+#rust_ev_crypto_primitives = {path = "../rust_ev_crypto_primitives"}
+regex = "1.10"
