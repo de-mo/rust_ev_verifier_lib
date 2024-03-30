@@ -97,6 +97,7 @@ impl VerificationResult {
     }
 
     /// Append anyhow errors to self as failures
+    #[allow(dead_code)]
     pub fn append_failures(&mut self, failures: &[anyhow::Error]) {
         let events: Vec<VerificationEvent> = failures
             .iter()

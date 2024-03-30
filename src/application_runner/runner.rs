@@ -86,6 +86,7 @@ pub struct Runner<'a, T: RunStrategy<'a>> {
     start_time: Option<SystemTime>,
     duration: Option<Duration>,
     run_strategy: T,
+    #[allow(dead_code)]
     config: &'static VerifierConfig,
     action_before: Box<dyn Fn(&str) + Send + Sync>,
     #[allow(clippy::type_complexity)]
@@ -124,6 +125,7 @@ where
     }
 
     /// Reset the verifications
+    #[allow(dead_code)]
     pub fn reset(&'a mut self, metadata_list: &'a VerificationMetaDataList) -> anyhow::Result<()> {
         self.start_time = None;
         self.duration = None;
@@ -182,6 +184,7 @@ where
         None
     }
 
+    #[allow(dead_code)]
     pub fn verifications_mut(&'a mut self) -> &'a mut VerificationSuite<'a> {
         &mut self.verifications
     }
@@ -194,6 +197,7 @@ where
         self.start_time.is_some() && self.duration.is_none()
     }
 
+    #[allow(dead_code)]
     pub fn can_be_started(&self) -> bool {
         self.start_time.is_none()
     }

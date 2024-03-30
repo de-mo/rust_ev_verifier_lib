@@ -45,6 +45,7 @@ impl VerificationMetaDataList {
             .map_err(|e| anyhow!(e).context("Cannot deserialize the verification list from json"))
     }
 
+    #[allow(dead_code)]
     pub fn load_period(data: &str, period: &VerificationPeriod) -> anyhow::Result<Self> {
         Ok(Self(
             Self::load(data)?
@@ -60,6 +61,7 @@ impl VerificationMetaDataList {
         self.0.iter().find(|e| e.id == id)
     }
 
+    #[allow(dead_code)]
     pub fn id_list(&self) -> Vec<String> {
         self.0.iter().map(|e| e.id.clone()).collect::<Vec<String>>()
     }
@@ -73,18 +75,22 @@ impl VerificationMetaDataList {
             .collect::<Vec<String>>()
     }
 
+    #[allow(dead_code)]
     pub fn len(&self) -> usize {
         self.0.len()
     }
 
+    #[allow(dead_code)]
     pub fn is_empty(&self) -> bool {
         self.len() == 0
     }
 
+    #[allow(dead_code)]
     pub fn get(&self, id: &str) -> Option<&VerificationMetaData> {
         self.iter().find(|&e| e.id == id)
     }
 
+    #[allow(dead_code)]
     pub fn iter(&self) -> std::slice::Iter<VerificationMetaData> {
         self.0.iter()
     }
@@ -117,6 +123,7 @@ impl VerificationMetaData {
         &self.category
     }
 
+    #[allow(dead_code)]
     pub fn from_id(id: &str, data: &str) -> Option<Self> {
         match VerificationMetaDataList::load(data) {
             Ok(l) => l.get(id).cloned(),

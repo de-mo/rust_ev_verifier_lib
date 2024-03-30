@@ -11,7 +11,7 @@ use log4rs::{
     encode::pattern::PatternEncoder,
 };
 
-pub use checks::{check_verification_dir, is_directory_tally, start_check};
+pub use checks::{check_verification_dir, start_check};
 pub use runner::{no_action_after_fn, no_action_before_fn, RunParallel, Runner};
 
 /// Init the logger with or without stdout

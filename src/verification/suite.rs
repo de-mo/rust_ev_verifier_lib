@@ -72,6 +72,7 @@ impl<'a> VerificationSuite<'a> {
         self.list.0.len()
     }
 
+    #[allow(dead_code)]
     pub fn is_empty(&self) -> bool {
         self.len() == 0
     }
@@ -104,6 +105,7 @@ impl<'a> VerificationSuite<'a> {
     /// List of ids of all verifications
     ///
     /// The excluded verifications are not collected
+    #[allow(dead_code)]
     pub fn collect_id(&self) -> Vec<String> {
         let mut list: Vec<String> = self.list.0.iter().map(|v| v.id().clone()).collect();
         list.sort();

@@ -348,6 +348,7 @@ impl VerifierDataType {
     }
 }
 
+#[allow(dead_code)]
 fn deserialize_string_hex_to_integer<'de, D>(deserializer: D) -> Result<Integer, D::Error>
 where
     D: Deserializer<'de>,
@@ -378,6 +379,7 @@ where
         .map_err(|e| Error::custom(e.to_string()))
 }
 
+#[allow(dead_code)]
 fn deserialize_seq_string_hex_to_seq_integer<'de, D>(
     deserializer: D,
 ) -> Result<Vec<Integer>, D::Error>
@@ -473,6 +475,7 @@ where
     deserializer.deserialize_seq(Visitor)
 }
 
+#[allow(dead_code)]
 fn deserialize_seq_seq_string_hex_to_seq_seq_integer<'de, D>(
     deserializer: D,
 ) -> Result<Vec<Vec<Integer>>, D::Error>
