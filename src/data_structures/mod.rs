@@ -547,7 +547,13 @@ where
 }
 
 #[cfg(test)]
-pub(crate) mod test {
+pub(super) mod test {
+    /// Macro testing the data structure (read data, signature and verify domain)
+    ///
+    /// # Parameters
+    /// $t: Name of the struct containing the data
+    /// $f: Filename as str
+    /// $fn_path: Function to get the path of the test data
     macro_rules! test_data_structure {
         ($t:ident, $f: literal, $fn_path: ident) => {
             fn get_data_res() -> anyhow::Result<$t> {
