@@ -22,9 +22,9 @@ pub struct ControlComponentCodeSharesPayloadInner {
     pub election_event_id: String,
     pub verification_card_set_id: String,
     pub chunk_id: usize,
-    pub control_component_code_shares: Vec<ControlComponentCodeShare>,
     #[serde(with = "EncryptionParametersDef")]
     pub encryption_group: EncryptionParameters,
+    pub control_component_code_shares: Vec<ControlComponentCodeShare>,
     pub node_id: usize,
     pub signature: Signature,
 }
@@ -38,8 +38,8 @@ pub struct ControlComponentCodeShare {
     #[serde(deserialize_with = "deserialize_seq_string_base64_to_seq_integer")]
     pub voter_vote_cast_return_code_generation_public_key: Vec<Integer>,
     pub exponentiated_encrypted_partial_choice_return_codes: ExponentiatedEncryptedElement,
-    pub encrypted_partial_choice_return_code_exponentiation_proof: Proof,
     pub exponentiated_encrypted_confirmation_key: ExponentiatedEncryptedElement,
+    pub encrypted_partial_choice_return_code_exponentiation_proof: Proof,
     pub encrypted_confirmation_key_exponentiation_proof: Proof,
 }
 
@@ -95,8 +95,8 @@ impl<'a> From<&'a ControlComponentCodeShare> for HashableMessage<'a> {
             Self::from(&value.voter_choice_return_code_generation_public_key),
             Self::from(&value.voter_vote_cast_return_code_generation_public_key),
             Self::from(&value.exponentiated_encrypted_partial_choice_return_codes),
-            Self::from(&value.encrypted_partial_choice_return_code_exponentiation_proof),
             Self::from(&value.exponentiated_encrypted_confirmation_key),
+            Self::from(&value.encrypted_partial_choice_return_code_exponentiation_proof),
             Self::from(&value.encrypted_confirmation_key_exponentiation_proof),
         ])
     }
@@ -130,20 +130,43 @@ impl<'a> VerifiySignatureTrait<'a> for ControlComponentCodeSharesPayloadInner {
     }
 }
 
+impl<'a> VerifiySignatureTrait<'a> for ControlComponentCodeSharesPayload {
+    fn get_hashable(&'a self) -> anyhow::Result<HashableMessage<'a>> {
+        unimplemented!()
+    }
+
+    fn get_context_data(&'a self) -> Vec<HashableMessage<'a>> {
+        unimplemented!()
+    }
+
+    fn get_certificate_authority(&self) -> anyhow::Result<String> {
+        unimplemented!()
+    }
+
+    fn get_signature(&self) -> ByteArray {
+        unimplemented!()
+    }
+
+    fn verify_signatures(
+        &'a self,
+        keystore: &rust_ev_crypto_primitives::Keystore,
+    ) -> Vec<anyhow::Result<bool>> {
+        self.0
+            .iter()
+            .map(|e| e.verifiy_signature(keystore))
+            .collect()
+    }
+}
+
 #[cfg(test)]
 mod test {
-    use super::*;
-    use crate::config::test::test_setup_verification_card_set_path;
+    use super::{super::super::test::test_data_structure, *};
+    use crate::config::test::{test_setup_verification_card_set_path, CONFIG_TEST};
     use std::fs;
 
-    #[test]
-    fn read_data_set() {
-        let path = test_setup_verification_card_set_path()
-            .join("controlComponentCodeSharesPayload.0.json");
-        let json = fs::read_to_string(path).unwrap();
-        let r_eec = ControlComponentCodeSharesPayload::from_json(&json);
-        //println!("{:?}", r_eec);
-        assert!(r_eec.is_ok());
-        assert!(r_eec.unwrap().verifiy_domain().is_empty())
-    }
+    test_data_structure!(
+        ControlComponentCodeSharesPayload,
+        "controlComponentCodeSharesPayload.0.json",
+        test_setup_verification_card_set_path
+    );
 }

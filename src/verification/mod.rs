@@ -76,7 +76,29 @@ fn verify_signature_for_object<'a, T>(
             return;
         }
     };
-    match obj.verifiy_signature(&ks) {
+    let res = obj.verify_signatures(&ks);
+    for (i, r) in res.iter().enumerate() {
+        match r {
+            Ok(t) => {
+                if !t {
+                    result.push(create_verification_failure!(format!(
+                        "Wrong signature for {}",
+                        name
+                    )))
+                }
+            }
+            Err(e) => {
+                result.push(create_verification_error!(format!(
+                    "Error testing signature of {} at position {}: {}",
+                    name,
+                    i,
+                    e.to_string()
+                )));
+            }
+        }
+    }
+
+    /*  {
         Ok(t) => {
             if !t {
                 result.push(create_verification_failure!(format!(
@@ -91,7 +113,7 @@ fn verify_signature_for_object<'a, T>(
                 e
             ));
         }
-    }
+    }*/
 }
 
 impl TryFrom<&str> for VerificationPeriod {

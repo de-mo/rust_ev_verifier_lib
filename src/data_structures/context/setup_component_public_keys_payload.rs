@@ -97,18 +97,13 @@ impl<'a> From<&'a SetupComponentPublicKeys> for HashableMessage<'a> {
 
 #[cfg(test)]
 mod test {
-    use super::*;
-    use crate::config::test::test_datasets_context_path;
+    use super::{super::super::test::test_data_structure, *};
+    use crate::config::test::{test_datasets_context_path, CONFIG_TEST};
     use std::fs;
 
-    #[test]
-    fn read_data_set() {
-        let path = test_datasets_context_path().join("setupComponentPublicKeysPayload.json");
-        let json = fs::read_to_string(path).unwrap();
-        let r_eec = SetupComponentPublicKeysPayload::from_json(&json);
-        if r_eec.is_err() {
-            println!("{:?}", r_eec.as_ref().unwrap_err())
-        }
-        assert!(r_eec.is_ok())
-    }
+    test_data_structure!(
+        SetupComponentPublicKeysPayload,
+        "setupComponentPublicKeysPayload.json",
+        test_datasets_context_path
+    );
 }

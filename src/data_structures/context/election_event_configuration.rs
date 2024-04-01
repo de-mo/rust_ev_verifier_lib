@@ -144,13 +144,21 @@ mod test {
     use super::*;
     use crate::config::test::test_datasets_context_path;
 
+    fn get_data_res() -> anyhow::Result<ElectionEventConfiguration> {
+        ElectionEventConfiguration::from_xml_file(
+            &test_datasets_context_path().join("configuration-anonymized.xml"),
+        )
+    }
+
     #[test]
     fn read_data_set() {
-        let path = test_datasets_context_path().join("configuration-anonymized.xml");
-        let config_res = ElectionEventConfiguration::from_xml_file(&path);
-        assert!(config_res.is_ok());
-        let config = config_res.unwrap();
-        assert_eq!(config.header.voter_total, 43);
-        assert_eq!(config.signature.signature_contents, "ctgAK+cygZ89QJ/4XGccw4fl4Yc1MCdsywfJuR5AIs/+SnozxB8USh7UJvl64fxuZ6ks+86tRGazABP+Az/0hEmSxihadlYpGe5b2goqo/TSQzC+Z683sHV1O4B8RGjFYt93xIVpsvs4mYiyktz7ma8IanZk0nNhihhgF0Da07Tv4PmhUqAuzd7IQEYTaTz7RXebOHkH4pG4fA2HbSHeUMlBw0Ni51zx5LOO0riX/bHf4ffnmaqibbOdt88VZegQoNp1gy/R29L6mNrSi01WQnDZ3xxzeFJCG1eSb0MoLoDwNSizC63pqKmQbjhsQbqxDpmkhvSqW5EnvY4VH4rYIaONyjZeivJwUwnLEPbE9k/PnZTAlESCFFR3bHnawEKsRCtwynH0u6IRuTW2iMuupl+UE3tfx8WOsqbWBWNCL9/0WSrvdiJLTcScRmU3ZqW+1La0FG/BhZiI0egBA4KIOYAb9McWlIE7QS8hWJjpQP5xYa+s4SHP63YNr0LvQ1dh");
+        let data_res = get_data_res();
+        assert!(data_res.is_ok());
+        let data = data_res.unwrap();
+        assert_eq!(data.header.voter_total, 43);
+        assert_eq!(data.signature.signature_contents, "ctgAK+cygZ89QJ/4XGccw4fl4Yc1MCdsywfJuR5AIs/+SnozxB8USh7UJvl64fxuZ6ks+86tRGazABP+Az/0hEmSxihadlYpGe5b2goqo/TSQzC+Z683sHV1O4B8RGjFYt93xIVpsvs4mYiyktz7ma8IanZk0nNhihhgF0Da07Tv4PmhUqAuzd7IQEYTaTz7RXebOHkH4pG4fA2HbSHeUMlBw0Ni51zx5LOO0riX/bHf4ffnmaqibbOdt88VZegQoNp1gy/R29L6mNrSi01WQnDZ3xxzeFJCG1eSb0MoLoDwNSizC63pqKmQbjhsQbqxDpmkhvSqW5EnvY4VH4rYIaONyjZeivJwUwnLEPbE9k/PnZTAlESCFFR3bHnawEKsRCtwynH0u6IRuTW2iMuupl+UE3tfx8WOsqbWBWNCL9/0WSrvdiJLTcScRmU3ZqW+1La0FG/BhZiI0egBA4KIOYAb9McWlIE7QS8hWJjpQP5xYa+s4SHP63YNr0LvQ1dh");
     }
+
+    #[test]
+    fn verify_signature() {}
 }

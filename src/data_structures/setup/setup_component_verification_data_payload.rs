@@ -49,10 +49,10 @@ impl SetupComponentVerificationDataPayload {
 #[serde(rename_all = "camelCase")]
 pub struct SetupComponentVerificationDataInner {
     pub verification_card_id: String,
-    pub encrypted_hashed_squared_confirmation_key: ExponentiatedEncryptedElement,
-    pub encrypted_hashed_squared_partial_choice_return_codes: ExponentiatedEncryptedElement,
     #[serde(deserialize_with = "deserialize_seq_string_base64_to_seq_integer")]
     pub verification_card_public_key: Vec<Integer>,
+    pub encrypted_hashed_squared_partial_choice_return_codes: ExponentiatedEncryptedElement,
+    pub encrypted_hashed_squared_confirmation_key: ExponentiatedEncryptedElement,
 }
 
 #[derive(Deserialize, Debug, Clone)]
@@ -117,9 +117,9 @@ impl<'a> From<&'a SetupComponentVerificationDataInner> for HashableMessage<'a> {
     fn from(value: &'a SetupComponentVerificationDataInner) -> Self {
         Self::from(vec![
             Self::from(&value.verification_card_id),
-            Self::from(&value.encrypted_hashed_squared_confirmation_key),
-            Self::from(&value.encrypted_hashed_squared_partial_choice_return_codes),
             Self::from(&value.verification_card_public_key),
+            Self::from(&value.encrypted_hashed_squared_partial_choice_return_codes),
+            Self::from(&value.encrypted_hashed_squared_confirmation_key),
         ])
     }
 }
@@ -148,19 +148,13 @@ impl<'a> From<&'a CorrectnessInformationElt> for HashableMessage<'a> {
 
 #[cfg(test)]
 mod test {
-    use super::*;
-    use crate::config::test::test_setup_verification_card_set_path;
+    use super::{super::super::test::test_data_structure, *};
+    use crate::config::test::{test_setup_verification_card_set_path, CONFIG_TEST};
     use std::fs;
 
-    #[test]
-    fn read_data_set() {
-        let path = test_setup_verification_card_set_path()
-            .join("setupComponentVerificationDataPayload.0.json");
-        let json = fs::read_to_string(path).unwrap();
-        let r_eec = SetupComponentVerificationDataPayload::from_json(&json);
-        if r_eec.is_err() {
-            println!("{:?}", r_eec.as_ref().unwrap_err());
-        }
-        assert!(r_eec.is_ok())
-    }
+    test_data_structure!(
+        SetupComponentVerificationDataPayload,
+        "setupComponentVerificationDataPayload.0.json",
+        test_setup_verification_card_set_path
+    );
 }

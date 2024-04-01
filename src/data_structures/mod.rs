@@ -545,3 +545,44 @@ where
     }
     deserializer.deserialize_seq(Visitor)
 }
+
+#[cfg(test)]
+pub(crate) mod test {
+    macro_rules! test_data_structure {
+        ($t:ident, $f: literal, $fn_path: ident) => {
+            fn get_data_res() -> anyhow::Result<$t> {
+                let json = fs::read_to_string($fn_path().join($f)).unwrap();
+                $t::from_json(&json)
+            }
+
+            #[test]
+            fn read_data_set() {
+                let data_res = get_data_res();
+                assert!(data_res.is_ok());
+                if data_res.is_err() {
+                    println!("{:?}", data_res.as_ref().unwrap_err());
+                }
+                assert!(data_res.is_ok())
+            }
+
+            #[test]
+            fn verify_signature() {
+                let data = get_data_res().unwrap();
+                let ks = CONFIG_TEST.keystore().unwrap();
+                let sign_validate_res = data.verify_signatures(&ks);
+                for r in sign_validate_res {
+                    assert!(r.is_ok());
+                    assert!(r.unwrap())
+                }
+            }
+
+            #[test]
+            fn verify_domain() {
+                let data = get_data_res().unwrap();
+                let verifiy_domain_res = data.verifiy_domain();
+                assert!(verifiy_domain_res.is_empty())
+            }
+        };
+    }
+    pub(super) use test_data_structure;
+}

@@ -89,6 +89,14 @@ where
         )
         .context("Error verifying the signature")
     }
+
+    /// Verify signatures of an array element
+    ///
+    /// Per default return an array of one element containing the result of the element verified
+    /// The method must be rewritten for a array of elements
+    fn verify_signatures(&'a self, keystore: &Keystore) -> Vec<anyhow::Result<bool>> {
+        vec![self.verifiy_signature(keystore)]
+    }
 }
 
 #[cfg(test)]
