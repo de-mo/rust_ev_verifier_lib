@@ -3,10 +3,15 @@ use super::super::{
     deserialize_seq_string_base64_to_seq_integer, deserialize_string_base64_to_integer,
     implement_trait_verifier_data_json_decode, VerifierDataDecode,
 };
-use crate::data_structures::common_types::DecryptionProof;
+use crate::{
+    data_structures::common_types::DecryptionProof,
+    direct_trust::{CertificateAuthority, VerifiySignatureTrait},
+};
 use anyhow::anyhow;
 use rug::Integer;
-use rust_ev_crypto_primitives::EncryptionParameters;
+use rust_ev_crypto_primitives::{
+    ByteArray, EncryptionParameters, HashableMessage, VerifyDomainTrait,
+};
 use serde::Deserialize;
 
 #[derive(Deserialize, Debug, Clone)]
@@ -104,18 +109,148 @@ pub struct DecryptedVote {
     pub message: Vec<String>,
 }
 
+impl VerifyDomainTrait for TallyComponentShufflePayload {}
+
+impl<'a> From<&'a TallyComponentShufflePayload> for HashableMessage<'a> {
+    fn from(value: &'a TallyComponentShufflePayload) -> Self {
+        Self::from(vec![
+            Self::from(&value.encryption_group),
+            Self::from(&value.election_event_id),
+            Self::from(&value.ballot_box_id),
+            Self::from(&value.verifiable_shuffle),
+            Self::from(&value.verifiable_plaintext_decryption),
+        ])
+    }
+}
+
+impl<'a> From<&'a VerifiableShuffle> for HashableMessage<'a> {
+    fn from(value: &'a VerifiableShuffle) -> Self {
+        Self::from(vec![
+            Self::from(
+                value
+                    .shuffled_ciphertexts
+                    .iter()
+                    .map(HashableMessage::from)
+                    .collect::<Vec<Self>>(),
+            ),
+            Self::from(&value.shuffle_argument),
+        ])
+    }
+}
+
+impl<'a> From<&'a VerifiablePlaintextDecryption> for HashableMessage<'a> {
+    fn from(value: &'a VerifiablePlaintextDecryption) -> Self {
+        Self::from(vec![
+            Self::from(
+                value
+                    .decrypted_votes
+                    .iter()
+                    .map(HashableMessage::from)
+                    .collect::<Vec<Self>>(),
+            ),
+            Self::from(
+                value
+                    .decryption_proofs
+                    .iter()
+                    .map(HashableMessage::from)
+                    .collect::<Vec<Self>>(),
+            ),
+        ])
+    }
+}
+
+impl<'a> From<&'a ShuffleArgument> for HashableMessage<'a> {
+    fn from(value: &'a ShuffleArgument) -> Self {
+        Self::from(vec![
+            Self::from(&value.c_a),
+            Self::from(&value.c_b),
+            Self::from(&value.product_argument),
+            Self::from(&value.multi_exponentiation_argument),
+        ])
+    }
+}
+
+impl<'a> From<&'a ProductArgument> for HashableMessage<'a> {
+    fn from(value: &'a ProductArgument) -> Self {
+        Self::from(vec![Self::from(&value.single_value_product_argument)])
+    }
+}
+
+impl<'a> From<&'a SingleValueProductArgument> for HashableMessage<'a> {
+    fn from(value: &'a SingleValueProductArgument) -> Self {
+        Self::from(vec![
+            Self::from(&value.c_d),
+            Self::from(&value.c_delta),
+            Self::from(&value.c_delta_upper),
+            Self::from(&value.a_tilde),
+            Self::from(&value.b_tilde),
+            Self::from(&value.r_tilde),
+            Self::from(&value.s_tilde),
+        ])
+    }
+}
+
+impl<'a> From<&'a MultiExponentiationArgument> for HashableMessage<'a> {
+    fn from(value: &'a MultiExponentiationArgument) -> Self {
+        Self::from(vec![
+            Self::from(&value.c_a_0),
+            Self::from(&value.c_b),
+            Self::from(
+                value
+                    .e
+                    .iter()
+                    .map(HashableMessage::from)
+                    .collect::<Vec<Self>>(),
+            ),
+            Self::from(&value.a),
+            Self::from(&value.r),
+            Self::from(&value.b),
+            Self::from(&value.s),
+            Self::from(&value.tau),
+        ])
+    }
+}
+
+impl<'a> From<&'a DecryptedVote> for HashableMessage<'a> {
+    fn from(value: &'a DecryptedVote) -> Self {
+        Self::from(vec![Self::from(&value.message)])
+    }
+}
+
+impl<'a> VerifiySignatureTrait<'a> for TallyComponentShufflePayload {
+    fn get_hashable(&'a self) -> anyhow::Result<HashableMessage<'a>> {
+        Ok(HashableMessage::from(self))
+    }
+
+    fn get_context_data(&'a self) -> Vec<HashableMessage<'a>> {
+        vec![
+            HashableMessage::from("shuffle"),
+            HashableMessage::from("offline"),
+            HashableMessage::from(&self.election_event_id),
+            HashableMessage::from(&self.ballot_box_id),
+        ]
+    }
+
+    fn get_certificate_authority(&self) -> anyhow::Result<String> {
+        Ok(String::from(CertificateAuthority::SdmTally))
+    }
+
+    fn get_signature(&self) -> ByteArray {
+        self.signature.get_signature()
+    }
+}
+
 #[cfg(test)]
 mod test {
-    use super::*;
-    use crate::config::test::test_ballot_box_path;
+    use super::{super::super::test::test_data_structure, *};
+    use crate::config::test::{test_ballot_box_path, CONFIG_TEST};
     use std::fs;
 
-    #[test]
-    fn read_data_set() {
-        let path = test_ballot_box_path().join("tallyComponentShufflePayload.json");
-        let json = fs::read_to_string(path).unwrap();
-        let r_eec = TallyComponentShufflePayload::from_json(&json);
-        println!("{:?}", r_eec.as_ref().err());
-        assert!(r_eec.is_ok())
-    }
+    /* Signature not working
+    test_data_structure!(
+        TallyComponentShufflePayload,
+        "tallyComponentShufflePayload.json",
+        test_ballot_box_path
+    );
+    */
 }

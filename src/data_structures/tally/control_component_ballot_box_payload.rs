@@ -2,9 +2,14 @@ use super::super::{
     common_types::{EncryptionParametersDef, ExponentiatedEncryptedElement, Signature},
     implement_trait_verifier_data_json_decode, VerifierDataDecode,
 };
-use crate::data_structures::common_types::{DecryptionProof, Proof};
-use anyhow::anyhow;
-use rust_ev_crypto_primitives::EncryptionParameters;
+use crate::{
+    data_structures::common_types::{DecryptionProof, Proof},
+    direct_trust::{CertificateAuthority, VerifiySignatureTrait},
+};
+use anyhow::{anyhow, Context};
+use rust_ev_crypto_primitives::{
+    ByteArray, EncryptionParameters, HashableMessage, VerifyDomainTrait,
+};
 use serde::Deserialize;
 
 #[derive(Deserialize, Debug, Clone)]
@@ -39,18 +44,85 @@ pub struct ContextIds {
     pub verification_card_id: String,
 }
 
+impl VerifyDomainTrait for ControlComponentBallotBoxPayload {}
+
+impl<'a> From<&'a ControlComponentBallotBoxPayload> for HashableMessage<'a> {
+    fn from(value: &'a ControlComponentBallotBoxPayload) -> Self {
+        let votes: Vec<Self> = value
+            .confirmed_encrypted_votes
+            .iter()
+            .map(Self::from)
+            .collect();
+        Self::from(vec![
+            Self::from(&value.encryption_group),
+            Self::from(&value.election_event_id),
+            Self::from(&value.ballot_box_id),
+            Self::from(&value.node_id),
+            Self::from(votes),
+        ])
+    }
+}
+
+impl<'a> From<&'a ConfirmedEncryptedVote> for HashableMessage<'a> {
+    fn from(value: &'a ConfirmedEncryptedVote) -> Self {
+        Self::from(vec![
+            Self::from(&value.context_ids),
+            Self::from(&value.encrypted_vote),
+            Self::from(&value.exponentiated_encrypted_vote),
+            Self::from(&value.encrypted_partial_choice_return_codes),
+            Self::from(&value.exponentiation_proof),
+            Self::from(&value.plaintext_equality_proof),
+        ])
+    }
+}
+
+impl<'a> From<&'a ContextIds> for HashableMessage<'a> {
+    fn from(value: &'a ContextIds) -> Self {
+        Self::from(vec![
+            Self::from(&value.election_event_id),
+            Self::from(&value.verification_card_set_id),
+            Self::from(&value.verification_card_id),
+        ])
+    }
+}
+
+impl<'a> VerifiySignatureTrait<'a> for ControlComponentBallotBoxPayload {
+    fn get_hashable(&'a self) -> anyhow::Result<HashableMessage<'a>> {
+        Ok(HashableMessage::from(self))
+    }
+
+    fn get_context_data(&'a self) -> Vec<HashableMessage<'a>> {
+        vec![
+            HashableMessage::from("ballotbox"),
+            HashableMessage::from(&self.node_id),
+            HashableMessage::from(&self.election_event_id),
+            HashableMessage::from(&self.ballot_box_id),
+        ]
+    }
+
+    fn get_certificate_authority(&self) -> anyhow::Result<String> {
+        Ok(String::from(
+            CertificateAuthority::get_ca_cc(&self.node_id).context(format!(
+                "verifiy signature for ControlComponentBallotBoxPayload for node {}",
+                self.node_id
+            ))?,
+        ))
+    }
+
+    fn get_signature(&self) -> ByteArray {
+        self.signature.get_signature()
+    }
+}
+
 #[cfg(test)]
 mod test {
-    use super::*;
-    use crate::config::test::test_ballot_box_path;
+    use super::{super::super::test::test_data_structure, *};
+    use crate::config::test::{test_ballot_box_path, CONFIG_TEST};
     use std::fs;
 
-    #[test]
-    fn read_data_set() {
-        let path = test_ballot_box_path().join("controlComponentBallotBoxPayload_1.json");
-        let json = fs::read_to_string(path).unwrap();
-        let r_eec = ControlComponentBallotBoxPayload::from_json(&json);
-        println!("{:?}", r_eec.as_ref().err());
-        assert!(r_eec.is_ok())
-    }
+    test_data_structure!(
+        ControlComponentBallotBoxPayload,
+        "controlComponentBallotBoxPayload_1.json",
+        test_ballot_box_path
+    );
 }

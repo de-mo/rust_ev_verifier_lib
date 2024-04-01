@@ -101,6 +101,9 @@ impl ElectionEventContext {
     }
 }
 
+/// Validate seed according to the specifications of Swiss Post
+///
+/// seed = <Canton>_<Date>_<TT|TP|PP>_nn
 fn validate_seed(seed: &str) -> Vec<anyhow::Error> {
     let mut res = vec![];
     if seed.len() != 16 {
@@ -134,37 +137,40 @@ fn validate_seed(seed: &str) -> Vec<anyhow::Error> {
     res
 }
 
+/// Validate small primes are correct
+///
+/// - Size is equal to the max. supported voting options
+/// - Is sorted correctly (for 05.02)
+/// - The first ist greater or equal than 5 (for 05.02)
+fn validate_small_primes(small_primes: &[usize]) -> Vec<anyhow::Error> {
+    let mut res = vec![];
+    // Len is correct
+    if !small_primes.len() == VerifierConfig::maximum_number_of_supported_voting_options_n_sup() {
+        res.push(anyhow!(format!(
+            "The list of small primes {} is not equal to the maximal number of voting options {}",
+            small_primes.len(),
+            VerifierConfig::maximum_number_of_supported_voting_options_n_sup()
+        )));
+    }
+    // is sorted
+    if !small_primes.windows(2).all(|p| p[0] < p[1]) {
+        res.push(anyhow!("Small primes list is not in ascending order"));
+    }
+    // for 5.02
+    if small_primes[0] < 5 {
+        res.push(anyhow!(
+            "The small primes contain 2 or 3, what is not allowed"
+        ));
+    };
+    res
+}
+
 impl VerifyDomainTrait for ElectionEventContextPayload {
-    fn verifiy_domain(&self) -> Vec<anyhow::Error> {
-        let mut res = self.encryption_group.verifiy_domain();
-        // For 05.01 (seed)
-        res.extend(validate_seed(&self.seed));
-        // For 5.02
-        if !self.small_primes.len()
-            == VerifierConfig::maximum_number_of_supported_voting_options_n_sup()
-        {
-            res.push(
-                anyhow!(
-                    format!(
-                        "The list of small primes {} is not equal to the maximal number of voting options {}",
-                        self.small_primes.len(),
-                        VerifierConfig::maximum_number_of_supported_voting_options_n_sup()
-                    )
-                )
-            );
-        }
-        // for 5.02
-        let mut sp = self.small_primes.clone();
-        sp.sort();
-        if sp != self.small_primes {
-            res.push(anyhow!("Small primes list is not in ascending order"));
-        }
-        // for 5.02
-        if sp[0] < 5 {
-            res.push(anyhow!(
-                "The small primes contain 2 or 3, what is not allowed"
-            ));
-        }
+    fn new_domain_verifications() -> rust_ev_crypto_primitives::DomainVerifications<Self> {
+        let mut res = rust_ev_crypto_primitives::DomainVerifications::default();
+        res.add_verification(|v: &Self| v.encryption_group.verifiy_domain());
+        res.add_verification(|v: &Self| validate_seed(&v.seed));
+        res.add_verification(|v: &Self| validate_small_primes(&v.small_primes));
         res
     }
 }
@@ -274,7 +280,7 @@ mod test {
     );
 
     #[test]
-    fn read_validate_seed() {
+    fn test_validate_seed() {
         assert!(validate_seed("SG_20230101_TT01").is_empty());
         assert!(!validate_seed("SG_20230101_TT0").is_empty());
         assert!(!validate_seed("Sg_20230101_TT01").is_empty());

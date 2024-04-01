@@ -16,8 +16,8 @@ pub struct ControlComponentShufflePayload {
     pub election_event_id: String,
     pub ballot_box_id: String,
     pub node_id: usize,
-    pub verifiable_decryptions: VerifiableDecryptions,
     pub verifiable_shuffle: VerifiableShuffle,
+    pub verifiable_decryptions: VerifiableDecryptions,
     pub signature: Signature,
 }
 implement_trait_verifier_data_json_decode!(ControlComponentShufflePayload);
