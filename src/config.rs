@@ -78,6 +78,11 @@ impl Config {
         consts::MAXIMUM_WRITE_IN_OPTION_LENGTH
     }
 
+    /// Character length of unique identifiers
+    pub fn l_id() -> usize {
+        consts::CHARACTER_LENGTH_OF_UNIQUE_IDENTIFIERS
+    }
+
     #[allow(dead_code)]
     pub fn maximum_actual_voting_option_length() -> usize {
         consts::MAXIMUM_ACTUAL_VOTING_OPTION_LENGTH

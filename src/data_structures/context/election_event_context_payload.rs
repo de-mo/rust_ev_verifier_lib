@@ -3,8 +3,8 @@ use super::super::{
     deserialize_string_string_to_datetime, implement_trait_verifier_data_json_decode,
     VerifierDataDecode,
 };
-use crate::config::Config as VerifierConfig;
 use crate::direct_trust::{CertificateAuthority, VerifiySignatureTrait};
+use crate::{config::Config as VerifierConfig, data_structures::verifiy_domain_length_unique_id};
 use anyhow::anyhow;
 use chrono::NaiveDate;
 use chrono::NaiveDateTime;
@@ -211,6 +211,13 @@ impl VerifyDomainTrait for ElectionEventContextPayload {
                 .map(|c| validate_voting_options_number(&c.primes_mapping_table))
                 .collect()
         });
+        // validate length of election event id (for all tests using )
+        res.add_verification(|v| {
+            verifiy_domain_length_unique_id(
+                &v.election_event_context.election_event_id,
+                "election event id",
+            )
+        });
         res
     }
 }
@@ -351,6 +358,13 @@ mod test {
         ee.election_event_context.verification_card_set_contexts[0]
             .primes_mapping_table
             .number_of_voting_options = 1;
+        assert!(!ee.verifiy_domain().is_empty());
+    }
+
+    #[test]
+    fn error_election_event_id() {
+        let mut ee = get_data_res().unwrap();
+        ee.election_event_context.election_event_id = "1234345".to_string();
         assert!(!ee.verifiy_domain().is_empty());
     }
 }

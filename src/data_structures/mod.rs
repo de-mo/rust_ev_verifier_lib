@@ -33,7 +33,10 @@ use self::{
         VerifierTallyDataType,
     },
 };
-use crate::file_structure::{file::File, FileReadMode, FileType};
+use crate::{
+    config::Config as VerifierConfig,
+    file_structure::{file::File, FileReadMode, FileType},
+};
 use anyhow::{anyhow, bail};
 use chrono::NaiveDateTime;
 use roxmltree::Document;
@@ -544,6 +547,21 @@ where
         }
     }
     deserializer.deserialize_seq(Visitor)
+}
+
+/// Verification of the length of unique ID according the expected length l_id
+///
+/// `name` is used for the error message
+fn verifiy_domain_length_unique_id(uuid: &str, name: &str) -> Vec<anyhow::Error> {
+    if uuid.len() != VerifierConfig::l_id() {
+        return vec![anyhow!(format!(
+            "The  length of {} {} must be {}",
+            uuid,
+            name,
+            VerifierConfig::l_id()
+        ))];
+    };
+    vec![]
 }
 
 #[cfg(test)]
