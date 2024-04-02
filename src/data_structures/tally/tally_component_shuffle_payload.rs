@@ -118,7 +118,22 @@ impl<'a> From<&'a TallyComponentShufflePayload> for HashableMessage<'a> {
             Self::from(&value.election_event_id),
             Self::from(&value.ballot_box_id),
             Self::from(&value.verifiable_shuffle),
-            Self::from(&value.verifiable_plaintext_decryption),
+            Self::from(
+                value
+                    .verifiable_plaintext_decryption
+                    .decrypted_votes
+                    .iter()
+                    .map(HashableMessage::from)
+                    .collect::<Vec<Self>>(),
+            ),
+            Self::from(
+                value
+                    .verifiable_plaintext_decryption
+                    .decryption_proofs
+                    .iter()
+                    .map(HashableMessage::from)
+                    .collect::<Vec<Self>>(),
+            ),
         ])
     }
 }
@@ -138,6 +153,7 @@ impl<'a> From<&'a VerifiableShuffle> for HashableMessage<'a> {
     }
 }
 
+/*
 impl<'a> From<&'a VerifiablePlaintextDecryption> for HashableMessage<'a> {
     fn from(value: &'a VerifiablePlaintextDecryption) -> Self {
         Self::from(vec![
@@ -158,6 +174,7 @@ impl<'a> From<&'a VerifiablePlaintextDecryption> for HashableMessage<'a> {
         ])
     }
 }
+ */
 
 impl<'a> From<&'a ShuffleArgument> for HashableMessage<'a> {
     fn from(value: &'a ShuffleArgument) -> Self {
