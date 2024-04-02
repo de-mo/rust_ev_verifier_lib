@@ -3,9 +3,14 @@ use super::super::{
     implement_trait_verifier_data_json_decode, VerifierDataDecode,
 };
 use super::tally_component_shuffle_payload::VerifiableShuffle;
-use crate::data_structures::common_types::DecryptionProof;
-use anyhow::anyhow;
-use rust_ev_crypto_primitives::EncryptionParameters;
+use crate::{
+    data_structures::common_types::DecryptionProof,
+    direct_trust::{CertificateAuthority, VerifiySignatureTrait},
+};
+use anyhow::{anyhow, Context};
+use rust_ev_crypto_primitives::{
+    ByteArray, EncryptionParameters, HashableMessage, VerifyDomainTrait,
+};
 use serde::Deserialize;
 
 #[derive(Deserialize, Debug, Clone)]
@@ -29,18 +34,85 @@ pub struct VerifiableDecryptions {
     pub decryption_proofs: Vec<DecryptionProof>,
 }
 
+impl VerifyDomainTrait for ControlComponentShufflePayload {}
+
+impl<'a> From<&'a ControlComponentShufflePayload> for HashableMessage<'a> {
+    fn from(value: &'a ControlComponentShufflePayload) -> Self {
+        Self::from(vec![
+            Self::from(&value.encryption_group),
+            Self::from(&value.election_event_id),
+            Self::from(&value.ballot_box_id),
+            Self::from(&value.node_id),
+            Self::from(&value.verifiable_shuffle),
+            Self::from(&value.verifiable_decryptions),
+        ])
+    }
+}
+
+impl<'a> From<&'a VerifiableDecryptions> for HashableMessage<'a> {
+    fn from(value: &'a VerifiableDecryptions) -> Self {
+        Self::from(vec![
+            Self::from(
+                value
+                    .ciphertexts
+                    .iter()
+                    .map(HashableMessage::from)
+                    .collect::<Vec<Self>>(),
+            ),
+            Self::from(
+                value
+                    .decryption_proofs
+                    .iter()
+                    .map(HashableMessage::from)
+                    .collect::<Vec<Self>>(),
+            ),
+        ])
+    }
+}
+
+impl<'a> VerifiySignatureTrait<'a> for ControlComponentShufflePayload {
+    fn get_hashable(&'a self) -> anyhow::Result<HashableMessage<'a>> {
+        Ok(HashableMessage::from(self))
+    }
+
+    fn get_context_data(&'a self) -> Vec<HashableMessage<'a>> {
+        vec![
+            HashableMessage::from("shuffle"),
+            HashableMessage::from(&self.node_id),
+            HashableMessage::from(&self.election_event_id),
+            HashableMessage::from(&self.ballot_box_id),
+        ]
+    }
+
+    fn get_certificate_authority(&self) -> anyhow::Result<String> {
+        Ok(String::from(
+            CertificateAuthority::get_ca_cc(&self.node_id).context(format!(
+                "verifiy signature for ControlComponentBallotBoxPayload for node {}",
+                self.node_id
+            ))?,
+        ))
+    }
+
+    fn get_signature(&self) -> ByteArray {
+        self.signature.get_signature()
+    }
+}
+
 #[cfg(test)]
 mod test {
-    use super::*;
-    use crate::config::test::test_ballot_box_path;
+    use super::{
+        super::super::test::{
+            test_data_structure, test_data_structure_read_data_set,
+            test_data_structure_verify_domain, test_data_structure_verify_signature,
+        },
+        *,
+    };
+    use crate::config::test::{test_ballot_box_path, CONFIG_TEST};
     use std::fs;
 
-    #[test]
-    fn read_data_set() {
-        let path = test_ballot_box_path().join("controlComponentShufflePayload_1.json");
-        let json = fs::read_to_string(path).unwrap();
-        let r_eec = ControlComponentShufflePayload::from_json(&json);
-        println!("{:?}", r_eec.as_ref().err());
-        assert!(r_eec.is_ok())
-    }
+    test_data_structure!(
+        ControlComponentShufflePayload,
+        "controlComponentShufflePayload_1.json",
+        test_ballot_box_path
+    );
 }
