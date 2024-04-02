@@ -10,7 +10,7 @@ use chrono::NaiveDate;
 use chrono::NaiveDateTime;
 use regex::Regex;
 use rust_ev_crypto_primitives::{
-    ByteArray, EncryptionParameters, HashableMessage, VerifyDomainTrait,
+    ByteArray, DomainVerifications, EncryptionParameters, HashableMessage, VerifyDomainTrait,
 };
 use serde::Deserialize;
 
@@ -165,12 +165,60 @@ fn validate_small_primes(small_primes: &[usize]) -> Vec<anyhow::Error> {
     res
 }
 
+/// Validate if the number of voting option in the verification card set context is correct
+///
+/// - The number of voting options expected is the same than counted
+/// - The number is greater than 0 and less than the maximum supported voting options (for 05.03)
+fn validate_voting_options_number(p_table: &PrimesMappingTable) -> Vec<anyhow::Error> {
+    let mut res = vec![];
+    // Value number_of_voting_options is correct
+    if p_table.number_of_voting_options != p_table.p_table.len() {
+        res.push(anyhow!(format!(
+            "The  number of voting options expected {} is not the same that the number of voting options listed {}",
+            p_table.number_of_voting_options,
+            p_table.p_table.len()
+        )));
+    }
+    // number of voting options must be greater that 0
+    if p_table.number_of_voting_options == 0 {
+        res.push(anyhow!(
+            "The  number of voting options must be greater than 0",
+        ));
+    }
+    // number of voting options must be smaller or equal than max. supported voting options
+    if p_table.number_of_voting_options
+        > VerifierConfig::maximum_number_of_supported_voting_options_n_sup()
+    {
+        res.push(anyhow!(format!(
+            "The  number of voting options expected {} must be smaller or equal the the max. supported voting options {}",
+            p_table.number_of_voting_options,
+            VerifierConfig::maximum_number_of_supported_voting_options_n_sup()
+        )));
+    }
+    res
+}
+
 impl VerifyDomainTrait for ElectionEventContextPayload {
-    fn new_domain_verifications() -> rust_ev_crypto_primitives::DomainVerifications<Self> {
-        let mut res = rust_ev_crypto_primitives::DomainVerifications::default();
+    fn new_domain_verifications() -> DomainVerifications<Self> {
+        let mut res = DomainVerifications::default();
         res.add_verification(|v: &Self| v.encryption_group.verifiy_domain());
         res.add_verification(|v: &Self| validate_seed(&v.seed));
         res.add_verification(|v: &Self| validate_small_primes(&v.small_primes));
+        res.add_verification_with_vec_of_vec_errors(|v| {
+            v.election_event_context
+                .verification_card_set_contexts
+                .iter()
+                .map(|c| validate_voting_options_number(&c.primes_mapping_table))
+                .collect()
+        });
+        res
+    }
+}
+
+impl VerifyDomainTrait for VerificationCardSetContext {
+    fn new_domain_verifications() -> DomainVerifications<Self> {
+        let mut res = DomainVerifications::default();
+        res.add_verification(|v: &Self| validate_voting_options_number(&v.primes_mapping_table));
         res
     }
 }
@@ -295,5 +343,14 @@ mod test {
         assert!(!validate_seed("SG_20230101_TT0a").is_empty());
         assert!(!validate_seed("SG_20231301_TT01").is_empty());
         assert!(!validate_seed("SG_20231201_AA01").is_empty());
+    }
+
+    #[test]
+    fn error_number_of_voting_options() {
+        let mut ee = get_data_res().unwrap();
+        ee.election_event_context.verification_card_set_contexts[0]
+            .primes_mapping_table
+            .number_of_voting_options = 1;
+        assert!(!ee.verifiy_domain().is_empty());
     }
 }
