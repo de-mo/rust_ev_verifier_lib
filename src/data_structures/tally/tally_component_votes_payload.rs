@@ -66,7 +66,13 @@ impl<'a> VerifiySignatureTrait<'a> for TallyComponentVotesPayload {
 
 #[cfg(test)]
 mod test {
-    use super::{super::super::test::test_data_structure, *};
+    use super::{
+        super::super::test::{
+            test_data_structure, test_data_structure_read_data_set,
+            test_data_structure_verify_domain, test_data_structure_verify_signature,
+        },
+        *,
+    };
     use crate::config::test::{test_ballot_box_path, CONFIG_TEST};
     use std::fs;
 

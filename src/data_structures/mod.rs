@@ -554,13 +554,34 @@ pub(super) mod test {
     /// $t: Name of the struct containing the data
     /// $f: Filename as str
     /// $fn_path: Function to get the path of the test data
+    /// $ignored (optional): If the signature test is not working, can be ignored with the comment $ignored
+    ///
+    /// # usage:
+    /// All the four macros have to be imported
     macro_rules! test_data_structure {
+        ($t:ident, $f: literal, $fn_path: ident, $ignored: literal) => {
+            fn get_data_res() -> anyhow::Result<$t> {
+                let json = fs::read_to_string($fn_path().join($f)).unwrap();
+                $t::from_json(&json)
+            }
+            test_data_structure_read_data_set!();
+            test_data_structure_verify_signature!($ignored);
+            test_data_structure_verify_domain!();
+        };
         ($t:ident, $f: literal, $fn_path: ident) => {
             fn get_data_res() -> anyhow::Result<$t> {
                 let json = fs::read_to_string($fn_path().join($f)).unwrap();
                 $t::from_json(&json)
             }
+            test_data_structure_read_data_set!();
+            test_data_structure_verify_signature!();
+            test_data_structure_verify_domain!();
+        };
+    }
+    pub(super) use test_data_structure;
 
+    macro_rules! test_data_structure_read_data_set {
+        () => {
             #[test]
             fn read_data_set() {
                 let data_res = get_data_res();
@@ -570,7 +591,17 @@ pub(super) mod test {
                 }
                 assert!(data_res.is_ok())
             }
+        };
+    }
+    pub(super) use test_data_structure_read_data_set;
 
+    macro_rules! test_data_structure_verify_signature {
+        ($ignored: literal) => {
+            #[test]
+            #[ignore = $ignored]
+            fn verify_signature() {}
+        };
+        () => {
             #[test]
             fn verify_signature() {
                 let data = get_data_res().unwrap();
@@ -581,7 +612,12 @@ pub(super) mod test {
                     assert!(r.unwrap())
                 }
             }
+        };
+    }
+    pub(super) use test_data_structure_verify_signature;
 
+    macro_rules! test_data_structure_verify_domain {
+        () => {
             #[test]
             fn verify_domain() {
                 let data = get_data_res().unwrap();
@@ -590,5 +626,5 @@ pub(super) mod test {
             }
         };
     }
-    pub(super) use test_data_structure;
+    pub(super) use test_data_structure_verify_domain;
 }
