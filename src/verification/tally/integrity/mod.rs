@@ -13,6 +13,7 @@ use crate::{
 };
 use anyhow::anyhow;
 use log::debug;
+use rust_ev_crypto_primitives::VerifyDomainTrait;
 
 pub fn get_verifications<'a>(
     metadata_list: &'a VerificationMetaDataList,
@@ -29,47 +30,81 @@ pub fn get_verifications<'a>(
 
 fn validate_bb_dir<B: BBDirectoryTrait>(dir: &B, result: &mut VerificationResult) {
     match dir.tally_component_votes_payload() {
-        Ok(_) => (),
+        Ok(d) => {
+            for e in d.verifiy_domain() {
+                result.push(create_verification_failure!(
+                    "Error verifying domain for tally_component_votes_payload",
+                    e
+                ))
+            }
+        }
         Err(e) => result.push(create_verification_failure!(
-            format!(
-                "{}/tally_component_votes_payload has wrong format",
-                dir.get_name()
-            ),
+            "tally_component_votes_payload has wrong format",
             e
         )),
     }
     match dir.tally_component_shuffle_payload() {
-        Ok(_) => (),
+        Ok(d) => {
+            for e in d.verifiy_domain() {
+                result.push(create_verification_failure!(
+                    "Error verifying domain for tally_component_shuffle_payload",
+                    e
+                ))
+            }
+        }
         Err(e) => result.push(create_verification_failure!(
-            format!(
-                "{}/tally_component_shuffle_payload has wrong format",
-                dir.get_name()
-            ),
+            "tally_component_shuffle_payload has wrong format",
             e
         )),
     }
+
     for (i, f) in dir.control_component_ballot_box_payload_iter() {
-        if let Err(e) = f {
-            result.push(create_verification_failure!(
+        match f {
+            Ok(d) => {
+                for e in d.verifiy_domain() {
+                    result.push(create_verification_failure!(
+                        format!(
+                             "Error verifying domain for {}/control_component_ballot_box_payload_iter.{}",
+                    dir.get_name(),
+                    i
+                        ),
+                        e
+                    ))
+                }
+            }
+            Err(e) => result.push(create_verification_failure!(
                 format!(
                     "{}/control_component_ballot_box_payload_iter.{} has wrong format",
                     dir.get_name(),
                     i
                 ),
                 e
-            ))
+            )),
         }
     }
+
     for (i, f) in dir.control_component_shuffle_payload_iter() {
-        if let Err(e) = f {
-            result.push(create_verification_failure!(
+        match f {
+            Ok(d) => {
+                for e in d.verifiy_domain() {
+                    result.push(create_verification_failure!(
+                        format!(
+                             "Error verifying domain for {}/control_component_shuffle_payload_iter.{}",
+                    dir.get_name(),
+                    i
+                        ),
+                        e
+                    ))
+                }
+            }
+            Err(e) => result.push(create_verification_failure!(
                 format!(
                     "{}/control_component_shuffle_payload_iter.{} has wrong format",
                     dir.get_name(),
                     i
                 ),
                 e
-            ))
+            )),
         }
     }
 }
