@@ -30,15 +30,22 @@ impl VerifyDomainTrait for TallyComponentVotesPayload {}
 
 impl<'a> From<&'a TallyComponentVotesPayload> for HashableMessage<'a> {
     fn from(value: &'a TallyComponentVotesPayload) -> Self {
-        Self::from(vec![
+        let mut res = vec![
             Self::from(&value.election_event_id),
             Self::from(&value.ballot_id),
             Self::from(&value.ballot_box_id),
             Self::from(&value.encryption_group),
-            Self::from(&value.votes),
-            Self::from(&value.actual_selected_voting_options),
-            Self::from(&value.decoded_write_in_votes),
-        ])
+        ];
+        if !value.votes.is_empty() {
+            res.push(Self::from(&value.votes))
+        };
+        if !value.actual_selected_voting_options.is_empty() {
+            res.push(Self::from(&value.actual_selected_voting_options))
+        }
+        if !value.decoded_write_in_votes.is_empty() {
+            res.push(Self::from(&value.decoded_write_in_votes))
+        }
+        Self::from(res)
     }
 }
 
@@ -73,7 +80,7 @@ mod test {
         },
         *,
     };
-    use crate::config::test::{test_ballot_box_path, CONFIG_TEST};
+    use crate::config::test::{test_ballot_box_empty_path, test_ballot_box_path, CONFIG_TEST};
     use std::fs;
 
     test_data_structure!(
@@ -81,4 +88,19 @@ mod test {
         "tallyComponentVotesPayload.json",
         test_ballot_box_path
     );
+
+    #[test]
+    fn test_signature_empty_votes() {
+        let json = fs::read_to_string(
+            test_ballot_box_empty_path().join("tallyComponentVotesPayload.json"),
+        )
+        .unwrap();
+        let data = TallyComponentVotesPayload::from_json(&json).unwrap();
+        let ks = CONFIG_TEST.keystore().unwrap();
+        let sign_validate_res = data.verify_signatures(&ks);
+        for r in sign_validate_res {
+            assert!(r.is_ok());
+            assert!(r.unwrap())
+        }
+    }
 }

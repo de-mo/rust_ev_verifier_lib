@@ -53,13 +53,16 @@ impl<'a> From<&'a ControlComponentBallotBoxPayload> for HashableMessage<'a> {
             .iter()
             .map(Self::from)
             .collect();
-        Self::from(vec![
+        let mut res = vec![
             Self::from(&value.encryption_group),
             Self::from(&value.election_event_id),
             Self::from(&value.ballot_box_id),
             Self::from(&value.node_id),
-            Self::from(votes),
-        ])
+        ];
+        if !votes.is_empty() {
+            res.push(Self::from(votes))
+        }
+        Self::from(res)
     }
 }
 
@@ -123,7 +126,7 @@ mod test {
         },
         *,
     };
-    use crate::config::test::{test_ballot_box_path, CONFIG_TEST};
+    use crate::config::test::{test_ballot_box_empty_path, test_ballot_box_path, CONFIG_TEST};
     use std::fs;
 
     test_data_structure!(
@@ -131,4 +134,19 @@ mod test {
         "controlComponentBallotBoxPayload_1.json",
         test_ballot_box_path
     );
+
+    #[test]
+    fn test_signature_empty_votes() {
+        let json = fs::read_to_string(
+            test_ballot_box_empty_path().join("controlComponentBallotBoxPayload_4.json"),
+        )
+        .unwrap();
+        let data = ControlComponentBallotBoxPayload::from_json(&json).unwrap();
+        let ks = CONFIG_TEST.keystore().unwrap();
+        let sign_validate_res = data.verify_signatures(&ks);
+        for r in sign_validate_res {
+            assert!(r.is_ok());
+            assert!(r.unwrap())
+        }
+    }
 }

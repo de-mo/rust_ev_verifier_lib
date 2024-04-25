@@ -179,6 +179,12 @@ pub(crate) mod test {
             .join("915C2B2C9D6631BABDB6069D6CD6496D")
     }
 
+    pub(crate) fn test_ballot_box_empty_path() -> PathBuf {
+        test_datasets_tally_path()
+            .join("ballotBoxes")
+            .join("D9FA8F23294682554F536AB040AC2294")
+    }
+
     pub(crate) fn test_context_verification_card_set_path() -> PathBuf {
         test_datasets_context_path()
             .join("verificationCardSets")
