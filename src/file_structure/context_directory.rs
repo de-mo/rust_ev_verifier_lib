@@ -1,11 +1,14 @@
 //! Module to implement the context directory
 
+use anyhow::ensure;
+
 use super::{
     file::{create_file, File},
     file_group::{
         add_type_for_file_group_iter_trait, impl_iterator_over_data_payload, FileGroup,
         FileGroupIter, FileGroupIterTrait,
     },
+    CompletnessTestTrait,
 };
 use crate::{
     config::Config,
@@ -49,7 +52,7 @@ pub struct ContextVCSDirectory {
 ///
 /// The trait is used as parameter of the verification functions to allow mock of
 /// test (negative tests)
-pub trait ContextDirectoryTrait {
+pub trait ContextDirectoryTrait: CompletnessTestTrait {
     type VCSDirType: ContextVCSDirectoryTrait;
     add_type_for_file_group_iter_trait!(
         ControlComponentPublicKeysPayloadAsResultIterType,
@@ -78,7 +81,7 @@ pub trait ContextDirectoryTrait {
 ///
 /// The trait is used as parameter of the verification functions to allow mock of
 /// test (negative tests)
-pub trait ContextVCSDirectoryTrait {
+pub trait ContextVCSDirectoryTrait: CompletnessTestTrait {
     fn setup_component_tally_data_payload_file(&self) -> &File;
     fn setup_component_tally_data_payload(
         &self,
@@ -140,6 +143,46 @@ impl ContextDirectory {
     }
 }
 
+macro_rules! impl_completness_test_trait_for_context {
+    ($t: ident) => {
+        impl CompletnessTestTrait for $t {
+            fn test_completness(&self) -> anyhow::Result<Vec<String>> {
+                ensure!(self.location.is_dir());
+                let mut missings = vec![];
+                if !self.election_event_context_payload_file().exists() {
+                    missings.push("election_event_context_payload does not exist".to_string());
+                }
+                if !self.setup_component_public_keys_payload_file().exists() {
+                    missings.push("setup_component_public_keys_payload_file does not exist".to_string());
+                }
+                if !self.election_event_configuration_file().exists() {
+                    missings.push("setup_component_public_keys_payload_file does not exist".to_string());
+                }
+                if self
+                    .control_component_public_keys_payload_group()
+                    .get_numbers()
+                    != &vec![1, 2, 3, 4]
+                {
+                    missings.push(format!(
+                        "control_component_public_keys_payload_group missing. only these parts are present: {:?}",
+                        self
+                            .control_component_public_keys_payload_group()
+                            .get_numbers()
+                    ))
+                }
+                if self.vcs_directories().is_empty() {
+                    missings.push("No vcs directory found".to_string());
+                }
+                for d in self.vcs_directories().iter() {
+                    missings.extend(d.test_completness()?);
+                }
+                Ok(missings)
+            }
+        }
+    }
+}
+impl_completness_test_trait_for_context!(ContextDirectory);
+
 impl ContextDirectoryTrait for ContextDirectory {
     type VCSDirType = ContextVCSDirectory;
     type ControlComponentPublicKeysPayloadAsResultIterType =
@@ -191,6 +234,26 @@ impl ContextDirectoryTrait for ContextDirectory {
     }
 }
 
+macro_rules! impl_completness_test_trait_for_context_vcs {
+    ($t: ident) => {
+        impl CompletnessTestTrait for $t {
+            fn test_completness(&self) -> anyhow::Result<Vec<String>> {
+                ensure!(self.location.is_dir());
+                let mut missings = vec![];
+                if !self.setup_component_tally_data_payload_file().exists() {
+                    missings.push(format!(
+                        "setup_component_tally_data_payload does not exist in {:?}",
+                        self.location.file_name().unwrap()
+                    ))
+                }
+                Ok(missings)
+            }
+        }
+    };
+}
+
+impl_completness_test_trait_for_context_vcs!(ContextVCSDirectory);
+
 impl ContextVCSDirectory {
     /// New [VCSDirectory]
     pub fn new(location: &Path) -> Self {
@@ -238,7 +301,7 @@ impl ContextVCSDirectoryTrait for ContextVCSDirectory {
 mod test {
     use super::*;
     use crate::config::test::{
-        test_context_verification_card_set_path, test_datasets_context_path,
+        test_context_verification_card_set_path, test_datasets_context_path, test_datasets_path,
     };
 
     #[test]
@@ -272,6 +335,14 @@ mod test {
         assert_eq!(dir.get_location(), location);
         assert!(dir.setup_component_tally_data_payload().is_ok());
     }
+
+    #[test]
+    fn test_completness() {
+        let dir = ContextDirectory::new(&test_datasets_path());
+        let c = dir.test_completness();
+        assert!(c.is_ok());
+        assert!(c.unwrap().is_empty());
+    }
 }
 
 #[cfg(any(test, doc))]
@@ -295,6 +366,7 @@ pub mod mock {
 
     /// Mock for [MockContextVCSDirectory]
     pub struct MockContextVCSDirectory {
+        location: PathBuf,
         dir: ContextVCSDirectory,
         mocked_setup_component_tally_data_payload_file: Option<File>,
         mocked_setup_component_tally_data_payload:
@@ -304,6 +376,7 @@ pub mod mock {
 
     /// Mock for [MockContextDirectory]
     pub struct MockContextDirectory {
+        location: PathBuf,
         dir: ContextDirectory,
         mocked_setup_component_public_keys_payload_file: Option<File>,
         mocked_election_event_context_payload_file: Option<File>,
@@ -346,6 +419,8 @@ pub mod mock {
             }
         }
     }
+
+    impl_completness_test_trait_for_context_vcs!(MockContextVCSDirectory);
 
     impl ContextDirectoryTrait for MockContextDirectory {
         type VCSDirType = MockContextVCSDirectory;
@@ -401,10 +476,13 @@ pub mod mock {
         );
     }
 
+    impl_completness_test_trait_for_context!(MockContextDirectory);
+
     impl MockContextVCSDirectory {
         /// New [MockVCSDirectory]
         pub fn new(location: &Path) -> Self {
             MockContextVCSDirectory {
+                location: location.to_path_buf(),
                 dir: ContextVCSDirectory::new(location),
                 mocked_setup_component_tally_data_payload_file: None,
                 mocked_setup_component_tally_data_payload: None,
@@ -436,6 +514,7 @@ pub mod mock {
                 .map(|d| MockContextVCSDirectory::new(&d.location))
                 .collect();
             MockContextDirectory {
+                location: setup_dir.location.to_owned(),
                 dir: setup_dir,
                 mocked_setup_component_public_keys_payload_file: None,
                 mocked_election_event_context_payload_file: None,

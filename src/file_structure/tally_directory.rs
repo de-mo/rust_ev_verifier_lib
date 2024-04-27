@@ -4,6 +4,7 @@ use super::{
         add_type_for_file_group_iter_trait, impl_iterator_over_data_payload, FileGroup,
         FileGroupIter, FileGroupIterTrait,
     },
+    CompletnessTestTrait,
 };
 use crate::{
     config::Config,
@@ -46,7 +47,7 @@ pub struct BBDirectory {
 ///
 /// The trait is used as parameter of the verification functions to allow mock of
 /// test (negative tests)
-pub trait TallyDirectoryTrait {
+pub trait TallyDirectoryTrait: CompletnessTestTrait {
     type BBDirType: BBDirectoryTrait;
 
     fn e_voting_decrypt_file(&self) -> &File;
@@ -60,7 +61,7 @@ pub trait TallyDirectoryTrait {
 ///
 /// The trait is used as parameter of the verification functions to allow mock of
 /// test (negative tests)
-pub trait BBDirectoryTrait {
+pub trait BBDirectoryTrait: CompletnessTestTrait {
     add_type_for_file_group_iter_trait!(
         ControlComponentBallotBoxPayloadAsResultIterType,
         ControlComponentBallotBoxPayloadAsResult
@@ -116,6 +117,33 @@ impl TallyDirectoryTrait for TallyDirectory {
     }
 }
 
+macro_rules! impl_completness_test_trait_for_tally {
+    ($t: ident) => {
+        impl CompletnessTestTrait for $t {
+            fn test_completness(&self) -> anyhow::Result<Vec<String>> {
+                let mut missings = vec![];
+                if !self.ech_0110_file().exists() {
+                    missings.push("ech_0110 does not exist".to_string())
+                }
+                if !self.ech_0222_file().exists() {
+                    missings.push("ech_0222 does not exist".to_string())
+                }
+                if !self.e_voting_decrypt_file().exists() {
+                    missings.push("e_voting_decrypt does not exist".to_string())
+                }
+                if self.bb_directories().is_empty() {
+                    missings.push("No bb directory found".to_string());
+                }
+                for d in self.bb_directories().iter() {
+                    missings.extend(d.test_completness()?)
+                }
+                Ok(missings)
+            }
+        }
+    };
+}
+impl_completness_test_trait_for_tally!(TallyDirectory);
+
 impl BBDirectoryTrait for BBDirectory {
     type ControlComponentBallotBoxPayloadAsResultIterType =
         ControlComponentBallotBoxPayloadAsResultIter;
@@ -167,6 +195,56 @@ impl BBDirectoryTrait for BBDirectory {
             .to_string()
     }
 }
+
+macro_rules! impl_completness_test_trait_for_tally_bb {
+    ($t: ident) => {
+        impl CompletnessTestTrait for $t {
+            fn test_completness(&self) -> anyhow::Result<Vec<String>> {
+                let mut missings = vec![];
+                if !self.tally_component_shuffle_payload_file().exists() {
+                    missings.push(format!(
+                        "{:?}/tally_component_shuffle_payload does not exist",
+                        self.location.file_name().unwrap()
+                    ))
+                }
+                if !self.tally_component_shuffle_payload_file().exists() {
+                    missings.push(format!(
+                        "{:?}/tally_component_shuffle_payload does not exist",
+                        self.location.file_name().unwrap()
+                    ))
+                }
+                if self
+                    .control_component_ballot_box_payload_group()
+                    .get_numbers()
+                    != &vec![1, 2, 3, 4]
+                {
+                    missings.push(format!(
+                        "{:?}/control_component_ballot_box_payload missing. only these parts are present: {:?}",
+                        self.location.file_name().unwrap(),
+                        self
+                            .control_component_ballot_box_payload_group()
+                            .get_numbers()
+                    ))
+                }
+                if self
+                    .control_component_shuffle_payload_group()
+                    .get_numbers()
+                    != &vec![1, 2, 3, 4]
+                {
+                    missings.push(format!(
+                        "{:?}/control_component_shuffle_payload_group missing. only these parts are present: {:?}",
+                        self.location.file_name().unwrap(),
+                        self
+                            .control_component_shuffle_payload_group()
+                            .get_numbers()
+                    ))
+                }
+                Ok(missings)
+            }
+        }
+    };
+}
+impl_completness_test_trait_for_tally_bb!(BBDirectory);
 
 impl TallyDirectory {
     #[allow(clippy::redundant_clone)]
@@ -232,6 +310,20 @@ impl BBDirectory {
     }
 }
 
+#[cfg(test)]
+mod test {
+    use super::*;
+    use crate::config::test::test_datasets_path;
+
+    #[test]
+    fn test_completness() {
+        let dir = TallyDirectory::new(&test_datasets_path());
+        let c = dir.test_completness();
+        assert!(c.is_ok());
+        assert!(c.unwrap().is_empty());
+    }
+}
+
 #[cfg(any(test, doc))]
 #[allow(dead_code)]
 pub mod mock {
@@ -250,6 +342,7 @@ pub mod mock {
 
     /// Mock for [BBDirectory]
     pub struct MockBBDirectory {
+        location: PathBuf,
         dir: BBDirectory,
         mocked_tally_component_votes_payload_file: Option<File>,
         mocked_tally_component_shuffle_payload_file: Option<File>,
@@ -269,6 +362,7 @@ pub mod mock {
 
     /// Mock for [TallyDirectory]
     pub struct MockTallyDirectory {
+        location: PathBuf,
         dir: TallyDirectory,
         mocked_e_voting_decrypt_file: Option<File>,
         mocked_ech_0110_file: Option<File>,
@@ -289,6 +383,8 @@ pub mod mock {
         ControlComponentShufflePayloadAsResultIter,
         MockControlComponentShufflePayloadAsResultIter
     );
+
+    impl_completness_test_trait_for_tally!(MockTallyDirectory);
 
     impl BBDirectoryTrait for MockBBDirectory {
         type ControlComponentBallotBoxPayloadAsResultIterType =
@@ -346,6 +442,8 @@ pub mod mock {
         }
     }
 
+    impl_completness_test_trait_for_tally_bb!(MockBBDirectory);
+
     impl TallyDirectoryTrait for MockTallyDirectory {
         type BBDirType = MockBBDirectory;
         wrap_file_group_getter!(e_voting_decrypt_file, mocked_e_voting_decrypt_file, File);
@@ -360,6 +458,7 @@ pub mod mock {
     impl MockBBDirectory {
         pub fn new(location: &Path) -> Self {
             MockBBDirectory {
+                location: location.to_path_buf(),
                 dir: BBDirectory::new(location),
                 mocked_tally_component_shuffle_payload_file: None,
                 mocked_tally_component_votes_payload_file: None,
@@ -398,6 +497,7 @@ pub mod mock {
                 .map(|d| MockBBDirectory::new(&d.location))
                 .collect();
             MockTallyDirectory {
+                location: tally_dir.location.to_owned(),
                 dir: tally_dir,
                 mocked_e_voting_decrypt_file: None,
                 mocked_ech_0110_file: None,

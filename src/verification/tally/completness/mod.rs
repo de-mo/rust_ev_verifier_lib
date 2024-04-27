@@ -1,14 +1,11 @@
 use crate::{
     config::Config,
-    file_structure::{
-        tally_directory::{BBDirectoryTrait, TallyDirectoryTrait},
-        VerificationDirectoryTrait,
-    },
-    verification::meta_data::VerificationMetaDataList,
+    file_structure::{CompletnessTestTrait, VerificationDirectoryTrait},
 };
 
 use super::super::{
-    result::{create_verification_failure, VerificationEvent, VerificationResult},
+    meta_data::VerificationMetaDataList,
+    result::{create_verification_error, VerificationEvent, VerificationResult},
     suite::VerificationList,
     verifications::Verification,
 };
@@ -28,51 +25,20 @@ pub fn get_verifications<'a>(
     )?]))
 }
 
-fn validate_bb_dir<B: BBDirectoryTrait>(dir: &B, result: &mut VerificationResult) {
-    if !dir.tally_component_shuffle_payload_file().exists() {
-        result.push(create_verification_failure!(
-            "tally_component_shuffle_payload does not exist"
-        ))
-    }
-    if !dir.tally_component_shuffle_payload_file().exists() {
-        result.push(create_verification_failure!(
-            "tally_component_shuffle_payload does not exist"
-        ))
-    }
-    if !dir
-        .control_component_ballot_box_payload_group()
-        .has_elements()
-    {
-        result.push(create_verification_failure!(
-            "control_component_ballot_box_payload does not exist"
-        ))
-    }
-    if !dir.control_component_shuffle_payload_group().has_elements() {
-        result.push(create_verification_failure!(
-            "control_component_shuffle_payload does not exist"
-        ))
-    }
-}
-
 fn fn_0601_verify_tally_completeness<D: VerificationDirectoryTrait>(
     dir: &D,
     _config: &'static Config,
     result: &mut VerificationResult,
 ) {
+    let context_dir = dir.context();
+    match context_dir.test_completness() {
+        Ok(v) => result.append_failures_from_string(&v),
+        Err(e) => result.push(create_verification_error!(e)),
+    }
     let tally_dir = dir.unwrap_tally();
-    if !tally_dir.ech_0110_file().exists() {
-        result.push(create_verification_failure!("ech_0110 does not exist"))
-    }
-    if !tally_dir.ech_0222_file().exists() {
-        result.push(create_verification_failure!("ech_0222 does not exist"))
-    }
-    if !tally_dir.e_voting_decrypt_file().exists() {
-        result.push(create_verification_failure!(
-            "e_voting_decrypt does not exist"
-        ))
-    }
-    for d in tally_dir.bb_directories().iter() {
-        validate_bb_dir(d, result);
+    match tally_dir.test_completness() {
+        Ok(v) => result.append_failures_from_string(&v),
+        Err(e) => result.push(create_verification_error!(e)),
     }
 }
 

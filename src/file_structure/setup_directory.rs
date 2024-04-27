@@ -1,8 +1,11 @@
 //! Module to implement the setup directory
 
-use super::file_group::{
-    add_type_for_file_group_iter_trait, impl_iterator_over_data_payload, FileGroup, FileGroupIter,
-    FileGroupIterTrait,
+use super::{
+    file_group::{
+        add_type_for_file_group_iter_trait, impl_iterator_over_data_payload, FileGroup,
+        FileGroupIter, FileGroupIterTrait,
+    },
+    CompletnessTestTrait,
 };
 use crate::{
     config::Config,
@@ -41,7 +44,7 @@ pub struct SetupVCSDirectory {
 ///
 /// The trait is used as parameter of the verification functions to allow mock of
 /// test (negative tests)
-pub trait SetupDirectoryTrait {
+pub trait SetupDirectoryTrait: CompletnessTestTrait {
     type VCSDirType: SetupVCSDirectoryTrait;
     fn vcs_directories(&self) -> &Vec<Self::VCSDirType>;
 }
@@ -51,7 +54,7 @@ pub trait SetupDirectoryTrait {
 ///
 /// The trait is used as parameter of the verification functions to allow mock of
 /// test (negative tests)
-pub trait SetupVCSDirectoryTrait {
+pub trait SetupVCSDirectoryTrait: CompletnessTestTrait {
     add_type_for_file_group_iter_trait!(
         SetupComponentVerificationDataPayloadAsResultIterType,
         SetupComponentVerificationDataPayloadAsResult
@@ -122,6 +125,24 @@ impl SetupDirectoryTrait for SetupDirectory {
     }
 }
 
+macro_rules! impl_completness_test_trait_for_setup {
+    ($t: ident) => {
+        impl CompletnessTestTrait for $t {
+            fn test_completness(&self) -> anyhow::Result<Vec<String>> {
+                let mut missings = vec![];
+                if self.vcs_directories().is_empty() {
+                    missings.push("No vcs directory found".to_string());
+                }
+                for d in self.vcs_directories().iter() {
+                    missings.extend(d.test_completness()?)
+                }
+                Ok(missings)
+            }
+        }
+    };
+}
+impl_completness_test_trait_for_setup!(SetupDirectory);
+
 impl SetupVCSDirectory {
     /// New [VCSDirectory]
     pub fn new(location: &Path) -> Self {
@@ -144,6 +165,36 @@ impl SetupVCSDirectory {
         self.location.as_path()
     }
 }
+
+macro_rules! impl_completness_test_trait_for_setup_vcs {
+    ($t: ident) => {
+        impl CompletnessTestTrait for $t {
+            fn test_completness(&self) -> anyhow::Result<Vec<String>> {
+                let mut missings = vec![];
+                if !self
+                    .setup_component_verification_data_payload_group()
+                    .has_elements()
+                {
+                    missings.push(format!(
+                        "{:?}/setup_component_verification_data_payload does not exist",
+                        self.location.file_name().unwrap()
+                    ))
+                }
+                if !self
+                    .control_component_code_shares_payload_group()
+                    .has_elements()
+                {
+                    missings.push(format!(
+                        "{:?}/control_component_code_shares_payload does not exist",
+                        self.location.file_name().unwrap()
+                    ))
+                }
+                Ok(missings)
+            }
+        }
+    };
+}
+impl_completness_test_trait_for_setup_vcs!(SetupVCSDirectory);
 
 impl SetupVCSDirectoryTrait for SetupVCSDirectory {
     type SetupComponentVerificationDataPayloadAsResultIterType =
@@ -182,7 +233,9 @@ impl SetupVCSDirectoryTrait for SetupVCSDirectory {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::config::test::{test_datasets_setup_path, test_setup_verification_card_set_path};
+    use crate::config::test::{
+        test_datasets_path, test_datasets_setup_path, test_setup_verification_card_set_path,
+    };
 
     #[test]
     fn test_setup_dir() {
@@ -218,6 +271,14 @@ mod test {
             assert_eq!(p.unwrap().chunk_id, i)
         }
     }
+
+    #[test]
+    fn test_completness() {
+        let dir = SetupDirectory::new(&test_datasets_path());
+        let c = dir.test_completness();
+        assert!(c.is_ok());
+        assert!(c.unwrap().is_empty());
+    }
 }
 
 #[cfg(any(test, doc))]
@@ -241,6 +302,7 @@ pub mod mock {
 
     /// Mock for [SetupVCSDirectory]
     pub struct MockSetupVCSDirectory {
+        location: PathBuf,
         dir: SetupVCSDirectory,
         mocked_setup_component_verification_data_payload_group: Option<FileGroup>,
         mocked_control_component_code_shares_payload_group: Option<FileGroup>,
@@ -267,9 +329,13 @@ pub mod mock {
 
     /// Mock for [SetupDirectory]
     pub struct MockSetupDirectory {
+        location: PathBuf,
         dir: SetupDirectory,
         vcs_directories: Vec<MockSetupVCSDirectory>,
     }
+
+    impl_completness_test_trait_for_setup!(MockSetupDirectory);
+    impl_completness_test_trait_for_setup_vcs!(MockSetupVCSDirectory);
 
     impl SetupVCSDirectoryTrait for MockSetupVCSDirectory {
         type SetupComponentVerificationDataPayloadAsResultIterType =
@@ -322,6 +388,7 @@ pub mod mock {
         /// New [MockSetupVCSDirectory]
         pub fn new(location: &Path) -> Self {
             MockSetupVCSDirectory {
+                location: location.to_path_buf(),
                 dir: SetupVCSDirectory::new(location),
                 mocked_setup_component_verification_data_payload_group: None,
                 mocked_control_component_code_shares_payload_group: None,
@@ -365,6 +432,7 @@ pub mod mock {
                 .map(|d| MockSetupVCSDirectory::new(&d.location))
                 .collect();
             MockSetupDirectory {
+                location: setup_dir.location.to_owned(),
                 dir: setup_dir,
                 vcs_directories: vcs_dirs,
             }

@@ -116,6 +116,10 @@ pub trait VerificationDirectoryTrait {
     fn unwrap_tally(&self) -> &Self::TallyDirType;
 }
 
+pub trait CompletnessTestTrait {
+    fn test_completness(&self) -> anyhow::Result<Vec<String>>;
+}
+
 impl VerificationDirectory {
     /// Create a new VerificationDirectory
     pub fn new(period: &VerificationPeriod, location: &Path) -> Self {

@@ -96,9 +96,37 @@ impl VerificationResult {
         }
     }
 
+    /// Append strings to self as errors
+    #[allow(dead_code)]
+    pub fn append_errors_from_string(&mut self, errors: &[String]) {
+        let events: Vec<VerificationEvent> = errors
+            .iter()
+            .map(|e| VerificationEvent::Error {
+                source: anyhow::anyhow!(e.to_string()),
+            })
+            .collect();
+        for e in events {
+            self.push(e)
+        }
+    }
+
     /// Append anyhow errors to self as failures
     #[allow(dead_code)]
     pub fn append_failures(&mut self, failures: &[anyhow::Error]) {
+        let events: Vec<VerificationEvent> = failures
+            .iter()
+            .map(|e| VerificationEvent::Error {
+                source: anyhow::anyhow!(e.to_string()),
+            })
+            .collect();
+        for e in events {
+            self.push(e)
+        }
+    }
+
+    /// Append strings to self as failures
+    #[allow(dead_code)]
+    pub fn append_failures_from_string(&mut self, failures: &[String]) {
         let events: Vec<VerificationEvent> = failures
             .iter()
             .map(|e| VerificationEvent::Error {
