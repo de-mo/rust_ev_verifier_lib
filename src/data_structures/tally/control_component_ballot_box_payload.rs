@@ -6,7 +6,7 @@ use crate::{
     data_structures::common_types::{DecryptionProof, Proof},
     direct_trust::{CertificateAuthority, VerifiySignatureTrait},
 };
-use anyhow::{anyhow, Context};
+use anyhow::anyhow;
 use rust_ev_crypto_primitives::{
     ByteArray, EncryptionParameters, HashableMessage, VerifyDomainTrait,
 };
@@ -103,13 +103,8 @@ impl<'a> VerifiySignatureTrait<'a> for ControlComponentBallotBoxPayload {
         ]
     }
 
-    fn get_certificate_authority(&self) -> anyhow::Result<String> {
-        Ok(String::from(
-            CertificateAuthority::get_ca_cc(&self.node_id).context(format!(
-                "verifiy signature for ControlComponentBallotBoxPayload for node {}",
-                self.node_id
-            ))?,
-        ))
+    fn get_certificate_authority(&self) -> Option<CertificateAuthority> {
+        CertificateAuthority::get_ca_cc(&self.node_id)
     }
 
     fn get_signature(&self) -> ByteArray {

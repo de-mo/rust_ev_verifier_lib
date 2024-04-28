@@ -30,8 +30,8 @@ impl<'a> VerifiySignatureTrait<'a> for ECH0110 {
         vec![HashableMessage::from("eCH 0110")]
     }
 
-    fn get_certificate_authority(&self) -> anyhow::Result<String> {
-        Ok(String::from(CertificateAuthority::Canton))
+    fn get_certificate_authority(&self) -> Option<CertificateAuthority> {
+        Some(CertificateAuthority::SdmTally)
     }
 
     fn get_signature(&self) -> ByteArray {

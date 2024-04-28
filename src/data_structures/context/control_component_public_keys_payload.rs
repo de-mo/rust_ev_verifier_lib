@@ -4,7 +4,7 @@ use super::super::{
     VerifierDataDecode,
 };
 use crate::direct_trust::{CertificateAuthority, VerifiySignatureTrait};
-use anyhow::{anyhow, Context};
+use anyhow::anyhow;
 use rug::Integer;
 use rust_ev_crypto_primitives::{
     ByteArray, EncryptionParameters, HashableMessage, VerifyDomainTrait,
@@ -48,15 +48,8 @@ impl<'a> VerifiySignatureTrait<'a> for ControlComponentPublicKeysPayload {
         ]
     }
 
-    fn get_certificate_authority(&self) -> anyhow::Result<String> {
-        Ok(String::from(
-            CertificateAuthority::get_ca_cc(&self.control_component_public_keys.node_id).context(
-                format!(
-                    "verifiy signature for ControlComponentPublicKeysPayload for node {}",
-                    self.control_component_public_keys.node_id
-                ),
-            )?,
-        ))
+    fn get_certificate_authority(&self) -> Option<CertificateAuthority> {
+        CertificateAuthority::get_ca_cc(&self.control_component_public_keys.node_id)
     }
 
     fn get_signature(&self) -> ByteArray {

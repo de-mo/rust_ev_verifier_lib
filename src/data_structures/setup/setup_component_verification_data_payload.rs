@@ -85,8 +85,8 @@ impl<'a> VerifiySignatureTrait<'a> for SetupComponentVerificationDataPayload {
         ]
     }
 
-    fn get_certificate_authority(&self) -> anyhow::Result<String> {
-        Ok(String::from(CertificateAuthority::SdmConfig))
+    fn get_certificate_authority(&self) -> Option<CertificateAuthority> {
+        Some(CertificateAuthority::SdmConfig)
     }
 
     fn get_signature(&self) -> ByteArray {

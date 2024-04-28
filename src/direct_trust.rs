@@ -1,4 +1,6 @@
-use anyhow::Context;
+use std::slice::Iter;
+
+use anyhow::{anyhow, Context};
 use rust_ev_crypto_primitives::{verify_signature, ByteArray, HashableMessage, Keystore};
 
 /// List of valide Certificate authorities
@@ -24,11 +26,25 @@ impl CertificateAuthority {
             _ => None,
         }
     }
+
+    pub fn iter() -> Iter<'static, CertificateAuthority> {
+        static AUTHORITIES: [CertificateAuthority; 8] = [
+            CertificateAuthority::Canton,
+            CertificateAuthority::SdmConfig,
+            CertificateAuthority::SdmTally,
+            CertificateAuthority::VotingServer,
+            CertificateAuthority::ControlComponent1,
+            CertificateAuthority::ControlComponent2,
+            CertificateAuthority::ControlComponent3,
+            CertificateAuthority::ControlComponent4,
+        ];
+        AUTHORITIES.iter()
+    }
 }
 
-impl From<CertificateAuthority> for String {
-    fn from(value: CertificateAuthority) -> Self {
-        match value {
+impl ToString for CertificateAuthority {
+    fn to_string(&self) -> String {
+        match self {
             CertificateAuthority::Canton => "canton".to_string(),
             CertificateAuthority::SdmConfig => "sdm_config".to_string(),
             CertificateAuthority::SdmTally => "sdm_tally".to_string(),
@@ -59,7 +75,7 @@ where
     fn get_context_data(&'a self) -> Vec<HashableMessage<'a>>;
 
     /// Get the Certificate Authority to the specifications
-    fn get_certificate_authority(&self) -> anyhow::Result<String>;
+    fn get_certificate_authority(&self) -> Option<CertificateAuthority>;
 
     /// Get the signature of the object
     fn get_signature(&self) -> ByteArray;
@@ -74,15 +90,16 @@ where
 
     /// Verfiy the signature according to the specifications of Verifier
     fn verifiy_signature(&'a self, keystore: &Keystore) -> anyhow::Result<bool> {
-        let ca = &self
-            .get_certificate_authority()
-            .context("Error getting ca")?;
+        let ca = match self.get_certificate_authority() {
+            Some(ca) => ca,
+            None => return Err(anyhow!("Error getting the certificate")),
+        };
         let hashable_message = self
             .get_hashable()
             .context("Error getting the hashable message")?;
         verify_signature(
             keystore,
-            ca.as_str(),
+            &ca.to_string(),
             &hashable_message,
             &self.get_context_hashable(),
             &self.get_signature(),
@@ -110,28 +127,28 @@ mod test {
         let dt = CONFIG_TEST.keystore().unwrap();
         //let dt = DirectTrustCertificate::new(, CertificateAuthority::Canton);
         assert!(dt
-            .certificate(String::from(CertificateAuthority::Canton).as_str())
+            .certificate(&CertificateAuthority::Canton.to_string())
             .is_ok());
         assert!(dt
-            .certificate(String::from(CertificateAuthority::SdmConfig).as_str())
+            .certificate(&CertificateAuthority::SdmConfig.to_string())
             .is_ok());
         assert!(dt
-            .certificate(String::from(CertificateAuthority::SdmTally).as_str())
+            .certificate(&CertificateAuthority::SdmTally.to_string())
             .is_ok());
         assert!(dt
-            .certificate(String::from(CertificateAuthority::VotingServer).as_str())
+            .certificate(&CertificateAuthority::VotingServer.to_string())
             .is_ok());
         assert!(dt
-            .certificate(String::from(CertificateAuthority::ControlComponent1).as_str())
+            .certificate(&CertificateAuthority::ControlComponent1.to_string())
             .is_ok());
         assert!(dt
-            .certificate(String::from(CertificateAuthority::ControlComponent2).as_str())
+            .certificate(&CertificateAuthority::ControlComponent2.to_string())
             .is_ok());
         assert!(dt
-            .certificate(String::from(CertificateAuthority::ControlComponent3).as_str())
+            .certificate(&CertificateAuthority::ControlComponent3.to_string())
             .is_ok());
         assert!(dt
-            .certificate(String::from(CertificateAuthority::ControlComponent4).as_str())
+            .certificate(&CertificateAuthority::ControlComponent4.to_string())
             .is_ok());
     }
 }

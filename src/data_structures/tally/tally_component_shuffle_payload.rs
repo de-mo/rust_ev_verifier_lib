@@ -248,8 +248,8 @@ impl<'a> VerifiySignatureTrait<'a> for TallyComponentShufflePayload {
         ]
     }
 
-    fn get_certificate_authority(&self) -> anyhow::Result<String> {
-        Ok(String::from(CertificateAuthority::SdmTally))
+    fn get_certificate_authority(&self) -> Option<CertificateAuthority> {
+        Some(CertificateAuthority::SdmTally)
     }
 
     fn get_signature(&self) -> ByteArray {
