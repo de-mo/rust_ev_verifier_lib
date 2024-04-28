@@ -1,5 +1,6 @@
 //! Module implementing all the verifications
 
+pub mod manual;
 pub mod meta_data;
 pub mod result;
 mod setup;
