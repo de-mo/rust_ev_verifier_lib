@@ -152,21 +152,22 @@ impl<'a> VerificationResultTrait for Verification<'a, VerificationDirectory> {
         self.is_valid() && self.result.has_failures()
     }
 
-    fn errors(&self) -> &Vec<VerificationEvent> {
+    fn errors(&self) -> Vec<&VerificationEvent> {
         self.result.errors()
     }
 
-    fn failures(&self) -> &Vec<VerificationEvent> {
+    fn failures(&self) -> Vec<&VerificationEvent> {
         self.result.failures()
     }
 
+    /*
     fn errors_mut(&mut self) -> &mut Vec<VerificationEvent> {
         self.result.errors_mut()
     }
 
     fn failures_mut(&mut self) -> &mut Vec<VerificationEvent> {
         self.result.failures_mut()
-    }
+    } */
 
     fn errors_to_string(&self) -> Vec<String> {
         self.result.errors_to_string()
@@ -174,6 +175,10 @@ impl<'a> VerificationResultTrait for Verification<'a, VerificationDirectory> {
 
     fn failures_to_string(&self) -> Vec<String> {
         self.result.failures_to_string()
+    }
+
+    fn errors_and_failures(&self) -> Vec<&VerificationEvent> {
+        self.result.errors_and_failures()
     }
 }
 

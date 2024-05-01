@@ -213,7 +213,7 @@ fn algorithm_0303_verify_encrypted_pcc_exponentiation_proofs_verification_card_s
     setup_verif_data: &[SetupComponentVerificationDataInner],
     cc_code_shares: &[ControlComponentCodeShare],
 ) -> VerificationResult {
-    let mut result: VerificationResult = VerificationResult::new();
+    let mut result: Vec<VerificationEvent> = vec![];
     debug!(
         "Verification for vcs_id {}, chunk {} and node {}",
         context.vcs_id, context.chunk_id, context.node_id
@@ -221,7 +221,7 @@ fn algorithm_0303_verify_encrypted_pcc_exponentiation_proofs_verification_card_s
     if verify_sizes(
         &verification_card_ids.len(),
         vec![setup_verif_data.len(), cc_code_shares.len()],
-        result.failures_mut(),
+        &mut result,
         vec!["setup_verif_data", "cc_code_shares"],
         &format!("for chunk {}", context.chunk_id),
     ) {
@@ -241,10 +241,10 @@ fn algorithm_0303_verify_encrypted_pcc_exponentiation_proofs_verification_card_s
             })
             .collect();
         for fs in failures.iter_mut() {
-            result.failures_mut().append(fs);
+            result.append(fs);
         }
     }
-    result
+    VerificationResult::from_vec(result)
 }
 
 /// Supporting algorithm for one vc
@@ -316,9 +316,7 @@ fn verify_encrypted_pccexponentiation_proofs_for_one_vc(
             .encrypted_partial_choice_return_code_exponentiation_proof
             .clone();
         match verify_exponentiation(context.eg, &gs, &ys, pi_exp_pcc_j.as_tuple(), &i_aux) {
-            Err(e) => failures.push(VerificationEvent::Failure {
-                source: anyhow::anyhow!(e),
-            }),
+            Err(e) => failures.push(VerificationEvent::failure_from_error(e)),
             Ok(b) => {
                 if !b {
                     failures.push(create_verification_failure!(format!(

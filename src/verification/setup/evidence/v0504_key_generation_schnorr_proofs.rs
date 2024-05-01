@@ -166,11 +166,7 @@ fn run_verify_schnorr_proof(
         test_name, pos, node
     );
     match verify_schnorr(eg, schnorr.as_tuple(), y, i_aux) {
-        Err(e) => {
-            return Some(VerificationEvent::Failure {
-                source: anyhow::anyhow!(e),
-            })
-        }
+        Err(e) => return Some(VerificationEvent::failure_from_error(e)),
         Ok(b) => {
             if !b {
                 let mut text = format!(
