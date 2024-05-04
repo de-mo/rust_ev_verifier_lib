@@ -44,7 +44,7 @@ fn fn_0601_verify_tally_completeness<D: VerificationDirectoryTrait>(
 
 #[cfg(test)]
 mod test {
-    use super::{super::super::result::VerificationResultTrait, *};
+    use super::*;
     use crate::config::test::{get_test_verifier_tally_dir, CONFIG_TEST};
 
     #[test]

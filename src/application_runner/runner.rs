@@ -4,8 +4,7 @@ use crate::{
     config::Config as VerifierConfig,
     file_structure::VerificationDirectory,
     verification::{
-        meta_data::VerificationMetaDataList, result::VerificationResultTrait,
-        suite::VerificationSuite, VerificationPeriod,
+        meta_data::VerificationMetaDataList, suite::VerificationSuite, VerificationPeriod,
     },
 };
 use log::{info, warn};
@@ -51,7 +50,11 @@ impl<'a> RunStrategy<'a> for RunSequential {
         for v in it {
             action_before(v.id());
             v.run(&directory);
-            action_after(v.id(), v.errors_to_string(), v.failures_to_string());
+            action_after(
+                v.id(),
+                v.verification_result().errors_to_string(),
+                v.verification_result().failures_to_string(),
+            );
         }
     }
 }
@@ -72,7 +75,11 @@ impl<'a> RunStrategy<'a> for RunParallel {
                 let mut v = vm.lock().unwrap();
                 action_before(v.id());
                 v.run(&d);
-                action_after(v.id(), v.errors_to_string(), v.failures_to_string());
+                action_after(
+                    v.id(),
+                    v.verification_result().errors_to_string(),
+                    v.verification_result().failures_to_string(),
+                );
             });
     }
 }

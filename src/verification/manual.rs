@@ -1,6 +1,5 @@
 use anyhow::Context;
 use chrono::NaiveDate;
-use rayon::iter::IntoParallelIterator;
 use rust_ev_crypto_primitives::Encode;
 use std::collections::HashMap;
 

@@ -183,7 +183,7 @@ fn fn_0704_verify_signature_tally_component_votes<D: VerificationDirectoryTrait>
 
 #[cfg(test)]
 mod test {
-    use super::{super::super::result::VerificationResultTrait, *};
+    use super::*;
     use crate::config::test::{get_test_verifier_tally_dir as get_verifier_dir, CONFIG_TEST};
 
     #[test]

@@ -1,20 +1,22 @@
 //! Module implementing the errors of the verifications
 //!
-use std::{any, error::Error, fmt::Display, sync::Arc};
+use std::{error::Error, fmt::Display, sync::Arc};
 
+/// Kind of the event during a verification
+#[derive(Debug)]
 pub enum VerificationEventKind {
     Error,
     Failure,
 }
 
-/// Enum representing one event (an error or a failure) during the tests
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 enum VerificationEventImpl {
     Error(Arc<anyhow::Error>),
     Failure(Arc<anyhow::Error>),
 }
 
-#[derive(Debug)]
+/// Enum representing one event (an error or a failure) during the tests
+#[derive(Debug, Clone)]
 pub struct VerificationEvent {
     value: VerificationEventImpl,
 }
@@ -26,88 +28,78 @@ pub struct VerificationResult {
     results: Vec<VerificationEvent>,
 }
 
-/// Trait defining functions to access the verficiation result
-pub trait VerificationResultTrait {
-    /// Check if the verification results are valid, and can be used
-    ///
-    /// If not, it can mean, that the verifications have not run
-    fn is_valid(&self) -> bool;
-
-    /// Is the verification ok ?
-    ///
-    /// If not run, the output is None
-    fn is_ok(&self) -> bool;
-
-    /// Has the verification errors ?
-    ///
-    /// If not run, the output is None
-    fn has_errors(&self) -> bool;
-
-    /// Has the verification failures ?
-    ///
-    /// If not run, the output is None
-    fn has_failures(&self) -> bool;
-
-    /// All errors and failures
-    fn errors_and_failures(&self) -> Vec<&VerificationEvent>;
-
-    /// All the errors
-    fn errors(&self) -> Vec<&VerificationEvent>;
-
-    fn errors_to_string(&self) -> Vec<String>;
-
-    /// All the failures
-    fn failures(&self) -> Vec<&VerificationEvent>;
-
-    fn failures_to_string(&self) -> Vec<String>;
-
-    // Mutable reference to the errors
-    //fn errors_mut(&mut self) -> &mut Vec<VerificationEvent>;
-
-    // Mutable reference to the failures
-    //fn failures_mut(&mut self) -> &mut Vec<VerificationEvent>;
-}
-
-impl VerificationEvent {
-    /// Create a new Error Event from an error
+impl VerificationEventImpl {
     pub fn from_error<E>(kind: VerificationEventKind, error: E) -> Self
     where
         E: Error + Send + Sync + 'static,
     {
-        match kind {
-            VerificationEventKind::Error => Self {
-                value: VerificationEventImpl::Error(Arc::new(anyhow::anyhow!(error))),
-            },
-            VerificationEventKind::Failure => Self {
-                value: VerificationEventImpl::Failure(Arc::new(anyhow::anyhow!(error))),
-            },
-        }
+        Self::from_anyhow_error(kind, anyhow!(error))
     }
 
-    /// Create a new Error Event from an error
     pub fn from_anyhow_error(kind: VerificationEventKind, error: anyhow::Error) -> Self {
         match kind {
-            VerificationEventKind::Error => Self {
-                value: VerificationEventImpl::Error(Arc::new(error)),
-            },
-            VerificationEventKind::Failure => Self {
-                value: VerificationEventImpl::Failure(Arc::new(error)),
-            },
+            VerificationEventKind::Error => Self::Error(Arc::new(error)),
+
+            VerificationEventKind::Failure => Self::Failure(Arc::new(error)),
         }
     }
 
-    /// Create a new Error Event from a string
     pub fn from_str(kind: VerificationEventKind, str: &str) -> Self {
-        match kind {
-            VerificationEventKind::Error => Self {
-                value: VerificationEventImpl::Error(Arc::new(anyhow::anyhow!(str.to_string()))),
-            },
-            VerificationEventKind::Failure => Self {
-                value: VerificationEventImpl::Failure(Arc::new(anyhow::anyhow!(str.to_string()))),
-            },
+        Self::from_anyhow_error(kind, anyhow!(str.to_string()))
+    }
+
+    pub fn is_error(&self) -> bool {
+        match self {
+            VerificationEventImpl::Error(_) => true,
+            VerificationEventImpl::Failure(_) => false,
         }
     }
 
+    pub fn is_failure(&self) -> bool {
+        !self.is_error()
+    }
+
+    fn source(&self) -> &anyhow::Error {
+        match &self {
+            VerificationEventImpl::Error(source) => source,
+            VerificationEventImpl::Failure(source) => source,
+        }
+    }
+}
+
+impl Display for VerificationEventImpl {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.source().fmt(f)
+    }
+}
+
+impl VerificationEvent {
+    /// Create a new Event of given type from an error
+    pub fn from_error<E>(kind: VerificationEventKind, error: E) -> Self
+    where
+        E: Error + Send + Sync + 'static,
+    {
+        Self {
+            value: VerificationEventImpl::from_error(kind, error),
+        }
+    }
+
+    /// Create a new Event of given type from [anyhow::Error]
+    pub fn from_anyhow_error(kind: VerificationEventKind, error: anyhow::Error) -> Self {
+        Self {
+            value: VerificationEventImpl::from_anyhow_error(kind, error),
+        }
+    }
+
+    /// Create a new Event of given type from str
+    pub fn from_str(kind: VerificationEventKind, str: &str) -> Self {
+        Self {
+            value: VerificationEventImpl::from_str(kind, str),
+        }
+    }
+
+    /// Create a new Event of type [VerificationEventKind::Error] from an error
+    #[allow(dead_code)]
     pub fn error_from_error<E>(error: E) -> Self
     where
         E: Error + Send + Sync + 'static,
@@ -115,14 +107,18 @@ impl VerificationEvent {
         Self::from_error(VerificationEventKind::Error, error)
     }
 
+    /// Create a new Event of type [VerificationEventKind::Error] from [anyhow::Error]
     pub fn error_from_anyhow_error(error: anyhow::Error) -> Self {
         Self::from_anyhow_error(VerificationEventKind::Error, error)
     }
 
+    /// Create a new Event of type [VerificationEventKind::Error] from str
+    #[allow(dead_code)]
     pub fn error_from_str(str: &str) -> Self {
         Self::from_str(VerificationEventKind::Error, str)
     }
 
+    /// Create a new Event of type [VerificationEventKind::Failure] from error
     pub fn failure_from_error<E>(error: E) -> Self
     where
         E: Error + Send + Sync + 'static,
@@ -130,15 +126,19 @@ impl VerificationEvent {
         Self::from_error(VerificationEventKind::Failure, error)
     }
 
+    /// Create a new Event of type [VerificationEventKind::Failure] from [anyhow::Error]
     pub fn failure_from_anyhow_error(error: anyhow::Error) -> Self {
         Self::from_anyhow_error(VerificationEventKind::Failure, error)
     }
 
+    /// Create a new Event of type [VerificationEventKind::Failure] from str
+    #[allow(dead_code)]
     pub fn failure_from_str(str: &str) -> Self {
         Self::from_str(VerificationEventKind::Failure, str)
     }
 
     /// Add a context to the Verification Event and return a new [VerificationEvent]
+    #[allow(dead_code)]
     pub fn add_context<C>(&mut self, context: C)
     where
         C: Display + Send + Sync + 'static,
@@ -155,6 +155,8 @@ impl VerificationEvent {
         }
     }
 
+    /// create a new [VerificationEvent] adding the given context
+    #[allow(dead_code)]
     pub fn new_with_context<C>(&self, context: C) -> Self
     where
         C: Clone + Display + Send + Sync + 'static,
@@ -171,17 +173,18 @@ impl VerificationEvent {
         }
     }
 
+    /// Is the event an error (of kind [VerificationEventKind::Error])
     pub fn is_error(&self) -> bool {
-        match self.value {
-            VerificationEventImpl::Error(_) => true,
-            VerificationEventImpl::Failure(_) => false,
-        }
+        self.value.is_error()
     }
 
+    /// Is the event a failure (of kind [VerificationEventKind::Failure])
     pub fn is_failure(&self) -> bool {
-        !self.is_error()
+        self.value.is_failure()
     }
 
+    /// Source of the event as [anyhow::Error]
+    #[allow(dead_code)]
     fn source(&self) -> &anyhow::Error {
         match &self.value {
             VerificationEventImpl::Error(source) => source,
@@ -190,16 +193,54 @@ impl VerificationEvent {
     }
 }
 
-impl ToString for VerificationEvent {
-    fn to_string(&self) -> String {
-        match &self.value {
-            VerificationEventImpl::Error(e) => e.to_string(),
-            VerificationEventImpl::Failure(e) => e.to_string(),
-        }
+impl Display for VerificationEvent {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.value.fmt(f)
     }
 }
 
 impl VerificationResult {
+    /// Return `true` if no error and not failure
+    pub fn is_ok(&self) -> bool {
+        !self.has_errors() && !self.has_failures()
+    }
+
+    /// Has the result errors
+    pub fn has_errors(&self) -> bool {
+        self.results.iter().any(|e| e.is_error())
+    }
+
+    /// Has the result failures
+    pub fn has_failures(&self) -> bool {
+        self.results.iter().any(|e| e.is_failure())
+    }
+
+    /// Get the errors
+    pub fn errors(&self) -> Vec<&VerificationEvent> {
+        self.results.iter().filter(|e| e.is_error()).collect()
+    }
+
+    /// Get the failures
+    pub fn failures(&self) -> Vec<&VerificationEvent> {
+        self.results.iter().filter(|e| e.is_failure()).collect()
+    }
+
+    /// Get the errors as string
+    pub fn errors_to_string(&self) -> Vec<String> {
+        self.errors().iter().map(|e| e.to_string()).collect()
+    }
+
+    /// Get the failures as string
+    pub fn failures_to_string(&self) -> Vec<String> {
+        self.failures().iter().map(|e| e.to_string()).collect()
+    }
+
+    /// Get the errors and the failures (all events)
+    #[allow(dead_code)]
+    pub fn errors_and_failures(&self) -> Vec<&VerificationEvent> {
+        self.results.iter().collect()
+    }
+
     /// New VerificationResult
     pub fn new() -> Self {
         VerificationResult { results: vec![] }
@@ -215,6 +256,7 @@ impl VerificationResult {
     }
 
     /// Push a new error or failure to the VerificationResult add the given context
+    #[allow(dead_code)]
     pub fn push_with_context<C>(&mut self, e: VerificationEvent, context: C)
     where
         C: Clone + Display + Send + Sync + 'static,
@@ -228,6 +270,7 @@ impl VerificationResult {
     }
 
     /// Append the results of ohter to self, emptying the vectors of other
+    #[allow(dead_code)]
     pub fn append_vec(&mut self, other: &mut Vec<VerificationEvent>) {
         self.results.append(other);
     }
@@ -263,53 +306,6 @@ impl Default for VerificationResult {
     }
 }
 
-impl VerificationResultTrait for VerificationResult {
-    fn is_valid(&self) -> bool {
-        true
-    }
-
-    fn is_ok(&self) -> bool {
-        !self.has_errors() && !self.has_failures()
-    }
-
-    fn has_errors(&self) -> bool {
-        self.results.iter().any(|e| e.is_error())
-    }
-
-    fn has_failures(&self) -> bool {
-        self.results.iter().any(|e| e.is_failure())
-    }
-
-    fn errors(&self) -> Vec<&VerificationEvent> {
-        self.results.iter().filter(|e| e.is_error()).collect()
-    }
-
-    fn failures(&self) -> Vec<&VerificationEvent> {
-        self.results.iter().filter(|e| e.is_failure()).collect()
-    }
-
-    /*
-       fn errors_mut(&mut self) -> &mut Vec<VerificationEvent> {
-           &mut self.errors
-       }
-
-       fn failures_mut(&mut self) -> &mut Vec<VerificationEvent> {
-           &mut self.failures
-       }
-    */
-    fn errors_to_string(&self) -> Vec<String> {
-        self.errors().iter().map(|e| e.to_string()).collect()
-    }
-
-    fn failures_to_string(&self) -> Vec<String> {
-        self.failures().iter().map(|e| e.to_string()).collect()
-    }
-
-    fn errors_and_failures(&self) -> Vec<&VerificationEvent> {
-        self.results.iter().collect()
-    }
-}
-
 /// Macro to create a verification error (with or without embedded error)
 macro_rules! create_verification_error {
     ($m: expr) => {{
@@ -341,36 +337,15 @@ macro_rules! create_verification_failure {
 }
 pub(crate) use create_verification_failure;
 
-/*
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum VerificationErrorType {
-    Error,
-}
+#[cfg(test)]
+mod test {
+    use super::*;
 
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum VerificationFailureType {
-    Failure,
-}
-
-impl Display for VerificationErrorType {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let s = match self {
-            Self::Error => "Error on test",
-        };
-        write!(f, "{s}")
+    #[test]
+    fn test_create_result() {
+        let res = VerificationResult::new();
+        assert!(res.is_ok());
+        assert!(!res.has_errors());
+        assert!(!res.has_failures());
     }
 }
-
-impl Display for VerificationFailureType {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let s = match self {
-            Self::Failure => "Failure on test",
-        };
-        write!(f, "{s}")
-    }
-}
-
-
-pub type VerificationError = VerifierError<VerificationErrorType>;
-pub type VerificationFailure = VerifierError<VerificationFailureType>;
- */

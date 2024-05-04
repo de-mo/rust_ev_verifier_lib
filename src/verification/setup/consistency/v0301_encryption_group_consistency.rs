@@ -178,10 +178,7 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
 mod test {
     use rug::Integer;
 
-    use super::{
-        super::super::super::{result::VerificationResultTrait, VerificationPeriod},
-        *,
-    };
+    use super::{super::super::super::VerificationPeriod, *};
     use crate::config::test::{
         get_test_verifier_setup_dir as get_verifier_dir, test_datasets_path, CONFIG_TEST,
     };

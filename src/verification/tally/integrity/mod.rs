@@ -122,10 +122,7 @@ fn fn_0901_verify_tally_integrity<D: VerificationDirectoryTrait>(
 
 #[cfg(test)]
 mod test {
-    use super::{
-        super::super::result::{VerificationResult, VerificationResultTrait},
-        *,
-    };
+    use super::{super::super::result::VerificationResult, *};
     use crate::config::test::{get_test_verifier_tally_dir as get_verifier_dir, CONFIG_TEST};
 
     #[test]
