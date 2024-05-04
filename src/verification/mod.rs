@@ -62,19 +62,16 @@ pub(super) fn verification_unimplemented<D: VerificationDirectoryTrait>(
 }
 
 /// Verify the signatue for a given object implementing [VerifiySignatureTrait]
-fn verify_signature_for_object<'a, T>(
-    obj: &'a T,
-    result: &mut VerificationResult,
-    config: &'static Config,
-    name: &str,
-) where
+fn verify_signature_for_object<'a, T>(obj: &'a T, config: &'static Config) -> VerificationResult
+where
     T: VerifiySignatureTrait<'a>,
 {
+    let mut result = VerificationResult::new();
     let ks = match config.keystore() {
         Ok(ks) => ks,
         Err(e) => {
             result.push(create_verification_error!("Cannot read keystore", e));
-            return;
+            return result;
         }
     };
     let res = obj.verify_signatures(&ks);
@@ -82,39 +79,18 @@ fn verify_signature_for_object<'a, T>(
         match r {
             Ok(t) => {
                 if !t {
-                    result.push(create_verification_failure!(format!(
-                        "Wrong signature for {}",
-                        name
-                    )))
+                    result.push(create_verification_failure!(format!("Wrong signature")))
                 }
             }
             Err(e) => {
-                result.push(create_verification_error!(format!(
-                    "Error testing signature of {} at position {}: {}",
-                    name,
-                    i,
-                    e.to_string()
-                )));
+                result.push_with_context(
+                    VerificationEvent::error_from_str(&e.to_string()),
+                    format!("at position {}", i),
+                );
             }
         }
     }
-
-    /*  {
-        Ok(t) => {
-            if !t {
-                result.push(create_verification_failure!(format!(
-                    "Wrong signature for {}",
-                    name
-                )))
-            }
-        }
-        Err(e) => {
-            result.push(create_verification_error!(
-                format!("Error testing signature of {}", name),
-                e
-            ));
-        }
-    }*/
+    result
 }
 
 impl TryFrom<&str> for VerificationPeriod {

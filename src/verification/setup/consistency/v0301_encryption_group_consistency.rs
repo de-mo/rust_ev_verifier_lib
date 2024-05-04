@@ -16,27 +16,18 @@ use rust_ev_crypto_primitives::EncryptionParameters;
 fn verify_encryption_group(
     eg: &EncryptionParameters,
     expected: &EncryptionParameters,
-    name: &str,
-    result: &mut VerificationResult,
-) {
+) -> VerificationResult {
+    let mut result = VerificationResult::new();
     if eg.p() != expected.p() {
-        result.push(create_verification_failure!(format!(
-            "p not equal in {}",
-            name
-        )));
+        result.push(create_verification_failure!(format!("p not equal",)));
     }
     if eg.q() != expected.q() {
-        result.push(create_verification_failure!(format!(
-            "q not equal in {}",
-            name
-        )));
+        result.push(create_verification_failure!(format!("q not equal",)));
     }
     if eg.g() != expected.g() {
-        result.push(create_verification_failure!(format!(
-            "g not equal in {}",
-            name
-        )));
+        result.push(create_verification_failure!(format!("g not equal",)));
     }
+    result
 }
 
 fn verify_encryption_group_for_context_vcs_dir<V: ContextVCSDirectoryTrait>(
@@ -45,11 +36,9 @@ fn verify_encryption_group_for_context_vcs_dir<V: ContextVCSDirectoryTrait>(
     result: &mut VerificationResult,
 ) {
     match dir.setup_component_tally_data_payload() {
-        Ok(p) => verify_encryption_group(
-            &p.encryption_group,
-            eg,
-            &format!("{}/setup_component_tally_data_payload", dir.get_name()),
-            result,
+        Ok(p) => result.append_wtih_context(
+            &verify_encryption_group(&p.encryption_group, eg),
+            format!("{}/setup_component_tally_data_payload", dir.get_name()),
         ),
         Err(e) => result.push(create_verification_error!(
             format!(
@@ -68,15 +57,13 @@ fn verify_encryption_group_for_setup_vcs_dir<V: SetupVCSDirectoryTrait>(
 ) {
     for (i, f) in dir.setup_component_verification_data_payload_iter() {
         match f {
-            Ok(s) => verify_encryption_group(
-                &s.encryption_group,
-                eg,
-                &format!(
+            Ok(s) => result.append_wtih_context(
+                &verify_encryption_group(&s.encryption_group, eg),
+                format!(
                     "{}/setup_component_verification_data_payload.{}",
                     i,
                     dir.get_name()
                 ),
-                result,
             ),
             Err(e) => result.push(create_verification_error!(
                 format!(
@@ -92,17 +79,15 @@ fn verify_encryption_group_for_setup_vcs_dir<V: SetupVCSDirectoryTrait>(
         match f {
             Ok(cc) => {
                 for (j, p) in cc.0.iter().enumerate() {
-                    verify_encryption_group(
-                        &p.encryption_group,
-                        eg,
-                        &format!(
+                    result.append_wtih_context(
+                        &verify_encryption_group(&p.encryption_group, eg),
+                        format!(
                             "{}/control_component_code_shares_payload.{}_chunk{}_element{}",
                             dir.get_name(),
                             i,
                             p.chunk_id,
                             j
                         ),
-                        result,
                     )
                 }
             }
@@ -137,11 +122,9 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
     };
     for (i, f) in config_dir.control_component_public_keys_payload_iter() {
         match f {
-            Ok(cc) => verify_encryption_group(
-                &cc.encryption_group,
-                &eg,
-                &format!("control_component_public_keys_payload.{}", i),
-                result,
+            Ok(cc) => result.append_wtih_context(
+                &verify_encryption_group(&cc.encryption_group, &eg),
+                format!("control_component_public_keys_payload.{}", i),
             ),
             Err(e) => result.push(create_verification_error!(
                 format!(
@@ -153,11 +136,9 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
         }
     }
     match config_dir.setup_component_public_keys_payload() {
-        Ok(p) => verify_encryption_group(
-            &p.encryption_group,
-            &eg,
+        Ok(p) => result.append_wtih_context(
+            &verify_encryption_group(&p.encryption_group, &eg),
             "setup_component_public_keys_payload",
-            result,
         ),
         Err(e) => result.push(create_verification_error!(
             "election_event_context_payload has wrong format",
@@ -211,7 +192,7 @@ mod test {
             &Integer::from(15usize),
             &Integer::from(3usize),
         ));
-        verify_encryption_group(&eg, &eg_expected, "toto", &mut result);
+        result.append_wtih_context(&verify_encryption_group(&eg, &eg_expected), "toto");
         assert!(result.is_ok());
         let mut result = VerificationResult::new();
         let eg = EncryptionParameters::from((
@@ -219,7 +200,7 @@ mod test {
             &Integer::from(15usize),
             &Integer::from(3usize),
         ));
-        verify_encryption_group(&eg, &eg_expected, "toto", &mut result);
+        result.append_wtih_context(&verify_encryption_group(&eg, &eg_expected), "toto");
         assert!(!result.has_errors());
         assert_eq!(result.failures().len(), 1);
         let mut result = VerificationResult::new();
@@ -228,7 +209,7 @@ mod test {
             &Integer::from(16usize),
             &Integer::from(4usize),
         ));
-        verify_encryption_group(&eg, &eg_expected, "toto", &mut result);
+        result.append_wtih_context(&verify_encryption_group(&eg, &eg_expected), "toto");
         assert!(!result.has_errors());
         assert_eq!(result.failures().len(), 3)
     }

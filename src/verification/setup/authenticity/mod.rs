@@ -74,10 +74,8 @@ fn fn_0201_verify_signature_canton_config<D: VerificationDirectoryTrait>(
             return;
         }
     };
-    verify_signature_for_object(
-        ee_config.as_ref(),
-        result,
-        config,
+    result.append_wtih_context(
+        &verify_signature_for_object(ee_config.as_ref(), config),
         "election_event_configuration",
     )
 }
@@ -88,7 +86,7 @@ fn fn_0202_verify_signature_setup_component_public_keys<D: VerificationDirectory
     result: &mut VerificationResult,
 ) {
     let context_dir = dir.context();
-    let eg = match context_dir.setup_component_public_keys_payload() {
+    let payload = match context_dir.setup_component_public_keys_payload() {
         Ok(p) => p,
         Err(e) => {
             result.push(create_verification_error!(
@@ -98,10 +96,8 @@ fn fn_0202_verify_signature_setup_component_public_keys<D: VerificationDirectory
             return;
         }
     };
-    verify_signature_for_object(
-        eg.as_ref(),
-        result,
-        config,
+    result.append_wtih_context(
+        &verify_signature_for_object(payload.as_ref(), config),
         "setup_component_public_keys_payload",
     )
 }
@@ -115,11 +111,9 @@ fn fn_0203_verify_signature_control_component_public_keys<D: VerificationDirecto
     for (i, cc) in context_dir.control_component_public_keys_payload_iter() {
         debug!("Verification 2.03 for cc {}", i);
         match cc {
-            Ok(cc) => verify_signature_for_object(
-                cc.as_ref(),
-                result,
-                config,
-                &format!("control_component_public_keys_payload_{}", i),
+            Ok(cc) => result.append_wtih_context(
+                &verify_signature_for_object(cc.as_ref(), config),
+                format!("control_component_public_keys_payload_{}", i),
             ),
             Err(e) => result.push(create_verification_error!(
                 format!("control_component_public_keys_payload_{} cannot be read", i),
@@ -138,11 +132,9 @@ fn fn_0204_verify_signature_setup_component_tally_data<D: VerificationDirectoryT
     for d in context_dir.vcs_directories() {
         debug!("Verification 2.04 for vcs_dir {}", d.get_name());
         match d.setup_component_tally_data_payload() {
-            Ok(p) => verify_signature_for_object(
-                p.as_ref(),
-                result,
-                config,
-                &format!("{}/setup_component_tally_data_payload.json", d.get_name(),),
+            Ok(p) => result.append_wtih_context(
+                &verify_signature_for_object(p.as_ref(), config),
+                format!("{}/setup_component_tally_data_payload.json", d.get_name(),),
             ),
             Err(e) => result.push(create_verification_error!(
                 format!("{}/setup_component_tally_data_payload.json", d.get_name(),),
@@ -168,10 +160,8 @@ fn fn_0205_verify_signature_election_event_context<D: VerificationDirectoryTrait
             return;
         }
     };
-    verify_signature_for_object(
-        rp.as_ref(),
-        result,
-        config,
+    result.append_wtih_context(
+        &verify_signature_for_object(rp.as_ref(), config),
         "election_event_context_payload",
     )
 }

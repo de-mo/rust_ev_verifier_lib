@@ -82,11 +82,9 @@ fn fn_0701_verify_signature_control_component_ballot_box<D: VerificationDirector
     for bb_d in tally_dir.bb_directories().iter() {
         for (i, f) in bb_d.control_component_ballot_box_payload_iter() {
             match f {
-                Ok(d) => verify_signature_for_object(
-                    d.as_ref(),
-                    result,
-                    config,
-                    &format!(
+                Ok(d) => result.append_wtih_context(
+                    &verify_signature_for_object(d.as_ref(), config),
+                    format!(
                         "{}/control_component_ballot_box_payload_{}.json",
                         bb_d.get_name(),
                         i
@@ -114,11 +112,9 @@ fn fn_0702_verify_verify_signature_control_component_shuffle<D: VerificationDire
     for bb_d in tally_dir.bb_directories().iter() {
         for (i, f) in bb_d.control_component_shuffle_payload_iter() {
             match f {
-                Ok(d) => verify_signature_for_object(
-                    d.as_ref(),
-                    result,
-                    config,
-                    &format!(
+                Ok(d) => result.append_wtih_context(
+                    &verify_signature_for_object(d.as_ref(), config),
+                    format!(
                         "{}/control_component_shuffle_payload_{}.json",
                         bb_d.get_name(),
                         i
@@ -145,11 +141,9 @@ fn fn_0703_verify_signature_tally_component_shuffle<D: VerificationDirectoryTrai
     let tally_dir = dir.unwrap_tally();
     for bb_d in tally_dir.bb_directories().iter() {
         match bb_d.tally_component_shuffle_payload() {
-            Ok(d) => verify_signature_for_object(
-                d.as_ref(),
-                result,
-                config,
-                &format!("{}/tally_component_shuffle_payload.json", bb_d.get_name(),),
+            Ok(d) => result.append_wtih_context(
+                &verify_signature_for_object(d.as_ref(), config),
+                format!("{}/tally_component_shuffle_payload.json", bb_d.get_name(),),
             ),
             Err(e) => result.push(create_verification_error!(
                 format!("{}/tally_component_shuffle_payload.json", bb_d.get_name(),),
@@ -167,11 +161,9 @@ fn fn_0704_verify_signature_tally_component_votes<D: VerificationDirectoryTrait>
     let tally_dir = dir.unwrap_tally();
     for bb_d in tally_dir.bb_directories().iter() {
         match bb_d.tally_component_votes_payload() {
-            Ok(d) => verify_signature_for_object(
-                d.as_ref(),
-                result,
-                config,
-                &format!("{}/tally_component_votes_payload.json", bb_d.get_name(),),
+            Ok(d) => result.append_wtih_context(
+                &verify_signature_for_object(d.as_ref(), config),
+                format!("{}/tally_component_votes_payload.json", bb_d.get_name(),),
             ),
             Err(e) => result.push(create_verification_error!(
                 format!("{}/tally_component_votes_payload.json", bb_d.get_name(),),

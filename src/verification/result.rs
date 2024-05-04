@@ -269,6 +269,16 @@ impl VerificationResult {
         self.results.append(&mut other.results);
     }
 
+    /// Append the results of ohter to self with context
+    pub fn append_wtih_context<C>(&mut self, other: &Self, context: C)
+    where
+        C: Clone + Display + Send + Sync + 'static,
+    {
+        for e in other.errors_and_failures() {
+            self.push_with_context(e.clone(), context.clone());
+        }
+    }
+
     /// Append the results of ohter to self, emptying the vectors of other
     #[allow(dead_code)]
     pub fn append_vec(&mut self, other: &mut Vec<VerificationEvent>) {

@@ -41,24 +41,15 @@ struct Context<'a> {
 fn algorithm_0301_verify_signature_setup_component_verification_data(
     verification_data_payload: &SetupComponentVerificationDataPayload,
     config: &'static Config,
-    result: &mut VerificationResult,
-    chunk_name: &str,
-) {
-    verify_signature_for_object(verification_data_payload, result, config, chunk_name)
+) -> VerificationResult {
+    verify_signature_for_object(verification_data_payload, config)
 }
 
 fn algorithm_0302_verify_signature_control_component_code_shares(
     control_component_code_shares: &ControlComponentCodeSharesPayloadInner,
     config: &'static Config,
-    result: &mut VerificationResult,
-    chunk_node_id_name: &str,
-) {
-    verify_signature_for_object(
-        control_component_code_shares,
-        result,
-        config,
-        chunk_node_id_name,
-    )
+) -> VerificationResult {
+    verify_signature_for_object(control_component_code_shares, config)
 }
 
 pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
@@ -103,11 +94,12 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
             match setup_verification_data_payload_result {
                 Ok(setup_verification_data_payload) => {
                     // Verifiy signature
-                    algorithm_0301_verify_signature_setup_component_verification_data(
-                        &setup_verification_data_payload,
-                        config,
-                        result,
-                        &setup_verif_data_chunk_name,
+                    result.append_wtih_context(
+                        &algorithm_0301_verify_signature_setup_component_verification_data(
+                            &setup_verification_data_payload,
+                            config,
+                        ),
+                        setup_verif_data_chunk_name.clone(),
                     );
                     let vcs_id = &setup_verification_data_payload.verification_card_set_id;
                     // Find correct vcs context
@@ -159,11 +151,10 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
                                 .par_bridge()
                                 .map(|(j, s)| {
                                     let mut result = VerificationResult::new();
-                                    algorithm_0302_verify_signature_control_component_code_shares(
+                                    result.append_wtih_context(&algorithm_0302_verify_signature_control_component_code_shares(
                                         s,
-                                        config,
-                                        &mut result,
-                                        &format!("{}.{}", cc_share_chunk_name, s.node_id),
+                                        config),
+                                        format!("{}.{}", cc_share_chunk_name, s.node_id),
                                     );
                                     let context = Context {
                                         eg: &setup_verification_data_payload.encryption_group,
