@@ -1,6 +1,7 @@
-use anyhow::anyhow;
+use anyhow::bail;
 //use futures::{stream::FuturesUnordered, StreamExt};
 use crate::{
+    application_runner::checks::{check_complete, check_verification_dir},
     config::Config as VerifierConfig,
     file_structure::VerificationDirectory,
     verification::{
@@ -9,6 +10,7 @@ use crate::{
 };
 use log::{info, warn};
 //use std::future::Future;
+use super::checks::start_check;
 use rayon::prelude::*;
 use std::{iter::zip, sync::Mutex};
 use std::{
@@ -25,7 +27,7 @@ pub trait RunStrategy<'a> {
     fn run(
         &self,
         verifications: &'a mut VerificationSuite<'a>,
-        dir_path: &Path,
+        directory: &VerificationDirectory,
         action_before: impl Fn(&str) + Send + Sync,
         action_after: impl Fn(&str, Vec<String>, Vec<String>) + Send + Sync,
     );
@@ -41,15 +43,14 @@ impl<'a> RunStrategy<'a> for RunSequential {
     fn run(
         &self,
         verifications: &'a mut VerificationSuite<'a>,
-        dir_path: &Path,
+        directory: &VerificationDirectory,
         action_before: impl Fn(&str) + Send + Sync,
         action_after: impl Fn(&str, Vec<String>, Vec<String>) + Send + Sync,
     ) {
-        let directory = VerificationDirectory::new(verifications.period(), dir_path);
         let it = verifications.list.0.iter_mut();
         for v in it {
             action_before(v.id());
-            v.run(&directory);
+            v.run(directory);
             action_after(
                 v.id(),
                 v.verification_result().errors_to_string(),
@@ -63,18 +64,17 @@ impl<'a> RunStrategy<'a> for RunParallel {
     fn run(
         &self,
         verifications: &'a mut VerificationSuite<'a>,
-        dir_path: &Path,
+        directory: &VerificationDirectory,
         action_before: impl Fn(&str) + Send + Sync,
         action_after: impl Fn(&str, Vec<String>, Vec<String>) + Send + Sync,
     ) {
-        let directory = VerificationDirectory::new(verifications.period(), dir_path);
         let dirs = vec![directory; verifications.len()];
         zip(verifications.list.0.iter_mut().map(Mutex::new), dirs)
             .par_bridge()
             .for_each(|(vm, d)| {
                 let mut v = vm.lock().unwrap();
                 action_before(v.id());
-                v.run(&d);
+                v.run(d);
                 action_after(
                     v.id(),
                     v.verification_result().errors_to_string(),
@@ -89,6 +89,7 @@ impl<'a> RunStrategy<'a> for RunParallel {
 /// The runner can run only once. The runner has to be reseted to restart.
 pub struct Runner<'a, T: RunStrategy<'a>> {
     path: PathBuf,
+    verification_directory: VerificationDirectory,
     verifications: Box<VerificationSuite<'a>>,
     start_time: Option<SystemTime>,
     duration: Option<Duration>,
@@ -119,8 +120,13 @@ where
         action_before: impl Fn(&str) + Send + Sync + 'static,
         action_after: impl Fn(&str, Vec<String>, Vec<String>) + Send + Sync + 'static,
     ) -> anyhow::Result<Runner<'a, T>> {
+        start_check(config)?;
+        check_verification_dir(period, path)?;
+        let directory = VerificationDirectory::new(period, path);
+        check_complete(period, &directory)?;
         Ok(Runner {
             path: path.to_path_buf(),
+            verification_directory: directory,
             verifications: Box::new(VerificationSuite::new(period, metadata, exclusion, config)?),
             start_time: None,
             duration: None,
@@ -149,16 +155,14 @@ where
     pub fn run_all<'c: 'a>(
         &'c mut self,
         metadata_list: &'a VerificationMetaDataList,
-    ) -> Option<anyhow::Error> {
+    ) -> anyhow::Result<()> {
         if self.is_running() {
-            return Some(anyhow!(format!(
-                "Runner is already running. Cannot be started"
-            )));
+            bail!(format!("Runner is already running. Cannot be started"));
         }
         if self.is_finished() {
-            return Some(anyhow!(format!(
+            bail!(format!(
                 "Runner is already running. Cannot be started before resetting it"
-            )));
+            ));
         }
         self.start_time = Some(SystemTime::now());
         info!(
@@ -177,7 +181,7 @@ where
         {
             self.run_strategy.run(
                 &mut self.verifications,
-                &self.path,
+                &self.verification_directory,
                 &self.action_before,
                 &self.action_after,
             );
@@ -188,7 +192,7 @@ where
             &len,
             self.duration.unwrap().as_secs_f32()
         );
-        None
+        Ok(())
     }
 
     #[allow(dead_code)]

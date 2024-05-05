@@ -2,6 +2,7 @@ use std::path::Path;
 
 use crate::{
     config::{Config as VerifierConfig, CONTEXT_DIR_NAME, SETUP_DIR_NAME, TALLY_DIR_NAME},
+    file_structure::{CompletnessTestTrait, VerificationDirectory, VerificationDirectoryTrait},
     verification::{meta_data::VerificationMetaDataList, VerificationPeriod},
 };
 use anyhow::{anyhow, ensure};
@@ -24,6 +25,7 @@ pub fn start_check(config: &'static VerifierConfig) -> anyhow::Result<()> {
     Ok(())
 }
 
+/// Check that the verification directory correct ist
 pub fn check_verification_dir(period: &VerificationPeriod, path: &Path) -> anyhow::Result<()> {
     ensure!(
         path.is_dir(),
@@ -51,6 +53,33 @@ pub fn check_verification_dir(period: &VerificationPeriod, path: &Path) -> anyho
                 TALLY_DIR_NAME, path
             )
         ),
+    }
+    Ok(())
+}
+
+/// Check that the directory is complete
+pub fn check_complete(
+    period: &VerificationPeriod,
+    dir: &VerificationDirectory,
+) -> anyhow::Result<()> {
+    let context_complete = dir.context().test_completness()?;
+    if !context_complete.is_empty() {
+        let mut e = anyhow!("Context directory not complete");
+        for elt in context_complete.iter() {
+            e = e.context(elt.clone());
+        }
+        return Err(e);
+    }
+    let complete = match period {
+        VerificationPeriod::Setup => dir.unwrap_setup().test_completness()?,
+        VerificationPeriod::Tally => dir.unwrap_tally().test_completness()?,
+    };
+    if !complete.is_empty() {
+        let mut e = anyhow!(format!("directory {} not complete", period.to_string()));
+        for elt in complete.iter() {
+            e = e.context(elt.clone());
+        }
+        return Err(e);
     }
     Ok(())
 }

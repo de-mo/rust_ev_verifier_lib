@@ -13,11 +13,8 @@ mod direct_trust;
 mod file_structure;
 mod resources;
 mod verification;
-
-use anyhow::bail;
 use application_runner::{
-    check_verification_dir, init_logger, no_action_after_fn, no_action_before_fn, start_check,
-    RunParallel, Runner,
+    init_logger, no_action_after_fn, no_action_before_fn, RunParallel, Runner,
 };
 use config::Config as VerifierConfig;
 use lazy_static::lazy_static;
@@ -88,28 +85,6 @@ impl SubCommands {
     }
 }
 
-/// Execute the runner for a given period
-///
-/// # Argument
-/// * `period`: The Verification Period
-/// * `cmd`: The [VerifierSubCommand] containung the necessary information to run the test
-fn execute_runner(period: &VerificationPeriod, cmd: &VerifierSubCommand) -> anyhow::Result<()> {
-    let metadata = VerificationMetaDataList::load(CONFIG.get_verification_list_str()).unwrap();
-    let mut runner = Runner::new(
-        &cmd.dir,
-        period,
-        &metadata,
-        &cmd.exclude,
-        RunParallel,
-        &CONFIG,
-        no_action_before_fn,
-        no_action_after_fn,
-    )
-    .map_err(|e| e.context("Error creating the runner"))?;
-    runner.run_all(&metadata);
-    Ok(())
-}
-
 /// Execute the verifier
 /// This is the main method called from the console
 ///
@@ -117,19 +92,25 @@ fn execute_runner(period: &VerificationPeriod, cmd: &VerifierSubCommand) -> anyh
 /// * Nothing if the execution runs correctly
 /// * [anyhow::Result] with the related error by a problem
 fn execute_verifier() -> anyhow::Result<()> {
-    if let Err(e) = start_check(&CONFIG) {
-        bail!("Application cannot start: {}", e);
-    };
     let command = VerifiyCommand::from_args();
     let period = VerificationPeriod::from(&command.sub);
     let sub_command = command.sub.verifier_sub_command();
     info!("Start Verifier for {}", period);
-    if let Err(e) = check_verification_dir(&period, &sub_command.dir) {
-        bail!("Application cannot start: {}", e);
-    } else {
-        execute_runner(&period, sub_command)
-            .map_err(|e| e.context("Error executing the runner"))?;
-    }
+    let metadata = VerificationMetaDataList::load(CONFIG.get_verification_list_str()).unwrap();
+    let mut runner = Runner::new(
+        &sub_command.dir,
+        &period,
+        &metadata,
+        &sub_command.exclude,
+        RunParallel,
+        &CONFIG,
+        no_action_before_fn,
+        no_action_after_fn,
+    )
+    .map_err(|e| e.context("Error creating the runner"))?;
+    runner
+        .run_all(&metadata)
+        .map_err(|e| e.context("error running the tests"))?;
     info!("Verifier finished");
     Ok(())
 }
