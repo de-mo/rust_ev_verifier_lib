@@ -250,6 +250,19 @@ impl VerificationResult {
         Self { results: list }
     }
 
+    pub fn from_verification_event(event: VerificationEvent) -> Self {
+        Self::from_vec(vec![event])
+    }
+
+    pub fn add_context<C>(&self, context: C) -> Self
+    where
+        C: Clone + Display + Send + Sync + 'static,
+    {
+        let mut res = Self::new();
+        res.append_wtih_context(&self, context);
+        res
+    }
+
     /// Push a new error or failure to the VerificationResult
     pub fn push(&mut self, e: VerificationEvent) {
         self.results.push(e)

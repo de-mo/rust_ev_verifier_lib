@@ -12,18 +12,15 @@ use crate::{
 use anyhow::anyhow;
 use log::debug;
 
-fn test_election_event_id(
-    ee_id: &String,
-    expected: &String,
-    name: &str,
-    result: &mut VerificationResult,
-) {
+fn test_election_event_id(ee_id: &String, expected: &String) -> VerificationResult {
+    let mut result = VerificationResult::new();
     if ee_id != expected {
         result.push(create_verification_failure!(format!(
-            "Election Event ID not equal in {}",
-            name
+            "Election Event ID {} not equal to {}",
+            ee_id, expected
         )));
     }
+    result
 }
 
 fn test_ee_id_for_context_vcs_dir<V: ContextVCSDirectoryTrait>(
@@ -32,11 +29,9 @@ fn test_ee_id_for_context_vcs_dir<V: ContextVCSDirectoryTrait>(
     result: &mut VerificationResult,
 ) {
     match dir.setup_component_tally_data_payload() {
-        Ok(p) => test_election_event_id(
-            &p.election_event_id,
-            expected,
-            &format!("{}/setup_component_tally_data_payload", dir.get_name()),
-            result,
+        Ok(p) => result.append_wtih_context(
+            &test_election_event_id(&p.election_event_id, expected),
+            format!("{}/setup_component_tally_data_payload", dir.get_name()),
         ),
         Err(e) => result.push(create_verification_error!(
             format!(
@@ -65,16 +60,14 @@ fn test_ee_id_for_setup_vcs_dir<V: SetupVCSDirectoryTrait>(
             )),
             Ok(cc) => {
                 for p in cc.0.iter() {
-                    test_election_event_id(
-                        &p.election_event_id,
-                        expected,
-                        &format!(
+                    result.append_wtih_context(
+                        &test_election_event_id(&p.election_event_id, expected),
+                        format!(
                             "{}/control_component_code_shares_payload.{}_chunk{}",
                             dir.get_name(),
                             i,
                             p.chunk_id
                         ),
-                        result,
                     )
                 }
             }
@@ -90,15 +83,13 @@ fn test_ee_id_for_setup_vcs_dir<V: SetupVCSDirectoryTrait>(
                 ),
                 e
             )),
-            Ok(s) => test_election_event_id(
-                &s.election_event_id,
-                expected,
-                &format!(
+            Ok(s) => result.append_wtih_context(
+                &test_election_event_id(&s.election_event_id, expected),
+                format!(
                     "{}/setup_component_verification_data_payload.{}",
                     i,
                     dir.get_name()
                 ),
-                result,
             ),
         }
     }
@@ -122,11 +113,9 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
         }
     };
     match context_dir.setup_component_public_keys_payload() {
-        Ok(p) => test_election_event_id(
-            &p.election_event_id,
-            &ee_id,
+        Ok(p) => result.append_wtih_context(
+            &test_election_event_id(&p.election_event_id, &ee_id),
             "setup_component_public_keys_payload",
-            result,
         ),
         Err(e) => result.push(create_verification_error!(
             "election_event_context_payload has wrong format",
@@ -142,11 +131,9 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
                 ),
                 e
             )),
-            Ok(cc) => test_election_event_id(
-                &cc.election_event_id,
-                &ee_id,
-                &format!("control_component_public_keys_payload.{}", i),
-                result,
+            Ok(cc) => result.append_wtih_context(
+                &test_election_event_id(&cc.election_event_id, &ee_id),
+                format!("control_component_public_keys_payload.{}", i),
             ),
         }
     }

@@ -40,21 +40,21 @@ pub(super) fn fn_0501_verify_encryption_parameters<D: VerificationDirectoryTrait
     };
     if eg_test.p() != eg.encryption_group.p() {
         result.push(create_verification_failure!(format!(
-            "payload p and calculated p are equal: payload: {} / calculated: {}",
+            "payload p and calculated p are not equal: payload: {} / calculated: {}",
             eg.encryption_group.p(),
             eg_test.p()
         )));
     }
     if eg_test.q() != eg.encryption_group.q() {
         result.push(create_verification_failure!(format!(
-            "payload q and calculated q are equal: payload: {} / calculated: {}",
+            "payload q and calculated q are not equal: payload: {} / calculated: {}",
             eg.encryption_group.q(),
             eg_test.q()
         )));
     }
     if eg_test.g() != eg.encryption_group.g() {
         result.push(create_verification_failure!(format!(
-            "payload g and calculated g are equal: payload: {} / calculated: {}",
+            "payload g and calculated g are not equal: payload: {} / calculated: {}",
             eg.encryption_group.g(),
             eg_test.g()
         )))

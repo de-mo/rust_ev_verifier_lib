@@ -64,10 +64,10 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
             &combined_cc_pk.ccrj_choice_return_codes_encryption_public_key,
             &proofs,
             &i_aux_ccr_j,
-            "VerifSchnorrCCRji",
-            "CCR_j",
-            &Some(j),
-        );
+        )
+        .add_context("Test VerifSchnorrCCRji")
+        .add_context("Proof CCR_j")
+        .add_context(format!("node {}", j));
         result.append(&mut res);
 
         // CCMj Schnorr Proofs
@@ -87,10 +87,10 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
             &combined_cc_pk.ccmj_election_public_key,
             &proofs,
             &i_aux_ccm_j,
-            "VerifSchnorrCCMji",
-            "CCM_j",
-            &Some(j),
-        );
+        )
+        .add_context("Test VerifSchnorrCCMji")
+        .add_context("Proof CCM_j")
+        .add_context(format!("node {}", j));
         result.append(&mut res);
     }
 
@@ -112,10 +112,9 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
             .electoral_board_public_key,
         &proofs,
         &i_aux_eb,
-        "VerifSchnorrELi",
-        "Electoral board",
-        &None,
-    );
+    )
+    .add_context("Test VerifSchnorrELi")
+    .add_context("Proof Electoral board");
     result.append(&mut res);
 }
 
@@ -124,21 +123,19 @@ fn run_verify_schnorr_proofs(
     pks: &Vec<Integer>,
     pis: &Vec<Proof>,
     i_aux: &Vec<String>,
-    test_name: &str,
-    proof_name: &str,
-    node: &Option<usize>,
 ) -> VerificationResult {
     let mut res = VerificationResult::new();
     if pks.len() != pis.len() {
-        res.push(create_verification_error!(format!(
-            "The length of pks and pis is not the same for {proof_name}"
-        )));
+        res.push(create_verification_error!(
+            "The length of pks and pis is not the same"
+        ));
     } else {
         let failures: Vec<Option<VerificationEvent>> = zip(pks, pis)
             .enumerate()
             .par_bridge()
             .map(|(i, (pk, pi))| {
-                run_verify_schnorr_proof(eg, pi, pk, i_aux, test_name, proof_name, i, node)
+                run_verify_schnorr_proof(eg, pi, pk, i_aux)
+                    .map(|e| e.new_with_context(format!("at position {}", i)))
             })
             .collect();
         failures.into_iter().for_each(|o| {
@@ -156,27 +153,12 @@ fn run_verify_schnorr_proof(
     schnorr: &Proof,
     y: &Integer,
     i_aux: &Vec<String>,
-    test_name: &str,
-    proof_name: &str,
-    pos: usize,
-    node: &Option<usize>,
 ) -> Option<VerificationEvent> {
-    debug!(
-        "Verification {} at pos {} for cc {:?}",
-        test_name, pos, node
-    );
     match verify_schnorr(eg, schnorr.as_tuple(), y, i_aux) {
         Err(e) => return Some(VerificationEvent::failure_from_error(e)),
         Ok(b) => {
             if !b {
-                let mut text = format!(
-                    "{}: Verifiy {} Schnorr proofs not ok at pos {}",
-                    test_name, proof_name, pos
-                );
-                if node.is_some() {
-                    text = format!("{} for node {}", text, node.unwrap());
-                }
-                return Some(create_verification_failure!(text));
+                return Some(create_verification_failure!("Schnorr proofs not ok"));
             }
         }
     }
