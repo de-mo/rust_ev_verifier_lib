@@ -4,10 +4,9 @@ use super::super::super::result::{
 use crate::{
     config::Config,
     data_structures::{
+        common_types::{ExponentiatedEncryptedElement, Proof},
         setup::{
-            control_component_code_shares_payload::{
-                ControlComponentCodeShare, ControlComponentCodeSharesPayloadInner,
-            },
+            control_component_code_shares_payload::ControlComponentCodeSharesPayloadInner,
             setup_component_verification_data_payload::{
                 SetupComponentVerificationDataInner, SetupComponentVerificationDataPayload,
             },
@@ -24,18 +23,27 @@ use crate::{
 use anyhow::anyhow;
 use log::debug;
 use rayon::prelude::*;
+use rug::Integer;
 use rust_ev_crypto_primitives::{verify_exponentiation, EncryptionParameters};
 use std::iter::zip;
 
-/// Context data according to the specifications
-struct Context<'a> {
+/// Context data for algorithm 3.3 according to the specifications
+struct ContextAlgorithm33<'a, 'b, 'c, 'd, 'e> {
     eg: &'a EncryptionParameters,
-    node_id: &'a usize,
-    ee_id: &'a String,
-    vcs_id: &'a String,
-    //nb_voters: &'a usize,
-    nb_voting_options: &'a usize,
-    chunk_id: &'a usize,
+    node_id: usize,
+    ee_id: &'b String,
+    vc_ids: &'c Vec<&'d String>,
+    setup_component_verification_data: &'e Vec<SetupComponentVerificationDataInner>,
+    nb_voting_options: usize,
+}
+
+/// Context data for algorithm 3.4 according to the specifications
+struct ContextAlgorithm34<'a, 'b, 'c, 'd, 'e> {
+    eg: &'a EncryptionParameters,
+    node_id: usize,
+    ee_id: &'b String,
+    vc_ids: &'c Vec<&'d String>,
+    setup_component_verification_data: &'e Vec<SetupComponentVerificationDataInner>,
 }
 
 fn algorithm_0301_verify_signature_setup_component_verification_data(
@@ -91,106 +99,120 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
                 vcs_dir.get_name(),
                 chunk_id
             );
-            match setup_verification_data_payload_result {
-                Ok(setup_verification_data_payload) => {
-                    // Verifiy signature
-                    result.append_wtih_context(
-                        &algorithm_0301_verify_signature_setup_component_verification_data(
-                            &setup_verification_data_payload,
-                            config,
-                        ),
-                        setup_verif_data_chunk_name.clone(),
-                    );
-                    let vcs_id = &setup_verification_data_payload.verification_card_set_id;
-                    // Find correct vcs context
-                    let vcs_context = match ee_context.find_verification_card_set_context(vcs_id) {
-                        Some(c) => c,
-                        None => {
-                            result.push(create_verification_error!(format!(
-                                "vcs id {} not found in election_event_context_payload",
-                                vcs_id
-                            )));
-                            break;
-                        }
-                    };
-                    let verification_card_ids =
-                        setup_verification_data_payload.verification_card_ids();
-                    // Check the number of voters of the vcs_id changed in the new chunk
-                    if &vcs_id_for_sum_vcs != vcs_id {
-                        // vcs_id changed
-                        if !vcs_id_for_sum_vcs.is_empty()
-                            && current_sum_vcs
-                                != ee_context
-                                    .find_verification_card_set_context(&vcs_id_for_sum_vcs)
-                                    .unwrap()
-                                    .number_of_voters()
-                        {
-                            result.push(create_verification_failure!(
+            if let Err(e) = setup_verification_data_payload_result {
+                result.push(create_verification_error!(
+                    format!("{} cannot be read", setup_verif_data_chunk_name),
+                    e
+                ));
+                break;
+            }
+            let setup_verification_data_payload = setup_verification_data_payload_result.unwrap();
+
+            // Verify signature setup_component_verification_data
+            result.append_wtih_context(
+                &algorithm_0301_verify_signature_setup_component_verification_data(
+                    &setup_verification_data_payload,
+                    config,
+                ),
+                setup_verif_data_chunk_name.clone(),
+            );
+
+            let vcs_id = &setup_verification_data_payload.verification_card_set_id;
+            // Find correct vcs context
+            let vcs_context = match ee_context.find_verification_card_set_context(vcs_id) {
+                Some(c) => c,
+                None => {
+                    result.push(create_verification_error!(format!(
+                        "vcs id {} not found in election_event_context_payload",
+                        vcs_id
+                    )));
+                    break;
+                }
+            };
+            let verification_card_ids = setup_verification_data_payload.verification_card_ids();
+            // Check the number of voters of the vcs_id changed in the new chunk
+            if &vcs_id_for_sum_vcs != vcs_id {
+                // vcs_id changed
+                if !vcs_id_for_sum_vcs.is_empty()
+                    && current_sum_vcs
+                        != ee_context
+                            .find_verification_card_set_context(&vcs_id_for_sum_vcs)
+                            .unwrap()
+                            .number_of_voters()
+                {
+                    result.push(create_verification_failure!(
                                 format!("Number of vcs {} for vcs id {} not the same as in the chunks of setup_verification_data",
                                 vcs_context.number_of_voters(), vcs_id_for_sum_vcs)
                             ));
-                        };
-                        vcs_id_for_sum_vcs = vcs_id.clone();
-                        current_sum_vcs = verification_card_ids.len();
-                    } else {
-                        // vcs_id not changed
-                        current_sum_vcs += verification_card_ids.len();
-                    }
-                    // Get cc_shares from the same chunk
-                    match vcs_dir
-                        .control_component_code_shares_payload_group()
-                        .get_file_with_number(chunk_id)
-                        .get_data()
-                    {
-                        Ok(s) => {
-                            let cc_shares = s.control_component_code_shares_payload().unwrap();
-                            // For each CC (1 to 4)
-                            let mut res_cc: Vec<VerificationResult> = cc_shares.0
+                };
+                vcs_id_for_sum_vcs = vcs_id.clone();
+                current_sum_vcs = verification_card_ids.len();
+            } else {
+                // vcs_id not changed
+                current_sum_vcs += verification_card_ids.len();
+            }
+            // Get cc_shares from the same chunk
+            match vcs_dir
+                .control_component_code_shares_payload_group()
+                .get_file_with_number(chunk_id)
+                .get_data()
+            {
+                Ok(s) => {
+                    let cc_shares = s.control_component_code_shares_payload().unwrap();
+                    // For each CC (1 to 4)
+                    let mut res_cc: Vec<VerificationResult> = cc_shares.0
                                 .iter()
                                 .enumerate()
                                 .par_bridge()
-                                .map(|(j, s)| {
+                                .map(|(j, shares)| {
                                     let mut result = VerificationResult::new();
                                     result.append_wtih_context(&algorithm_0302_verify_signature_control_component_code_shares(
-                                        s,
+                                        shares,
                                         config),
-                                        format!("{}.{}", cc_share_chunk_name, s.node_id),
+                                        format!("{}.{}", cc_share_chunk_name, shares.node_id),
                                     );
-                                    let context = Context {
+                                    let context33 = ContextAlgorithm33 {
                                         eg: &setup_verification_data_payload.encryption_group,
-                                        node_id: &j,
+                                        node_id: j,
                                         ee_id: &setup_verification_data_payload.election_event_id,
-                                        vcs_id,
-                                        //nb_voters: &vcs_context.number_of_voters(),
-                                        nb_voting_options: &vcs_context.number_of_voting_options(),
-                                        chunk_id: &chunk_id,
+                                        vc_ids: &verification_card_ids,
+                                        nb_voting_options: vcs_context.number_of_voting_options(),
+                                        setup_component_verification_data: &setup_verification_data_payload.setup_component_verification_data
                                     };
-                                    result.append(&mut algorithm_0303_verify_encrypted_pcc_exponentiation_proofs_verification_card_set(
-                                        &context,
-                                        &verification_card_ids,
-                                        &setup_verification_data_payload
-                                            .setup_component_verification_data,
-                                        &s.control_component_code_shares,
-                                    ));
+                                    let mut res_algo_33 = algorithm_0303_verify_encrypted_pcc_exponentiation_proofs_verification_card_set(
+                                        &context33,
+                                        setup_verification_data_payload.setup_component_verification_data.iter().map(|e| &e.encrypted_hashed_squared_partial_choice_return_codes).collect(),
+                                        shares.control_component_code_shares.iter().map(|e| &e.voter_choice_return_code_generation_public_key[0]).collect(),
+                                        shares.control_component_code_shares.iter().map(|e| &e.exponentiated_encrypted_partial_choice_return_codes).collect(),
+                                        shares.control_component_code_shares.iter().map(|e| &e.encrypted_partial_choice_return_code_exponentiation_proof).collect(),
+                                    ).add_context(format!("Node {}", j)).add_context(format!("Chunk {}", cc_share_chunk_name));
+                                    result.append(&mut res_algo_33);
+                                    let context34 = ContextAlgorithm34 {
+                                        eg: &setup_verification_data_payload.encryption_group,
+                                        node_id: j,
+                                        ee_id: &setup_verification_data_payload.election_event_id,
+                                        vc_ids: &verification_card_ids,
+                                        setup_component_verification_data: &setup_verification_data_payload.setup_component_verification_data
+                                    };
+                                    let mut res_algo_34 = algorithm_0304_verify_encrypted_ckexponentiation_proofs_verification_card_set(
+                                        &context34,
+                                        setup_verification_data_payload.setup_component_verification_data.iter().map(|e| &e.encrypted_hashed_squared_confirmation_key).collect(),
+                                        shares.control_component_code_shares.iter().map(|e| &e.voter_vote_cast_return_code_generation_public_key[0]).collect(),
+                                        shares.control_component_code_shares.iter().map(|e| &e.exponentiated_encrypted_confirmation_key).collect(),
+                                        shares.control_component_code_shares.iter().map(|e| &e.encrypted_confirmation_key_exponentiation_proof).collect(),
+                                    ).add_context(format!("Node {}", j)).add_context(format!("Chunk {}", cc_share_chunk_name));
+                                    result.append(&mut res_algo_34);
                                     result
                                 })
                                 .collect();
-                            for r in res_cc.iter_mut() {
-                                result.append(r);
-                            }
-                        }
-                        Err(e) => result.push(create_verification_error!(
-                            format!("{} cannot be read", cc_share_chunk_name),
-                            e
-                        )),
+                    for r in res_cc.iter_mut() {
+                        result.append(r);
                     }
                 }
-                Err(e) => {
-                    result.push(create_verification_error!(
-                        format!("{} cannot be read", setup_verif_data_chunk_name),
-                        e
-                    ));
-                }
+                Err(e) => result.push(create_verification_error!(
+                    format!("{} cannot be read", cc_share_chunk_name),
+                    e
+                )),
             }
         }
     }
@@ -198,149 +220,240 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
 
 /// Supporting algorithm
 fn algorithm_0303_verify_encrypted_pcc_exponentiation_proofs_verification_card_set(
-    context: &Context,
-    verification_card_ids: &[&String],
-    setup_verif_data: &[SetupComponentVerificationDataInner],
-    cc_code_shares: &[ControlComponentCodeShare],
+    context: &ContextAlgorithm33,
+    encrypted_hashed_squared_partial_choice_return_codes: Vec<&ExponentiatedEncryptedElement>,
+    voter_choice_return_code_generation_public_key: Vec<&Integer>,
+    exponentiated_encrypted_partial_choice_return_codes: Vec<&ExponentiatedEncryptedElement>,
+    encrypted_partial_choice_return_code_exponentiation_proof: Vec<&Proof>,
 ) -> VerificationResult {
-    let mut result: Vec<VerificationEvent> = vec![];
-    debug!(
-        "Verification for vcs_id {}, chunk {} and node {}",
-        context.vcs_id, context.chunk_id, context.node_id
+    let mut result = VerificationResult::new();
+    let verif_size_res = verify_sizes(
+        &context.vc_ids.len(),
+        vec![
+            encrypted_hashed_squared_partial_choice_return_codes.len(),
+            voter_choice_return_code_generation_public_key.len(),
+            exponentiated_encrypted_partial_choice_return_codes.len(),
+            encrypted_partial_choice_return_code_exponentiation_proof.len(),
+        ],
+        vec![
+            "encrypted_hashed_squared_partial_choice_return_codes".to_string(),
+            "voter_choice_return_code_generation_public_key".to_string(),
+            "exponentiated_encrypted_partial_choice_return_codes".to_string(),
+            "encrypted_partial_choice_return_code_exponentiation_proof".to_string(),
+        ],
     );
-    if verify_sizes(
-        &verification_card_ids.len(),
-        vec![setup_verif_data.len(), cc_code_shares.len()],
-        &mut result,
-        vec!["setup_verif_data", "cc_code_shares"],
-        &format!("for chunk {}", context.chunk_id),
-    ) {
-        // Parallel verification for each voting card.
-        // WARNING: It is assumed that the voting cards are in the same order in each list.
-        let mut failures: Vec<Vec<VerificationEvent>> = verification_card_ids
+    if !verif_size_res.is_ok() {
+        return verif_size_res;
+    }
+    // Parallel verification for each voting card.
+    // WARNING: It is assumed that the voting cards are in the same order in each list.
+    let mut failures: Vec<VerificationResult> = context.vc_ids
             .iter()
             .enumerate()
             .par_bridge()
             .map(|(i, vc_id)| {
-                verify_encrypted_pccexponentiation_proofs_for_one_vc(
+                algorithm_0303_verify_encrypted_pcc_exponentiation_proofs_verification_card_set_for_one_vc(
                     context,
                     vc_id,
-                    &setup_verif_data[i],
-                    &cc_code_shares[i],
-                )
+                    encrypted_hashed_squared_partial_choice_return_codes[i],
+                    voter_choice_return_code_generation_public_key[i],
+                    exponentiated_encrypted_partial_choice_return_codes[i],
+                    encrypted_partial_choice_return_code_exponentiation_proof[i]
+                ).add_context(format!("For vc_id {}", vc_id)).add_context(format!("At position {}", i))
             })
             .collect();
-        for fs in failures.iter_mut() {
-            result.append(fs);
-        }
+    for fs in failures.iter_mut() {
+        result.append(fs);
     }
-    VerificationResult::from_vec(result)
+    result
 }
 
 /// Supporting algorithm for one vc
-fn verify_encrypted_pccexponentiation_proofs_for_one_vc(
-    context: &Context,
-    vc_id: &String,
-    setup_verif: &SetupComponentVerificationDataInner,
-    cc_code_share: &ControlComponentCodeShare,
-) -> Vec<VerificationEvent> {
-    let mut failures = vec![];
-
-    debug!(
-        "Verification for vcs_id {}, chunk {}, node {} and vc_id {}",
-        context.vcs_id, context.chunk_id, context.node_id, vc_id
-    ); // Verify that the size of phis correspond to the voting options
-    if verify_sizes(
-        context.nb_voting_options,
+fn algorithm_0303_verify_encrypted_pcc_exponentiation_proofs_verification_card_set_for_one_vc(
+    context: &ContextAlgorithm33,
+    vc_id: &str,
+    encrypted_hashed_squared_partial_choice_return_codes: &ExponentiatedEncryptedElement,
+    voter_choice_return_code_generation_public_key: &Integer,
+    exponentiated_encrypted_partial_choice_return_codes: &ExponentiatedEncryptedElement,
+    encrypted_partial_choice_return_code_exponentiation_proof: &Proof,
+) -> VerificationResult {
+    let mut result = VerificationResult::new();
+    let verif_size_res = verify_sizes(
+        &context.nb_voting_options,
         vec![
-            setup_verif
-                .encrypted_hashed_squared_partial_choice_return_codes
+            encrypted_hashed_squared_partial_choice_return_codes
                 .phis
                 .len(),
-            cc_code_share
-                .exponentiated_encrypted_partial_choice_return_codes
+            exponentiated_encrypted_partial_choice_return_codes
                 .phis
                 .len(),
         ],
-        &mut failures,
         vec![
-            "setup_verif.encrypted_hashed_squared_partial_choice_return_codes.phis",
-            "cc_code_share.exponentiated_encrypted_partial_choice_return_codes.phis",
+            "setup_verif.encrypted_hashed_squared_partial_choice_return_codes.phis".to_string(),
+            "cc_code_share.exponentiated_encrypted_partial_choice_return_codes.phis".to_string(),
         ],
-        &format!("for chunk {} and voting card {}", context.chunk_id, vc_id),
-    ) {
-        let mut gs = setup_verif
-            .encrypted_hashed_squared_partial_choice_return_codes
+    );
+    if !verif_size_res.is_ok() {
+        return verif_size_res;
+    }
+    {
+        let mut gs = encrypted_hashed_squared_partial_choice_return_codes
             .phis
             .clone();
         gs.insert(
             0,
-            setup_verif
-                .encrypted_hashed_squared_partial_choice_return_codes
+            encrypted_hashed_squared_partial_choice_return_codes
                 .gamma
                 .clone(),
         );
         gs.insert(0, context.eg.g().clone());
-        let mut ys = cc_code_share
-            .exponentiated_encrypted_partial_choice_return_codes
+        let mut ys = exponentiated_encrypted_partial_choice_return_codes
             .phis
             .clone();
         ys.insert(
             0,
-            cc_code_share
-                .exponentiated_encrypted_partial_choice_return_codes
+            exponentiated_encrypted_partial_choice_return_codes
                 .gamma
                 .clone(),
         );
-        ys.insert(
-            0,
-            cc_code_share.voter_choice_return_code_generation_public_key[0].clone(),
-        );
+        ys.insert(0, voter_choice_return_code_generation_public_key.clone());
         let i_aux = vec![
             context.ee_id.clone(),
-            vc_id.clone(),
+            vc_id.to_string(),
             "GenEncLongCodeShares".to_string(),
             context.node_id.to_string(),
         ];
-        let pi_exp_pcc_j = cc_code_share
-            .encrypted_partial_choice_return_code_exponentiation_proof
-            .clone();
+        let pi_exp_pcc_j = encrypted_partial_choice_return_code_exponentiation_proof.clone();
         match verify_exponentiation(context.eg, &gs, &ys, pi_exp_pcc_j.as_tuple(), &i_aux) {
-            Err(e) => failures.push(VerificationEvent::failure_from_error(e)),
+            Err(e) => result.push(VerificationEvent::failure_from_error(e)),
             Ok(b) => {
                 if !b {
-                    failures.push(create_verification_failure!(format!(
-                        "Failure verifying proofs for voting card id {} in chunk {} for node {}",
-                        vc_id, context.chunk_id, context.node_id
-                    )))
+                    result.push(create_verification_failure!(
+                        "Failure verifying encrypted_pcc_exponentiation_proofs"
+                    ))
                 }
             }
         }
     }
-    failures
+    result
 }
 
-/// Verify the size of many arrays
+/// Supporting algorithm
+fn algorithm_0304_verify_encrypted_ckexponentiation_proofs_verification_card_set(
+    context: &ContextAlgorithm34,
+    encrypted_hashed_squared_confirmation_key: Vec<&ExponentiatedEncryptedElement>,
+    voter_vote_cast_return_code_generation_public_key: Vec<&Integer>,
+    exponentiated_encrypted_confirmation_key: Vec<&ExponentiatedEncryptedElement>,
+    encrypted_confirmation_key_exponentiation_proof: Vec<&Proof>,
+) -> VerificationResult {
+    let mut result = VerificationResult::new();
+    let verif_size_res = verify_sizes(
+        &context.vc_ids.len(),
+        vec![
+            encrypted_hashed_squared_confirmation_key.len(),
+            voter_vote_cast_return_code_generation_public_key.len(),
+            exponentiated_encrypted_confirmation_key.len(),
+            encrypted_confirmation_key_exponentiation_proof.len(),
+        ],
+        vec![
+            "encrypted_hashed_squared_confirmation_key".to_string(),
+            "voter_vote_cast_return_code_generation_public_key".to_string(),
+            "exponentiated_encrypted_confirmation_key".to_string(),
+            "encrypted_confirmation_key_exponentiation_proof".to_string(),
+        ],
+    );
+    if !verif_size_res.is_ok() {
+        return verif_size_res;
+    }
+    // Parallel verification for each voting card.
+    // WARNING: It is assumed that the voting cards are in the same order in each list.
+    let mut failures: Vec<VerificationResult> = context.vc_ids
+            .iter()
+            .enumerate()
+            .par_bridge()
+            .map(|(i, vc_id)| {
+                algorithm_0304_verify_encrypted_ckexponentiation_proofs_verification_card_set_for_one_vc(
+                    context,
+                    vc_id,
+                    encrypted_hashed_squared_confirmation_key[i],
+                    voter_vote_cast_return_code_generation_public_key[i],
+                    exponentiated_encrypted_confirmation_key[i],
+                    encrypted_confirmation_key_exponentiation_proof[i]
+                ).add_context(format!("For vc_id {}", vc_id)).add_context(format!("At position {}", i))
+            })
+            .collect();
+    for fs in failures.iter_mut() {
+        result.append(fs);
+    }
+    result
+}
+
+/// Supporting algorithm for one vc
+fn algorithm_0304_verify_encrypted_ckexponentiation_proofs_verification_card_set_for_one_vc(
+    context: &ContextAlgorithm34,
+    vc_id: &str,
+    encrypted_hashed_squared_confirmation_key: &ExponentiatedEncryptedElement,
+    voter_vote_cast_return_code_generation_public_key: &Integer,
+    exponentiated_encrypted_confirmation_key: &ExponentiatedEncryptedElement,
+    encrypted_confirmation_key_exponentiation_proof: &Proof,
+) -> VerificationResult {
+    let mut result = VerificationResult::new();
+    let verif_size_res = verify_sizes(
+        &1usize,
+        vec![
+            encrypted_hashed_squared_confirmation_key.phis.len(),
+            exponentiated_encrypted_confirmation_key.phis.len(),
+        ],
+        vec![
+            "setup_verif.encrypted_hashed_squared_confirmation_key.phis".to_string(),
+            "cc_code_share.exponentiated_encrypted_confirmation_key.phis".to_string(),
+        ],
+    );
+    if !verif_size_res.is_ok() {
+        return verif_size_res;
+    }
+    {
+        let mut gs = encrypted_hashed_squared_confirmation_key.phis.clone();
+        gs.insert(0, encrypted_hashed_squared_confirmation_key.gamma.clone());
+        gs.insert(0, context.eg.g().clone());
+        let mut ys = exponentiated_encrypted_confirmation_key.phis.clone();
+        ys.insert(0, exponentiated_encrypted_confirmation_key.gamma.clone());
+        ys.insert(0, voter_vote_cast_return_code_generation_public_key.clone());
+        let i_aux = vec![
+            context.ee_id.clone(),
+            vc_id.to_string(),
+            "GenEncLongCodeShares".to_string(),
+            context.node_id.to_string(),
+        ];
+        let pi_exp_pcc_j = encrypted_confirmation_key_exponentiation_proof.clone();
+        match verify_exponentiation(context.eg, &gs, &ys, pi_exp_pcc_j.as_tuple(), &i_aux) {
+            Err(e) => result.push(VerificationEvent::failure_from_error(e)),
+            Ok(b) => {
+                if !b {
+                    result.push(create_verification_failure!(
+                        "Failure verifying encrypted_ck_exponentiation_proofs"
+                    ))
+                }
+            }
+        }
+    }
+    result
+}
+
+/// Verify the size of many arrays, the must be the same as expected
 ///
 /// Names must have the same length of vec_sizes
-fn verify_sizes(
-    expected: &usize,
-    vec_sizes: Vec<usize>,
-    result: &mut Vec<VerificationEvent>,
-    names: Vec<&str>,
-    suffix_text: &String,
-) -> bool {
-    let mut res = true;
+fn verify_sizes(expected: &usize, vec_sizes: Vec<usize>, names: Vec<String>) -> VerificationResult {
+    let mut result = VerificationResult::new();
     for (size, name) in zip(vec_sizes, names) {
         if &size != expected {
             result.push(create_verification_failure!(format!(
-                "number of {} {} not equal to number of voters {} {}",
-                name, size, expected, suffix_text
+                "number of elements {} in {} are not equal to expected {}",
+                size, name, expected
             )));
-            res = false;
         }
     }
-    res
+    result
 }
 
 #[cfg(test)]
@@ -349,17 +462,17 @@ mod test {
     use crate::config::test::{get_test_verifier_setup_dir as get_verifier_dir, CONFIG_TEST};
 
     #[test]
-    #[ignore = "Verification not working ... Generating errors for signature and PCC"]
+    #[ignore = "Verification not working ... Generating errors for PCC and CK"]
     fn test_ok() {
         let dir = get_verifier_dir();
         let mut result = VerificationResult::new();
         fn_verification(&dir, &CONFIG_TEST, &mut result);
         if !result.is_ok() {
             for e in result.errors() {
-                println!("{:?}", e);
+                println!("{}", e);
             }
             for f in result.failures() {
-                println!("{:?}", f);
+                println!("{}", f);
             }
         }
         assert!(result.is_ok());
