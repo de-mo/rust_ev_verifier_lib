@@ -135,7 +135,7 @@ fn run_verify_schnorr_proofs(
             .par_bridge()
             .map(|(i, (pk, pi))| {
                 run_verify_schnorr_proof(eg, pi, pk, i_aux)
-                    .map(|e| e.new_with_context(format!("at position {}", i)))
+                    .map(|e| e.add_context(format!("at position {}", i)))
             })
             .collect();
         failures.into_iter().for_each(|o| {

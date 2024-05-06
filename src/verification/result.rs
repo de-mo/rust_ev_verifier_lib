@@ -3,22 +3,18 @@
 use std::{error::Error, fmt::Display, sync::Arc};
 
 /// Kind of the event during a verification
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum VerificationEventKind {
     Error,
     Failure,
 }
 
-#[derive(Debug, Clone)]
-enum VerificationEventImpl {
-    Error(Arc<anyhow::Error>),
-    Failure(Arc<anyhow::Error>),
-}
-
 /// Enum representing one event (an error or a failure) during the tests
 #[derive(Debug, Clone)]
 pub struct VerificationEvent {
-    value: VerificationEventImpl,
+    kind: VerificationEventKind,
+    source: Arc<anyhow::Error>,
+    contexts: Vec<String>,
 }
 
 /// Struct representing a result of the verification
@@ -28,48 +24,29 @@ pub struct VerificationResult {
     results: Vec<VerificationEvent>,
 }
 
-impl VerificationEventImpl {
-    pub fn from_error<E>(kind: VerificationEventKind, error: E) -> Self
-    where
-        E: Error + Send + Sync + 'static,
-    {
-        Self::from_anyhow_error(kind, anyhow!(error))
-    }
-
-    pub fn from_anyhow_error(kind: VerificationEventKind, error: anyhow::Error) -> Self {
-        match kind {
-            VerificationEventKind::Error => Self::Error(Arc::new(error)),
-
-            VerificationEventKind::Failure => Self::Failure(Arc::new(error)),
-        }
-    }
-
-    pub fn from_str(kind: VerificationEventKind, str: &str) -> Self {
-        Self::from_anyhow_error(kind, anyhow!(str.to_string()))
-    }
-
+impl VerificationEventKind {
     pub fn is_error(&self) -> bool {
         match self {
-            VerificationEventImpl::Error(_) => true,
-            VerificationEventImpl::Failure(_) => false,
+            VerificationEventKind::Error => true,
+            VerificationEventKind::Failure => false,
         }
     }
 
     pub fn is_failure(&self) -> bool {
         !self.is_error()
     }
-
-    fn source(&self) -> &anyhow::Error {
-        match &self {
-            VerificationEventImpl::Error(source) => source,
-            VerificationEventImpl::Failure(source) => source,
-        }
-    }
 }
 
-impl Display for VerificationEventImpl {
+impl Display for VerificationEventKind {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        self.source().fmt(f)
+        write!(
+            f,
+            "{}",
+            match self {
+                VerificationEventKind::Error => "Error",
+                VerificationEventKind::Failure => "Failure",
+            }
+        )
     }
 }
 
@@ -80,21 +57,27 @@ impl VerificationEvent {
         E: Error + Send + Sync + 'static,
     {
         Self {
-            value: VerificationEventImpl::from_error(kind, error),
+            kind,
+            source: Arc::new(anyhow!(error)),
+            contexts: vec![],
         }
     }
 
     /// Create a new Event of given type from [anyhow::Error]
     pub fn from_anyhow_error(kind: VerificationEventKind, error: anyhow::Error) -> Self {
         Self {
-            value: VerificationEventImpl::from_anyhow_error(kind, error),
+            kind,
+            source: Arc::new(error),
+            contexts: vec![],
         }
     }
 
     /// Create a new Event of given type from str
     pub fn from_str(kind: VerificationEventKind, str: &str) -> Self {
         Self {
-            value: VerificationEventImpl::from_str(kind, str),
+            kind,
+            source: Arc::new(anyhow!(str.to_string())),
+            contexts: vec![],
         }
     }
 
@@ -139,63 +122,38 @@ impl VerificationEvent {
 
     /// Add a context to the Verification Event and return a new [VerificationEvent]
     #[allow(dead_code)]
-    pub fn add_context<C>(&mut self, context: C)
+    pub fn add_context<C>(mut self, context: C) -> Self
     where
         C: Display + Send + Sync + 'static,
     {
-        match &self.value {
-            VerificationEventImpl::Error(source) => {
-                self.value =
-                    VerificationEventImpl::Error(Arc::new(anyhow!(source.clone()).context(context)))
-            }
-            VerificationEventImpl::Failure(source) => {
-                self.value =
-                    VerificationEventImpl::Error(Arc::new(anyhow!(source.clone()).context(context)))
-            }
-        }
-    }
-
-    /// create a new [VerificationEvent] adding the given context
-    #[allow(dead_code)]
-    pub fn new_with_context<C>(&self, context: C) -> Self
-    where
-        C: Clone + Display + Send + Sync + 'static,
-    {
-        match &self.value {
-            VerificationEventImpl::Error(source) => Self::from_anyhow_error(
-                VerificationEventKind::Error,
-                anyhow!(source.clone()).context(context),
-            ),
-            VerificationEventImpl::Failure(source) => Self::from_anyhow_error(
-                VerificationEventKind::Failure,
-                anyhow!(source.clone()).context(context),
-            ),
-        }
+        self.contexts.push(context.to_string());
+        self
     }
 
     /// Is the event an error (of kind [VerificationEventKind::Error])
     pub fn is_error(&self) -> bool {
-        self.value.is_error()
+        self.kind.is_error()
     }
 
     /// Is the event a failure (of kind [VerificationEventKind::Failure])
     pub fn is_failure(&self) -> bool {
-        self.value.is_failure()
+        self.kind.is_failure()
     }
 
     /// Source of the event as [anyhow::Error]
     #[allow(dead_code)]
     fn source(&self) -> &anyhow::Error {
-        match &self.value {
-            VerificationEventImpl::Error(source) => source,
-            VerificationEventImpl::Failure(source) => source,
-        }
+        &self.source
     }
 }
 
 impl Display for VerificationEvent {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        self.value.fmt(f)
+        let mut res = format!("{}: {:#}", self.kind, self.source);
+        if !self.contexts.is_empty() {
+            res = format!("{} ({})", res, self.contexts.join(" -> "));
+        }
+        write!(f, "{}", res)
     }
 }
 
@@ -274,7 +232,7 @@ impl VerificationResult {
     where
         C: Clone + Display + Send + Sync + 'static,
     {
-        self.push(e.new_with_context(context))
+        self.push(e.add_context(context))
     }
 
     /// Append the results of ohter to self, emptying the vectors of other
@@ -370,5 +328,16 @@ mod test {
         assert!(res.is_ok());
         assert!(!res.has_errors());
         assert!(!res.has_failures());
+    }
+
+    #[test]
+    fn test_verif_event() {
+        let event = VerificationEvent::error_from_str("toto")
+            .add_context("context")
+            .add_context("first");
+        assert_eq!(
+            event.to_string(),
+            "Error: toto (context -> first)".to_string()
+        )
     }
 }
