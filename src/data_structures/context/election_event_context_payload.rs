@@ -99,6 +99,13 @@ impl ElectionEventContext {
             .iter()
             .find(|c| &c.verification_card_set_id == vcs_id)
     }
+
+    pub fn vcs_ids(&self) -> Vec<&str> {
+        self.verification_card_set_contexts
+            .iter()
+            .map(|c| c.verification_card_set_id.as_str())
+            .collect()
+    }
 }
 
 /// Validate seed according to the specifications of Swiss Post
