@@ -70,6 +70,24 @@ pub struct CorrectnessInformationElt {
     pub list_of_write_in_options: Vec<usize>,
 }
 
+impl SetupComponentVerificationDataPayload {
+    pub fn vc_ids(&self) -> Vec<&str> {
+        self.setup_component_verification_data
+            .iter()
+            .map(|e| e.verification_card_id.as_str())
+            .collect()
+    }
+
+    pub fn setup_component_verification_data(
+        &self,
+        vc_id: &str,
+    ) -> Option<&SetupComponentVerificationDataInner> {
+        self.setup_component_verification_data
+            .iter()
+            .find(|d| d.verification_card_id == vc_id)
+    }
+}
+
 impl VerifyDomainTrait for SetupComponentVerificationDataPayload {}
 
 impl<'a> VerifiySignatureTrait<'a> for SetupComponentVerificationDataPayload {
