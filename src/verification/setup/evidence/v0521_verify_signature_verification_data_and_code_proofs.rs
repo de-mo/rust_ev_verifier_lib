@@ -33,6 +33,7 @@ struct ContextAlgorithm33<'a, 'b, 'c, 'd, 'e> {
     node_id: usize,
     ee_id: &'b String,
     vc_ids: &'c Vec<&'d String>,
+    #[allow(dead_code)]
     setup_component_verification_data: &'e Vec<SetupComponentVerificationDataInner>,
     nb_voting_options: usize,
 }
@@ -43,6 +44,7 @@ struct ContextAlgorithm34<'a, 'b, 'c, 'd, 'e> {
     node_id: usize,
     ee_id: &'b String,
     vc_ids: &'c Vec<&'d String>,
+    #[allow(dead_code)]
     setup_component_verification_data: &'e Vec<SetupComponentVerificationDataInner>,
 }
 
@@ -162,9 +164,8 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
                     // For each CC (1 to 4)
                     let mut res_cc: Vec<VerificationResult> = cc_shares.0
                                 .iter()
-                                .enumerate()
                                 .par_bridge()
-                                .map(|(j, shares)| {
+                                .map(|shares| {
                                     let mut result = VerificationResult::new();
                                     result.append_wtih_context(&algorithm_0302_verify_signature_control_component_code_shares(
                                         shares,
@@ -173,7 +174,7 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
                                     );
                                     let context33 = ContextAlgorithm33 {
                                         eg: &setup_verification_data_payload.encryption_group,
-                                        node_id: j,
+                                        node_id: shares.node_id,
                                         ee_id: &setup_verification_data_payload.election_event_id,
                                         vc_ids: &verification_card_ids,
                                         nb_voting_options: vcs_context.number_of_voting_options(),
@@ -185,11 +186,11 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
                                         shares.control_component_code_shares.iter().map(|e| &e.voter_choice_return_code_generation_public_key[0]).collect(),
                                         shares.control_component_code_shares.iter().map(|e| &e.exponentiated_encrypted_partial_choice_return_codes).collect(),
                                         shares.control_component_code_shares.iter().map(|e| &e.encrypted_partial_choice_return_code_exponentiation_proof).collect(),
-                                    ).add_context(format!("Node {}", j)).add_context(format!("Chunk {}", cc_share_chunk_name));
+                                    ).add_context(format!("Node {}", shares.node_id)).add_context(format!("Chunk {}", cc_share_chunk_name));
                                     result.append(&mut res_algo_33);
                                     let context34 = ContextAlgorithm34 {
                                         eg: &setup_verification_data_payload.encryption_group,
-                                        node_id: j,
+                                        node_id: shares.node_id,
                                         ee_id: &setup_verification_data_payload.election_event_id,
                                         vc_ids: &verification_card_ids,
                                         setup_component_verification_data: &setup_verification_data_payload.setup_component_verification_data
@@ -200,7 +201,7 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
                                         shares.control_component_code_shares.iter().map(|e| &e.voter_vote_cast_return_code_generation_public_key[0]).collect(),
                                         shares.control_component_code_shares.iter().map(|e| &e.exponentiated_encrypted_confirmation_key).collect(),
                                         shares.control_component_code_shares.iter().map(|e| &e.encrypted_confirmation_key_exponentiation_proof).collect(),
-                                    ).add_context(format!("Node {}", j)).add_context(format!("Chunk {}", cc_share_chunk_name));
+                                    ).add_context(format!("Node {}", shares.node_id)).add_context(format!("Chunk {}", cc_share_chunk_name));
                                     result.append(&mut res_algo_34);
                                     result
                                 })
@@ -462,7 +463,6 @@ mod test {
     use crate::config::test::{get_test_verifier_setup_dir as get_verifier_dir, CONFIG_TEST};
 
     #[test]
-    #[ignore = "Verification not working ... Generating errors for PCC and CK"]
     fn test_ok() {
         let dir = get_verifier_dir();
         let mut result = VerificationResult::new();
