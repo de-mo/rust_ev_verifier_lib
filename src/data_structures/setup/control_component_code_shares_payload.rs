@@ -43,6 +43,24 @@ pub struct ControlComponentCodeShare {
     pub encrypted_confirmation_key_exponentiation_proof: Proof,
 }
 
+impl ControlComponentCodeSharesPayloadInner {
+    pub fn vc_ids(&self) -> Vec<&str> {
+        self.control_component_code_shares
+            .iter()
+            .map(|e| e.verification_card_id.as_str())
+            .collect()
+    }
+
+    pub fn control_component_verification_data(
+        &self,
+        vc_id: &str,
+    ) -> Option<&ControlComponentCodeShare> {
+        self.control_component_code_shares
+            .iter()
+            .find(|d| d.verification_card_id == vc_id)
+    }
+}
+
 impl VerifyDomainTrait for ControlComponentCodeSharesPayloadInner {}
 
 impl VerifyDomainTrait for ControlComponentCodeSharesPayload {
