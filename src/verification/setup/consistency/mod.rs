@@ -7,8 +7,9 @@ mod v0306_choice_return_codes_public_key_consistency;
 mod v0307_election_pk_consistency;
 mod v0308_primes_mapping_table_consistency;
 mod v0309_election_event_id_consistency;
-mod v0310_card_set_ids_consistency;
+mod v0310_verification_card_set_ids_consistency;
 mod v0311_file_name_verification_card_set_ids_consistency;
+mod v0312_verification_card_ids_consistency;
 mod v0313_total_voters_consistency;
 mod v0315_chunk_consistency;
 
@@ -90,7 +91,7 @@ pub fn get_verifications<'a>(
         Verification::new(
             "03.10",
             "VerifyVerificationCardSetIdsConsistency",
-            v0310_card_set_ids_consistency::fn_verification,
+            v0310_verification_card_set_ids_consistency::fn_verification,
             metadata_list,
             config,
         )?,
@@ -104,7 +105,7 @@ pub fn get_verifications<'a>(
         Verification::new(
             "03.12",
             "VerifyVerificationCardIdsConsistency",
-            verification_unimplemented,
+            v0312_verification_card_ids_consistency::fn_verification,
             metadata_list,
             config,
         )?,
