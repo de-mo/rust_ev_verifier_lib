@@ -104,7 +104,7 @@ mod test {
         },
         *,
     };
-    use crate::config::test::{test_datasets_context_path, CONFIG_TEST};
+    use crate::config::test::{signing_keystore, test_datasets_context_path, CONFIG_TEST};
     use std::fs;
 
     test_data_structure!(
@@ -112,4 +112,13 @@ mod test {
         "setupComponentPublicKeysPayload.json",
         test_datasets_context_path
     );
+
+    #[test]
+    fn test_sign() {
+        let payload = get_data_res().unwrap();
+        let signature = payload
+            .sign(&signing_keystore(payload.get_certificate_authority().unwrap()).unwrap())
+            .unwrap();
+        assert_eq!(signature, payload.get_signature());
+    }
 }

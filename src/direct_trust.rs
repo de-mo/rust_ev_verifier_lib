@@ -108,6 +108,8 @@ where
     }
 
     /// Sign according to the specifications of Verifier
+    ///
+    /// Can be usefull to resign the payload after mocking it
     fn sign(&'a self, keystore: &Keystore) -> anyhow::Result<ByteArray> {
         let hashable_message = self
             .get_hashable()

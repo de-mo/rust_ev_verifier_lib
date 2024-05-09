@@ -150,8 +150,27 @@ impl Config {
 #[cfg(test)]
 pub(crate) mod test {
     use super::*;
-    use crate::{file_structure::VerificationDirectory, verification::VerificationPeriod};
+    use crate::{
+        direct_trust::CertificateAuthority, file_structure::VerificationDirectory,
+        verification::VerificationPeriod,
+    };
+    use anyhow::bail;
     use lazy_static::lazy_static;
+
+    const CANTON_KEYSTORE_FILE_NAME: &str = "signing_keystore_canton.p12";
+    const CANTON_KEYSTORE_PASSWORD_FILE_NAME: &str = "signing_pw_canton.txt";
+    const CC1_KEYSTORE_FILE_NAME: &str = "signing_keystore_control_component_1.p12";
+    const CC1_KEYSTORE_PASSWORD_FILE_NAME: &str = "signing_pw_control_component_1.txt";
+    const CC2_KEYSTORE_FILE_NAME: &str = "signing_keystore_control_component_2.p12";
+    const CC2_KEYSTORE_PASSWORD_FILE_NAME: &str = "signing_pw_control_component_2.txt";
+    const CC3_KEYSTORE_FILE_NAME: &str = "signing_keystore_control_component_3.p12";
+    const CC3_KEYSTORE_PASSWORD_FILE_NAME: &str = "signing_pw_control_component_3.txt";
+    const CC4_KEYSTORE_FILE_NAME: &str = "signing_keystore_control_component_4.p12";
+    const CC4_KEYSTORE_PASSWORD_FILE_NAME: &str = "signing_pw_control_component_4.txt";
+    const CONFIG_KEYSTORE_FILE_NAME: &str = "signing_keystore_sdm_config.p12";
+    const CONFIG_KEYSTORE_PASSWORD_FILE_NAME: &str = "signing_pw_sdm_config.txt";
+    const TALLY_KEYSTORE_FILE_NAME: &str = "signing_keystore_sdm_tally.p12";
+    const TALLY_KEYSTORE_PASSWORD_FILE_NAME: &str = "signing_pw_sdm_tally.txt";
 
     lazy_static! {
         pub(crate) static ref CONFIG_TEST: Config = Config::new(".");
@@ -207,6 +226,45 @@ pub(crate) mod test {
 
     pub(crate) fn get_test_verifier_setup_dir() -> VerificationDirectory {
         VerificationDirectory::new(&VerificationPeriod::Setup, &test_datasets_path())
+    }
+
+    pub(crate) fn get_mock_direct_trust_path() -> PathBuf {
+        test_datasets_path().join("direct-trust").join("mock")
+    }
+
+    /// Get the signing keystore
+    pub fn signing_keystore(authority: CertificateAuthority) -> Result<Keystore> {
+        let (ks_name, pwd_name) = match authority {
+            CertificateAuthority::Canton => (
+                CANTON_KEYSTORE_FILE_NAME,
+                CANTON_KEYSTORE_PASSWORD_FILE_NAME,
+            ),
+            CertificateAuthority::SdmConfig => (
+                CONFIG_KEYSTORE_FILE_NAME,
+                CONFIG_KEYSTORE_PASSWORD_FILE_NAME,
+            ),
+            CertificateAuthority::SdmTally => {
+                (TALLY_KEYSTORE_FILE_NAME, TALLY_KEYSTORE_PASSWORD_FILE_NAME)
+            }
+            CertificateAuthority::VotingServer => bail!("No certificate for voting server"),
+            CertificateAuthority::ControlComponent1 => {
+                (CC1_KEYSTORE_FILE_NAME, CC1_KEYSTORE_PASSWORD_FILE_NAME)
+            }
+            CertificateAuthority::ControlComponent2 => {
+                (CC2_KEYSTORE_FILE_NAME, CC2_KEYSTORE_PASSWORD_FILE_NAME)
+            }
+            CertificateAuthority::ControlComponent3 => {
+                (CC3_KEYSTORE_FILE_NAME, CC3_KEYSTORE_PASSWORD_FILE_NAME)
+            }
+            CertificateAuthority::ControlComponent4 => {
+                (CC4_KEYSTORE_FILE_NAME, CC4_KEYSTORE_PASSWORD_FILE_NAME)
+            }
+        };
+        Keystore::from_pkcs12(
+            &get_mock_direct_trust_path().join(ks_name),
+            &get_mock_direct_trust_path().join(pwd_name),
+        )
+        .context("Problem reading the keystore for mocking")
     }
 
     #[test]
