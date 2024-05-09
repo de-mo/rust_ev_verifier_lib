@@ -159,17 +159,12 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
 mod test {
     use rug::Integer;
 
-    use super::{super::super::super::VerificationPeriod, *};
+    use super::*;
     use crate::config::test::{
-        get_test_verifier_setup_dir as get_verifier_dir, test_datasets_path, CONFIG_TEST,
+        get_test_verifier_mock_setup_dir as get_mock_verifier_dir,
+        get_test_verifier_setup_dir as get_verifier_dir, CONFIG_TEST,
     };
-    use crate::{
-        data_structures::VerifierContextDataTrait, file_structure::mock::MockVerificationDirectory,
-    };
-
-    fn get_mock_verifier_dir() -> MockVerificationDirectory {
-        MockVerificationDirectory::new(&VerificationPeriod::Setup, &test_datasets_path())
-    }
+    use crate::data_structures::VerifierContextDataTrait;
 
     #[test]
     fn test_ok() {

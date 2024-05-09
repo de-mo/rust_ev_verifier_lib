@@ -151,7 +151,8 @@ impl Config {
 pub(crate) mod test {
     use super::*;
     use crate::{
-        direct_trust::CertificateAuthority, file_structure::VerificationDirectory,
+        direct_trust::CertificateAuthority,
+        file_structure::{mock::MockVerificationDirectory, VerificationDirectory},
         verification::VerificationPeriod,
     };
     use anyhow::bail;
@@ -226,6 +227,14 @@ pub(crate) mod test {
 
     pub(crate) fn get_test_verifier_setup_dir() -> VerificationDirectory {
         VerificationDirectory::new(&VerificationPeriod::Setup, &test_datasets_path())
+    }
+
+    pub(crate) fn get_test_verifier_mock_setup_dir() -> MockVerificationDirectory {
+        MockVerificationDirectory::new(&VerificationPeriod::Setup, &test_datasets_path())
+    }
+
+    pub(crate) fn get_test_verifier_mock_tally_dir() -> MockVerificationDirectory {
+        MockVerificationDirectory::new(&VerificationPeriod::Setup, &test_datasets_path())
     }
 
     pub(crate) fn get_mock_direct_trust_path() -> PathBuf {
