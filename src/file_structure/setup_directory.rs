@@ -244,10 +244,10 @@ mod test {
         let dir = SetupDirectory::new(setup_location.parent().unwrap());
         assert_eq!(dir.get_location(), setup_location);
         let expected = [
-            "41AEF809A62BF53C7CFF61AA0925F636",
-            "44D54DAF832C90AB4C7F850A08F6D96A",
-            "73EC6188EBC9FF086400FE6D17F10861",
-            "BFFC067693F0505D500A9BF16E7AC0D4",
+            "43C30C09BEFDB427C1D2B71C3D32E919",
+            "67F0B5BBE55C6E58E3869AD2789E82A0",
+            "87A39F43822D045BFDFE4A7E5898780F",
+            "47576B32934B80275895EA036F963610",
         ];
         for d in dir.vcs_directories().iter() {
             let j = expected.iter().position(|l| &d.get_name() == l).unwrap();

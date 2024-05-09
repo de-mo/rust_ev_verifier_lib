@@ -195,25 +195,25 @@ pub(crate) mod test {
     pub(crate) fn test_ballot_box_path() -> PathBuf {
         test_datasets_tally_path()
             .join("ballotBoxes")
-            .join("915C2B2C9D6631BABDB6069D6CD6496D")
+            .join("4F30DBDEF8827670C2D90C7128566CAB")
     }
 
     pub(crate) fn test_ballot_box_empty_path() -> PathBuf {
         test_datasets_tally_path()
             .join("ballotBoxes")
-            .join("D9FA8F23294682554F536AB040AC2294")
+            .join("FD873801F693B2788C8B950CC1D61529")
     }
 
     pub(crate) fn test_context_verification_card_set_path() -> PathBuf {
         test_datasets_context_path()
             .join("verificationCardSets")
-            .join("41AEF809A62BF53C7CFF61AA0925F636")
+            .join("43C30C09BEFDB427C1D2B71C3D32E919")
     }
 
     pub(crate) fn test_setup_verification_card_set_path() -> PathBuf {
         test_datasets_setup_path()
             .join("verificationCardSets")
-            .join("41AEF809A62BF53C7CFF61AA0925F636")
+            .join("43C30C09BEFDB427C1D2B71C3D32E919")
     }
 
     pub(crate) fn test_xml_path() -> PathBuf {

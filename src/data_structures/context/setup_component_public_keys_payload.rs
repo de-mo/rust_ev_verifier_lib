@@ -97,6 +97,8 @@ impl<'a> From<&'a SetupComponentPublicKeys> for HashableMessage<'a> {
 
 #[cfg(test)]
 mod test {
+    use rust_ev_crypto_primitives::Encode;
+
     use super::{
         super::super::test::{
             test_data_structure, test_data_structure_read_data_set,
@@ -115,10 +117,13 @@ mod test {
 
     #[test]
     fn test_sign() {
-        let payload = get_data_res().unwrap();
+        let mut payload = get_data_res().unwrap();
         let signature = payload
             .sign(&signing_keystore(payload.get_certificate_authority().unwrap()).unwrap())
             .unwrap();
-        assert_eq!(signature, payload.get_signature());
+        payload.signature.signature_contents = ByteArray::base64_encode(&signature);
+        let verif_res = payload.verifiy_signature(&CONFIG_TEST.keystore().unwrap());
+        assert!(verif_res.is_ok());
+        assert!(verif_res.unwrap());
     }
 }
