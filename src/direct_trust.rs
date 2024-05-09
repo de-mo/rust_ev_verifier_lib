@@ -1,7 +1,7 @@
 use std::slice::Iter;
 
 use anyhow::{anyhow, Context};
-use rust_ev_crypto_primitives::{verify_signature, ByteArray, HashableMessage, Keystore};
+use rust_ev_crypto_primitives::{sign, verify_signature, ByteArray, HashableMessage, Keystore};
 
 /// List of valide Certificate authorities
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -107,6 +107,14 @@ where
         .context("Error verifying the signature")
     }
 
+    /// Sign according to the specifications of Verifier
+    fn sign(&'a self, keystore: &Keystore) -> anyhow::Result<ByteArray> {
+        let hashable_message = self
+            .get_hashable()
+            .context("Error getting the hashable message")?;
+        sign(keystore, &hashable_message, &self.get_context_hashable()).context("Error signing")
+    }
+
     /// Verify signatures of an array element
     ///
     /// Per default return an array of one element containing the result of the element verified
@@ -127,28 +135,28 @@ mod test {
         let dt = CONFIG_TEST.keystore().unwrap();
         //let dt = DirectTrustCertificate::new(, CertificateAuthority::Canton);
         assert!(dt
-            .certificate(&CertificateAuthority::Canton.to_string())
+            .public_certificate(&CertificateAuthority::Canton.to_string())
             .is_ok());
         assert!(dt
-            .certificate(&CertificateAuthority::SdmConfig.to_string())
+            .public_certificate(&CertificateAuthority::SdmConfig.to_string())
             .is_ok());
         assert!(dt
-            .certificate(&CertificateAuthority::SdmTally.to_string())
+            .public_certificate(&CertificateAuthority::SdmTally.to_string())
             .is_ok());
         assert!(dt
-            .certificate(&CertificateAuthority::VotingServer.to_string())
+            .public_certificate(&CertificateAuthority::VotingServer.to_string())
             .is_ok());
         assert!(dt
-            .certificate(&CertificateAuthority::ControlComponent1.to_string())
+            .public_certificate(&CertificateAuthority::ControlComponent1.to_string())
             .is_ok());
         assert!(dt
-            .certificate(&CertificateAuthority::ControlComponent2.to_string())
+            .public_certificate(&CertificateAuthority::ControlComponent2.to_string())
             .is_ok());
         assert!(dt
-            .certificate(&CertificateAuthority::ControlComponent3.to_string())
+            .public_certificate(&CertificateAuthority::ControlComponent3.to_string())
             .is_ok());
         assert!(dt
-            .certificate(&CertificateAuthority::ControlComponent4.to_string())
+            .public_certificate(&CertificateAuthority::ControlComponent4.to_string())
             .is_ok());
     }
 }

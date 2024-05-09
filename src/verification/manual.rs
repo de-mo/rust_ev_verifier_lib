@@ -50,7 +50,7 @@ impl<'a, D: VerificationDirectoryTrait> ManualVerificationsAllPeriod<'a, D> {
             fingerprints.insert(
                 ca.to_string(),
                 keystore
-                    .certificate(&ca.to_string())?
+                    .public_certificate(&ca.to_string())?
                     .signing_certificate()
                     .digest()?
                     .base16_encode(),
