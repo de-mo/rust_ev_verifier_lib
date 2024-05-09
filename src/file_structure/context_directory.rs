@@ -74,6 +74,14 @@ pub trait ContextDirectoryTrait: CompletnessTestTrait {
     fn control_component_public_keys_payload_iter(
         &self,
     ) -> Self::ControlComponentPublicKeysPayloadAsResultIterType;
+
+    /// Collect the names of the vcs directories
+    fn vcs_directory_names(&self) -> Vec<String> {
+        self.vcs_directories()
+            .iter()
+            .map(|d| d.get_name())
+            .collect()
+    }
 }
 
 /// Trait to set the necessary functions for the struct [VCSDirectory] that

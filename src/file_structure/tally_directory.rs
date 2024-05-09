@@ -54,6 +54,11 @@ pub trait TallyDirectoryTrait: CompletnessTestTrait {
     fn ech_0110_file(&self) -> &File;
     fn ech_0222_file(&self) -> &File;
     fn bb_directories(&self) -> &Vec<Self::BBDirType>;
+
+    /// Collect the names of the ballot box directories
+    fn bb_directory_names(&self) -> Vec<String> {
+        self.bb_directories().iter().map(|d| d.get_name()).collect()
+    }
 }
 
 /// Trait to set the necessary functions for the struct [BBDirectory] that

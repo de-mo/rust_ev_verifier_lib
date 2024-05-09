@@ -47,6 +47,14 @@ pub struct SetupVCSDirectory {
 pub trait SetupDirectoryTrait: CompletnessTestTrait {
     type VCSDirType: SetupVCSDirectoryTrait;
     fn vcs_directories(&self) -> &Vec<Self::VCSDirType>;
+
+    /// Collect the names of the vcs directories
+    fn vcs_directory_names(&self) -> Vec<String> {
+        self.vcs_directories()
+            .iter()
+            .map(|d| d.get_name())
+            .collect()
+    }
 }
 
 /// Trait to set the necessary functions for the struct [SetupVCSDirectory] that
