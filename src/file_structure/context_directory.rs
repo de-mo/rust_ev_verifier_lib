@@ -309,13 +309,13 @@ impl ContextVCSDirectoryTrait for ContextVCSDirectory {
 mod test {
     use super::*;
     use crate::config::test::{
-        test_context_verification_card_set_path, test_datasets_context_path, test_datasets_path,
+        test_all_context_vcs_paths, test_context_verification_card_set_path,
+        test_datasets_context_path, test_datasets_path,
     };
 
     #[test]
     fn test_context_dir() {
         let context_location = test_datasets_context_path();
-        let vcs_location = context_location.join("verificationCardSets");
         let dir = ContextDirectory::new(context_location.parent().unwrap());
         assert_eq!(dir.get_location(), context_location);
         assert!(dir.setup_component_public_keys_payload().is_ok());
@@ -324,15 +324,13 @@ mod test {
             assert!(p.is_ok());
             assert_eq!(p.unwrap().control_component_public_keys.node_id, i)
         }
-        let expected = [
-            "43C30C09BEFDB427C1D2B71C3D32E919",
-            "67F0B5BBE55C6E58E3869AD2789E82A0",
-            "87A39F43822D045BFDFE4A7E5898780F",
-            "47576B32934B80275895EA036F963610",
-        ];
+        let expected = test_all_context_vcs_paths();
         for d in dir.vcs_directories().iter() {
-            let j = expected.iter().position(|l| &d.get_name() == l).unwrap();
-            assert_eq!(d.get_location(), vcs_location.join(expected[j]))
+            let j = expected
+                .iter()
+                .position(|l| &d.get_location() == l)
+                .unwrap();
+            assert_eq!(d.get_location(), expected[j])
         }
     }
 

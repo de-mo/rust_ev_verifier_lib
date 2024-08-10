@@ -106,7 +106,7 @@ mod test {
         },
         *,
     };
-    use crate::config::test::{signing_keystore, test_datasets_context_path, CONFIG_TEST};
+    use crate::{config::test::{signing_keystore, test_datasets_context_path, CONFIG_TEST}, direct_trust::Keystore};
     use std::fs;
 
     test_data_structure!(
@@ -119,7 +119,7 @@ mod test {
     fn test_sign() {
         let mut payload = get_data_res().unwrap();
         let signature = payload
-            .sign(&signing_keystore(payload.get_certificate_authority().unwrap()).unwrap())
+            .sign(&Keystore(signing_keystore(payload.get_certificate_authority().unwrap()).unwrap()))
             .unwrap();
         payload.signature.signature_contents = ByteArray::base64_encode(&signature);
         let verif_res = payload.verifiy_signature(&CONFIG_TEST.keystore().unwrap());

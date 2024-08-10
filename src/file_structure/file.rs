@@ -173,7 +173,10 @@ mod test {
         );
         assert!(f.exists());
         assert_eq!(f.get_location(), location);
-        assert_eq!(f.get_path(), location.join("eCH-0110_Post_E2E_DEV.xml"));
+        assert_eq!(
+            f.get_path(),
+            location.join("eCH-0110_v4-0_NE_20231124_TT05.xml")
+        );
     }
 
     #[test]

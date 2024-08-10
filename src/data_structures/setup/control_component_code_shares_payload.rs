@@ -3,7 +3,7 @@ use super::super::{
     deserialize_seq_string_base64_to_seq_integer, implement_trait_verifier_data_json_decode,
     VerifierDataDecode,
 };
-use crate::direct_trust::{CertificateAuthority, VerifiySignatureTrait};
+use crate::direct_trust::{Keystore, CertificateAuthority, VerifiySignatureTrait};
 use anyhow::anyhow;
 use rug::Integer;
 use rust_ev_crypto_primitives::{
@@ -162,7 +162,7 @@ impl<'a> VerifiySignatureTrait<'a> for ControlComponentCodeSharesPayload {
 
     fn verify_signatures(
         &'a self,
-        keystore: &rust_ev_crypto_primitives::Keystore,
+        keystore: &Keystore,
     ) -> Vec<anyhow::Result<bool>> {
         self.0
             .iter()

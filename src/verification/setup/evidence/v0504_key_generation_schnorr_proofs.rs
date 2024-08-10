@@ -175,6 +175,11 @@ mod test {
         let dir = get_verifier_dir();
         let mut result = VerificationResult::new();
         fn_verification(&dir, &CONFIG_TEST, &mut result);
-        assert!(result.is_ok());
+        assert!(
+            result.is_ok(),
+            "errors: {:?} \n failures: {:?}",
+            result.errors(),
+            result.failures()
+        );
     }
 }

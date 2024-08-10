@@ -1,7 +1,13 @@
-use std::slice::Iter;
+use std::{
+    fmt::Display, path::{Path, PathBuf}, slice::Iter
+};
 
 use anyhow::{anyhow, Context};
-use rust_ev_crypto_primitives::{sign, verify_signature, ByteArray, HashableMessage, Keystore};
+use rust_ev_crypto_primitives::{
+    sign, verify_signature, ByteArray, HashableMessage, Keystore as BasisKeystore,
+};
+
+pub struct Keystore(pub BasisKeystore);
 
 /// List of valide Certificate authorities
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -42,18 +48,52 @@ impl CertificateAuthority {
     }
 }
 
-impl ToString for CertificateAuthority {
-    fn to_string(&self) -> String {
-        match self {
-            CertificateAuthority::Canton => "canton".to_string(),
-            CertificateAuthority::SdmConfig => "sdm_config".to_string(),
-            CertificateAuthority::SdmTally => "sdm_tally".to_string(),
-            CertificateAuthority::VotingServer => "voting_server".to_string(),
-            CertificateAuthority::ControlComponent1 => "control_component_1".to_string(),
-            CertificateAuthority::ControlComponent2 => "control_component_2".to_string(),
-            CertificateAuthority::ControlComponent3 => "control_component_3".to_string(),
-            CertificateAuthority::ControlComponent4 => "control_component_4".to_string(),
-        }
+impl Display for CertificateAuthority {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}",match self {
+            CertificateAuthority::Canton => "canton",
+            CertificateAuthority::SdmConfig => "sdm_config",
+            CertificateAuthority::SdmTally => "sdm_tally",
+            CertificateAuthority::VotingServer => "voting_server",
+            CertificateAuthority::ControlComponent1 => "control_component_1",
+            CertificateAuthority::ControlComponent2 => "control_component_2",
+            CertificateAuthority::ControlComponent3 => "control_component_3",
+            CertificateAuthority::ControlComponent4 => "control_component_4",
+        } )
+    }
+}
+
+pub fn find_unique_file_with_extension(path: &Path, extension: &str) -> anyhow::Result<PathBuf> {
+    let pathes = std::fs::read_dir(path)
+        .map_err(|e| anyhow!(e))?
+        .filter_map(|res| res.ok())
+        .map(|f| f.path())
+        .filter_map(|path| {
+            if path.extension().map_or(false, |ext| ext == extension) {
+                Some(path)
+            } else {
+                None
+            }
+        })
+        .collect::<Vec<_>>();
+    if pathes.len() != 1 {
+        return Err(anyhow!("Too many files or no file found"));
+    }
+    Ok(pathes[0].clone())
+}
+
+impl TryFrom<&Path> for Keystore {
+    type Error = anyhow::Error;
+
+    fn try_from(value: &Path) -> Result<Self, Self::Error> {
+        let keystore_path =
+            find_unique_file_with_extension(value, "p12").context("Error reading keystore path")?;
+        let password_path =
+            find_unique_file_with_extension(value, "txt").context("Error reading password path")?;
+        Ok(Keystore(
+            BasisKeystore::from_pkcs12(&keystore_path, &password_path)
+                .context("Problem reading the keystore")?,
+        ))
     }
 }
 
@@ -98,7 +138,7 @@ where
             .get_hashable()
             .context("Error getting the hashable message")?;
         verify_signature(
-            keystore,
+            &keystore.0,
             &ca.to_string(),
             &hashable_message,
             &self.get_context_hashable(),
@@ -114,7 +154,7 @@ where
         let hashable_message = self
             .get_hashable()
             .context("Error getting the hashable message")?;
-        sign(keystore, &hashable_message, &self.get_context_hashable()).context("Error signing")
+        sign(&keystore.0, &hashable_message, &self.get_context_hashable()).context("Error signing")
     }
 
     /// Verify signatures of an array element
@@ -135,29 +175,36 @@ mod test {
     #[test]
     fn test_create() {
         let dt = CONFIG_TEST.keystore().unwrap();
-        //let dt = DirectTrustCertificate::new(, CertificateAuthority::Canton);
         assert!(dt
+            .0
             .public_certificate(&CertificateAuthority::Canton.to_string())
             .is_ok());
         assert!(dt
+            .0
             .public_certificate(&CertificateAuthority::SdmConfig.to_string())
             .is_ok());
         assert!(dt
+            .0
             .public_certificate(&CertificateAuthority::SdmTally.to_string())
             .is_ok());
         assert!(dt
+            .0
             .public_certificate(&CertificateAuthority::VotingServer.to_string())
             .is_ok());
         assert!(dt
+            .0
             .public_certificate(&CertificateAuthority::ControlComponent1.to_string())
             .is_ok());
         assert!(dt
+            .0
             .public_certificate(&CertificateAuthority::ControlComponent2.to_string())
             .is_ok());
         assert!(dt
+            .0
             .public_certificate(&CertificateAuthority::ControlComponent3.to_string())
             .is_ok());
         assert!(dt
+            .0
             .public_certificate(&CertificateAuthority::ControlComponent4.to_string())
             .is_ok());
     }

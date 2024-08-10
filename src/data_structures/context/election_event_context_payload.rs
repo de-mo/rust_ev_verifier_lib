@@ -331,6 +331,8 @@ impl<'a> From<&'a PTableElement> for HashableMessage<'a> {
 
 #[cfg(test)]
 mod test {
+    use rust_ev_crypto_primitives::{Encode, RecursiveHashTrait};
+
     use super::{
         super::super::test::{
             test_data_structure, test_data_structure_read_data_set,
@@ -338,7 +340,7 @@ mod test {
         },
         *,
     };
-    use crate::config::test::{test_datasets_context_path, CONFIG_TEST};
+    use crate::config::test::{test_datasets_context_path, test_resources_path, CONFIG_TEST};
     use std::fs;
 
     test_data_structure!(
@@ -373,5 +375,34 @@ mod test {
         let mut ee = get_data_res().unwrap();
         ee.election_event_context.election_event_id = "1234345".to_string();
         assert!(!ee.verifiy_domain().is_empty());
+    }
+
+    #[derive(Deserialize, Debug, Clone)]
+    #[serde(rename_all = "camelCase")]
+    struct Output {
+        d: String,
+    }
+    #[derive(Deserialize, Debug, Clone)]
+    #[serde(rename_all = "camelCase")]
+    struct TestDataStructureInner {
+        description: String,
+        context: ElectionEventContextPayload,
+        output: Output,
+    }
+
+    #[test]
+    #[ignore = "test data are not aligned to the productive data of the verifier"]
+    fn test_hash_election_event_context() {
+        let json = std::fs::read_to_string(
+            test_resources_path()
+                .join("get-hash-election-event-context.json")
+                .as_path(),
+        )
+        .unwrap();
+        let test_cases: Vec<TestDataStructureInner> = serde_json::from_str(&json).unwrap();
+        for tc in test_cases.iter() {
+            let hash = HashableMessage::from(&tc.context).hash();
+            assert_eq!(hash.base64_encode(), tc.output.d, "{}", tc.description)
+        }
     }
 }

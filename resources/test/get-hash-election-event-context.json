@@ -1,0 +1,1293 @@
+[
+	{
+		"description": "3072-bits",
+		"context": {
+			"encryptionGroup": {
+				"p": "jA4DatkpgfS1r6X1Q5iYA0sS2KakO3pabCF5uww/NyUxmZLOWP1E70Wq1jYs7FMgqAXPvfWn2cCdVGrU5ZcoHWim7FjtyhZPFw15XXewjoOsBUDoqf1Pg5mNakQpQAVEhqMRQ4s5FY1nCB5FvsAUnd8gCONEyIo75r6nj0BmZSoKYCGICT0nBnD0tpW3DwLInQZc5L+x1j39j+CGQI9wCk4+FhAyrK4nNMSsHv3vRUuxdsJber7KZ8d0eqRcyuRZdTbbBDmwz0GlxEmSrP4KRt6gohGN25y7myXQkza1alJpsNOGmBR7GSipM6/gagxRroVzAHBCVNp20g9d7UUZ32DA11pbBrjvEIWMNtZBKGr5Px4d+BJPljxBsbANBqu3d4gfrc5j0Me03yRbPwWq39r5sNFFrIMURmqaOa9l6kVkBBvgDiBt1ult+X787mO6orBoyLXMMCU8qy3zIdzCi5Kfq4Wn8i1C5af7SowhOfV33XNoRnMfPp3CSZaWi1wv",
+				"q": "RgcBtWyUwPpa19L6ocxMAaWJbFNSHb0tNhC83YYfm5KYzMlnLH6id6LVaxsWdimQVALn3vrT7OBOqjVqcsuUDrRTdix25Qsni4a8rrvYR0HWAqB0VP6nwczGtSIUoAKiQ1GIocWcisazhA8i32AKTu+QBHGiZEUd819Tx6AzMpUFMBDEBJ6Tgzh6W0rbh4FkToMucl/Y6x7+x/BDIEe4BScfCwgZVlcTmmJWD373oqXYu2EtvV9lM+O6PVIuZXIsupttghzYZ6DS4iTJVn8FI29QUQjG7c5dzZLoSZtatSk02GnDTAo9jJRUmdfwNQYo10K5gDghKm07aQeu9qKM77Bga60tg1x3iELGG2sglDV8n48O/Aknyx4g2NgGg1Xbu8QP1ucx6GPab5Itn4LVb+182Gii1kGKIzVNHNey9SKyAg3wBxA263S2/L9+dzHdUVg0ZFrmGBKeVZb5kO5hRclP1cLT+RahctP9pUYQnPq77rm0IzmPn07hJMtLRa4X",
+				"g": "Ag=="
+			},
+			"electionEventContext": {
+				"electionEventId": "42827348C2C9DAA86FFD5709F14ED1D7",
+				"electionEventAlias": "Post_E2E_DEV",
+				"electionEventDescription": "Urnengang Template",
+				"verificationCardSetContexts": [
+					{
+						"verificationCardSetId": "F629FE4053E063C0BD6B1A818EAAEE60",
+						"verificationCardSetAlias": "vcs_516e2551-ee42-3401-9988-7dfebd0ac0c0",
+						"verificationCardSetDescription": "vcs_516e2551-ee42-3401-9988-7dfebd0ac0c0",
+						"ballotBoxId": "BB6B7C1D88C39242A29BA7000C7FF289",
+						"ballotBoxStartTime": "2023-12-06T07:00:00",
+						"ballotBoxFinishTime": "2027-11-25T23:00:00",
+						"testBallotBox": true,
+						"numberOfVotingCards": 1,
+						"gracePeriod": 900,
+						"primesMappingTable": {
+							"encryptionGroup": {
+								"p": "jA4DatkpgfS1r6X1Q5iYA0sS2KakO3pabCF5uww/NyUxmZLOWP1E70Wq1jYs7FMgqAXPvfWn2cCdVGrU5ZcoHWim7FjtyhZPFw15XXewjoOsBUDoqf1Pg5mNakQpQAVEhqMRQ4s5FY1nCB5FvsAUnd8gCONEyIo75r6nj0BmZSoKYCGICT0nBnD0tpW3DwLInQZc5L+x1j39j+CGQI9wCk4+FhAyrK4nNMSsHv3vRUuxdsJber7KZ8d0eqRcyuRZdTbbBDmwz0GlxEmSrP4KRt6gohGN25y7myXQkza1alJpsNOGmBR7GSipM6/gagxRroVzAHBCVNp20g9d7UUZ32DA11pbBrjvEIWMNtZBKGr5Px4d+BJPljxBsbANBqu3d4gfrc5j0Me03yRbPwWq39r5sNFFrIMURmqaOa9l6kVkBBvgDiBt1ult+X787mO6orBoyLXMMCU8qy3zIdzCi5Kfq4Wn8i1C5af7SowhOfV33XNoRnMfPp3CSZaWi1wv",
+								"q": "RgcBtWyUwPpa19L6ocxMAaWJbFNSHb0tNhC83YYfm5KYzMlnLH6id6LVaxsWdimQVALn3vrT7OBOqjVqcsuUDrRTdix25Qsni4a8rrvYR0HWAqB0VP6nwczGtSIUoAKiQ1GIocWcisazhA8i32AKTu+QBHGiZEUd819Tx6AzMpUFMBDEBJ6Tgzh6W0rbh4FkToMucl/Y6x7+x/BDIEe4BScfCwgZVlcTmmJWD373oqXYu2EtvV9lM+O6PVIuZXIsupttghzYZ6DS4iTJVn8FI29QUQjG7c5dzZLoSZtatSk02GnDTAo9jJRUmdfwNQYo10K5gDghKm07aQeu9qKM77Bga60tg1x3iELGG2sglDV8n48O/Aknyx4g2NgGg1Xbu8QP1ucx6GPab5Itn4LVb+182Gii1kGKIzVNHNey9SKyAg3wBxA263S2/L9+dzHdUVg0ZFrmGBKeVZb5kO5hRclP1cLT+RahctP9pUYQnPq77rm0IzmPn07hJMtLRa4X",
+								"g": "Ag=="
+							},
+							"pTable": [
+								{
+									"actualVotingOption": "806f52e6-9d49-4906-b2a8-7c89dfdf53e2|3aa38c9e-6e93-3159-91e1-c3da90681572",
+									"encodedVotingOption": 61,
+									"semanticInformation": "NON_BLANK|Wollen Sie den ersten «**Vorschlag**» annehmen?|Acceptez-vous la première «**proposition**» ?|accettate la prima «**proposta**» ?|acceptar l’emprima «**proposta**» ?|Ja|Oui|Si|Gea",
+									"correctnessInformation": "806f52e6-9d49-4906-b2a8-7c89dfdf53e2"
+								},
+								{
+									"actualVotingOption": "806f52e6-9d49-4906-b2a8-7c89dfdf53e2|16ac94e3-0c72-3570-9df9-050ebb18a9cc",
+									"encodedVotingOption": 67,
+									"semanticInformation": "NON_BLANK|Wollen Sie den ersten «**Vorschlag**» annehmen?|Acceptez-vous la première «**proposition**» ?|accettate la prima «**proposta**» ?|acceptar l’emprima «**proposta**» ?|Nein|Non|No|Na",
+									"correctnessInformation": "806f52e6-9d49-4906-b2a8-7c89dfdf53e2"
+								},
+								{
+									"actualVotingOption": "806f52e6-9d49-4906-b2a8-7c89dfdf53e2|fbed7bf6-a7ed-3812-bb0c-22e449aa4f96",
+									"encodedVotingOption": 71,
+									"semanticInformation": "BLANK|Wollen Sie den ersten «**Vorschlag**» annehmen?|Acceptez-vous la première «**proposition**» ?|accettate la prima «**proposta**» ?|acceptar l’emprima «**proposta**» ?|Leer|Blanc|Bianco|Vid",
+									"correctnessInformation": "806f52e6-9d49-4906-b2a8-7c89dfdf53e2"
+								},
+								{
+									"actualVotingOption": "16f99be5-0ce6-4a81-ae8b-1817ceecaebc|d7a1b387-a90c-31ca-bfc2-ad038a1d9816",
+									"encodedVotingOption": 73,
+									"semanticInformation": "NON_BLANK|Wollen Sie den zweiten Vorschlag annehmen?|Acceptez-vous la deuxième proposition ?|Accettare la seconda proposta ?|Acceptar la segunda proposta ?|Ja|Oui|Si|Gea",
+									"correctnessInformation": "16f99be5-0ce6-4a81-ae8b-1817ceecaebc"
+								},
+								{
+									"actualVotingOption": "16f99be5-0ce6-4a81-ae8b-1817ceecaebc|e9da718b-469e-35d4-8d7d-d6329621e755",
+									"encodedVotingOption": 79,
+									"semanticInformation": "NON_BLANK|Wollen Sie den zweiten Vorschlag annehmen?|Acceptez-vous la deuxième proposition ?|Accettare la seconda proposta ?|Acceptar la segunda proposta ?|Nein|Non|No|Na",
+									"correctnessInformation": "16f99be5-0ce6-4a81-ae8b-1817ceecaebc"
+								},
+								{
+									"actualVotingOption": "16f99be5-0ce6-4a81-ae8b-1817ceecaebc|ecdbcc43-396a-348f-a671-919abfff4e12",
+									"encodedVotingOption": 83,
+									"semanticInformation": "BLANK|Wollen Sie den zweiten Vorschlag annehmen?|Acceptez-vous la deuxième proposition ?|Accettare la seconda proposta ?|Acceptar la segunda proposta ?|Leer|Blanc|Bianco|Vid",
+									"correctnessInformation": "16f99be5-0ce6-4a81-ae8b-1817ceecaebc"
+								},
+								{
+									"actualVotingOption": "b173aebb-7b2c-476a-97fa-c81d640e498a|d0f886b7-03a8-3d8a-9e7d-4c9bfa02ddc6",
+									"encodedVotingOption": 89,
+									"semanticInformation": "NON_BLANK|Wollen Sie den **«Gegenvorschlag»** annehmen?|Acceptez-vous la **«contre proposition»** ?|Accettare la **«contra proposta»** ?|Acceptar la **«cuntra proposta»** ?|Ja|Oui|Si|Gea",
+									"correctnessInformation": "b173aebb-7b2c-476a-97fa-c81d640e498a"
+								},
+								{
+									"actualVotingOption": "b173aebb-7b2c-476a-97fa-c81d640e498a|562a2034-f9a8-3783-abf5-624ec5ac08be",
+									"encodedVotingOption": 101,
+									"semanticInformation": "NON_BLANK|Wollen Sie den **«Gegenvorschlag»** annehmen?|Acceptez-vous la **«contre proposition»** ?|Accettare la **«contra proposta»** ?|Acceptar la **«cuntra proposta»** ?|Nein|Non|No|Na",
+									"correctnessInformation": "b173aebb-7b2c-476a-97fa-c81d640e498a"
+								},
+								{
+									"actualVotingOption": "b173aebb-7b2c-476a-97fa-c81d640e498a|004e5a94-c242-3ba4-837b-131b5698eaa7",
+									"encodedVotingOption": 107,
+									"semanticInformation": "BLANK|Wollen Sie den **«Gegenvorschlag»** annehmen?|Acceptez-vous la **«contre proposition»** ?|Accettare la **«contra proposta»** ?|Acceptar la **«cuntra proposta»** ?|Leer|Blanc|Bianco|Vid",
+									"correctnessInformation": "b173aebb-7b2c-476a-97fa-c81d640e498a"
+								},
+								{
+									"actualVotingOption": "1129f74b-1e49-4636-9731-84dba618bec6|65113930-4472-3aac-9cfd-162f501c78f5",
+									"encodedVotingOption": 109,
+									"semanticInformation": "NON_BLANK|Bei *Gleichstand*: Wollen Sie den «**Vorschlag**» oder den **«Gegenvorschlag»** annehmen?|En cas d'*égalité* : voulez-vous accepter «**la proposition**» ou la **«contre-proposition»** ?|In caso di *parità di voti*: volete accettare la «**proposta**» o la **«controproposta»**?|En connex cun l’*egualitad*: vulais Vus acceptar la «**proposta**» u la **«cuntraproposta»**?|Initiative|Initiative|Iniziativa|Iniziativa",
+									"correctnessInformation": "1129f74b-1e49-4636-9731-84dba618bec6"
+								},
+								{
+									"actualVotingOption": "1129f74b-1e49-4636-9731-84dba618bec6|b4277282-00aa-3ccb-bdf2-4703ba2724e4",
+									"encodedVotingOption": 149,
+									"semanticInformation": "NON_BLANK|Bei *Gleichstand*: Wollen Sie den «**Vorschlag**» oder den **«Gegenvorschlag»** annehmen?|En cas d'*égalité* : voulez-vous accepter «**la proposition**» ou la **«contre-proposition»** ?|In caso di *parità di voti*: volete accettare la «**proposta**» o la **«controproposta»**?|En connex cun l’*egualitad*: vulais Vus acceptar la «**proposta**» u la **«cuntraproposta»**?|Gegenentwurf|Contre-projet|Controprogetto|Cuntraproposta",
+									"correctnessInformation": "1129f74b-1e49-4636-9731-84dba618bec6"
+								},
+								{
+									"actualVotingOption": "1129f74b-1e49-4636-9731-84dba618bec6|e6467637-1921-3c4f-b669-88ba2f73a193",
+									"encodedVotingOption": 163,
+									"semanticInformation": "BLANK|Bei *Gleichstand*: Wollen Sie den «**Vorschlag**» oder den **«Gegenvorschlag»** annehmen?|En cas d'*égalité* : voulez-vous accepter «**la proposition**» ou la **«contre-proposition»** ?|In caso di *parità di voti*: volete accettare la «**proposta**» o la **«controproposta»**?|En connex cun l’*egualitad*: vulais Vus acceptar la «**proposta**» u la **«cuntraproposta»**?|Leer|Blanc|Bianco|Vid",
+									"correctnessInformation": "1129f74b-1e49-4636-9731-84dba618bec6"
+								},
+								{
+									"actualVotingOption": "nrw_test|244ab111-a5d4-4090-bed3-79f850a27fa1",
+									"encodedVotingOption": 173,
+									"semanticInformation": "NON_BLANK|Partei 01|Partei 01|Partei 01|Partei 01",
+									"correctnessInformation": "L|nrw_test"
+								},
+								{
+									"actualVotingOption": "nrw_test|50504845-5222-4e70-8d34-f812fce04009",
+									"encodedVotingOption": 181,
+									"semanticInformation": "NON_BLANK|Partei 02|Partei 02|Partei 02|Partei 02",
+									"correctnessInformation": "L|nrw_test"
+								},
+								{
+									"actualVotingOption": "nrw_test|9ef97382-006e-4e3d-b079-1b7e53da339b",
+									"encodedVotingOption": 191,
+									"semanticInformation": "NON_BLANK|Partei 03|Partei 03|Partei 03|Partei 03",
+									"correctnessInformation": "L|nrw_test"
+								},
+								{
+									"actualVotingOption": "nrw_test|97e7687a-9ce7-4724-91bb-17396344b50c",
+									"encodedVotingOption": 197,
+									"semanticInformation": "NON_BLANK|Partei 10|Partei 10|Partei 10|Partei 10",
+									"correctnessInformation": "L|nrw_test"
+								},
+								{
+									"actualVotingOption": "nrw_test|99",
+									"encodedVotingOption": 211,
+									"semanticInformation": "BLANK|Wahlzettel ohne Parteibezeichnung|Wahlzettel ohne Parteibezeichnung|Wahlzettel ohne Parteibezeichnung|Wahlzettel ohne Parteibezeichnung",
+									"correctnessInformation": "L|nrw_test"
+								},
+								{
+									"actualVotingOption": "nrw_test|8cc68a36-df81-4381-aaff-83544ffe6e6c|0",
+									"encodedVotingOption": 227,
+									"semanticInformation": "NON_BLANK|Eins|Kandidat|Anton|1982-01-01",
+									"correctnessInformation": "C|nrw_test"
+								},
+								{
+									"actualVotingOption": "nrw_test|8cc68a36-df81-4381-aaff-83544ffe6e6c|1",
+									"encodedVotingOption": 233,
+									"semanticInformation": "NON_BLANK|Eins|Kandidat|Anton|1982-01-01",
+									"correctnessInformation": "C|nrw_test"
+								},
+								{
+									"actualVotingOption": "nrw_test|d396ab8f-3c5f-4a88-81bc-494dba014287|0",
+									"encodedVotingOption": 251,
+									"semanticInformation": "NON_BLANK|Zwei|Kandidat|Beat|1952-01-01",
+									"correctnessInformation": "C|nrw_test"
+								},
+								{
+									"actualVotingOption": "nrw_test|d396ab8f-3c5f-4a88-81bc-494dba014287|1",
+									"encodedVotingOption": 263,
+									"semanticInformation": "NON_BLANK|Zwei|Kandidat|Beat|1952-01-01",
+									"correctnessInformation": "C|nrw_test"
+								},
+								{
+									"actualVotingOption": "nrw_test|d113bd2d-10aa-4519-89e9-ad7b49eafa76|0",
+									"encodedVotingOption": 269,
+									"semanticInformation": "NON_BLANK|Drei|Kandidat|Christine|1965-01-01",
+									"correctnessInformation": "C|nrw_test"
+								},
+								{
+									"actualVotingOption": "nrw_test|d113bd2d-10aa-4519-89e9-ad7b49eafa76|1",
+									"encodedVotingOption": 277,
+									"semanticInformation": "NON_BLANK|Drei|Kandidat|Christine|1965-01-01",
+									"correctnessInformation": "C|nrw_test"
+								},
+								{
+									"actualVotingOption": "nrw_test|1da9fbd3-07a5-4d9e-b3c1-2342a07684f2|0",
+									"encodedVotingOption": 307,
+									"semanticInformation": "NON_BLANK|Vier|Kandidat|Dagmar|1968-01-01",
+									"correctnessInformation": "C|nrw_test"
+								},
+								{
+									"actualVotingOption": "nrw_test|1da9fbd3-07a5-4d9e-b3c1-2342a07684f2|1",
+									"encodedVotingOption": 311,
+									"semanticInformation": "NON_BLANK|Vier|Kandidat|Dagmar|1968-01-01",
+									"correctnessInformation": "C|nrw_test"
+								},
+								{
+									"actualVotingOption": "nrw_test|f74aacda-e4f1-493e-95b8-0984f0f18d89|0",
+									"encodedVotingOption": 313,
+									"semanticInformation": "NON_BLANK|Fünf|Kandidat|Eberhard|1992-01-01",
+									"correctnessInformation": "C|nrw_test"
+								},
+								{
+									"actualVotingOption": "nrw_test|f74aacda-e4f1-493e-95b8-0984f0f18d89|1",
+									"encodedVotingOption": 317,
+									"semanticInformation": "NON_BLANK|Fünf|Kandidat|Eberhard|1992-01-01",
+									"correctnessInformation": "C|nrw_test"
+								},
+								{
+									"actualVotingOption": "nrw_test|ed9f8446-fb14-4927-b5ec-b4db51cb77b1|0",
+									"encodedVotingOption": 331,
+									"semanticInformation": "NON_BLANK|Sechs|Kandidat|Franziska|1970-01-29",
+									"correctnessInformation": "C|nrw_test"
+								},
+								{
+									"actualVotingOption": "nrw_test|ed9f8446-fb14-4927-b5ec-b4db51cb77b1|1",
+									"encodedVotingOption": 337,
+									"semanticInformation": "NON_BLANK|Sechs|Kandidat|Franziska|1970-01-29",
+									"correctnessInformation": "C|nrw_test"
+								},
+								{
+									"actualVotingOption": "nrw_test|6eb5e01e-755a-4794-9781-b76a32e7175c|0",
+									"encodedVotingOption": 347,
+									"semanticInformation": "NON_BLANK|Dreizehn|Kandidat|Maximilian|1964-01-01",
+									"correctnessInformation": "C|nrw_test"
+								},
+								{
+									"actualVotingOption": "nrw_test|6eb5e01e-755a-4794-9781-b76a32e7175c|1",
+									"encodedVotingOption": 367,
+									"semanticInformation": "NON_BLANK|Dreizehn|Kandidat|Maximilian|1964-01-01",
+									"correctnessInformation": "C|nrw_test"
+								},
+								{
+									"actualVotingOption": "nrw_test|1d48f2f5-08a3-4d1f-be5e-80cfb6ed76e4|0",
+									"encodedVotingOption": 389,
+									"semanticInformation": "NON_BLANK|Vierzehn|Kandidat|Nina|1967-01-01",
+									"correctnessInformation": "C|nrw_test"
+								},
+								{
+									"actualVotingOption": "nrw_test|1d48f2f5-08a3-4d1f-be5e-80cfb6ed76e4|1",
+									"encodedVotingOption": 409,
+									"semanticInformation": "NON_BLANK|Vierzehn|Kandidat|Nina|1967-01-01",
+									"correctnessInformation": "C|nrw_test"
+								},
+								{
+									"actualVotingOption": "nrw_test|93d09b22-5b53-46cd-97c3-ae9cb122eab0|0",
+									"encodedVotingOption": 419,
+									"semanticInformation": "NON_BLANK|Fünfzehn|Kandidat|Orhan|1963-01-01",
+									"correctnessInformation": "C|nrw_test"
+								},
+								{
+									"actualVotingOption": "nrw_test|93d09b22-5b53-46cd-97c3-ae9cb122eab0|1",
+									"encodedVotingOption": 421,
+									"semanticInformation": "NON_BLANK|Fünfzehn|Kandidat|Orhan|1963-01-01",
+									"correctnessInformation": "C|nrw_test"
+								},
+								{
+									"actualVotingOption": "nrw_test|8ed07d87-b81d-4dc8-aaeb-0d5d29a1c2dd|0",
+									"encodedVotingOption": 439,
+									"semanticInformation": "NON_BLANK|Sechszehn|Kandidat|Patrick|1977-01-01",
+									"correctnessInformation": "C|nrw_test"
+								},
+								{
+									"actualVotingOption": "nrw_test|8ed07d87-b81d-4dc8-aaeb-0d5d29a1c2dd|1",
+									"encodedVotingOption": 449,
+									"semanticInformation": "NON_BLANK|Sechszehn|Kandidat|Patrick|1977-01-01",
+									"correctnessInformation": "C|nrw_test"
+								},
+								{
+									"actualVotingOption": "nrw_test|8c12fee2-619f-47e1-82dd-cd4314c95807|0",
+									"encodedVotingOption": 461,
+									"semanticInformation": "NON_BLANK|Siebzehn|Kandidat|Qadira|1970-01-01",
+									"correctnessInformation": "C|nrw_test"
+								},
+								{
+									"actualVotingOption": "nrw_test|8c12fee2-619f-47e1-82dd-cd4314c95807|1",
+									"encodedVotingOption": 467,
+									"semanticInformation": "NON_BLANK|Siebzehn|Kandidat|Qadira|1970-01-01",
+									"correctnessInformation": "C|nrw_test"
+								},
+								{
+									"actualVotingOption": "nrw_test|f5074d62-71f3-4a0e-9fb5-82cb03d4751e|0",
+									"encodedVotingOption": 487,
+									"semanticInformation": "NON_BLANK|Achtzehn|Kandidat|Rolf|1968-01-01",
+									"correctnessInformation": "C|nrw_test"
+								},
+								{
+									"actualVotingOption": "nrw_test|f5074d62-71f3-4a0e-9fb5-82cb03d4751e|1",
+									"encodedVotingOption": 491,
+									"semanticInformation": "NON_BLANK|Achtzehn|Kandidat|Rolf|1968-01-01",
+									"correctnessInformation": "C|nrw_test"
+								},
+								{
+									"actualVotingOption": "nrw_test|e5b16bd6-815b-4e02-8e9e-04064a19b6d0|0",
+									"encodedVotingOption": 499,
+									"semanticInformation": "NON_BLANK|Neunzehn|Kandidat|Elena|1975-01-01",
+									"correctnessInformation": "C|nrw_test"
+								},
+								{
+									"actualVotingOption": "nrw_test|e5b16bd6-815b-4e02-8e9e-04064a19b6d0|1",
+									"encodedVotingOption": 509,
+									"semanticInformation": "NON_BLANK|Neunzehn|Kandidat|Elena|1975-01-01",
+									"correctnessInformation": "C|nrw_test"
+								},
+								{
+									"actualVotingOption": "nrw_test|3a89019a-87ba-45b6-ac92-501ace75d05f|0",
+									"encodedVotingOption": 523,
+									"semanticInformation": "NON_BLANK|Zwanzig|Kandidat|Friedrich|1964-01-01",
+									"correctnessInformation": "C|nrw_test"
+								},
+								{
+									"actualVotingOption": "nrw_test|3a89019a-87ba-45b6-ac92-501ace75d05f|1",
+									"encodedVotingOption": 547,
+									"semanticInformation": "NON_BLANK|Zwanzig|Kandidat|Friedrich|1964-01-01",
+									"correctnessInformation": "C|nrw_test"
+								},
+								{
+									"actualVotingOption": "nrw_test|cdd0f070-a3a2-4a89-b525-fa19825d1305|0",
+									"encodedVotingOption": 557,
+									"semanticInformation": "NON_BLANK|Einundzwanzig|Kandidat|Gerda|1960-01-01",
+									"correctnessInformation": "C|nrw_test"
+								},
+								{
+									"actualVotingOption": "nrw_test|cdd0f070-a3a2-4a89-b525-fa19825d1305|1",
+									"encodedVotingOption": 569,
+									"semanticInformation": "NON_BLANK|Einundzwanzig|Kandidat|Gerda|1960-01-01",
+									"correctnessInformation": "C|nrw_test"
+								},
+								{
+									"actualVotingOption": "nrw_test|1eb4e5e4-d2fc-4cdf-bbc4-2f84439b9870|0",
+									"encodedVotingOption": 571,
+									"semanticInformation": "NON_BLANK|Zweiundzwanzig|Kandidat|Horst|1986-01-01",
+									"correctnessInformation": "C|nrw_test"
+								},
+								{
+									"actualVotingOption": "nrw_test|1eb4e5e4-d2fc-4cdf-bbc4-2f84439b9870|1",
+									"encodedVotingOption": 587,
+									"semanticInformation": "NON_BLANK|Zweiundzwanzig|Kandidat|Horst|1986-01-01",
+									"correctnessInformation": "C|nrw_test"
+								},
+								{
+									"actualVotingOption": "nrw_test|9b175406-327d-42a2-9979-fcefb95e7620|0",
+									"encodedVotingOption": 599,
+									"semanticInformation": "NON_BLANK|Dreiundzwanzig|Kandidat|Ines|1957-01-01",
+									"correctnessInformation": "C|nrw_test"
+								},
+								{
+									"actualVotingOption": "nrw_test|9b175406-327d-42a2-9979-fcefb95e7620|1",
+									"encodedVotingOption": 619,
+									"semanticInformation": "NON_BLANK|Dreiundzwanzig|Kandidat|Ines|1957-01-01",
+									"correctnessInformation": "C|nrw_test"
+								},
+								{
+									"actualVotingOption": "nrw_test|04998ee9-33ce-4aae-beec-5fa4159e1ec0|0",
+									"encodedVotingOption": 631,
+									"semanticInformation": "NON_BLANK|Vierundzwanzig|Kandidat|Jack|1984-01-01",
+									"correctnessInformation": "C|nrw_test"
+								},
+								{
+									"actualVotingOption": "nrw_test|04998ee9-33ce-4aae-beec-5fa4159e1ec0|1",
+									"encodedVotingOption": 641,
+									"semanticInformation": "NON_BLANK|Vierundzwanzig|Kandidat|Jack|1984-01-01",
+									"correctnessInformation": "C|nrw_test"
+								},
+								{
+									"actualVotingOption": "nrw_test|25d225ee-2a75-49ac-b8f5-18a1be37f574|0",
+									"encodedVotingOption": 701,
+									"semanticInformation": "NON_BLANK|Fünfundzwanzig|Kandidat|Klara|1981-01-01",
+									"correctnessInformation": "C|nrw_test"
+								},
+								{
+									"actualVotingOption": "nrw_test|25d225ee-2a75-49ac-b8f5-18a1be37f574|1",
+									"encodedVotingOption": 727,
+									"semanticInformation": "NON_BLANK|Fünfundzwanzig|Kandidat|Klara|1981-01-01",
+									"correctnessInformation": "C|nrw_test"
+								},
+								{
+									"actualVotingOption": "nrw_test|ff671047-7e0f-4198-974f-0041a55f1c70|0",
+									"encodedVotingOption": 739,
+									"semanticInformation": "NON_BLANK|Acht|Kandidat|Hilde|1984-01-01",
+									"correctnessInformation": "C|nrw_test"
+								},
+								{
+									"actualVotingOption": "nrw_test|ff671047-7e0f-4198-974f-0041a55f1c70|1",
+									"encodedVotingOption": 743,
+									"semanticInformation": "NON_BLANK|Acht|Kandidat|Hilde|1984-01-01",
+									"correctnessInformation": "C|nrw_test"
+								},
+								{
+									"actualVotingOption": "nrw_test|4ea3eb45-4872-3418-81d9-1e928937fc1b",
+									"encodedVotingOption": 757,
+									"semanticInformation": "BLANK|EMPTY_CANDIDATE_POSITION-1",
+									"correctnessInformation": "C|nrw_test"
+								},
+								{
+									"actualVotingOption": "nrw_test|d2838d83-b21e-3758-b3db-428094b8c39f",
+									"encodedVotingOption": 761,
+									"semanticInformation": "BLANK|EMPTY_CANDIDATE_POSITION-2",
+									"correctnessInformation": "C|nrw_test"
+								},
+								{
+									"actualVotingOption": "nrw_test|c2275508-2e7e-33e7-8fb8-4aaa48979288",
+									"encodedVotingOption": 769,
+									"semanticInformation": "BLANK|EMPTY_CANDIDATE_POSITION-3",
+									"correctnessInformation": "C|nrw_test"
+								},
+								{
+									"actualVotingOption": "nrw_test|0e08a1c6-62d3-3e54-8642-6792536ba039",
+									"encodedVotingOption": 811,
+									"semanticInformation": "BLANK|EMPTY_CANDIDATE_POSITION-4",
+									"correctnessInformation": "C|nrw_test"
+								},
+								{
+									"actualVotingOption": "nrw_test|899e6604-8374-370d-961c-e1537d2f7d53",
+									"encodedVotingOption": 823,
+									"semanticInformation": "BLANK|EMPTY_CANDIDATE_POSITION-5",
+									"correctnessInformation": "C|nrw_test"
+								},
+								{
+									"actualVotingOption": "nrw_test|1a6ea144-5fe6-376a-a659-aa8d72bb2ad8",
+									"encodedVotingOption": 839,
+									"semanticInformation": "BLANK|EMPTY_CANDIDATE_POSITION-6",
+									"correctnessInformation": "C|nrw_test"
+								}
+							],
+							"numberOfVotingOptions": 63
+						}
+					},
+					{
+						"verificationCardSetId": "F59511A66200BD75CB0D9F37BFF9B2E6",
+						"verificationCardSetAlias": "vcs_ec1ce02e-9b9b-3756-8d99-5bfd68678f6b",
+						"verificationCardSetDescription": "vcs_ec1ce02e-9b9b-3756-8d99-5bfd68678f6b",
+						"ballotBoxId": "A268462A27316C2A8BB30763FA3756F6",
+						"ballotBoxStartTime": "2023-12-06T07:00:00",
+						"ballotBoxFinishTime": "2027-11-25T23:00:00",
+						"testBallotBox": true,
+						"numberOfVotingCards": 5,
+						"gracePeriod": 900,
+						"primesMappingTable": {
+							"encryptionGroup": {
+								"p": "jA4DatkpgfS1r6X1Q5iYA0sS2KakO3pabCF5uww/NyUxmZLOWP1E70Wq1jYs7FMgqAXPvfWn2cCdVGrU5ZcoHWim7FjtyhZPFw15XXewjoOsBUDoqf1Pg5mNakQpQAVEhqMRQ4s5FY1nCB5FvsAUnd8gCONEyIo75r6nj0BmZSoKYCGICT0nBnD0tpW3DwLInQZc5L+x1j39j+CGQI9wCk4+FhAyrK4nNMSsHv3vRUuxdsJber7KZ8d0eqRcyuRZdTbbBDmwz0GlxEmSrP4KRt6gohGN25y7myXQkza1alJpsNOGmBR7GSipM6/gagxRroVzAHBCVNp20g9d7UUZ32DA11pbBrjvEIWMNtZBKGr5Px4d+BJPljxBsbANBqu3d4gfrc5j0Me03yRbPwWq39r5sNFFrIMURmqaOa9l6kVkBBvgDiBt1ult+X787mO6orBoyLXMMCU8qy3zIdzCi5Kfq4Wn8i1C5af7SowhOfV33XNoRnMfPp3CSZaWi1wv",
+								"q": "RgcBtWyUwPpa19L6ocxMAaWJbFNSHb0tNhC83YYfm5KYzMlnLH6id6LVaxsWdimQVALn3vrT7OBOqjVqcsuUDrRTdix25Qsni4a8rrvYR0HWAqB0VP6nwczGtSIUoAKiQ1GIocWcisazhA8i32AKTu+QBHGiZEUd819Tx6AzMpUFMBDEBJ6Tgzh6W0rbh4FkToMucl/Y6x7+x/BDIEe4BScfCwgZVlcTmmJWD373oqXYu2EtvV9lM+O6PVIuZXIsupttghzYZ6DS4iTJVn8FI29QUQjG7c5dzZLoSZtatSk02GnDTAo9jJRUmdfwNQYo10K5gDghKm07aQeu9qKM77Bga60tg1x3iELGG2sglDV8n48O/Aknyx4g2NgGg1Xbu8QP1ucx6GPab5Itn4LVb+182Gii1kGKIzVNHNey9SKyAg3wBxA263S2/L9+dzHdUVg0ZFrmGBKeVZb5kO5hRclP1cLT+RahctP9pUYQnPq77rm0IzmPn07hJMtLRa4X",
+								"g": "Ag=="
+							},
+							"pTable": [
+								{
+									"actualVotingOption": "806f52e6-9d49-4906-b2a8-7c89dfdf53e2|3aa38c9e-6e93-3159-91e1-c3da90681572",
+									"encodedVotingOption": 61,
+									"semanticInformation": "NON_BLANK|Wollen Sie den ersten «**Vorschlag**» annehmen?|Acceptez-vous la première «**proposition**» ?|accettate la prima «**proposta**» ?|acceptar l’emprima «**proposta**» ?|Ja|Oui|Si|Gea",
+									"correctnessInformation": "806f52e6-9d49-4906-b2a8-7c89dfdf53e2"
+								},
+								{
+									"actualVotingOption": "806f52e6-9d49-4906-b2a8-7c89dfdf53e2|16ac94e3-0c72-3570-9df9-050ebb18a9cc",
+									"encodedVotingOption": 67,
+									"semanticInformation": "NON_BLANK|Wollen Sie den ersten «**Vorschlag**» annehmen?|Acceptez-vous la première «**proposition**» ?|accettate la prima «**proposta**» ?|acceptar l’emprima «**proposta**» ?|Nein|Non|No|Na",
+									"correctnessInformation": "806f52e6-9d49-4906-b2a8-7c89dfdf53e2"
+								},
+								{
+									"actualVotingOption": "806f52e6-9d49-4906-b2a8-7c89dfdf53e2|fbed7bf6-a7ed-3812-bb0c-22e449aa4f96",
+									"encodedVotingOption": 71,
+									"semanticInformation": "BLANK|Wollen Sie den ersten «**Vorschlag**» annehmen?|Acceptez-vous la première «**proposition**» ?|accettate la prima «**proposta**» ?|acceptar l’emprima «**proposta**» ?|Leer|Blanc|Bianco|Vid",
+									"correctnessInformation": "806f52e6-9d49-4906-b2a8-7c89dfdf53e2"
+								},
+								{
+									"actualVotingOption": "16f99be5-0ce6-4a81-ae8b-1817ceecaebc|d7a1b387-a90c-31ca-bfc2-ad038a1d9816",
+									"encodedVotingOption": 73,
+									"semanticInformation": "NON_BLANK|Wollen Sie den zweiten Vorschlag annehmen?|Acceptez-vous la deuxième proposition ?|Accettare la seconda proposta ?|Acceptar la segunda proposta ?|Ja|Oui|Si|Gea",
+									"correctnessInformation": "16f99be5-0ce6-4a81-ae8b-1817ceecaebc"
+								},
+								{
+									"actualVotingOption": "16f99be5-0ce6-4a81-ae8b-1817ceecaebc|e9da718b-469e-35d4-8d7d-d6329621e755",
+									"encodedVotingOption": 79,
+									"semanticInformation": "NON_BLANK|Wollen Sie den zweiten Vorschlag annehmen?|Acceptez-vous la deuxième proposition ?|Accettare la seconda proposta ?|Acceptar la segunda proposta ?|Nein|Non|No|Na",
+									"correctnessInformation": "16f99be5-0ce6-4a81-ae8b-1817ceecaebc"
+								},
+								{
+									"actualVotingOption": "16f99be5-0ce6-4a81-ae8b-1817ceecaebc|ecdbcc43-396a-348f-a671-919abfff4e12",
+									"encodedVotingOption": 83,
+									"semanticInformation": "BLANK|Wollen Sie den zweiten Vorschlag annehmen?|Acceptez-vous la deuxième proposition ?|Accettare la seconda proposta ?|Acceptar la segunda proposta ?|Leer|Blanc|Bianco|Vid",
+									"correctnessInformation": "16f99be5-0ce6-4a81-ae8b-1817ceecaebc"
+								},
+								{
+									"actualVotingOption": "b173aebb-7b2c-476a-97fa-c81d640e498a|d0f886b7-03a8-3d8a-9e7d-4c9bfa02ddc6",
+									"encodedVotingOption": 89,
+									"semanticInformation": "NON_BLANK|Wollen Sie den **«Gegenvorschlag»** annehmen?|Acceptez-vous la **«contre proposition»** ?|Accettare la **«contra proposta»** ?|Acceptar la **«cuntra proposta»** ?|Ja|Oui|Si|Gea",
+									"correctnessInformation": "b173aebb-7b2c-476a-97fa-c81d640e498a"
+								},
+								{
+									"actualVotingOption": "b173aebb-7b2c-476a-97fa-c81d640e498a|562a2034-f9a8-3783-abf5-624ec5ac08be",
+									"encodedVotingOption": 101,
+									"semanticInformation": "NON_BLANK|Wollen Sie den **«Gegenvorschlag»** annehmen?|Acceptez-vous la **«contre proposition»** ?|Accettare la **«contra proposta»** ?|Acceptar la **«cuntra proposta»** ?|Nein|Non|No|Na",
+									"correctnessInformation": "b173aebb-7b2c-476a-97fa-c81d640e498a"
+								},
+								{
+									"actualVotingOption": "b173aebb-7b2c-476a-97fa-c81d640e498a|004e5a94-c242-3ba4-837b-131b5698eaa7",
+									"encodedVotingOption": 107,
+									"semanticInformation": "BLANK|Wollen Sie den **«Gegenvorschlag»** annehmen?|Acceptez-vous la **«contre proposition»** ?|Accettare la **«contra proposta»** ?|Acceptar la **«cuntra proposta»** ?|Leer|Blanc|Bianco|Vid",
+									"correctnessInformation": "b173aebb-7b2c-476a-97fa-c81d640e498a"
+								},
+								{
+									"actualVotingOption": "1129f74b-1e49-4636-9731-84dba618bec6|65113930-4472-3aac-9cfd-162f501c78f5",
+									"encodedVotingOption": 109,
+									"semanticInformation": "NON_BLANK|Bei *Gleichstand*: Wollen Sie den «**Vorschlag**» oder den **«Gegenvorschlag»** annehmen?|En cas d'*égalité* : voulez-vous accepter «**la proposition**» ou la **«contre-proposition»** ?|In caso di *parità di voti*: volete accettare la «**proposta**» o la **«controproposta»**?|En connex cun l’*egualitad*: vulais Vus acceptar la «**proposta**» u la **«cuntraproposta»**?|Initiative|Initiative|Iniziativa|Iniziativa",
+									"correctnessInformation": "1129f74b-1e49-4636-9731-84dba618bec6"
+								},
+								{
+									"actualVotingOption": "1129f74b-1e49-4636-9731-84dba618bec6|b4277282-00aa-3ccb-bdf2-4703ba2724e4",
+									"encodedVotingOption": 149,
+									"semanticInformation": "NON_BLANK|Bei *Gleichstand*: Wollen Sie den «**Vorschlag**» oder den **«Gegenvorschlag»** annehmen?|En cas d'*égalité* : voulez-vous accepter «**la proposition**» ou la **«contre-proposition»** ?|In caso di *parità di voti*: volete accettare la «**proposta**» o la **«controproposta»**?|En connex cun l’*egualitad*: vulais Vus acceptar la «**proposta**» u la **«cuntraproposta»**?|Gegenentwurf|Contre-projet|Controprogetto|Cuntraproposta",
+									"correctnessInformation": "1129f74b-1e49-4636-9731-84dba618bec6"
+								},
+								{
+									"actualVotingOption": "1129f74b-1e49-4636-9731-84dba618bec6|e6467637-1921-3c4f-b669-88ba2f73a193",
+									"encodedVotingOption": 163,
+									"semanticInformation": "BLANK|Bei *Gleichstand*: Wollen Sie den «**Vorschlag**» oder den **«Gegenvorschlag»** annehmen?|En cas d'*égalité* : voulez-vous accepter «**la proposition**» ou la **«contre-proposition»** ?|In caso di *parità di voti*: volete accettare la «**proposta**» o la **«controproposta»**?|En connex cun l’*egualitad*: vulais Vus acceptar la «**proposta**» u la **«cuntraproposta»**?|Leer|Blanc|Bianco|Vid",
+									"correctnessInformation": "1129f74b-1e49-4636-9731-84dba618bec6"
+								},
+								{
+									"actualVotingOption": "nrw_test|244ab111-a5d4-4090-bed3-79f850a27fa1",
+									"encodedVotingOption": 173,
+									"semanticInformation": "NON_BLANK|Partei 01|Partei 01|Partei 01|Partei 01",
+									"correctnessInformation": "L|nrw_test"
+								},
+								{
+									"actualVotingOption": "nrw_test|50504845-5222-4e70-8d34-f812fce04009",
+									"encodedVotingOption": 181,
+									"semanticInformation": "NON_BLANK|Partei 02|Partei 02|Partei 02|Partei 02",
+									"correctnessInformation": "L|nrw_test"
+								},
+								{
+									"actualVotingOption": "nrw_test|9ef97382-006e-4e3d-b079-1b7e53da339b",
+									"encodedVotingOption": 191,
+									"semanticInformation": "NON_BLANK|Partei 03|Partei 03|Partei 03|Partei 03",
+									"correctnessInformation": "L|nrw_test"
+								},
+								{
+									"actualVotingOption": "nrw_test|97e7687a-9ce7-4724-91bb-17396344b50c",
+									"encodedVotingOption": 197,
+									"semanticInformation": "NON_BLANK|Partei 10|Partei 10|Partei 10|Partei 10",
+									"correctnessInformation": "L|nrw_test"
+								},
+								{
+									"actualVotingOption": "nrw_test|99",
+									"encodedVotingOption": 211,
+									"semanticInformation": "BLANK|Wahlzettel ohne Parteibezeichnung|Wahlzettel ohne Parteibezeichnung|Wahlzettel ohne Parteibezeichnung|Wahlzettel ohne Parteibezeichnung",
+									"correctnessInformation": "L|nrw_test"
+								},
+								{
+									"actualVotingOption": "nrw_test|8cc68a36-df81-4381-aaff-83544ffe6e6c|0",
+									"encodedVotingOption": 227,
+									"semanticInformation": "NON_BLANK|Eins|Kandidat|Anton|1982-01-01",
+									"correctnessInformation": "C|nrw_test"
+								},
+								{
+									"actualVotingOption": "nrw_test|8cc68a36-df81-4381-aaff-83544ffe6e6c|1",
+									"encodedVotingOption": 233,
+									"semanticInformation": "NON_BLANK|Eins|Kandidat|Anton|1982-01-01",
+									"correctnessInformation": "C|nrw_test"
+								},
+								{
+									"actualVotingOption": "nrw_test|d396ab8f-3c5f-4a88-81bc-494dba014287|0",
+									"encodedVotingOption": 251,
+									"semanticInformation": "NON_BLANK|Zwei|Kandidat|Beat|1952-01-01",
+									"correctnessInformation": "C|nrw_test"
+								},
+								{
+									"actualVotingOption": "nrw_test|d396ab8f-3c5f-4a88-81bc-494dba014287|1",
+									"encodedVotingOption": 263,
+									"semanticInformation": "NON_BLANK|Zwei|Kandidat|Beat|1952-01-01",
+									"correctnessInformation": "C|nrw_test"
+								},
+								{
+									"actualVotingOption": "nrw_test|d113bd2d-10aa-4519-89e9-ad7b49eafa76|0",
+									"encodedVotingOption": 269,
+									"semanticInformation": "NON_BLANK|Drei|Kandidat|Christine|1965-01-01",
+									"correctnessInformation": "C|nrw_test"
+								},
+								{
+									"actualVotingOption": "nrw_test|d113bd2d-10aa-4519-89e9-ad7b49eafa76|1",
+									"encodedVotingOption": 277,
+									"semanticInformation": "NON_BLANK|Drei|Kandidat|Christine|1965-01-01",
+									"correctnessInformation": "C|nrw_test"
+								},
+								{
+									"actualVotingOption": "nrw_test|1da9fbd3-07a5-4d9e-b3c1-2342a07684f2|0",
+									"encodedVotingOption": 307,
+									"semanticInformation": "NON_BLANK|Vier|Kandidat|Dagmar|1968-01-01",
+									"correctnessInformation": "C|nrw_test"
+								},
+								{
+									"actualVotingOption": "nrw_test|1da9fbd3-07a5-4d9e-b3c1-2342a07684f2|1",
+									"encodedVotingOption": 311,
+									"semanticInformation": "NON_BLANK|Vier|Kandidat|Dagmar|1968-01-01",
+									"correctnessInformation": "C|nrw_test"
+								},
+								{
+									"actualVotingOption": "nrw_test|f74aacda-e4f1-493e-95b8-0984f0f18d89|0",
+									"encodedVotingOption": 313,
+									"semanticInformation": "NON_BLANK|Fünf|Kandidat|Eberhard|1992-01-01",
+									"correctnessInformation": "C|nrw_test"
+								},
+								{
+									"actualVotingOption": "nrw_test|f74aacda-e4f1-493e-95b8-0984f0f18d89|1",
+									"encodedVotingOption": 317,
+									"semanticInformation": "NON_BLANK|Fünf|Kandidat|Eberhard|1992-01-01",
+									"correctnessInformation": "C|nrw_test"
+								},
+								{
+									"actualVotingOption": "nrw_test|ed9f8446-fb14-4927-b5ec-b4db51cb77b1|0",
+									"encodedVotingOption": 331,
+									"semanticInformation": "NON_BLANK|Sechs|Kandidat|Franziska|1970-01-29",
+									"correctnessInformation": "C|nrw_test"
+								},
+								{
+									"actualVotingOption": "nrw_test|ed9f8446-fb14-4927-b5ec-b4db51cb77b1|1",
+									"encodedVotingOption": 337,
+									"semanticInformation": "NON_BLANK|Sechs|Kandidat|Franziska|1970-01-29",
+									"correctnessInformation": "C|nrw_test"
+								},
+								{
+									"actualVotingOption": "nrw_test|6eb5e01e-755a-4794-9781-b76a32e7175c|0",
+									"encodedVotingOption": 347,
+									"semanticInformation": "NON_BLANK|Dreizehn|Kandidat|Maximilian|1964-01-01",
+									"correctnessInformation": "C|nrw_test"
+								},
+								{
+									"actualVotingOption": "nrw_test|6eb5e01e-755a-4794-9781-b76a32e7175c|1",
+									"encodedVotingOption": 367,
+									"semanticInformation": "NON_BLANK|Dreizehn|Kandidat|Maximilian|1964-01-01",
+									"correctnessInformation": "C|nrw_test"
+								},
+								{
+									"actualVotingOption": "nrw_test|1d48f2f5-08a3-4d1f-be5e-80cfb6ed76e4|0",
+									"encodedVotingOption": 389,
+									"semanticInformation": "NON_BLANK|Vierzehn|Kandidat|Nina|1967-01-01",
+									"correctnessInformation": "C|nrw_test"
+								},
+								{
+									"actualVotingOption": "nrw_test|1d48f2f5-08a3-4d1f-be5e-80cfb6ed76e4|1",
+									"encodedVotingOption": 409,
+									"semanticInformation": "NON_BLANK|Vierzehn|Kandidat|Nina|1967-01-01",
+									"correctnessInformation": "C|nrw_test"
+								},
+								{
+									"actualVotingOption": "nrw_test|93d09b22-5b53-46cd-97c3-ae9cb122eab0|0",
+									"encodedVotingOption": 419,
+									"semanticInformation": "NON_BLANK|Fünfzehn|Kandidat|Orhan|1963-01-01",
+									"correctnessInformation": "C|nrw_test"
+								},
+								{
+									"actualVotingOption": "nrw_test|93d09b22-5b53-46cd-97c3-ae9cb122eab0|1",
+									"encodedVotingOption": 421,
+									"semanticInformation": "NON_BLANK|Fünfzehn|Kandidat|Orhan|1963-01-01",
+									"correctnessInformation": "C|nrw_test"
+								},
+								{
+									"actualVotingOption": "nrw_test|8ed07d87-b81d-4dc8-aaeb-0d5d29a1c2dd|0",
+									"encodedVotingOption": 439,
+									"semanticInformation": "NON_BLANK|Sechszehn|Kandidat|Patrick|1977-01-01",
+									"correctnessInformation": "C|nrw_test"
+								},
+								{
+									"actualVotingOption": "nrw_test|8ed07d87-b81d-4dc8-aaeb-0d5d29a1c2dd|1",
+									"encodedVotingOption": 449,
+									"semanticInformation": "NON_BLANK|Sechszehn|Kandidat|Patrick|1977-01-01",
+									"correctnessInformation": "C|nrw_test"
+								},
+								{
+									"actualVotingOption": "nrw_test|8c12fee2-619f-47e1-82dd-cd4314c95807|0",
+									"encodedVotingOption": 461,
+									"semanticInformation": "NON_BLANK|Siebzehn|Kandidat|Qadira|1970-01-01",
+									"correctnessInformation": "C|nrw_test"
+								},
+								{
+									"actualVotingOption": "nrw_test|8c12fee2-619f-47e1-82dd-cd4314c95807|1",
+									"encodedVotingOption": 467,
+									"semanticInformation": "NON_BLANK|Siebzehn|Kandidat|Qadira|1970-01-01",
+									"correctnessInformation": "C|nrw_test"
+								},
+								{
+									"actualVotingOption": "nrw_test|f5074d62-71f3-4a0e-9fb5-82cb03d4751e|0",
+									"encodedVotingOption": 487,
+									"semanticInformation": "NON_BLANK|Achtzehn|Kandidat|Rolf|1968-01-01",
+									"correctnessInformation": "C|nrw_test"
+								},
+								{
+									"actualVotingOption": "nrw_test|f5074d62-71f3-4a0e-9fb5-82cb03d4751e|1",
+									"encodedVotingOption": 491,
+									"semanticInformation": "NON_BLANK|Achtzehn|Kandidat|Rolf|1968-01-01",
+									"correctnessInformation": "C|nrw_test"
+								},
+								{
+									"actualVotingOption": "nrw_test|e5b16bd6-815b-4e02-8e9e-04064a19b6d0|0",
+									"encodedVotingOption": 499,
+									"semanticInformation": "NON_BLANK|Neunzehn|Kandidat|Elena|1975-01-01",
+									"correctnessInformation": "C|nrw_test"
+								},
+								{
+									"actualVotingOption": "nrw_test|e5b16bd6-815b-4e02-8e9e-04064a19b6d0|1",
+									"encodedVotingOption": 509,
+									"semanticInformation": "NON_BLANK|Neunzehn|Kandidat|Elena|1975-01-01",
+									"correctnessInformation": "C|nrw_test"
+								},
+								{
+									"actualVotingOption": "nrw_test|3a89019a-87ba-45b6-ac92-501ace75d05f|0",
+									"encodedVotingOption": 523,
+									"semanticInformation": "NON_BLANK|Zwanzig|Kandidat|Friedrich|1964-01-01",
+									"correctnessInformation": "C|nrw_test"
+								},
+								{
+									"actualVotingOption": "nrw_test|3a89019a-87ba-45b6-ac92-501ace75d05f|1",
+									"encodedVotingOption": 547,
+									"semanticInformation": "NON_BLANK|Zwanzig|Kandidat|Friedrich|1964-01-01",
+									"correctnessInformation": "C|nrw_test"
+								},
+								{
+									"actualVotingOption": "nrw_test|cdd0f070-a3a2-4a89-b525-fa19825d1305|0",
+									"encodedVotingOption": 557,
+									"semanticInformation": "NON_BLANK|Einundzwanzig|Kandidat|Gerda|1960-01-01",
+									"correctnessInformation": "C|nrw_test"
+								},
+								{
+									"actualVotingOption": "nrw_test|cdd0f070-a3a2-4a89-b525-fa19825d1305|1",
+									"encodedVotingOption": 569,
+									"semanticInformation": "NON_BLANK|Einundzwanzig|Kandidat|Gerda|1960-01-01",
+									"correctnessInformation": "C|nrw_test"
+								},
+								{
+									"actualVotingOption": "nrw_test|1eb4e5e4-d2fc-4cdf-bbc4-2f84439b9870|0",
+									"encodedVotingOption": 571,
+									"semanticInformation": "NON_BLANK|Zweiundzwanzig|Kandidat|Horst|1986-01-01",
+									"correctnessInformation": "C|nrw_test"
+								},
+								{
+									"actualVotingOption": "nrw_test|1eb4e5e4-d2fc-4cdf-bbc4-2f84439b9870|1",
+									"encodedVotingOption": 587,
+									"semanticInformation": "NON_BLANK|Zweiundzwanzig|Kandidat|Horst|1986-01-01",
+									"correctnessInformation": "C|nrw_test"
+								},
+								{
+									"actualVotingOption": "nrw_test|9b175406-327d-42a2-9979-fcefb95e7620|0",
+									"encodedVotingOption": 599,
+									"semanticInformation": "NON_BLANK|Dreiundzwanzig|Kandidat|Ines|1957-01-01",
+									"correctnessInformation": "C|nrw_test"
+								},
+								{
+									"actualVotingOption": "nrw_test|9b175406-327d-42a2-9979-fcefb95e7620|1",
+									"encodedVotingOption": 619,
+									"semanticInformation": "NON_BLANK|Dreiundzwanzig|Kandidat|Ines|1957-01-01",
+									"correctnessInformation": "C|nrw_test"
+								},
+								{
+									"actualVotingOption": "nrw_test|04998ee9-33ce-4aae-beec-5fa4159e1ec0|0",
+									"encodedVotingOption": 631,
+									"semanticInformation": "NON_BLANK|Vierundzwanzig|Kandidat|Jack|1984-01-01",
+									"correctnessInformation": "C|nrw_test"
+								},
+								{
+									"actualVotingOption": "nrw_test|04998ee9-33ce-4aae-beec-5fa4159e1ec0|1",
+									"encodedVotingOption": 641,
+									"semanticInformation": "NON_BLANK|Vierundzwanzig|Kandidat|Jack|1984-01-01",
+									"correctnessInformation": "C|nrw_test"
+								},
+								{
+									"actualVotingOption": "nrw_test|25d225ee-2a75-49ac-b8f5-18a1be37f574|0",
+									"encodedVotingOption": 701,
+									"semanticInformation": "NON_BLANK|Fünfundzwanzig|Kandidat|Klara|1981-01-01",
+									"correctnessInformation": "C|nrw_test"
+								},
+								{
+									"actualVotingOption": "nrw_test|25d225ee-2a75-49ac-b8f5-18a1be37f574|1",
+									"encodedVotingOption": 727,
+									"semanticInformation": "NON_BLANK|Fünfundzwanzig|Kandidat|Klara|1981-01-01",
+									"correctnessInformation": "C|nrw_test"
+								},
+								{
+									"actualVotingOption": "nrw_test|ff671047-7e0f-4198-974f-0041a55f1c70|0",
+									"encodedVotingOption": 739,
+									"semanticInformation": "NON_BLANK|Acht|Kandidat|Hilde|1984-01-01",
+									"correctnessInformation": "C|nrw_test"
+								},
+								{
+									"actualVotingOption": "nrw_test|ff671047-7e0f-4198-974f-0041a55f1c70|1",
+									"encodedVotingOption": 743,
+									"semanticInformation": "NON_BLANK|Acht|Kandidat|Hilde|1984-01-01",
+									"correctnessInformation": "C|nrw_test"
+								},
+								{
+									"actualVotingOption": "nrw_test|4ea3eb45-4872-3418-81d9-1e928937fc1b",
+									"encodedVotingOption": 757,
+									"semanticInformation": "BLANK|EMPTY_CANDIDATE_POSITION-1",
+									"correctnessInformation": "C|nrw_test"
+								},
+								{
+									"actualVotingOption": "nrw_test|d2838d83-b21e-3758-b3db-428094b8c39f",
+									"encodedVotingOption": 761,
+									"semanticInformation": "BLANK|EMPTY_CANDIDATE_POSITION-2",
+									"correctnessInformation": "C|nrw_test"
+								},
+								{
+									"actualVotingOption": "nrw_test|c2275508-2e7e-33e7-8fb8-4aaa48979288",
+									"encodedVotingOption": 769,
+									"semanticInformation": "BLANK|EMPTY_CANDIDATE_POSITION-3",
+									"correctnessInformation": "C|nrw_test"
+								},
+								{
+									"actualVotingOption": "nrw_test|0e08a1c6-62d3-3e54-8642-6792536ba039",
+									"encodedVotingOption": 811,
+									"semanticInformation": "BLANK|EMPTY_CANDIDATE_POSITION-4",
+									"correctnessInformation": "C|nrw_test"
+								},
+								{
+									"actualVotingOption": "nrw_test|899e6604-8374-370d-961c-e1537d2f7d53",
+									"encodedVotingOption": 823,
+									"semanticInformation": "BLANK|EMPTY_CANDIDATE_POSITION-5",
+									"correctnessInformation": "C|nrw_test"
+								},
+								{
+									"actualVotingOption": "nrw_test|1a6ea144-5fe6-376a-a659-aa8d72bb2ad8",
+									"encodedVotingOption": 839,
+									"semanticInformation": "BLANK|EMPTY_CANDIDATE_POSITION-6",
+									"correctnessInformation": "C|nrw_test"
+								},
+								{
+									"actualVotingOption": "majorz_test|9bfe1f69-6d35-4966-b281-a5dc39655e3a|0",
+									"encodedVotingOption": 11,
+									"semanticInformation": "NON_BLANK|Rot|Doris|Doris|1961-11-29",
+									"correctnessInformation": "C|majorz_test"
+								},
+								{
+									"actualVotingOption": "majorz_test|b5c605ec-9398-41d9-b934-006c548381c3|0",
+									"encodedVotingOption": 13,
+									"semanticInformation": "NON_BLANK|Gelb|Henry|Henry|1954-11-29",
+									"correctnessInformation": "C|majorz_test"
+								},
+								{
+									"actualVotingOption": "majorz_test|1cde3adc-d3b8-3077-95b4-21ac2958a8fe",
+									"encodedVotingOption": 37,
+									"semanticInformation": "BLANK|EMPTY_CANDIDATE_POSITION-1",
+									"correctnessInformation": "C|majorz_test"
+								},
+								{
+									"actualVotingOption": "majorz_test|f71ffce9-78c9-3621-895b-aebcc0849ad1",
+									"encodedVotingOption": 43,
+									"semanticInformation": "WRITE_IN|WRITE_IN_POSITION-1",
+									"correctnessInformation": "C|majorz_test"
+								}
+							],
+							"numberOfVotingOptions": 67
+						}
+					},
+					{
+						"verificationCardSetId": "4F5A51E80E6B50524FC0A2C43723E151",
+						"verificationCardSetAlias": "vcs_7228df42-9812-3434-a123-7af149a88672",
+						"verificationCardSetDescription": "vcs_7228df42-9812-3434-a123-7af149a88672",
+						"ballotBoxId": "F812D34F266ACA9D11CB1BCC210108B5",
+						"ballotBoxStartTime": "2023-12-06T07:00:00",
+						"ballotBoxFinishTime": "2027-11-25T23:00:00",
+						"testBallotBox": true,
+						"numberOfVotingCards": 5,
+						"gracePeriod": 900,
+						"primesMappingTable": {
+							"encryptionGroup": {
+								"p": "jA4DatkpgfS1r6X1Q5iYA0sS2KakO3pabCF5uww/NyUxmZLOWP1E70Wq1jYs7FMgqAXPvfWn2cCdVGrU5ZcoHWim7FjtyhZPFw15XXewjoOsBUDoqf1Pg5mNakQpQAVEhqMRQ4s5FY1nCB5FvsAUnd8gCONEyIo75r6nj0BmZSoKYCGICT0nBnD0tpW3DwLInQZc5L+x1j39j+CGQI9wCk4+FhAyrK4nNMSsHv3vRUuxdsJber7KZ8d0eqRcyuRZdTbbBDmwz0GlxEmSrP4KRt6gohGN25y7myXQkza1alJpsNOGmBR7GSipM6/gagxRroVzAHBCVNp20g9d7UUZ32DA11pbBrjvEIWMNtZBKGr5Px4d+BJPljxBsbANBqu3d4gfrc5j0Me03yRbPwWq39r5sNFFrIMURmqaOa9l6kVkBBvgDiBt1ult+X787mO6orBoyLXMMCU8qy3zIdzCi5Kfq4Wn8i1C5af7SowhOfV33XNoRnMfPp3CSZaWi1wv",
+								"q": "RgcBtWyUwPpa19L6ocxMAaWJbFNSHb0tNhC83YYfm5KYzMlnLH6id6LVaxsWdimQVALn3vrT7OBOqjVqcsuUDrRTdix25Qsni4a8rrvYR0HWAqB0VP6nwczGtSIUoAKiQ1GIocWcisazhA8i32AKTu+QBHGiZEUd819Tx6AzMpUFMBDEBJ6Tgzh6W0rbh4FkToMucl/Y6x7+x/BDIEe4BScfCwgZVlcTmmJWD373oqXYu2EtvV9lM+O6PVIuZXIsupttghzYZ6DS4iTJVn8FI29QUQjG7c5dzZLoSZtatSk02GnDTAo9jJRUmdfwNQYo10K5gDghKm07aQeu9qKM77Bga60tg1x3iELGG2sglDV8n48O/Aknyx4g2NgGg1Xbu8QP1ucx6GPab5Itn4LVb+182Gii1kGKIzVNHNey9SKyAg3wBxA263S2/L9+dzHdUVg0ZFrmGBKeVZb5kO5hRclP1cLT+RahctP9pUYQnPq77rm0IzmPn07hJMtLRa4X",
+								"g": "Ag=="
+							},
+							"pTable": [
+								{
+									"actualVotingOption": "majorz_test|9bfe1f69-6d35-4966-b281-a5dc39655e3a|0",
+									"encodedVotingOption": 11,
+									"semanticInformation": "NON_BLANK|Rot|Doris|Doris|1961-11-29",
+									"correctnessInformation": "C|majorz_test"
+								},
+								{
+									"actualVotingOption": "majorz_test|b5c605ec-9398-41d9-b934-006c548381c3|0",
+									"encodedVotingOption": 13,
+									"semanticInformation": "NON_BLANK|Gelb|Henry|Henry|1954-11-29",
+									"correctnessInformation": "C|majorz_test"
+								},
+								{
+									"actualVotingOption": "majorz_test|1cde3adc-d3b8-3077-95b4-21ac2958a8fe",
+									"encodedVotingOption": 37,
+									"semanticInformation": "BLANK|EMPTY_CANDIDATE_POSITION-1",
+									"correctnessInformation": "C|majorz_test"
+								},
+								{
+									"actualVotingOption": "majorz_test|f71ffce9-78c9-3621-895b-aebcc0849ad1",
+									"encodedVotingOption": 43,
+									"semanticInformation": "WRITE_IN|WRITE_IN_POSITION-1",
+									"correctnessInformation": "C|majorz_test"
+								}
+							],
+							"numberOfVotingOptions": 4
+						}
+					},
+					{
+						"verificationCardSetId": "B5B86BE222B46BBD57750AC1347DF5FF",
+						"verificationCardSetAlias": "vcs_88ac0932-b73a-3d2b-b04a-44a16176a5e9",
+						"verificationCardSetDescription": "vcs_88ac0932-b73a-3d2b-b04a-44a16176a5e9",
+						"ballotBoxId": "A4DB03CA709E7533B0F9F090B46CE878",
+						"ballotBoxStartTime": "2023-12-06T07:00:00",
+						"ballotBoxFinishTime": "2027-11-25T23:00:00",
+						"testBallotBox": true,
+						"numberOfVotingCards": 32,
+						"gracePeriod": 900,
+						"primesMappingTable": {
+							"encryptionGroup": {
+								"p": "jA4DatkpgfS1r6X1Q5iYA0sS2KakO3pabCF5uww/NyUxmZLOWP1E70Wq1jYs7FMgqAXPvfWn2cCdVGrU5ZcoHWim7FjtyhZPFw15XXewjoOsBUDoqf1Pg5mNakQpQAVEhqMRQ4s5FY1nCB5FvsAUnd8gCONEyIo75r6nj0BmZSoKYCGICT0nBnD0tpW3DwLInQZc5L+x1j39j+CGQI9wCk4+FhAyrK4nNMSsHv3vRUuxdsJber7KZ8d0eqRcyuRZdTbbBDmwz0GlxEmSrP4KRt6gohGN25y7myXQkza1alJpsNOGmBR7GSipM6/gagxRroVzAHBCVNp20g9d7UUZ32DA11pbBrjvEIWMNtZBKGr5Px4d+BJPljxBsbANBqu3d4gfrc5j0Me03yRbPwWq39r5sNFFrIMURmqaOa9l6kVkBBvgDiBt1ult+X787mO6orBoyLXMMCU8qy3zIdzCi5Kfq4Wn8i1C5af7SowhOfV33XNoRnMfPp3CSZaWi1wv",
+								"q": "RgcBtWyUwPpa19L6ocxMAaWJbFNSHb0tNhC83YYfm5KYzMlnLH6id6LVaxsWdimQVALn3vrT7OBOqjVqcsuUDrRTdix25Qsni4a8rrvYR0HWAqB0VP6nwczGtSIUoAKiQ1GIocWcisazhA8i32AKTu+QBHGiZEUd819Tx6AzMpUFMBDEBJ6Tgzh6W0rbh4FkToMucl/Y6x7+x/BDIEe4BScfCwgZVlcTmmJWD373oqXYu2EtvV9lM+O6PVIuZXIsupttghzYZ6DS4iTJVn8FI29QUQjG7c5dzZLoSZtatSk02GnDTAo9jJRUmdfwNQYo10K5gDghKm07aQeu9qKM77Bga60tg1x3iELGG2sglDV8n48O/Aknyx4g2NgGg1Xbu8QP1ucx6GPab5Itn4LVb+182Gii1kGKIzVNHNey9SKyAg3wBxA263S2/L9+dzHdUVg0ZFrmGBKeVZb5kO5hRclP1cLT+RahctP9pUYQnPq77rm0IzmPn07hJMtLRa4X",
+								"g": "Ag=="
+							},
+							"pTable": [
+								{
+									"actualVotingOption": "806f52e6-9d49-4906-b2a8-7c89dfdf53e2|3aa38c9e-6e93-3159-91e1-c3da90681572",
+									"encodedVotingOption": 61,
+									"semanticInformation": "NON_BLANK|Wollen Sie den ersten «**Vorschlag**» annehmen?|Acceptez-vous la première «**proposition**» ?|accettate la prima «**proposta**» ?|acceptar l’emprima «**proposta**» ?|Ja|Oui|Si|Gea",
+									"correctnessInformation": "806f52e6-9d49-4906-b2a8-7c89dfdf53e2"
+								},
+								{
+									"actualVotingOption": "806f52e6-9d49-4906-b2a8-7c89dfdf53e2|16ac94e3-0c72-3570-9df9-050ebb18a9cc",
+									"encodedVotingOption": 67,
+									"semanticInformation": "NON_BLANK|Wollen Sie den ersten «**Vorschlag**» annehmen?|Acceptez-vous la première «**proposition**» ?|accettate la prima «**proposta**» ?|acceptar l’emprima «**proposta**» ?|Nein|Non|No|Na",
+									"correctnessInformation": "806f52e6-9d49-4906-b2a8-7c89dfdf53e2"
+								},
+								{
+									"actualVotingOption": "806f52e6-9d49-4906-b2a8-7c89dfdf53e2|fbed7bf6-a7ed-3812-bb0c-22e449aa4f96",
+									"encodedVotingOption": 71,
+									"semanticInformation": "BLANK|Wollen Sie den ersten «**Vorschlag**» annehmen?|Acceptez-vous la première «**proposition**» ?|accettate la prima «**proposta**» ?|acceptar l’emprima «**proposta**» ?|Leer|Blanc|Bianco|Vid",
+									"correctnessInformation": "806f52e6-9d49-4906-b2a8-7c89dfdf53e2"
+								},
+								{
+									"actualVotingOption": "16f99be5-0ce6-4a81-ae8b-1817ceecaebc|d7a1b387-a90c-31ca-bfc2-ad038a1d9816",
+									"encodedVotingOption": 73,
+									"semanticInformation": "NON_BLANK|Wollen Sie den zweiten Vorschlag annehmen?|Acceptez-vous la deuxième proposition ?|Accettare la seconda proposta ?|Acceptar la segunda proposta ?|Ja|Oui|Si|Gea",
+									"correctnessInformation": "16f99be5-0ce6-4a81-ae8b-1817ceecaebc"
+								},
+								{
+									"actualVotingOption": "16f99be5-0ce6-4a81-ae8b-1817ceecaebc|e9da718b-469e-35d4-8d7d-d6329621e755",
+									"encodedVotingOption": 79,
+									"semanticInformation": "NON_BLANK|Wollen Sie den zweiten Vorschlag annehmen?|Acceptez-vous la deuxième proposition ?|Accettare la seconda proposta ?|Acceptar la segunda proposta ?|Nein|Non|No|Na",
+									"correctnessInformation": "16f99be5-0ce6-4a81-ae8b-1817ceecaebc"
+								},
+								{
+									"actualVotingOption": "16f99be5-0ce6-4a81-ae8b-1817ceecaebc|ecdbcc43-396a-348f-a671-919abfff4e12",
+									"encodedVotingOption": 83,
+									"semanticInformation": "BLANK|Wollen Sie den zweiten Vorschlag annehmen?|Acceptez-vous la deuxième proposition ?|Accettare la seconda proposta ?|Acceptar la segunda proposta ?|Leer|Blanc|Bianco|Vid",
+									"correctnessInformation": "16f99be5-0ce6-4a81-ae8b-1817ceecaebc"
+								},
+								{
+									"actualVotingOption": "b173aebb-7b2c-476a-97fa-c81d640e498a|d0f886b7-03a8-3d8a-9e7d-4c9bfa02ddc6",
+									"encodedVotingOption": 89,
+									"semanticInformation": "NON_BLANK|Wollen Sie den **«Gegenvorschlag»** annehmen?|Acceptez-vous la **«contre proposition»** ?|Accettare la **«contra proposta»** ?|Acceptar la **«cuntra proposta»** ?|Ja|Oui|Si|Gea",
+									"correctnessInformation": "b173aebb-7b2c-476a-97fa-c81d640e498a"
+								},
+								{
+									"actualVotingOption": "b173aebb-7b2c-476a-97fa-c81d640e498a|562a2034-f9a8-3783-abf5-624ec5ac08be",
+									"encodedVotingOption": 101,
+									"semanticInformation": "NON_BLANK|Wollen Sie den **«Gegenvorschlag»** annehmen?|Acceptez-vous la **«contre proposition»** ?|Accettare la **«contra proposta»** ?|Acceptar la **«cuntra proposta»** ?|Nein|Non|No|Na",
+									"correctnessInformation": "b173aebb-7b2c-476a-97fa-c81d640e498a"
+								},
+								{
+									"actualVotingOption": "b173aebb-7b2c-476a-97fa-c81d640e498a|004e5a94-c242-3ba4-837b-131b5698eaa7",
+									"encodedVotingOption": 107,
+									"semanticInformation": "BLANK|Wollen Sie den **«Gegenvorschlag»** annehmen?|Acceptez-vous la **«contre proposition»** ?|Accettare la **«contra proposta»** ?|Acceptar la **«cuntra proposta»** ?|Leer|Blanc|Bianco|Vid",
+									"correctnessInformation": "b173aebb-7b2c-476a-97fa-c81d640e498a"
+								},
+								{
+									"actualVotingOption": "1129f74b-1e49-4636-9731-84dba618bec6|65113930-4472-3aac-9cfd-162f501c78f5",
+									"encodedVotingOption": 109,
+									"semanticInformation": "NON_BLANK|Bei *Gleichstand*: Wollen Sie den «**Vorschlag**» oder den **«Gegenvorschlag»** annehmen?|En cas d'*égalité* : voulez-vous accepter «**la proposition**» ou la **«contre-proposition»** ?|In caso di *parità di voti*: volete accettare la «**proposta**» o la **«controproposta»**?|En connex cun l’*egualitad*: vulais Vus acceptar la «**proposta**» u la **«cuntraproposta»**?|Initiative|Initiative|Iniziativa|Iniziativa",
+									"correctnessInformation": "1129f74b-1e49-4636-9731-84dba618bec6"
+								},
+								{
+									"actualVotingOption": "1129f74b-1e49-4636-9731-84dba618bec6|b4277282-00aa-3ccb-bdf2-4703ba2724e4",
+									"encodedVotingOption": 149,
+									"semanticInformation": "NON_BLANK|Bei *Gleichstand*: Wollen Sie den «**Vorschlag**» oder den **«Gegenvorschlag»** annehmen?|En cas d'*égalité* : voulez-vous accepter «**la proposition**» ou la **«contre-proposition»** ?|In caso di *parità di voti*: volete accettare la «**proposta**» o la **«controproposta»**?|En connex cun l’*egualitad*: vulais Vus acceptar la «**proposta**» u la **«cuntraproposta»**?|Gegenentwurf|Contre-projet|Controprogetto|Cuntraproposta",
+									"correctnessInformation": "1129f74b-1e49-4636-9731-84dba618bec6"
+								},
+								{
+									"actualVotingOption": "1129f74b-1e49-4636-9731-84dba618bec6|e6467637-1921-3c4f-b669-88ba2f73a193",
+									"encodedVotingOption": 163,
+									"semanticInformation": "BLANK|Bei *Gleichstand*: Wollen Sie den «**Vorschlag**» oder den **«Gegenvorschlag»** annehmen?|En cas d'*égalité* : voulez-vous accepter «**la proposition**» ou la **«contre-proposition»** ?|In caso di *parità di voti*: volete accettare la «**proposta**» o la **«controproposta»**?|En connex cun l’*egualitad*: vulais Vus acceptar la «**proposta**» u la **«cuntraproposta»**?|Leer|Blanc|Bianco|Vid",
+									"correctnessInformation": "1129f74b-1e49-4636-9731-84dba618bec6"
+								},
+								{
+									"actualVotingOption": "nrw_test|244ab111-a5d4-4090-bed3-79f850a27fa1",
+									"encodedVotingOption": 173,
+									"semanticInformation": "NON_BLANK|Partei 01|Partei 01|Partei 01|Partei 01",
+									"correctnessInformation": "L|nrw_test"
+								},
+								{
+									"actualVotingOption": "nrw_test|50504845-5222-4e70-8d34-f812fce04009",
+									"encodedVotingOption": 181,
+									"semanticInformation": "NON_BLANK|Partei 02|Partei 02|Partei 02|Partei 02",
+									"correctnessInformation": "L|nrw_test"
+								},
+								{
+									"actualVotingOption": "nrw_test|9ef97382-006e-4e3d-b079-1b7e53da339b",
+									"encodedVotingOption": 191,
+									"semanticInformation": "NON_BLANK|Partei 03|Partei 03|Partei 03|Partei 03",
+									"correctnessInformation": "L|nrw_test"
+								},
+								{
+									"actualVotingOption": "nrw_test|97e7687a-9ce7-4724-91bb-17396344b50c",
+									"encodedVotingOption": 197,
+									"semanticInformation": "NON_BLANK|Partei 10|Partei 10|Partei 10|Partei 10",
+									"correctnessInformation": "L|nrw_test"
+								},
+								{
+									"actualVotingOption": "nrw_test|99",
+									"encodedVotingOption": 211,
+									"semanticInformation": "BLANK|Wahlzettel ohne Parteibezeichnung|Wahlzettel ohne Parteibezeichnung|Wahlzettel ohne Parteibezeichnung|Wahlzettel ohne Parteibezeichnung",
+									"correctnessInformation": "L|nrw_test"
+								},
+								{
+									"actualVotingOption": "nrw_test|8cc68a36-df81-4381-aaff-83544ffe6e6c|0",
+									"encodedVotingOption": 227,
+									"semanticInformation": "NON_BLANK|Eins|Kandidat|Anton|1982-01-01",
+									"correctnessInformation": "C|nrw_test"
+								},
+								{
+									"actualVotingOption": "nrw_test|8cc68a36-df81-4381-aaff-83544ffe6e6c|1",
+									"encodedVotingOption": 233,
+									"semanticInformation": "NON_BLANK|Eins|Kandidat|Anton|1982-01-01",
+									"correctnessInformation": "C|nrw_test"
+								},
+								{
+									"actualVotingOption": "nrw_test|d396ab8f-3c5f-4a88-81bc-494dba014287|0",
+									"encodedVotingOption": 251,
+									"semanticInformation": "NON_BLANK|Zwei|Kandidat|Beat|1952-01-01",
+									"correctnessInformation": "C|nrw_test"
+								},
+								{
+									"actualVotingOption": "nrw_test|d396ab8f-3c5f-4a88-81bc-494dba014287|1",
+									"encodedVotingOption": 263,
+									"semanticInformation": "NON_BLANK|Zwei|Kandidat|Beat|1952-01-01",
+									"correctnessInformation": "C|nrw_test"
+								},
+								{
+									"actualVotingOption": "nrw_test|d113bd2d-10aa-4519-89e9-ad7b49eafa76|0",
+									"encodedVotingOption": 269,
+									"semanticInformation": "NON_BLANK|Drei|Kandidat|Christine|1965-01-01",
+									"correctnessInformation": "C|nrw_test"
+								},
+								{
+									"actualVotingOption": "nrw_test|d113bd2d-10aa-4519-89e9-ad7b49eafa76|1",
+									"encodedVotingOption": 277,
+									"semanticInformation": "NON_BLANK|Drei|Kandidat|Christine|1965-01-01",
+									"correctnessInformation": "C|nrw_test"
+								},
+								{
+									"actualVotingOption": "nrw_test|1da9fbd3-07a5-4d9e-b3c1-2342a07684f2|0",
+									"encodedVotingOption": 307,
+									"semanticInformation": "NON_BLANK|Vier|Kandidat|Dagmar|1968-01-01",
+									"correctnessInformation": "C|nrw_test"
+								},
+								{
+									"actualVotingOption": "nrw_test|1da9fbd3-07a5-4d9e-b3c1-2342a07684f2|1",
+									"encodedVotingOption": 311,
+									"semanticInformation": "NON_BLANK|Vier|Kandidat|Dagmar|1968-01-01",
+									"correctnessInformation": "C|nrw_test"
+								},
+								{
+									"actualVotingOption": "nrw_test|f74aacda-e4f1-493e-95b8-0984f0f18d89|0",
+									"encodedVotingOption": 313,
+									"semanticInformation": "NON_BLANK|Fünf|Kandidat|Eberhard|1992-01-01",
+									"correctnessInformation": "C|nrw_test"
+								},
+								{
+									"actualVotingOption": "nrw_test|f74aacda-e4f1-493e-95b8-0984f0f18d89|1",
+									"encodedVotingOption": 317,
+									"semanticInformation": "NON_BLANK|Fünf|Kandidat|Eberhard|1992-01-01",
+									"correctnessInformation": "C|nrw_test"
+								},
+								{
+									"actualVotingOption": "nrw_test|ed9f8446-fb14-4927-b5ec-b4db51cb77b1|0",
+									"encodedVotingOption": 331,
+									"semanticInformation": "NON_BLANK|Sechs|Kandidat|Franziska|1970-01-29",
+									"correctnessInformation": "C|nrw_test"
+								},
+								{
+									"actualVotingOption": "nrw_test|ed9f8446-fb14-4927-b5ec-b4db51cb77b1|1",
+									"encodedVotingOption": 337,
+									"semanticInformation": "NON_BLANK|Sechs|Kandidat|Franziska|1970-01-29",
+									"correctnessInformation": "C|nrw_test"
+								},
+								{
+									"actualVotingOption": "nrw_test|6eb5e01e-755a-4794-9781-b76a32e7175c|0",
+									"encodedVotingOption": 347,
+									"semanticInformation": "NON_BLANK|Dreizehn|Kandidat|Maximilian|1964-01-01",
+									"correctnessInformation": "C|nrw_test"
+								},
+								{
+									"actualVotingOption": "nrw_test|6eb5e01e-755a-4794-9781-b76a32e7175c|1",
+									"encodedVotingOption": 367,
+									"semanticInformation": "NON_BLANK|Dreizehn|Kandidat|Maximilian|1964-01-01",
+									"correctnessInformation": "C|nrw_test"
+								},
+								{
+									"actualVotingOption": "nrw_test|1d48f2f5-08a3-4d1f-be5e-80cfb6ed76e4|0",
+									"encodedVotingOption": 389,
+									"semanticInformation": "NON_BLANK|Vierzehn|Kandidat|Nina|1967-01-01",
+									"correctnessInformation": "C|nrw_test"
+								},
+								{
+									"actualVotingOption": "nrw_test|1d48f2f5-08a3-4d1f-be5e-80cfb6ed76e4|1",
+									"encodedVotingOption": 409,
+									"semanticInformation": "NON_BLANK|Vierzehn|Kandidat|Nina|1967-01-01",
+									"correctnessInformation": "C|nrw_test"
+								},
+								{
+									"actualVotingOption": "nrw_test|93d09b22-5b53-46cd-97c3-ae9cb122eab0|0",
+									"encodedVotingOption": 419,
+									"semanticInformation": "NON_BLANK|Fünfzehn|Kandidat|Orhan|1963-01-01",
+									"correctnessInformation": "C|nrw_test"
+								},
+								{
+									"actualVotingOption": "nrw_test|93d09b22-5b53-46cd-97c3-ae9cb122eab0|1",
+									"encodedVotingOption": 421,
+									"semanticInformation": "NON_BLANK|Fünfzehn|Kandidat|Orhan|1963-01-01",
+									"correctnessInformation": "C|nrw_test"
+								},
+								{
+									"actualVotingOption": "nrw_test|8ed07d87-b81d-4dc8-aaeb-0d5d29a1c2dd|0",
+									"encodedVotingOption": 439,
+									"semanticInformation": "NON_BLANK|Sechszehn|Kandidat|Patrick|1977-01-01",
+									"correctnessInformation": "C|nrw_test"
+								},
+								{
+									"actualVotingOption": "nrw_test|8ed07d87-b81d-4dc8-aaeb-0d5d29a1c2dd|1",
+									"encodedVotingOption": 449,
+									"semanticInformation": "NON_BLANK|Sechszehn|Kandidat|Patrick|1977-01-01",
+									"correctnessInformation": "C|nrw_test"
+								},
+								{
+									"actualVotingOption": "nrw_test|8c12fee2-619f-47e1-82dd-cd4314c95807|0",
+									"encodedVotingOption": 461,
+									"semanticInformation": "NON_BLANK|Siebzehn|Kandidat|Qadira|1970-01-01",
+									"correctnessInformation": "C|nrw_test"
+								},
+								{
+									"actualVotingOption": "nrw_test|8c12fee2-619f-47e1-82dd-cd4314c95807|1",
+									"encodedVotingOption": 467,
+									"semanticInformation": "NON_BLANK|Siebzehn|Kandidat|Qadira|1970-01-01",
+									"correctnessInformation": "C|nrw_test"
+								},
+								{
+									"actualVotingOption": "nrw_test|f5074d62-71f3-4a0e-9fb5-82cb03d4751e|0",
+									"encodedVotingOption": 487,
+									"semanticInformation": "NON_BLANK|Achtzehn|Kandidat|Rolf|1968-01-01",
+									"correctnessInformation": "C|nrw_test"
+								},
+								{
+									"actualVotingOption": "nrw_test|f5074d62-71f3-4a0e-9fb5-82cb03d4751e|1",
+									"encodedVotingOption": 491,
+									"semanticInformation": "NON_BLANK|Achtzehn|Kandidat|Rolf|1968-01-01",
+									"correctnessInformation": "C|nrw_test"
+								},
+								{
+									"actualVotingOption": "nrw_test|e5b16bd6-815b-4e02-8e9e-04064a19b6d0|0",
+									"encodedVotingOption": 499,
+									"semanticInformation": "NON_BLANK|Neunzehn|Kandidat|Elena|1975-01-01",
+									"correctnessInformation": "C|nrw_test"
+								},
+								{
+									"actualVotingOption": "nrw_test|e5b16bd6-815b-4e02-8e9e-04064a19b6d0|1",
+									"encodedVotingOption": 509,
+									"semanticInformation": "NON_BLANK|Neunzehn|Kandidat|Elena|1975-01-01",
+									"correctnessInformation": "C|nrw_test"
+								},
+								{
+									"actualVotingOption": "nrw_test|3a89019a-87ba-45b6-ac92-501ace75d05f|0",
+									"encodedVotingOption": 523,
+									"semanticInformation": "NON_BLANK|Zwanzig|Kandidat|Friedrich|1964-01-01",
+									"correctnessInformation": "C|nrw_test"
+								},
+								{
+									"actualVotingOption": "nrw_test|3a89019a-87ba-45b6-ac92-501ace75d05f|1",
+									"encodedVotingOption": 547,
+									"semanticInformation": "NON_BLANK|Zwanzig|Kandidat|Friedrich|1964-01-01",
+									"correctnessInformation": "C|nrw_test"
+								},
+								{
+									"actualVotingOption": "nrw_test|cdd0f070-a3a2-4a89-b525-fa19825d1305|0",
+									"encodedVotingOption": 557,
+									"semanticInformation": "NON_BLANK|Einundzwanzig|Kandidat|Gerda|1960-01-01",
+									"correctnessInformation": "C|nrw_test"
+								},
+								{
+									"actualVotingOption": "nrw_test|cdd0f070-a3a2-4a89-b525-fa19825d1305|1",
+									"encodedVotingOption": 569,
+									"semanticInformation": "NON_BLANK|Einundzwanzig|Kandidat|Gerda|1960-01-01",
+									"correctnessInformation": "C|nrw_test"
+								},
+								{
+									"actualVotingOption": "nrw_test|1eb4e5e4-d2fc-4cdf-bbc4-2f84439b9870|0",
+									"encodedVotingOption": 571,
+									"semanticInformation": "NON_BLANK|Zweiundzwanzig|Kandidat|Horst|1986-01-01",
+									"correctnessInformation": "C|nrw_test"
+								},
+								{
+									"actualVotingOption": "nrw_test|1eb4e5e4-d2fc-4cdf-bbc4-2f84439b9870|1",
+									"encodedVotingOption": 587,
+									"semanticInformation": "NON_BLANK|Zweiundzwanzig|Kandidat|Horst|1986-01-01",
+									"correctnessInformation": "C|nrw_test"
+								},
+								{
+									"actualVotingOption": "nrw_test|9b175406-327d-42a2-9979-fcefb95e7620|0",
+									"encodedVotingOption": 599,
+									"semanticInformation": "NON_BLANK|Dreiundzwanzig|Kandidat|Ines|1957-01-01",
+									"correctnessInformation": "C|nrw_test"
+								},
+								{
+									"actualVotingOption": "nrw_test|9b175406-327d-42a2-9979-fcefb95e7620|1",
+									"encodedVotingOption": 619,
+									"semanticInformation": "NON_BLANK|Dreiundzwanzig|Kandidat|Ines|1957-01-01",
+									"correctnessInformation": "C|nrw_test"
+								},
+								{
+									"actualVotingOption": "nrw_test|04998ee9-33ce-4aae-beec-5fa4159e1ec0|0",
+									"encodedVotingOption": 631,
+									"semanticInformation": "NON_BLANK|Vierundzwanzig|Kandidat|Jack|1984-01-01",
+									"correctnessInformation": "C|nrw_test"
+								},
+								{
+									"actualVotingOption": "nrw_test|04998ee9-33ce-4aae-beec-5fa4159e1ec0|1",
+									"encodedVotingOption": 641,
+									"semanticInformation": "NON_BLANK|Vierundzwanzig|Kandidat|Jack|1984-01-01",
+									"correctnessInformation": "C|nrw_test"
+								},
+								{
+									"actualVotingOption": "nrw_test|25d225ee-2a75-49ac-b8f5-18a1be37f574|0",
+									"encodedVotingOption": 701,
+									"semanticInformation": "NON_BLANK|Fünfundzwanzig|Kandidat|Klara|1981-01-01",
+									"correctnessInformation": "C|nrw_test"
+								},
+								{
+									"actualVotingOption": "nrw_test|25d225ee-2a75-49ac-b8f5-18a1be37f574|1",
+									"encodedVotingOption": 727,
+									"semanticInformation": "NON_BLANK|Fünfundzwanzig|Kandidat|Klara|1981-01-01",
+									"correctnessInformation": "C|nrw_test"
+								},
+								{
+									"actualVotingOption": "nrw_test|ff671047-7e0f-4198-974f-0041a55f1c70|0",
+									"encodedVotingOption": 739,
+									"semanticInformation": "NON_BLANK|Acht|Kandidat|Hilde|1984-01-01",
+									"correctnessInformation": "C|nrw_test"
+								},
+								{
+									"actualVotingOption": "nrw_test|ff671047-7e0f-4198-974f-0041a55f1c70|1",
+									"encodedVotingOption": 743,
+									"semanticInformation": "NON_BLANK|Acht|Kandidat|Hilde|1984-01-01",
+									"correctnessInformation": "C|nrw_test"
+								},
+								{
+									"actualVotingOption": "nrw_test|4ea3eb45-4872-3418-81d9-1e928937fc1b",
+									"encodedVotingOption": 757,
+									"semanticInformation": "BLANK|EMPTY_CANDIDATE_POSITION-1",
+									"correctnessInformation": "C|nrw_test"
+								},
+								{
+									"actualVotingOption": "nrw_test|d2838d83-b21e-3758-b3db-428094b8c39f",
+									"encodedVotingOption": 761,
+									"semanticInformation": "BLANK|EMPTY_CANDIDATE_POSITION-2",
+									"correctnessInformation": "C|nrw_test"
+								},
+								{
+									"actualVotingOption": "nrw_test|c2275508-2e7e-33e7-8fb8-4aaa48979288",
+									"encodedVotingOption": 769,
+									"semanticInformation": "BLANK|EMPTY_CANDIDATE_POSITION-3",
+									"correctnessInformation": "C|nrw_test"
+								},
+								{
+									"actualVotingOption": "nrw_test|0e08a1c6-62d3-3e54-8642-6792536ba039",
+									"encodedVotingOption": 811,
+									"semanticInformation": "BLANK|EMPTY_CANDIDATE_POSITION-4",
+									"correctnessInformation": "C|nrw_test"
+								},
+								{
+									"actualVotingOption": "nrw_test|899e6604-8374-370d-961c-e1537d2f7d53",
+									"encodedVotingOption": 823,
+									"semanticInformation": "BLANK|EMPTY_CANDIDATE_POSITION-5",
+									"correctnessInformation": "C|nrw_test"
+								},
+								{
+									"actualVotingOption": "nrw_test|1a6ea144-5fe6-376a-a659-aa8d72bb2ad8",
+									"encodedVotingOption": 839,
+									"semanticInformation": "BLANK|EMPTY_CANDIDATE_POSITION-6",
+									"correctnessInformation": "C|nrw_test"
+								}
+							],
+							"numberOfVotingOptions": 63
+						}
+					}
+				],
+				"startTime": "2023-12-06T07:00:00",
+				"finishTime": "2027-11-25T23:00:00",
+				"maximumNumberOfVotingOptions": 67,
+				"maximumNumberOfSelections": 12,
+				"maximumNumberOfWriteInsPlusOne": 2
+			}
+		},
+		"output": {
+			"d": "Va7k1MIJ62KU7J7HMdoK3U064bnt6NokaR8bf0oYo68="
+		}
+	}
+]
