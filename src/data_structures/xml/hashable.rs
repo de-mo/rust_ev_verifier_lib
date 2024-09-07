@@ -9,7 +9,9 @@ use quick_xml::{
     name::{Namespace, QName, ResolveResult::*},
     reader::NsReader,
 };
-use rust_ev_crypto_primitives::{ByteArray, Decode, HashableMessage, RecursiveHashTrait};
+use rust_ev_crypto_primitives::{
+    ByteArray, Decode, HashError, HashableMessage, RecursiveHashTrait,
+};
 use std::{
     collections::HashMap,
     fs::File,
@@ -55,7 +57,7 @@ impl XMLFileHashable {
 impl RecursiveHashTrait for XMLFileHashable {
     type Error = anyhow::Error;
 
-    fn try_hash(&self) -> Result<ByteArray, Self::Error> {
+    fn recursive_hash(&self) -> Result<ByteArray, Self::Error> {
         let mut reader = NsReader::from_file(&self.file).map_err(|e| {
             anyhow!(e).context(format!(
                 "Error creating xml reader for file {}",
@@ -78,15 +80,30 @@ impl RecursiveHashTrait for XMLFileHashable {
                             &mut reader,
                             &self.exclusion,
                         )
-                        .try_hash();
+                        .recursive_hash();
                     }
                 }
                 Ok((_, Event::Eof)) => panic!("tag {} not found", schema_node.name()),
                 Ok(_) => (),
-                Err(e) => return Err(anyhow!(e).context("Error reader in try_hash")),
+                Err(e) => return Err(anyhow!(e).context("Error reader in recursive_hash")),
             }
             buf.clear();
         }
+    }
+
+    fn recursive_hash_of_length(&self, length: usize) -> Result<ByteArray, Self::Error> {
+        Err(anyhow!(
+            "recursive_hash_of_length is not implemented for xml files"
+        ))
+    }
+
+    fn recursive_hash_to_zq(
+        &self,
+        q: &rust_ev_crypto_primitives::integer::MPInteger,
+    ) -> Result<rust_ev_crypto_primitives::integer::MPInteger, Self::Error> {
+        Err(anyhow!(
+            "recursive_hash_to_zq is not implemented for xml files"
+        ))
     }
 }
 
@@ -118,7 +135,8 @@ impl<'a> NodeHashable<'a> {
                 native_type,
             )?
             .to_hashable()?
-            .hash()),
+            .recursive_hash()
+            .unwrap()),
             Ok(e) => Err(anyhow!("Text expected. {:?} found", e)),
             Err(e) => Err(anyhow!(e).context("Error in hash_native_type getting the type")),
         }
@@ -149,7 +167,7 @@ impl<'a> NodeHashable<'a> {
             self.reader,
             &self.exclusion,
         )
-        .try_hash()
+        .recursive_hash()
     }
 
     fn push_hashed_from_element_node(
@@ -167,14 +185,18 @@ impl<'a> NodeHashable<'a> {
                     .iter()
                     .map(|e| HashableMessage::Hashed(e.clone()))
                     .collect();
-                hashables.push(HashableMessage::Hashed(HashableMessage::from(l).hash()));
+                hashables.push(HashableMessage::Hashed(
+                    HashableMessage::from(l).recursive_hash().unwrap(),
+                ));
             }
         } else {
             let exclusion_local_name = QName(self.exclusion.as_bytes()).local_name();
             let exclusion_name = str::from_utf8(exclusion_local_name.as_ref()).unwrap();
             if exclusion_name != element_node.name() {
                 hashables.push(HashableMessage::Hashed(
-                    hashable_no_value(element_node.name()).hash(),
+                    hashable_no_value(element_node.name())
+                        .recursive_hash()
+                        .unwrap(),
                 ));
             }
         }
@@ -247,7 +269,7 @@ impl<'a> NodeHashable<'a> {
                 }
             }
         }
-        Ok(HashableMessage::from(hashables).hash())
+        Ok(HashableMessage::from(hashables).recursive_hash().unwrap())
     }
 
     /// Hash a complex type
@@ -291,7 +313,7 @@ impl<'a> NodeHashable<'a> {
     }
 
     /// Try to hash the node
-    fn try_hash(&mut self) -> anyhow::Result<ByteArray> {
+    fn recursive_hash(&mut self) -> anyhow::Result<ByteArray> {
         if self.schema_node.node_kind().is_complex_type() {
             self.hash_complex_type()
         } else {
@@ -387,8 +409,9 @@ mod test {
             HashableMessage::from("true"),
             HashableMessage::from(10usize),
         ])
-        .hash();
-        assert_eq!(xml_hashable.try_hash().unwrap(), expected)
+        .recursive_hash()
+        .unwrap();
+        assert_eq!(xml_hashable.recursive_hash().unwrap(), expected)
     }
 
     #[test]
@@ -399,8 +422,9 @@ mod test {
             HashableMessage::from("test"),
             HashableMessage::from("true"),
         ])
-        .hash();
-        assert_eq!(xml_hashable.try_hash().unwrap(), expected)
+        .recursive_hash()
+        .unwrap();
+        assert_eq!(xml_hashable.recursive_hash().unwrap(), expected)
     }
 
     #[test]
@@ -412,8 +436,9 @@ mod test {
             HashableMessage::from("true"),
             HashableMessage::from(10usize),
         ])
-        .hash();
-        assert_eq!(xml_hashable.try_hash().unwrap(), expected)
+        .recursive_hash()
+        .unwrap();
+        assert_eq!(xml_hashable.recursive_hash().unwrap(), expected)
     }
 
     #[test]
@@ -425,8 +450,9 @@ mod test {
             HashableMessage::from("test"),
             HashableMessage::from(10usize),
         ])
-        .hash();
-        assert_eq!(xml_hashable.try_hash().unwrap(), expected)
+        .recursive_hash()
+        .unwrap();
+        assert_eq!(xml_hashable.recursive_hash().unwrap(), expected)
     }
 
     #[test]
@@ -438,8 +464,9 @@ mod test {
             HashableMessage::from("no valueBoolean value"),
             HashableMessage::from(10usize),
         ])
-        .hash();
-        assert_eq!(xml_hashable.try_hash().unwrap(), expected)
+        .recursive_hash()
+        .unwrap();
+        assert_eq!(xml_hashable.recursive_hash().unwrap(), expected)
     }
 
     #[test]
@@ -451,8 +478,9 @@ mod test {
             HashableMessage::from("true"),
             HashableMessage::from(10usize),
         ])
-        .hash();
-        assert_eq!(xml_hashable.try_hash().unwrap(), expected)
+        .recursive_hash()
+        .unwrap();
+        assert_eq!(xml_hashable.recursive_hash().unwrap(), expected)
     }
 
     #[test]
@@ -469,8 +497,9 @@ mod test {
             HashableMessage::from(5usize),
             HashableMessage::from(10usize),
         ])
-        .hash();
-        assert_eq!(xml_hashable.try_hash().unwrap(), expected)
+        .recursive_hash()
+        .unwrap();
+        assert_eq!(xml_hashable.recursive_hash().unwrap(), expected)
     }
 
     #[test]
@@ -493,8 +522,9 @@ mod test {
             ]),
             HashableMessage::from(10usize),
         ])
-        .hash();
-        assert_eq!(xml_hashable.try_hash().unwrap(), expected)
+        .recursive_hash()
+        .unwrap();
+        assert_eq!(xml_hashable.recursive_hash().unwrap(), expected)
     }
 
     #[test]
@@ -511,8 +541,9 @@ mod test {
                 HashableMessage::from("toto"),
             ]),
         ])
-        .hash();
-        assert_eq!(xml_hashable.try_hash().unwrap(), expected)
+        .recursive_hash()
+        .unwrap();
+        assert_eq!(xml_hashable.recursive_hash().unwrap(), expected)
     }
 
     #[test]
@@ -529,8 +560,9 @@ mod test {
                 HashableMessage::from("toto"),
             ]),
         ])
-        .hash();
-        assert_eq!(xml_hashable.try_hash().unwrap(), expected)
+        .recursive_hash()
+        .unwrap();
+        assert_eq!(xml_hashable.recursive_hash().unwrap(), expected)
     }
 
     #[test]
@@ -548,8 +580,9 @@ mod test {
                 HashableMessage::from("toto"),
             ]),
         ])
-        .hash();
-        assert_eq!(xml_hashable.try_hash().unwrap(), expected)
+        .recursive_hash()
+        .unwrap();
+        assert_eq!(xml_hashable.recursive_hash().unwrap(), expected)
     }
 
     #[test]
@@ -567,8 +600,9 @@ mod test {
                 HashableMessage::from("toto"),
             ]),
         ])
-        .hash();
-        assert_eq!(xml_hashable.try_hash().unwrap(), expected)
+        .recursive_hash()
+        .unwrap();
+        assert_eq!(xml_hashable.recursive_hash().unwrap(), expected)
     }
 
     #[test]
@@ -586,8 +620,9 @@ mod test {
                 HashableMessage::from("toto"),
             ]),
         ])
-        .hash();
-        assert_eq!(xml_hashable.try_hash().unwrap(), expected)
+        .recursive_hash()
+        .unwrap();
+        assert_eq!(xml_hashable.recursive_hash().unwrap(), expected)
     }
 
     #[test]
@@ -597,7 +632,7 @@ mod test {
             .join("setup")
             .join("configuration-anonymized.xml");
         let xml_hashable = XMLFileHashable::new_with_schema(&xml, SchemaKind::Config.schema(), "");
-        let hash = xml_hashable.try_hash();
+        let hash = xml_hashable.recursive_hash();
         let is_ok = hash.is_ok();
         if hash.is_err() {
             println!("{:?}", hash.err());
@@ -612,7 +647,7 @@ mod test {
             .join("tally")
             .join("evoting-decrypt_Post_E2E_DEV.xml");
         let xml_hashable = XMLFileHashable::new_with_schema(&xml, SchemaKind::Decrypt.schema(), "");
-        let hash = xml_hashable.try_hash();
+        let hash = xml_hashable.recursive_hash();
         let is_ok = hash.is_ok();
         if hash.is_err() {
             println!("{:?}", hash.err());
@@ -631,7 +666,7 @@ mod test {
             SchemaKind::Ech0222.schema(),
             "eCH-0222:extension",
         );
-        let hash = xml_hashable.try_hash();
+        let hash = xml_hashable.recursive_hash();
         let is_ok = hash.is_ok();
         if hash.is_err() {
             println!("{:?}", hash.err());
@@ -646,7 +681,7 @@ mod test {
             .join("tally")
             .join("eCH-0110_Post_E2E_DEV.xml");
         let xml_hashable = XMLFileHashable::new_with_schema(&xml, SchemaKind::Ech0110.schema(), "");
-        let hash = xml_hashable.try_hash();
+        let hash = xml_hashable.recursive_hash();
         let is_ok = hash.is_ok();
         if hash.is_err() {
             println!("{:?}", hash.err());

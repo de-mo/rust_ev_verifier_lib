@@ -22,7 +22,7 @@ impl VerifierDataDecode for ECH0110 {
 impl<'a> VerifiySignatureTrait<'a> for ECH0110 {
     fn get_hashable(&'a self) -> anyhow::Result<HashableMessage<'a>> {
         let hashable = XMLFileHashable::new(&self.path, &SchemaKind::Ech0110, "eCH-0110:extension");
-        let hash = hashable.try_hash()?;
+        let hash = hashable.recursive_hash()?;
         Ok(HashableMessage::Hashed(hash))
     }
 

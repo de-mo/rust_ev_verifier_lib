@@ -8,6 +8,7 @@ use crate::{config::Config as VerifierConfig, data_structures::verifiy_domain_le
 use anyhow::anyhow;
 use chrono::NaiveDate;
 use chrono::NaiveDateTime;
+use rayon::iter;
 use regex::Regex;
 use rust_ev_crypto_primitives::{
     ByteArray, DomainVerifications, EncryptionParameters, HashableMessage, VerifyDomainTrait,
@@ -205,10 +206,16 @@ fn validate_voting_options_number(p_table: &PrimesMappingTable) -> Vec<anyhow::E
     res
 }
 
-impl VerifyDomainTrait for ElectionEventContextPayload {
-    fn new_domain_verifications() -> DomainVerifications<Self> {
+impl VerifyDomainTrait<anyhow::Error> for ElectionEventContextPayload {
+    fn new_domain_verifications() -> DomainVerifications<Self, anyhow::Error> {
         let mut res = DomainVerifications::default();
-        res.add_verification(|v: &Self| v.encryption_group.verifiy_domain());
+        res.add_verification(|v: &Self| {
+            v.encryption_group
+                .verifiy_domain()
+                .iter()
+                .map(|e| anyhow!(e.to_string()))
+                .collect::<Vec<_>>()
+        });
         res.add_verification(|v: &Self| validate_seed(&v.seed));
         res.add_verification(|v: &Self| validate_small_primes(&v.small_primes));
         res.add_verification_with_vec_of_vec_errors(|v| {
@@ -229,8 +236,8 @@ impl VerifyDomainTrait for ElectionEventContextPayload {
     }
 }
 
-impl VerifyDomainTrait for VerificationCardSetContext {
-    fn new_domain_verifications() -> DomainVerifications<Self> {
+impl VerifyDomainTrait<anyhow::Error> for VerificationCardSetContext {
+    fn new_domain_verifications() -> DomainVerifications<Self, anyhow::Error> {
         let mut res = DomainVerifications::default();
         res.add_verification(|v: &Self| validate_voting_options_number(&v.primes_mapping_table));
         res
@@ -401,8 +408,14 @@ mod test {
         .unwrap();
         let test_cases: Vec<TestDataStructureInner> = serde_json::from_str(&json).unwrap();
         for tc in test_cases.iter() {
-            let hash = HashableMessage::from(&tc.context).hash();
-            assert_eq!(hash.base64_encode(), tc.output.d, "{}", tc.description)
+            let hash = HashableMessage::from(&tc.context).recursive_hash();
+            assert!(hash.is_ok(), "{}", &hash.unwrap_err());
+            assert_eq!(
+                hash.unwrap().base64_encode().unwrap(),
+                tc.output.d,
+                "{}",
+                tc.description
+            )
         }
     }
 }

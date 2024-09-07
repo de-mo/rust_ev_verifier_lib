@@ -26,7 +26,7 @@ pub struct SetupComponentPublicKeysPayload {
 
 implement_trait_verifier_data_json_decode!(SetupComponentPublicKeysPayload);
 
-impl VerifyDomainTrait for SetupComponentPublicKeysPayload {}
+impl VerifyDomainTrait<anyhow::Error> for SetupComponentPublicKeysPayload {}
 
 impl<'a> From<&'a SetupComponentPublicKeysPayload> for HashableMessage<'a> {
     fn from(value: &'a SetupComponentPublicKeysPayload) -> Self {
@@ -106,7 +106,10 @@ mod test {
         },
         *,
     };
-    use crate::{config::test::{signing_keystore, test_datasets_context_path, CONFIG_TEST}, direct_trust::Keystore};
+    use crate::{
+        config::test::{signing_keystore, test_datasets_context_path, CONFIG_TEST},
+        direct_trust::Keystore,
+    };
     use std::fs;
 
     test_data_structure!(
@@ -119,9 +122,11 @@ mod test {
     fn test_sign() {
         let mut payload = get_data_res().unwrap();
         let signature = payload
-            .sign(&Keystore(signing_keystore(payload.get_certificate_authority().unwrap()).unwrap()))
+            .sign(&Keystore(
+                signing_keystore(payload.get_certificate_authority().unwrap()).unwrap(),
+            ))
             .unwrap();
-        payload.signature.signature_contents = ByteArray::base64_encode(&signature);
+        payload.signature.signature_contents = ByteArray::base64_encode(&signature).unwrap();
         let verif_res = payload.verifiy_signature(&CONFIG_TEST.keystore().unwrap());
         assert!(verif_res.is_ok());
         assert!(verif_res.unwrap());

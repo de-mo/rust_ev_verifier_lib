@@ -3,7 +3,7 @@ use super::super::{
     deserialize_seq_string_base64_to_seq_integer, implement_trait_verifier_data_json_decode,
     VerifierDataDecode,
 };
-use crate::direct_trust::{Keystore, CertificateAuthority, VerifiySignatureTrait};
+use crate::direct_trust::{CertificateAuthority, Keystore, VerifiySignatureTrait};
 use anyhow::anyhow;
 use rug::Integer;
 use rust_ev_crypto_primitives::{
@@ -61,9 +61,9 @@ impl ControlComponentCodeSharesPayloadInner {
     }
 }
 
-impl VerifyDomainTrait for ControlComponentCodeSharesPayloadInner {}
+impl VerifyDomainTrait<anyhow::Error> for ControlComponentCodeSharesPayloadInner {}
 
-impl VerifyDomainTrait for ControlComponentCodeSharesPayload {
+impl VerifyDomainTrait<anyhow::Error> for ControlComponentCodeSharesPayload {
     fn verifiy_domain(&self) -> Vec<anyhow::Error> {
         let mut errors: Vec<anyhow::Error> = self
             .0
@@ -160,10 +160,7 @@ impl<'a> VerifiySignatureTrait<'a> for ControlComponentCodeSharesPayload {
         unimplemented!()
     }
 
-    fn verify_signatures(
-        &'a self,
-        keystore: &Keystore,
-    ) -> Vec<anyhow::Result<bool>> {
+    fn verify_signatures(&'a self, keystore: &Keystore) -> Vec<anyhow::Result<bool>> {
         self.0
             .iter()
             .map(|e| e.verifiy_signature(keystore))

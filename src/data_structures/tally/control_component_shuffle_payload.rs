@@ -34,7 +34,7 @@ pub struct VerifiableDecryptions {
     pub decryption_proofs: Vec<DecryptionProof>,
 }
 
-impl VerifyDomainTrait for ControlComponentShufflePayload {}
+impl VerifyDomainTrait<anyhow::Error> for ControlComponentShufflePayload {}
 
 impl<'a> From<&'a ControlComponentShufflePayload> for HashableMessage<'a> {
     fn from(value: &'a ControlComponentShufflePayload) -> Self {

@@ -34,7 +34,7 @@ pub fn xml_read_to_end_into_buffer<R: BufRead>(
         let event = reader
             .read_event_into(junk_buf)
             .map_err(|e| anyhow!(e).context("format!(Error reading event"))?;
-        w.write_event(&event).map_err(|e| {
+        w.write_event(event.clone()).map_err(|e| {
             anyhow!(e).context(format!("Error writing event {:?} in writer", event))
         })?;
 

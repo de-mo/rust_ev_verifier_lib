@@ -27,7 +27,7 @@ pub struct SetupComponentTallyDataPayload {
 
 implement_trait_verifier_data_json_decode!(SetupComponentTallyDataPayload);
 
-impl VerifyDomainTrait for SetupComponentTallyDataPayload {}
+impl VerifyDomainTrait<anyhow::Error> for SetupComponentTallyDataPayload {}
 
 impl<'a> From<&'a SetupComponentTallyDataPayload> for HashableMessage<'a> {
     fn from(value: &'a SetupComponentTallyDataPayload) -> Self {

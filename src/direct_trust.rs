@@ -1,5 +1,7 @@
 use std::{
-    fmt::Display, path::{Path, PathBuf}, slice::Iter
+    fmt::Display,
+    path::{Path, PathBuf},
+    slice::Iter,
 };
 
 use anyhow::{anyhow, Context};
@@ -50,22 +52,26 @@ impl CertificateAuthority {
 
 impl Display for CertificateAuthority {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}",match self {
-            CertificateAuthority::Canton => "canton",
-            CertificateAuthority::SdmConfig => "sdm_config",
-            CertificateAuthority::SdmTally => "sdm_tally",
-            CertificateAuthority::VotingServer => "voting_server",
-            CertificateAuthority::ControlComponent1 => "control_component_1",
-            CertificateAuthority::ControlComponent2 => "control_component_2",
-            CertificateAuthority::ControlComponent3 => "control_component_3",
-            CertificateAuthority::ControlComponent4 => "control_component_4",
-        } )
+        write!(
+            f,
+            "{}",
+            match self {
+                CertificateAuthority::Canton => "canton",
+                CertificateAuthority::SdmConfig => "sdm_config",
+                CertificateAuthority::SdmTally => "sdm_tally",
+                CertificateAuthority::VotingServer => "voting_server",
+                CertificateAuthority::ControlComponent1 => "control_component_1",
+                CertificateAuthority::ControlComponent2 => "control_component_2",
+                CertificateAuthority::ControlComponent3 => "control_component_3",
+                CertificateAuthority::ControlComponent4 => "control_component_4",
+            }
+        )
     }
 }
 
 pub fn find_unique_file_with_extension(path: &Path, extension: &str) -> anyhow::Result<PathBuf> {
     let pathes = std::fs::read_dir(path)
-        .map_err(|e| anyhow!(e))?
+        .context(format!("{}", path.as_os_str().to_str().unwrap()))?
         .filter_map(|res| res.ok())
         .map(|f| f.path())
         .filter_map(|path| {

@@ -49,11 +49,13 @@ impl<'a, D: VerificationDirectoryTrait> ManualVerificationsAllPeriod<'a, D> {
         for ca in CertificateAuthority::iter() {
             fingerprints.insert(
                 ca.to_string(),
-                keystore.0
+                keystore
+                    .0
                     .public_certificate(&ca.to_string())?
                     .signing_certificate()
                     .digest()?
-                    .base16_encode(),
+                    .base16_encode()
+                    .unwrap(),
             );
         }
         Ok(Self {

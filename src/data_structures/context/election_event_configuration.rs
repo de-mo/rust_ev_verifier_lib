@@ -40,7 +40,7 @@ pub struct PartialDelivery {
     pub voter_to: usize,
 }
 
-impl VerifyDomainTrait for ElectionEventConfiguration {}
+impl VerifyDomainTrait<anyhow::Error> for ElectionEventConfiguration {}
 
 impl VerifierDataDecode for ElectionEventConfiguration {
     fn from_xml_file(p: &Path) -> anyhow::Result<Self> {
@@ -50,7 +50,8 @@ impl VerifierDataDecode for ElectionEventConfiguration {
                 p.to_str().unwrap()
             ))
         })?;
-        reader.trim_text(true);
+        let reader_config_mut = reader.config_mut();
+        reader_config_mut.trim_text(true);
 
         let header_tag = "header";
         let signature_tag = "signature";
@@ -122,7 +123,7 @@ impl VerifierDataDecode for ElectionEventConfiguration {
 impl<'a> VerifiySignatureTrait<'a> for ElectionEventConfiguration {
     fn get_hashable(&'a self) -> anyhow::Result<HashableMessage<'a>> {
         let hashable = XMLFileHashable::new(&self.path, &SchemaKind::Config, "signature");
-        let hash = hashable.try_hash()?;
+        let hash = hashable.recursive_hash()?;
         Ok(HashableMessage::Hashed(hash))
     }
 

@@ -23,7 +23,7 @@ pub struct ControlComponentPublicKeysPayload {
 
 implement_trait_verifier_data_json_decode!(ControlComponentPublicKeysPayload);
 
-impl VerifyDomainTrait for ControlComponentPublicKeysPayload {}
+impl VerifyDomainTrait<anyhow::Error> for ControlComponentPublicKeysPayload {}
 
 impl<'a> From<&'a ControlComponentPublicKeysPayload> for HashableMessage<'a> {
     fn from(value: &'a ControlComponentPublicKeysPayload) -> Self {

@@ -13,6 +13,7 @@ mod direct_trust;
 mod file_structure;
 mod resources;
 mod verification;
+use anyhow::Context;
 use application_runner::{
     init_logger, no_action_after_fn, no_action_before_fn, RunParallel, Runner,
 };
@@ -107,10 +108,10 @@ fn execute_verifier() -> anyhow::Result<()> {
         no_action_before_fn,
         no_action_after_fn,
     )
-    .map_err(|e| e.context("Error creating the runner"))?;
+    .context("Error creating the runner")?;
     runner
         .run_all(&metadata)
-        .map_err(|e| e.context("error running the tests"))?;
+        .context("error running the tests")?;
     info!("Verifier finished");
     Ok(())
 }

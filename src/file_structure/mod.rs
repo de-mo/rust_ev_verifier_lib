@@ -6,6 +6,7 @@ pub mod file;
 pub mod file_group;
 pub mod setup_directory;
 pub mod tally_directory;
+pub mod zip;
 
 use crate::{
     data_structures::{
