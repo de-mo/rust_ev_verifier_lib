@@ -19,7 +19,6 @@ use application_runner::{
 };
 use application_runner::{read_and_extract, DatasetType};
 use config::Config as VerifierConfig;
-use file_structure::zip::EncryptedZipReader;
 use lazy_static::lazy_static;
 use log::{error, info, LevelFilter};
 use std::path::Path;
@@ -88,7 +87,7 @@ fn execute_verifications(
     let metadata = VerificationMetaDataList::load(CONFIG.get_verification_list_str()).unwrap();
     let mut runner = Runner::new(
         &sub_command.dir,
-        &period,
+        period,
         &metadata,
         &sub_command.exclude,
         RunParallel,

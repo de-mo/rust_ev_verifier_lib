@@ -128,7 +128,7 @@ impl Config {
     pub fn data_dir_path(&self) -> PathBuf {
         let res = self.root_dir_path().join(Self::temp_dir_name());
         if !res.is_dir() {
-            std::fs::create_dir_all(&res);
+            let _ = std::fs::create_dir_all(&res);
         }
         res
     }
@@ -138,7 +138,7 @@ impl Config {
     pub fn zip_temp_dir_path(&self) -> PathBuf {
         let res = self.data_dir_path().join(ZIP_TEMP_DIR_NAME);
         if !res.is_dir() {
-            std::fs::create_dir_all(&res);
+            let _ = std::fs::create_dir_all(&res);
         }
         res
     }
@@ -151,7 +151,7 @@ impl Config {
             "dataset-{}",
             chrono::Local::now().format("%Y%m%d-%H%M%S")
         ));
-        std::fs::create_dir_all(&res);
+        let _ = std::fs::create_dir_all(&res);
         res
     }
 

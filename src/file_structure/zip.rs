@@ -1,11 +1,9 @@
-use crate::config;
 use anyhow::{anyhow, Context};
 use chrono::prelude::*;
 use rust_ev_crypto_primitives::{Argon2id, ByteArray, Decrypter};
 use std::{
-    ffi::OsString,
     fs::File,
-    io::{BufRead, BufReader, BufWriter, Read, Write},
+    io::{BufReader, Read, Write},
     path::{Path, PathBuf},
 };
 
@@ -114,6 +112,8 @@ impl EncryptedZipReader {
 
 #[cfg(test)]
 mod test {
+    use std::ffi::OsString;
+
     use super::*;
     use crate::config::test::{test_datasets_path, test_temp_dir_path, CONFIG_TEST};
 
@@ -152,7 +152,7 @@ mod test {
         let path = test_datasets_path().join("Dataset-context-NE_20231124_TT05-20240802_1158.zip");
         let subdir_time =
             test_temp_dir_path().join(Local::now().format("%Y%m%d-%H%M%S").to_string());
-        std::fs::create_dir(&subdir_time);
+        let _ = std::fs::create_dir(&subdir_time);
         let target_dir = subdir_time.join("context");
         let mut zip_reader = EncryptedZipReader::new(
             &path,

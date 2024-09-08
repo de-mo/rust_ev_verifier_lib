@@ -13,7 +13,7 @@ rust_ev_crypto_primitives = {path = "../rust_ev_crypto_primitives"}
 [workspace.package]
 authors = ["Denis Morel"]
 edition = "2021"
-rust-version = "1.74"
+rust-version = "1.81"
 repository = "https://github.com/de-mo/rust_verifier"
 
 [package]
