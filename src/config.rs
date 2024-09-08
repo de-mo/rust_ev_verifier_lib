@@ -17,6 +17,8 @@ const BB_DIR_NAME: &str = "ballotBoxes";
 const LOG_DIR_NAME: &str = "log";
 const LOG_FILE_NAME: &str = "log.txt";
 const DIRECT_TRUST_DIR_NAME: &str = "direct-trust";
+const TEMP_DIR_NAME: &str = ".temp";
+const ZIP_TEMP_DIR_NAME: &str = "encrypted_zip";
 
 /// Structuring getting all the configuration information relevant for the
 /// verifier
@@ -111,9 +113,34 @@ impl Config {
         BB_DIR_NAME
     }
 
+    /// The name of the temp directory
+    pub fn temp_dir_name() -> &'static str {
+        TEMP_DIR_NAME
+    }
+
     /// The path to the log file
     pub fn log_file_path(&self) -> PathBuf {
         self.root_dir_path().join(LOG_DIR_NAME).join(LOG_FILE_NAME)
+    }
+
+    /// The path to the dir name
+    /// Create the directory if not exist
+    pub fn temp_dir_path(&self) -> PathBuf {
+        let res = self.root_dir_path().join(Self::temp_dir_name());
+        if !res.is_dir() {
+            std::fs::create_dir_all(&res);
+        }
+        res
+    }
+
+    /// The path to the dir name
+    /// Create the directory if not exist
+    pub fn zip_temp_dir_path(&self) -> PathBuf {
+        let res = self.temp_dir_path().join(ZIP_TEMP_DIR_NAME);
+        if !res.is_dir() {
+            std::fs::create_dir_all(&res);
+        }
+        res
     }
 
     /// The path to the directory where direct trust keystore is stored
@@ -159,6 +186,8 @@ pub(crate) mod test {
     const TALLY_KEYSTORE_FILE_NAME: &str = "local_direct_trust_keystore_sdm_tally.p12";
     const TALLY_KEYSTORE_PASSWORD_FILE_NAME: &str = "local_direct_trust_pw_sdm_tally.txt";
 
+    const TEST_TEMP_DIR_NAME: &str = "test_temp_dir";
+
     lazy_static! {
         pub(crate) static ref CONFIG_TEST: Config = Config::new(".");
     }
@@ -177,6 +206,10 @@ pub(crate) mod test {
 
     pub(crate) fn test_datasets_context_path() -> PathBuf {
         test_datasets_path().join(CONTEXT_DIR_NAME)
+    }
+
+    pub(crate) fn test_temp_dir_path() -> PathBuf {
+        CONFIG_TEST.root_dir_path().join(TEST_TEMP_DIR_NAME)
     }
 
     pub(crate) fn test_all_paths_of_subdir(

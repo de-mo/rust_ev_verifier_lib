@@ -54,3 +54,4 @@ quick-xml = { version = "0.36", features = ["serialize"] }
 structopt = "0.3"
 rug = "1.24"
 regex = "1.10"
+zip-extract = "0.2"
