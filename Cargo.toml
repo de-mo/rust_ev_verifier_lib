@@ -55,3 +55,4 @@ structopt = "0.3"
 rug = "1.24"
 regex = "1.10"
 zip-extract = "0.2"
+strum = {version = "0.26", features = ["derive"]}

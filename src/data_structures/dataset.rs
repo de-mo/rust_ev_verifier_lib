@@ -1,7 +1,9 @@
 //! Module implementing [SetupOrTally]
 
-/// Generic Enum that is a type of setup or tally
-#[derive(Clone)]
+use strum::AsRefStr;
+
+/// Generic Enum that is a type of context, setup or tally
+#[derive(Clone, AsRefStr)]
 pub enum DatasetType<C, S, T> {
     Context(C),
     Setup(S),

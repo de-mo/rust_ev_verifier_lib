@@ -17,8 +17,8 @@ const BB_DIR_NAME: &str = "ballotBoxes";
 const LOG_DIR_NAME: &str = "log";
 const LOG_FILE_NAME: &str = "log.txt";
 const DIRECT_TRUST_DIR_NAME: &str = "direct-trust";
-const TEMP_DIR_NAME: &str = ".temp";
-const ZIP_TEMP_DIR_NAME: &str = "encrypted_zip";
+const DATA_DIR_NAME: &str = "data";
+const ZIP_TEMP_DIR_NAME: &str = "decrypted_zip";
 
 /// Structuring getting all the configuration information relevant for the
 /// verifier
@@ -115,7 +115,7 @@ impl Config {
 
     /// The name of the temp directory
     pub fn temp_dir_name() -> &'static str {
-        TEMP_DIR_NAME
+        DATA_DIR_NAME
     }
 
     /// The path to the log file
@@ -125,7 +125,7 @@ impl Config {
 
     /// The path to the dir name
     /// Create the directory if not exist
-    pub fn temp_dir_path(&self) -> PathBuf {
+    pub fn data_dir_path(&self) -> PathBuf {
         let res = self.root_dir_path().join(Self::temp_dir_name());
         if !res.is_dir() {
             std::fs::create_dir_all(&res);
@@ -136,10 +136,22 @@ impl Config {
     /// The path to the dir name
     /// Create the directory if not exist
     pub fn zip_temp_dir_path(&self) -> PathBuf {
-        let res = self.temp_dir_path().join(ZIP_TEMP_DIR_NAME);
+        let res = self.data_dir_path().join(ZIP_TEMP_DIR_NAME);
         if !res.is_dir() {
             std::fs::create_dir_all(&res);
         }
+        res
+    }
+
+    /// Create a dataset directory and return the value.
+    /// The dataset dir contains the current date time
+    /// Create the directory if not exist
+    pub fn create_dataset_dir_path(&self) -> PathBuf {
+        let res = self.data_dir_path().join(format!(
+            "dataset-{}",
+            chrono::Local::now().format("%Y%m%d-%H%M%S")
+        ));
+        std::fs::create_dir_all(&res);
         res
     }
 

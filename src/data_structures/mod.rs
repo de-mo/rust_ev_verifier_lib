@@ -9,6 +9,8 @@ pub mod setup;
 pub mod tally;
 mod xml;
 
+pub use self::dataset::DatasetType;
+
 use self::{
     context::{
         control_component_public_keys_payload::ControlComponentPublicKeysPayload,
@@ -18,7 +20,6 @@ use self::{
         setup_component_tally_data_payload::SetupComponentTallyDataPayload, VerifierContextData,
         VerifierContextDataType,
     },
-    dataset::DatasetType,
     setup::{
         control_component_code_shares_payload::ControlComponentCodeSharesPayload,
         setup_component_verification_data_payload::SetupComponentVerificationDataPayload,
