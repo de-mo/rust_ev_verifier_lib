@@ -1,7 +1,6 @@
 //! Module implementing common functionalities for all Verifier applications (console and GUI)
 
 mod checks;
-mod dataset;
 mod runner;
 
 use crate::config::Config as VerifierConfig;
@@ -12,7 +11,6 @@ use log4rs::{
     encode::pattern::PatternEncoder,
 };
 
-pub use dataset::{read_and_extract, DatasetType};
 pub use runner::{no_action_after_fn, no_action_before_fn, RunParallel, Runner};
 
 /// Init the logger with or without stdout

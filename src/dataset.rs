@@ -1,11 +1,182 @@
-use anyhow::{anyhow, Context};
+use anyhow::{anyhow, bail, ensure, Context};
 use chrono::prelude::*;
-use rust_ev_crypto_primitives::{Argon2id, ByteArray, Decrypter};
+use enum_kinds::EnumKind;
+use rust_ev_crypto_primitives::{sha256_stream, Argon2id, ByteArray, Decrypter};
 use std::{
     fs::File,
     io::{BufReader, Read, Write},
     path::{Path, PathBuf},
 };
+use strum::AsRefStr;
+
+/// Metadata containing the information of the zip dataset before and after extraction
+#[derive(Debug, Clone)]
+pub struct DatasetMetadata {
+    pub source_path: PathBuf,
+    pub decrypted_zip_path: PathBuf,
+    pub extracted_dir_path: PathBuf,
+    pub fingerprint: ByteArray,
+}
+
+/// Datasettype containing the information about metadata
+#[derive(Debug, Clone, AsRefStr, EnumKind)]
+#[enum_kind(DatasetTypeKind)]
+pub enum DatasetType {
+    Context(DatasetMetadata),
+    Setup(DatasetMetadata),
+    Tally(DatasetMetadata),
+}
+
+impl DatasetMetadata {
+    /// New [DatasetMetadata]
+    pub fn new(
+        source_path: &Path,
+        decrypted_zip_path: &Path,
+        extracted_dir_path: &Path,
+        fingerprint: &ByteArray,
+    ) -> Self {
+        Self {
+            source_path: source_path.to_path_buf(),
+            decrypted_zip_path: decrypted_zip_path.to_path_buf(),
+            extracted_dir_path: extracted_dir_path.to_path_buf(),
+            fingerprint: fingerprint.clone(),
+        }
+    }
+}
+
+impl TryFrom<&str> for DatasetTypeKind {
+    type Error = anyhow::Error;
+
+    fn try_from(value: &str) -> Result<Self, Self::Error> {
+        match value.to_lowercase().as_str() {
+            "context" => Ok(Self::Context),
+            "setup" => Ok(Self::Setup),
+            "tally" => Ok(Self::Tally),
+            _ => bail!("Error matching DatasetTypeKind from str"),
+        }
+    }
+}
+
+impl DatasetType {
+    pub fn metadata(&self) -> &DatasetMetadata {
+        match self {
+            DatasetType::Context(m) => m,
+            DatasetType::Setup(m) => m,
+            DatasetType::Tally(m) => m,
+        }
+    }
+
+    pub fn get_from_context_str_with_inputs(
+        datasettype_str: &str,
+        input: &Path,
+        password: &str,
+        extract_dir: &Path,
+        zip_temp_dir_path: &Path,
+    ) -> anyhow::Result<Self> {
+        match DatasetTypeKind::try_from(datasettype_str)? {
+            DatasetTypeKind::Context => {
+                Self::context(input, password, extract_dir, zip_temp_dir_path)
+            }
+            DatasetTypeKind::Setup => Self::setup(input, password, extract_dir, zip_temp_dir_path),
+            DatasetTypeKind::Tally => Self::tally(input, password, extract_dir, zip_temp_dir_path),
+        }
+    }
+
+    /// Extract the data as context datatype.
+    ///
+    /// Return [DatasetType] with the correct metadata or Error if something goes wrong
+    pub fn context(
+        input: &Path,
+        password: &str,
+        extract_dir: &Path,
+        zip_temp_dir_path: &Path,
+    ) -> anyhow::Result<Self> {
+        Ok(Self::Context(Self::process_dataset_operations(
+            input,
+            password,
+            extract_dir,
+            "context",
+            zip_temp_dir_path,
+        )?))
+    }
+
+    /// Extract the data as setup datatype.
+    ///
+    /// Return [DatasetType] with the correct metadata or Error if something goes wrong
+    pub fn setup(
+        input: &Path,
+        password: &str,
+        extract_dir: &Path,
+        zip_temp_dir_path: &Path,
+    ) -> anyhow::Result<Self> {
+        Ok(Self::Setup(Self::process_dataset_operations(
+            input,
+            password,
+            extract_dir,
+            "setup",
+            zip_temp_dir_path,
+        )?))
+    }
+
+    /// Extract the data as tally datatype.
+    ///
+    /// Return [DatasetType] with the correct metadata or Error if something goes wrong
+    pub fn tally(
+        input: &Path,
+        password: &str,
+        extract_dir: &Path,
+        zip_temp_dir_path: &Path,
+    ) -> anyhow::Result<Self> {
+        Ok(Self::Tally(Self::process_dataset_operations(
+            input,
+            password,
+            extract_dir,
+            "tally",
+            zip_temp_dir_path,
+        )?))
+    }
+
+    fn fingerprint(input: &Path) -> anyhow::Result<ByteArray> {
+        let f =
+            std::fs::File::open(input).context("Opening file for calculation of fingerprint")?;
+        let mut reader = std::io::BufReader::new(f);
+        sha256_stream(&mut reader).context("Calculating fingerprint")
+    }
+
+    fn process_dataset_operations(
+        input: &Path,
+        password: &str,
+        extract_dir: &Path,
+        datasettype_str: &str,
+        zip_temp_dir_path: &Path,
+    ) -> anyhow::Result<DatasetMetadata> {
+        ensure!(input.exists(), "Input file does not exist");
+        ensure!(input.is_file(), "Input is not a file");
+        ensure!(
+            extract_dir.is_dir(),
+            "The directory where the zip should be extracted does not exist"
+        );
+        ensure!(
+            zip_temp_dir_path.is_dir(),
+            "The directory where the zip should be decrypted does not exist"
+        );
+        let fingerprint = Self::fingerprint(input)?;
+        let extract_dir_with_context = extract_dir.join(datasettype_str);
+        let mut reader = EncryptedZipReader::new(
+            input,
+            password,
+            &extract_dir_with_context,
+            zip_temp_dir_path,
+        )?;
+        reader.unzip()?;
+        Ok(DatasetMetadata::new(
+            input,
+            &extract_dir_with_context,
+            &reader.temp_zip,
+            &fingerprint,
+        ))
+    }
+}
 
 const SALT_BYTE_LENGTH: u8 = 16;
 const NONCE_BYTE_LENGTH: u8 = 12;
@@ -102,10 +273,11 @@ impl EncryptedZipReader {
     fn temp_zip_path(source: &Path, temp_zip_dir: &Path) -> PathBuf {
         let mut new_name = source.file_stem().unwrap().to_os_string();
         let now = Local::now().format("%Y%m%d-%H%M%S").to_string();
-        new_name.push("-decrypted-");
-        new_name.push(now);
-        new_name.push(".");
-        new_name.push(source.extension().unwrap());
+        new_name.push(format!(
+            "-decrypted-{}.{}",
+            now,
+            source.extension().unwrap().to_str().unwrap()
+        ));
         temp_zip_dir.join(new_name)
     }
 }

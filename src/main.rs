@@ -9,21 +9,25 @@ mod application_runner;
 mod config;
 mod consts;
 mod data_structures;
+mod dataset;
 mod direct_trust;
 mod file_structure;
 mod resources;
 mod verification;
+
+use anyhow::ensure;
 use anyhow::Context;
 use application_runner::{
     init_logger, no_action_after_fn, no_action_before_fn, RunParallel, Runner,
 };
-use application_runner::{read_and_extract, DatasetType};
 use config::Config as VerifierConfig;
+use dataset::DatasetType;
 use lazy_static::lazy_static;
 use log::{error, info, LevelFilter};
 use std::path::Path;
 use std::path::PathBuf;
 use structopt::StructOpt;
+use verification::meta_data;
 use verification::{meta_data::VerificationMetaDataList, VerificationPeriod};
 
 lazy_static! {
@@ -105,23 +109,28 @@ fn execute_verifications(
 
 /// Execute the verifications, starting the runner
 fn execute_extract(input: &Path, password: &str, dataset_type_str: &str) -> anyhow::Result<()> {
-    let dataset_type = DatasetType::try_from(dataset_type_str)?;
+    ensure!(
+        ["context", "setup", "tally"].contains(&dataset_type_str),
+        "not correct dataset type: only context, setup or tally allowed"
+    );
     let target_dir = CONFIG.create_dataset_dir_path();
     info!(
         "Start extracting file {}",
         input.as_os_str().to_str().unwrap(),
     );
-    let res_dir = read_and_extract(
+    let dataset = DatasetType::get_from_context_str_with_inputs(
+        dataset_type_str,
         input,
         password,
         &target_dir,
-        dataset_type,
         &CONFIG.zip_temp_dir_path(),
     )?;
+    let meta_data = dataset.metadata();
     info!(
-        "Successfully extraction of file {} in directory {}",
+        "Successfully extraction of file {} in directory {}. (Fingerprint: {})",
         input.as_os_str().to_str().unwrap(),
-        res_dir.as_os_str().to_str().unwrap()
+        meta_data.extracted_dir_path.as_os_str().to_str().unwrap(),
+        meta_data.fingerprint,
     );
     Ok(())
 }
