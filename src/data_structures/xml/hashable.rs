@@ -9,6 +9,7 @@ use quick_xml::{
     name::{Namespace, QName, ResolveResult::*},
     reader::NsReader,
 };
+use rust_ev_crypto_primitives::Integer;
 use rust_ev_crypto_primitives::{
     ByteArray, Decode, HashError, HashableMessage, RecursiveHashTrait,
 };
@@ -91,16 +92,13 @@ impl RecursiveHashTrait for XMLFileHashable {
         }
     }
 
-    fn recursive_hash_of_length(&self, length: usize) -> Result<ByteArray, Self::Error> {
+    fn recursive_hash_of_length(&self, _length: usize) -> Result<ByteArray, Self::Error> {
         Err(anyhow!(
             "recursive_hash_of_length is not implemented for xml files"
         ))
     }
 
-    fn recursive_hash_to_zq(
-        &self,
-        q: &rust_ev_crypto_primitives::integer::MPInteger,
-    ) -> Result<rust_ev_crypto_primitives::integer::MPInteger, Self::Error> {
+    fn recursive_hash_to_zq(&self, _q: &Integer) -> Result<Integer, Self::Error> {
         Err(anyhow!(
             "recursive_hash_to_zq is not implemented for xml files"
         ))

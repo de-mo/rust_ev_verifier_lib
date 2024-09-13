@@ -7,7 +7,7 @@ use crate::{
 };
 use anyhow::anyhow;
 use log::debug;
-use rug::Integer;
+use rust_ev_crypto_primitives::Integer;
 use rust_ev_crypto_primitives::{Constants, Operations};
 
 pub(super) fn fn_verification<D: VerificationDirectoryTrait>(

@@ -1,7 +1,7 @@
 //! Type that are used in many structures
 
 use super::{deserialize_seq_string_base64_to_seq_integer, deserialize_string_base64_to_integer};
-use rug::Integer;
+use rust_ev_crypto_primitives::Integer;
 use rust_ev_crypto_primitives::{ByteArray, Decode, EncryptionParameters, HashableMessage};
 use serde::Deserialize;
 

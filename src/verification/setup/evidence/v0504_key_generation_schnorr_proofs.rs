@@ -9,7 +9,7 @@ use crate::{
 use anyhow::anyhow;
 use log::debug;
 use rayon::prelude::*;
-use rug::Integer;
+use rust_ev_crypto_primitives::Integer;
 use rust_ev_crypto_primitives::{verify_schnorr, EncryptionParameters};
 use std::iter::zip;
 

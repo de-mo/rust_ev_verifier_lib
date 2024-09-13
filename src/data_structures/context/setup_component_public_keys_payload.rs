@@ -8,7 +8,7 @@ use super::{
 };
 use crate::direct_trust::{CertificateAuthority, VerifiySignatureTrait};
 use anyhow::anyhow;
-use rug::Integer;
+use rust_ev_crypto_primitives::Integer;
 use rust_ev_crypto_primitives::{
     ByteArray, EncryptionParameters, HashableMessage, VerifyDomainTrait,
 };

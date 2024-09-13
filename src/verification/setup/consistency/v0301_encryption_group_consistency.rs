@@ -157,7 +157,7 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
 
 #[cfg(test)]
 mod test {
-    use rug::Integer;
+    use rust_ev_crypto_primitives::Integer;
 
     use super::*;
     use crate::config::test::{

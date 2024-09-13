@@ -41,7 +41,7 @@ use crate::{
 use anyhow::{anyhow, bail};
 use chrono::NaiveDateTime;
 use roxmltree::Document;
-use rug::Integer;
+use rust_ev_crypto_primitives::Integer;
 use rust_ev_crypto_primitives::{ByteArray, Decode, Hexa};
 use serde::de::{Deserialize, Deserializer, Error};
 use std::path::Path;
