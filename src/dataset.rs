@@ -1,13 +1,40 @@
-use anyhow::{anyhow, ensure, Context};
 use chrono::prelude::*;
 use enum_kinds::EnumKind;
-use rust_ev_crypto_primitives::{sha256_stream, Argon2id, ByteArray, Decrypter};
+use rust_ev_crypto_primitives::{sha256_stream, Argon2id, BasisCryptoError, ByteArray, Decrypter};
 use std::{
     fs::File,
     io::{BufReader, Read, Write},
     path::{Path, PathBuf},
 };
 use strum::{AsRefStr, EnumString};
+use thiserror::Error;
+
+// Enum representing the direct trust errors
+#[derive(Error, Debug)]
+pub enum DatasetError {
+    #[error("IO error {msg} -> caused by: {source}")]
+    IO { msg: String, source: std::io::Error },
+    #[error("Path doesn't exists {0}")]
+    PathNotExist(PathBuf),
+    #[error("Path is not a file {0}")]
+    PathNotFile(PathBuf),
+    #[error("Path is not a directory {0}")]
+    PathIsNotDir(PathBuf),
+    #[error("Crypto error {msg} -> caused by: {source}")]
+    CryptoError {
+        msg: String,
+        source: BasisCryptoError,
+    },
+    #[error("Byte length error {0}")]
+    ByteLengthError(String),
+    #[error("Error Unzipping {file}: {source}")]
+    Unzip {
+        file: PathBuf,
+        source: zip_extract::ZipExtractError,
+    },
+    #[error("Kind {0} delivered. Only context, setup and tally possible")]
+    WrongKindStr(String),
+}
 
 /// Metadata containing the information of the zip dataset before and after extraction
 #[derive(Debug, Clone)]
@@ -59,8 +86,10 @@ impl DatasetType {
         password: &str,
         extract_dir: &Path,
         zip_temp_dir_path: &Path,
-    ) -> anyhow::Result<Self> {
-        match DatasetTypeKind::try_from(datasettype_str)? {
+    ) -> Result<Self, DatasetError> {
+        match DatasetTypeKind::try_from(datasettype_str)
+            .map_err(|_| DatasetError::WrongKindStr(datasettype_str.to_string()))?
+        {
             DatasetTypeKind::Context => {
                 Self::context(input, password, extract_dir, zip_temp_dir_path)
             }
@@ -77,7 +106,7 @@ impl DatasetType {
         password: &str,
         extract_dir: &Path,
         zip_temp_dir_path: &Path,
-    ) -> anyhow::Result<Self> {
+    ) -> Result<Self, DatasetError> {
         Ok(Self::Context(Self::process_dataset_operations(
             input,
             password,
@@ -95,7 +124,7 @@ impl DatasetType {
         password: &str,
         extract_dir: &Path,
         zip_temp_dir_path: &Path,
-    ) -> anyhow::Result<Self> {
+    ) -> Result<Self, DatasetError> {
         Ok(Self::Setup(Self::process_dataset_operations(
             input,
             password,
@@ -113,7 +142,7 @@ impl DatasetType {
         password: &str,
         extract_dir: &Path,
         zip_temp_dir_path: &Path,
-    ) -> anyhow::Result<Self> {
+    ) -> Result<Self, DatasetError> {
         Ok(Self::Tally(Self::process_dataset_operations(
             input,
             password,
@@ -123,11 +152,16 @@ impl DatasetType {
         )?))
     }
 
-    fn fingerprint(input: &Path) -> anyhow::Result<ByteArray> {
-        let f =
-            std::fs::File::open(input).context("Opening file for calculation of fingerprint")?;
+    fn fingerprint(input: &Path) -> Result<ByteArray, DatasetError> {
+        let f = std::fs::File::open(input).map_err(|e| DatasetError::IO {
+            msg: "Opening file for calculation of fingerprint".to_string(),
+            source: e,
+        })?;
         let mut reader = std::io::BufReader::new(f);
-        sha256_stream(&mut reader).context("Calculating fingerprint")
+        sha256_stream(&mut reader).map_err(|e| DatasetError::CryptoError {
+            msg: "Calculating fingerprint".to_string(),
+            source: e,
+        })
     }
 
     fn process_dataset_operations(
@@ -136,17 +170,19 @@ impl DatasetType {
         extract_dir: &Path,
         datasettype_str: &str,
         zip_temp_dir_path: &Path,
-    ) -> anyhow::Result<DatasetMetadata> {
-        ensure!(input.exists(), "Input file does not exist");
-        ensure!(input.is_file(), "Input is not a file");
-        ensure!(
-            extract_dir.is_dir(),
-            "The directory where the zip should be extracted does not exist"
-        );
-        ensure!(
-            zip_temp_dir_path.is_dir(),
-            "The directory where the zip should be decrypted does not exist"
-        );
+    ) -> Result<DatasetMetadata, DatasetError> {
+        if !input.exists() {
+            return Err(DatasetError::PathNotExist(input.to_path_buf()));
+        }
+        if !input.is_file() {
+            return Err(DatasetError::PathNotFile(input.to_path_buf()));
+        }
+        if !extract_dir.is_dir() {
+            return Err(DatasetError::PathIsNotDir(extract_dir.to_path_buf()));
+        }
+        if !zip_temp_dir_path.is_dir() {
+            return Err(DatasetError::PathIsNotDir(zip_temp_dir_path.to_path_buf()));
+        }
         let fingerprint = Self::fingerprint(input)?;
         let extract_dir_with_context = extract_dir.join(datasettype_str);
         let mut reader = EncryptedZipReader::new(
@@ -195,22 +231,32 @@ impl EncryptedZipReader {
         password: &str,
         target_dir: &Path,
         temp_zip_dir: &Path,
-    ) -> anyhow::Result<Self> {
-        let f = File::open(file).context(format!(
-            "File {}",
-            file.file_name().unwrap().to_str().unwrap()
-        ))?;
+    ) -> Result<Self, DatasetError> {
+        let f = File::open(file).map_err(|e| DatasetError::IO {
+            msg: format!("File {}", file.file_name().unwrap().to_str().unwrap()),
+            source: e,
+        })?;
         let mut buf = BufReader::new(f);
         let mut salt_buf: Vec<u8> = vec![0; SALT_BYTE_LENGTH as usize];
         let mut nonce_buf: Vec<u8> = vec![0; NONCE_BYTE_LENGTH as usize];
-        let bytes_red = buf.read(&mut salt_buf).context("Reading salt")?;
+        let bytes_red = buf.read(&mut salt_buf).map_err(|e| DatasetError::IO {
+            msg: "Reading salt".to_string(),
+            source: e,
+        })?;
         if bytes_red != SALT_BYTE_LENGTH as usize {
-            return Err(anyhow!("Number of bytes red not correct"));
+            return Err(DatasetError::ByteLengthError(format!(
+                "size of bytes read {bytes_red} for salt wrong. Expected: {SALT_BYTE_LENGTH}"
+            )));
         }
         let salt = ByteArray::from_bytes(&salt_buf);
-        let bytes_red = buf.read(&mut nonce_buf).context("Reading nonce")?;
+        let bytes_red = buf.read(&mut nonce_buf).map_err(|e| DatasetError::IO {
+            msg: "Reading nonce".to_string(),
+            source: e,
+        })?;
         if bytes_red != NONCE_BYTE_LENGTH as usize {
-            return Err(anyhow!("Number of bytes red not correct"));
+            return Err(DatasetError::ByteLengthError(format!(
+                "size of bytes read {bytes_red} for nonce wrong. Expected: {NONCE_BYTE_LENGTH}"
+            )));
         }
         let nonce = ByteArray::from_bytes(&nonce_buf);
         let derive_key = Argon2id::new_standard()
@@ -218,18 +264,29 @@ impl EncryptedZipReader {
             .unwrap();
         Ok(Self {
             internal_reader: buf,
-            decrypter: Decrypter::new(&nonce, &derive_key).context("Creating decrypter")?,
+            decrypter: Decrypter::new(&nonce, &derive_key).map_err(|e| {
+                DatasetError::CryptoError {
+                    msg: "Creating decrypter".to_string(),
+                    source: e,
+                }
+            })?,
             target_dir: target_dir.to_path_buf(),
             temp_zip: Self::temp_zip_path(file, temp_zip_dir),
         })
     }
 
-    fn decrypt_to_zip(&mut self) -> anyhow::Result<PathBuf> {
-        let mut target = std::fs::File::create(&self.temp_zip).context("Creating Temp Zip")?;
+    fn decrypt_to_zip(&mut self) -> Result<PathBuf, DatasetError> {
+        let mut target = std::fs::File::create(&self.temp_zip).map_err(|e| DatasetError::IO {
+            msg: "Creating Temp Zip".to_string(),
+            source: e,
+        })?;
         let buf = &mut self.internal_reader;
         loop {
             let mut temp_buffer = vec![0; ENCRYPTED_BLOCK_SIZE];
-            let count = buf.read(&mut temp_buffer).context("Reading buffer")?;
+            let count = buf.read(&mut temp_buffer).map_err(|e| DatasetError::IO {
+                msg: "Reading buffer".to_string(),
+                source: e,
+            })?;
             if count == 0 {
                 break;
             }
@@ -237,10 +294,16 @@ impl EncryptedZipReader {
             let plaintext = self
                 .decrypter
                 .decrypt(&ByteArray::from_bytes(&temp_buffer))
-                .context("Decrypting cipher")?;
+                .map_err(|e| DatasetError::CryptoError {
+                    msg: "Decrypting cipher".to_string(),
+                    source: e,
+                })?;
             target
                 .write_all(&plaintext.to_bytes())
-                .context("Writing temp zip")?;
+                .map_err(|e| DatasetError::IO {
+                    msg: "Writing temp zip".to_string(),
+                    source: e,
+                })?;
         }
         Ok(self.temp_zip.to_owned())
     }
@@ -248,12 +311,21 @@ impl EncryptedZipReader {
     /// Decrypt and unzip the source file
     ///
     /// The method return the target directory
-    pub fn unzip(&mut self) -> anyhow::Result<PathBuf> {
+    pub fn unzip(&mut self) -> Result<PathBuf, DatasetError> {
         if !self.temp_zip.exists() {
             self.decrypt_to_zip()?;
         }
-        let f = std::fs::File::open(&self.temp_zip).context("Opening temp zip file")?;
-        zip_extract::extract(&f, &self.target_dir, true).context("Error unzipping")?;
+        let f = std::fs::File::open(&self.temp_zip).map_err(|e| DatasetError::IO {
+            msg: format!(
+                "Opening temp zip file {}",
+                self.temp_zip.file_name().unwrap().to_str().unwrap()
+            ),
+            source: e,
+        })?;
+        zip_extract::extract(&f, &self.target_dir, true).map_err(|e| DatasetError::Unzip {
+            file: self.temp_zip.to_path_buf(),
+            source: e,
+        })?;
         Ok(self.target_dir.to_owned())
     }
 
