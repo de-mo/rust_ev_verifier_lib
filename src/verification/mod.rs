@@ -13,7 +13,6 @@ use crate::{
     config::Config, direct_trust::VerifiySignatureTrait, file_structure::VerificationDirectoryTrait,
 };
 use anyhow::{anyhow, bail, Result};
-use log::debug;
 use std::fmt::Display;
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]

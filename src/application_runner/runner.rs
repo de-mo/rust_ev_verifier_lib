@@ -8,7 +8,7 @@ use crate::{
         meta_data::VerificationMetaDataList, suite::VerificationSuite, VerificationPeriod,
     },
 };
-use log::{info, warn};
+use tracing::{info, warn};
 //use std::future::Future;
 use super::checks::start_check;
 use rayon::prelude::*;

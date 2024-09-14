@@ -9,8 +9,8 @@ use crate::{
     file_structure::{VerificationDirectory, VerificationDirectoryTrait},
 };
 use anyhow::bail;
-use log::{info, warn};
 use std::time::{Duration, SystemTime};
+use tracing::{info, warn};
 
 /// Struct representing a verification
 #[allow(clippy::type_complexity)]
