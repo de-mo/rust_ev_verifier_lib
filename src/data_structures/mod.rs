@@ -9,9 +9,7 @@ pub mod setup;
 pub mod tally;
 mod xml;
 
-pub use self::dataset::DatasetType;
-
-use self::{
+pub use self::{
     context::{
         control_component_public_keys_payload::ControlComponentPublicKeysPayload,
         election_event_configuration::ElectionEventConfiguration,
@@ -20,6 +18,7 @@ use self::{
         setup_component_tally_data_payload::SetupComponentTallyDataPayload, VerifierContextData,
         VerifierContextDataType,
     },
+    dataset::DatasetType,
     setup::{
         control_component_code_shares_payload::ControlComponentCodeSharesPayload,
         setup_component_verification_data_payload::SetupComponentVerificationDataPayload,
@@ -36,15 +35,64 @@ use self::{
 };
 use crate::{
     config::Config as VerifierConfig,
-    file_structure::{file::File, FileReadMode, FileType},
+    file_structure::{FileType, GetFileReadMode, GetFileTypeTrait},
 };
-use anyhow::{anyhow, bail};
 use chrono::NaiveDateTime;
-use roxmltree::Document;
+use quick_xml::{DeError as QuickXmDeError, Error as QuickXmlError};
+use roxmltree::{Document, Error as RoXmlTreeError};
 use rust_ev_crypto_primitives::Integer;
 use rust_ev_crypto_primitives::{ByteArray, Decode, Hexa};
-use serde::de::{Deserialize, Deserializer, Error};
+use serde::de::{Deserialize, Deserializer, Error as SerdeError};
 use std::path::Path;
+use thiserror::Error;
+
+// Enum representing the direct trust errors
+#[derive(Error, Debug)]
+pub enum DataStructureError {
+    #[error("IO error {msg} -> caused by: {source}")]
+    IO { msg: String, source: std::io::Error },
+    /*#[error("Error in file/file groupe {msg} -> caused by: {source}")]
+    FileStructure {
+        msg: String,
+        source: FileStructureError,
+    },*/
+    #[error("Not implemented: {0}")]
+    NotImplemented(String),
+    #[error("Error parsing xml {msg} -> caused by: {source}")]
+    ParseRoXML { msg: String, source: RoXmlTreeError },
+    #[error("Error parsing xml {msg} -> caused by: {source}")]
+    ParseQuickXML { msg: String, source: QuickXmlError },
+    #[error("Error parsing xml {msg} -> caused by: {source}")]
+    ParseQuickXMLDE { msg: String, source: QuickXmDeError },
+    #[error("Error parsing json {msg} -> caused by: {source}")]
+    ParseJSON {
+        msg: String,
+        source: serde_json::Error,
+    },
+    #[error("Data error {0}")]
+    DataError(String),
+    /*
+    #[error("Path doesn't exists {0}")]
+    PathNotExist(PathBuf),
+    #[error("Path is not a file {0}")]
+    PathNotFile(PathBuf),
+    #[error("Path is not a directory {0}")]
+    PathIsNotDir(PathBuf),
+    #[error("Crypto error {msg} -> caused by: {source}")]
+    CryptoError {
+        msg: String,
+        source: BasisCryptoError,
+    },
+    #[error("Byte length error {0}")]
+    ByteLengthError(String),
+    #[error("Error Unzipping {file}: {source}")]
+    Unzip {
+        file: PathBuf,
+        source: zip_extract::ZipExtractError,
+    },
+    #[error("Kind {0} delivered. Only context, setup and tally possible")]
+    WrongKindStr(String), */
+}
 
 /// The type VerifierData implement an option between
 /// [VerifierContextData], [VerifierSetupData] and [VerifierTallyData]
@@ -135,87 +183,44 @@ pub trait VerifierTallyDataTrait {
 
 /// A trait defining the necessary function to decode to the Verifier Data
 pub trait VerifierDataDecode: Sized {
-    /// Decode the data from the file
-    ///
-    /// # Arguments
-    /// * `f`: The [File] to read
-    /// * `t`: The type of the file (json or xml)
-    /// * `mode`: The mode to read the file (memory or streaming)
-    ///
-    /// # Return
-    /// The decoded data or [anyhow::Result] if something wrong
-    fn from_file(f: &File, t: &FileType, mode: &FileReadMode) -> anyhow::Result<Self> {
-        match mode {
-            FileReadMode::Memory => Self::from_file_memory(f, t),
-            FileReadMode::Streaming => Self::from_file_stream(f, t),
-        }
-    }
-
-    /// Decode the data from the file in memory
-    ///
-    /// # Arguments
-    /// * `f`: The [File] to read
-    /// * `t`: The type of the file (json or xml)
-    ///
-    /// # Return
-    /// The decoded data or [anyhow::Result] if something wrong
-    fn from_file_memory(f: &File, t: &FileType) -> anyhow::Result<Self> {
-        let s = f.read_data().map_err(|e| {
-            anyhow!(e).context(format!("Error reading data in file {}", f.to_str()))
-        })?;
-        match t {
-            FileType::Json => Self::from_json(&s),
-            FileType::Xml => {
-                let doc = Document::parse(&s).map_err(|e| {
-                    anyhow!(e).context(format!("Cannot parse content of xml file {}", f.to_str()))
-                })?;
-                Self::from_roxmltree(&doc)
-            }
-        }
-    }
-
-    /// Decode the data from the file streaming
-    ///
-    /// # Arguments
-    /// * `f`: The [File] to read
-    /// * `t`: The type of the file (json or xml)
-    ///
-    /// # Return
-    /// The decoded data or [anyhow::Result] if something wrong
-    fn from_file_stream(f: &File, t: &FileType) -> anyhow::Result<Self> {
-        match t {
-            FileType::Json => {
-                bail!(format!("from_file not implemented for JSON Files"))
-            }
-            FileType::Xml => Self::from_xml_file(&f.get_path()),
-        }
-    }
-
     /// Decode the data from a json string
     ///
     /// # Return
-    /// The decoded data or [anyhow::Result] if something wrong, e.g. if it is not allowed, or if an error
+    /// The decoded data or [DataStructureError] if something wrong, e.g. if it is not allowed, or if an error
     /// occured during the decoding
-    fn from_json(_: &String) -> anyhow::Result<Self> {
-        bail!(format!("from_json not implemented now"))
+    fn decode_json(_: &str) -> Result<Self, DataStructureError> {
+        Err(DataStructureError::NotImplemented(
+            "decode_json".to_string(),
+        ))
     }
 
-    /// Decode the data from a xml [Document] (roxmltreee)
+    /// Decode the data from a xml string
     ///
     /// # Return
-    /// The decoded data or [anyhow::Result] if something wrong, e.g. if it is not allowed, or if an error
+    /// The decoded data or [DataStructureError] if something wrong, e.g. if it is not allowed, or if an error
     /// occured during the decoding
-    fn from_roxmltree<'a>(_: &'a Document<'a>) -> anyhow::Result<Self> {
-        bail!(format!("from_roxmltree not implemented now"))
+    fn decode_xml<'a>(_: &'a Document<'a>) -> Result<Self, DataStructureError> {
+        Err(DataStructureError::NotImplemented("decode_xml".to_string()))
     }
 
-    /// Decode the data from a xml xml file
+    /// Prepare the streamin of data from a json file
     ///
     /// # Return
-    /// The decoded data or [anyhow::Result] if something wrong, e.g. if it is not allowed, or if an error
+    /// The decoded data or [DataStructureError] if something wrong, e.g. if it is not allowed, or if an error
     /// occured during the decoding
-    fn from_xml_file(_: &Path) -> anyhow::Result<Self> {
-        bail!(format!("from_xml_file not implemented now"))
+    fn stream_json(_: &Path) -> Result<Self, DataStructureError> {
+        Err(DataStructureError::NotImplemented(
+            "stream_json".to_string(),
+        ))
+    }
+
+    /// Prepare the streamin of data from a xml file
+    ///
+    /// # Return
+    /// The decoded data or [DataStructureError] if something wrong, e.g. if it is not allowed, or if an error
+    /// occured during the decoding
+    fn stream_xml(_: &Path) -> Result<Self, DataStructureError> {
+        Err(DataStructureError::NotImplemented("stream_xml".to_string()))
     }
 }
 
@@ -223,14 +228,36 @@ pub trait VerifierDataDecode: Sized {
 macro_rules! implement_trait_verifier_data_json_decode {
     ($s: ty) => {
         impl VerifierDataDecode for $s {
-            fn from_json(s: &String) -> anyhow::Result<Self> {
-                serde_json::from_str(s)
-                    .map_err(|e| anyhow!(e).context(format!("Cannot deserialize json")))
+            fn decode_json(s: &str) -> Result<Self, DataStructureError> {
+                serde_json::from_str(s).map_err(|e| DataStructureError::ParseJSON {
+                    msg: format!("Cannot deserialize json"),
+                    source: e,
+                })
             }
         }
     };
 }
 use implement_trait_verifier_data_json_decode;
+
+impl GetFileTypeTrait for VerifierDataType {
+    fn get_file_type(&self) -> FileType {
+        match self {
+            DatasetType::Context(t) => t.get_file_type(),
+            DatasetType::Setup(t) => t.get_file_type(),
+            DatasetType::Tally(t) => t.get_file_type(),
+        }
+    }
+}
+
+impl GetFileReadMode for VerifierDataType {
+    fn get_file_read_mode(&self) -> crate::file_structure::FileReadMode {
+        match self {
+            DatasetType::Context(t) => t.get_file_read_mode(),
+            DatasetType::Setup(t) => t.get_file_read_mode(),
+            DatasetType::Tally(t) => t.get_file_read_mode(),
+        }
+    }
+}
 
 impl VerifierContextDataTrait for VerifierData {
     fn setup_component_public_keys_payload(&self) -> Option<&SetupComponentPublicKeysPayload> {
@@ -332,26 +359,6 @@ impl VerifierTallyDataTrait for VerifierData {
     }
 }
 
-impl VerifierDataType {
-    /// Read VerifierDataType from a String as JSON
-    pub fn verifier_data_from_file(&self, f: &File) -> anyhow::Result<VerifierData> {
-        match self {
-            VerifierDataType::Context(t) => t
-                .verifier_data_from_file(f)
-                .map_err(|e| e.context("in verifier_data_from_file"))
-                .map(VerifierData::Context),
-            VerifierDataType::Setup(t) => t
-                .verifier_data_from_file(f)
-                .map_err(|e| e.context("in verifier_data_from_file"))
-                .map(VerifierData::Setup),
-            VerifierDataType::Tally(t) => t
-                .verifier_data_from_file(f)
-                .map_err(|e| e.context("in verifier_data_from_file"))
-                .map(VerifierData::Tally),
-        }
-    }
-}
-
 #[allow(dead_code)]
 fn deserialize_string_hex_to_integer<'de, D>(deserializer: D) -> Result<Integer, D::Error>
 where
@@ -359,7 +366,7 @@ where
 {
     let buf = String::deserialize(deserializer)?;
 
-    Integer::from_hexa_string(&buf).map_err(|e| Error::custom(e.to_string()))
+    Integer::from_hexa_string(&buf).map_err(|e| SerdeError::custom(e.to_string()))
 }
 
 fn deserialize_string_base64_to_integer<'de, D>(deserializer: D) -> Result<Integer, D::Error>
@@ -369,7 +376,7 @@ where
     let buf = String::deserialize(deserializer)?;
 
     ByteArray::base64_decode(&buf)
-        .map_err(|e| Error::custom(e.to_string()))
+        .map_err(|e| SerdeError::custom(e.to_string()))
         .map(|e| e.into_mp_integer())
 }
 
@@ -380,7 +387,7 @@ where
     let buf = String::deserialize(deserializer)?;
 
     NaiveDateTime::parse_from_str(&buf, "%Y-%m-%dT%H:%M:%S")
-        .map_err(|e| Error::custom(e.to_string()))
+        .map_err(|e| SerdeError::custom(e.to_string()))
 }
 
 #[allow(dead_code)]
@@ -553,14 +560,14 @@ where
 /// Verification of the length of unique ID according the expected length l_id
 ///
 /// `name` is used for the error message
-fn verifiy_domain_length_unique_id(uuid: &str, name: &str) -> Vec<anyhow::Error> {
+fn verifiy_domain_length_unique_id(uuid: &str, name: &str) -> Vec<String> {
     if uuid.len() != VerifierConfig::l_id() {
-        return vec![anyhow!(format!(
+        return vec![format!(
             "The  length of {} {} must be {}",
             uuid,
             name,
             VerifierConfig::l_id()
-        ))];
+        )];
     };
     vec![]
 }
@@ -579,18 +586,18 @@ pub(super) mod test {
     /// All the four macros have to be imported
     macro_rules! test_data_structure {
         ($t:ident, $f: literal, $fn_path: ident, $ignored: literal) => {
-            fn get_data_res() -> anyhow::Result<$t> {
+            fn get_data_res() -> Result<$t, DataStructureError> {
                 let json = fs::read_to_string($fn_path().join($f)).unwrap();
-                $t::from_json(&json)
+                $t::decode_json(&json)
             }
             test_data_structure_read_data_set!();
             test_data_structure_verify_signature!($ignored);
             test_data_structure_verify_domain!();
         };
         ($t:ident, $f: literal, $fn_path: ident) => {
-            fn get_data_res() -> anyhow::Result<$t> {
+            fn get_data_res() -> Result<$t, DataStructureError> {
                 let json = fs::read_to_string($fn_path().join($f)).unwrap();
-                $t::from_json(&json)
+                $t::decode_json(&json)
             }
             test_data_structure_read_data_set!();
             test_data_structure_verify_signature!();

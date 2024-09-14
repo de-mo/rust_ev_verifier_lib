@@ -154,7 +154,7 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
             match vcs_dir
                 .control_component_code_shares_payload_group()
                 .get_file_with_number(chunk_id)
-                .get_data()
+                .get_verifier_data()
             {
                 Ok(s) => {
                     let cc_shares = s.control_component_code_shares_payload().unwrap();

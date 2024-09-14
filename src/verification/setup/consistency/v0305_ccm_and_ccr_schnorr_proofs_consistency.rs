@@ -19,14 +19,14 @@ fn validate_ccm_and_ccr_schorr_proofs<S: ContextDirectoryTrait>(
         .control_component_public_keys_payload_group()
         .get_file_with_number(node_id);
     let cc_pk = match f
-        .get_data()
+        .get_verifier_data()
         .map(|d| Box::new(d.control_component_public_keys_payload().unwrap().clone()))
     {
         Ok(d) => d.control_component_public_keys,
         Err(e) => {
             result.push(
                 VerificationEvent::new_error(&e)
-                    .add_context(format!("Cannot read data from file {}", f.to_str())),
+                    .add_context(format!("Cannot read data from file {}", f.path_to_str())),
             );
             return;
         }

@@ -7,22 +7,65 @@ pub mod file_group;
 pub mod setup_directory;
 pub mod tally_directory;
 
-use crate::{
-    data_structures::{
-        context::VerifierContextDataType, setup::VerifierSetupDataType,
-        tally::VerifierTallyDataType, VerifierDataType,
-    },
-    verification::VerificationPeriod,
-};
-use setup_directory::SetupDirectory;
-use std::path::Path;
-use tally_directory::TallyDirectory;
-
 use self::{
     context_directory::{ContextDirectory, ContextDirectoryTrait},
     setup_directory::SetupDirectoryTrait,
     tally_directory::TallyDirectoryTrait,
 };
+use crate::{
+    data_structures::{
+        context::VerifierContextDataType, setup::VerifierSetupDataType,
+        tally::VerifierTallyDataType, DataStructureError, VerifierDataType,
+    },
+    verification::VerificationPeriod,
+};
+use roxmltree::Error as RoXmlTreeError;
+use setup_directory::SetupDirectory;
+use std::path::{Path, PathBuf};
+use tally_directory::TallyDirectory;
+use thiserror::Error;
+
+// Enum representing the direct trust errors
+#[derive(Error, Debug)]
+pub enum FileStructureError {
+    #[error("IO error for {path} -> caused by: {source}")]
+    IO {
+        path: PathBuf,
+        source: std::io::Error,
+    },
+    #[error("Path is not a file {0}")]
+    PathNotFile(PathBuf),
+    #[error("Error parsing xml {msg} -> caused by: {source}")]
+    ParseRoXML { msg: String, source: RoXmlTreeError },
+    #[error("Any error {msg} -> caused by: {source}")]
+    Any { msg: String, source: anyhow::Error },
+    #[error("Mock error: {0}")]
+    Mock(String),
+    #[error("Error reading data structure {path} -> caudes by: {source}")]
+    ReadDataStructure {
+        path: PathBuf,
+        source: DataStructureError,
+    },
+    /*
+    #[error("Path doesn't exists {0}")]
+    PathNotExist(PathBuf),
+    #[error("Path is not a directory {0}")]
+    PathIsNotDir(PathBuf),
+    #[error("Crypto error {msg} -> caused by: {source}")]
+    CryptoError {
+        msg: String,
+        source: BasisCryptoError,
+    },
+    #[error("Byte length error {0}")]
+    ByteLengthError(String),
+    #[error("Error Unzipping {file}: {source}")]
+    Unzip {
+        file: PathBuf,
+        source: zip_extract::ZipExtractError,
+    },
+    #[error("Kind {0} delivered. Only context, setup and tally possible")]
+    WrongKindStr(String), */
+}
 
 #[derive(Clone)]
 /// Type represending a VerificationDirectory (subdirectory context and setup or tally)
@@ -42,6 +85,16 @@ pub enum FileType {
 pub enum FileReadMode {
     Memory,
     Streaming,
+}
+
+pub trait GetFileTypeTrait {
+    /// Get [FileType]
+    fn get_file_type(&self) -> FileType;
+}
+
+pub trait GetFileReadMode {
+    /// Get [FileReadMode]
+    fn get_file_read_mode(&self) -> FileReadMode;
 }
 
 /// Trait defining functions to get the filename

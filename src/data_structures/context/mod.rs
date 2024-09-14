@@ -13,8 +13,10 @@ use self::{
     setup_component_public_keys_payload::SetupComponentPublicKeysPayload,
     setup_component_tally_data_payload::SetupComponentTallyDataPayload,
 };
-use super::{VerifierContextDataTrait, VerifierDataDecode};
-use crate::file_structure::{file::File, FileReadMode, FileType};
+use super::{DataStructureError, VerifierContextDataTrait, VerifierDataDecode};
+use crate::file_structure::{
+    file::File, FileReadMode, FileType, GetFileReadMode, GetFileTypeTrait,
+};
 use enum_kinds::EnumKind;
 
 /// Types of the context directory
@@ -29,20 +31,8 @@ pub enum VerifierContextData {
     ElectionEventConfiguration(ElectionEventConfiguration),
 }
 
-impl VerifierContextDataType {
-    /// Get the type of the file for the [VerifierContextData]
-    pub fn get_file_type(&self) -> FileType {
-        match self {
-            Self::ElectionEventContextPayload => FileType::Json,
-            Self::SetupComponentPublicKeysPayload => FileType::Json,
-            Self::ControlComponentPublicKeysPayload => FileType::Json,
-            Self::SetupComponentTallyDataPayload => FileType::Json,
-            Self::ElectionEventConfiguration => FileType::Xml,
-        }
-    }
-
-    /// Get the read mode of the file for the [VerifierContextData]
-    pub fn get_file_read_mode(&self) -> FileReadMode {
+impl GetFileReadMode for VerifierContextDataType {
+    fn get_file_read_mode(&self) -> FileReadMode {
         match self {
             Self::ElectionEventContextPayload => FileReadMode::Memory,
             Self::SetupComponentPublicKeysPayload => FileReadMode::Memory,
@@ -51,11 +41,34 @@ impl VerifierContextDataType {
             Self::ElectionEventConfiguration => FileReadMode::Streaming,
         }
     }
+}
+
+impl GetFileTypeTrait for VerifierContextDataType {
+    fn get_file_type(&self) -> FileType {
+        match self {
+            Self::ElectionEventContextPayload => FileType::Json,
+            Self::SetupComponentPublicKeysPayload => FileType::Json,
+            Self::ControlComponentPublicKeysPayload => FileType::Json,
+            Self::SetupComponentTallyDataPayload => FileType::Json,
+            Self::ElectionEventConfiguration => FileType::Xml,
+        }
+    }
+}
+
+/*
+impl VerifierContextDataType {
+    /// Get the type of the file for the [VerifierContextData]
+
+    /// Get the read mode of the file for the [VerifierContextData]
+
 
     /// Read from String as json or xml
     ///
     /// All the types have to oimplement the trait [VerifierDataDecode]
-    pub fn verifier_data_from_file(&self, f: &File) -> anyhow::Result<VerifierContextData> {
+    pub fn verifier_data_from_file(
+        &self,
+        f: &File,
+    ) -> Result<VerifierContextData, DataStructureError> {
         match self {
             VerifierContextDataType::ElectionEventContextPayload => {
                 ElectionEventContextPayload::from_file(
@@ -99,7 +112,7 @@ impl VerifierContextDataType {
             }
         }
     }
-}
+} */
 
 impl VerifierContextDataTrait for VerifierContextData {
     fn setup_component_public_keys_payload(&self) -> Option<&SetupComponentPublicKeysPayload> {

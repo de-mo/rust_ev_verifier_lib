@@ -1,5 +1,5 @@
 //! Trait implementing group of files with the same structure (in particular for the files from the control components)
-use super::{file::File, GetFileNameTrait};
+use super::{file::File, FileStructureError, GetFileNameTrait};
 use crate::data_structures::VerifierDataType;
 use std::{
     fs,
@@ -124,12 +124,15 @@ impl<T> FileGroupIter<T> {
 /// ```
 macro_rules! impl_iterator_over_data_payload {
     ($p: ty, $fct: ident, $pread: ident, $preaditer: ident) => {
-        type $pread = anyhow::Result<Box<$p>>;
+        type $pread = Result<Box<$p>, FileStructureError>;
         type $preaditer = FileGroupIter<$pread>;
         impl FileGroupIterTrait<$pread> for $preaditer {
             fn current_elt(&self) -> Option<$pread> {
                 match self.current_file() {
-                    Some(f) => Some(f.get_data().map(|d| Box::new(d.$fct().unwrap().clone()))),
+                    Some(f) => Some(
+                        f.get_verifier_data()
+                            .map(|d| Box::new(d.$fct().unwrap().clone())),
+                    ),
                     None => None,
                 }
             }
@@ -214,7 +217,7 @@ impl FileGroup {
     /// Get the paths of the files
     #[allow(dead_code)]
     pub fn get_paths(&self) -> Vec<PathBuf> {
-        self.iter().map(|(_, f)| f.get_path()).collect()
+        self.iter().map(|(_, f)| f.path()).collect()
     }
 
     /// Get all the valid numbers of the files
@@ -252,7 +255,7 @@ mod test {
         assert_eq!(fg.get_numbers(), &[1, 2, 3, 4]);
         for (i, f) in fg.iter() {
             let name = format!("controlComponentPublicKeysPayload.{}.json", i);
-            assert_eq!(f.get_path(), location.join(name));
+            assert_eq!(f.path(), location.join(name));
         }
     }
 
@@ -265,7 +268,7 @@ mod test {
         );
         let f = fg.get_file_with_number(1);
         assert_eq!(
-            f.get_path(),
+            f.path(),
             location.join("controlComponentPublicKeysPayload.1.json")
         );
     }
@@ -317,7 +320,7 @@ pub mod mock {
     /// ```
     macro_rules! impl_iterator_over_data_payload_mock {
         ($p: ty, $pread: ident, $preaditer: ident,$mockpreaditer: ident) => {
-            type $pread = anyhow::Result<Box<$p>>;
+            type $pread = Result<Box<$p>, FileStructureError>;
             type $mockpreaditer = MockFileGroupIter<$pread, $preaditer>;
             impl FileGroupIterTrait<$pread> for $mockpreaditer {
                 fn current_elt(&self) -> Option<$pread> {
@@ -325,11 +328,11 @@ pub mod mock {
                         Some(i) => match self.mocked_data().get(i) {
                             Some(data) => match data {
                                 Ok(d) => Some(Ok(d.clone().to_owned())),
-                                Err(e) => Some(Err(anyhow!(format!("{}", e)))),
+                                Err(e) => Some(Err(FileStructureError::Mock(e.to_string()))),
                             },
                             None => match self.orig().current_elt().unwrap() {
                                 Ok(d) => Some(Ok((d.clone().to_owned()))),
-                                Err(e) => Some(Err(anyhow!(e))),
+                                Err(e) => Some(Err(FileStructureError::Mock(e.to_string()))),
                             },
                         },
                         None => None,
@@ -437,7 +440,7 @@ pub mod mock {
                         i.to_owned(),
                         match elt {
                             Ok(d) => Ok(d.clone().to_owned()),
-                            Err(e) => Err(anyhow!(format!("{}", e))),
+                            Err(e) => Err(FileStructureError::Mock(e.to_string())),
                         },
                     );
                 }
@@ -460,7 +463,7 @@ pub mod mock {
                     index,
                     match data {
                         Ok(d) => Ok(Box::new(d.clone().to_owned())),
-                        Err(e) => Err(anyhow!(format!("{}", e))),
+                        Err(e) => Err(FileStructureError::Mock(e.to_string())),
                     },
                 );
             }

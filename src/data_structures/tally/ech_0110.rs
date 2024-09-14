@@ -1,6 +1,6 @@
 use super::super::{
     xml::{hashable::XMLFileHashable, SchemaKind},
-    VerifierDataDecode,
+    DataStructureError, VerifierDataDecode,
 };
 use crate::direct_trust::{CertificateAuthority, VerifiySignatureTrait};
 use rust_ev_crypto_primitives::{ByteArray, HashableMessage, RecursiveHashTrait};
@@ -12,7 +12,7 @@ pub struct ECH0110 {
 }
 
 impl VerifierDataDecode for ECH0110 {
-    fn from_xml_file(p: &Path) -> anyhow::Result<Self> {
+    fn stream_xml(p: &Path) -> Result<Self, DataStructureError> {
         Ok(ECH0110 {
             path: p.to_path_buf(),
         })
@@ -48,8 +48,8 @@ mod test {
     fn read_data_set() {
         let path = test_datasets_tally_path()
             .join("tally")
-            .join("eCH-0110_Post_E2E_DEV.xml");
-        let ech_0110 = ECH0110::from_xml_file(&path);
+            .join("eCH-0110_v4-0_NE_20231124_TT05.xml");
+        let ech_0110 = ECH0110::stream_xml(&path);
         assert!(ech_0110.is_ok())
     }
 }

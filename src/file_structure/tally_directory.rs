@@ -4,7 +4,7 @@ use super::{
         add_type_for_file_group_iter_trait, impl_iterator_over_data_payload, FileGroup,
         FileGroupIter, FileGroupIterTrait,
     },
-    CompletnessTestTrait,
+    CompletnessTestTrait, FileStructureError,
 };
 use crate::{
     config::Config,
@@ -19,6 +19,7 @@ use crate::{
         VerifierDataType, VerifierTallyDataTrait,
     },
 };
+use anyhow::{anyhow, Context};
 use std::{
     fs,
     path::{Path, PathBuf},
@@ -168,14 +169,14 @@ impl BBDirectoryTrait for BBDirectory {
     }
     fn tally_component_votes_payload(&self) -> anyhow::Result<Box<TallyComponentVotesPayload>> {
         self.tally_component_votes_payload_file
-            .get_data()
-            .map_err(|e| e.context("in tally_component_votes_payload"))
+            .get_verifier_data()
+            .map_err(|e| anyhow!(e).context("in tally_component_votes_payload"))
             .map(|d| Box::new(d.tally_component_votes_payload().unwrap().clone()))
     }
     fn tally_component_shuffle_payload(&self) -> anyhow::Result<Box<TallyComponentShufflePayload>> {
         self.tally_component_shuffle_payload_file
-            .get_data()
-            .map_err(|e| e.context("in tally_component_shuffle_payload"))
+            .get_verifier_data()
+            .map_err(|e| anyhow!(e).context("in tally_component_shuffle_payload"))
             .map(|d| Box::new(d.tally_component_shuffle_payload().unwrap().clone()))
     }
 

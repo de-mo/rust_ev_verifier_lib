@@ -1,6 +1,6 @@
 use super::super::{
     xml::{hashable::XMLFileHashable, SchemaKind},
-    VerifierDataDecode,
+    DataStructureError, VerifierDataDecode,
 };
 use crate::direct_trust::{CertificateAuthority, VerifiySignatureTrait};
 use rust_ev_crypto_primitives::{ByteArray, HashableMessage, RecursiveHashTrait};
@@ -12,7 +12,7 @@ pub struct EVotingDecrypt {
 }
 
 impl VerifierDataDecode for EVotingDecrypt {
-    fn from_xml_file(p: &Path) -> anyhow::Result<Self> {
+    fn stream_xml(p: &Path) -> Result<Self, DataStructureError> {
         Ok(EVotingDecrypt {
             path: p.to_path_buf(),
         })
@@ -48,8 +48,8 @@ mod test {
     fn read_data_set() {
         let path = test_datasets_tally_path()
             .join("tally")
-            .join("evoting-decrypt_Post_E2E_DEV.xml");
-        let decrypt = EVotingDecrypt::from_xml_file(&path);
+            .join("evoting-decrypt_NE_20231124_TT05.xml");
+        let decrypt = EVotingDecrypt::stream_xml(&path);
         assert!(decrypt.is_ok())
     }
 }

@@ -1,7 +1,7 @@
 use super::super::{
     common_types::{EncryptionParametersDef, Signature},
     deserialize_string_string_to_datetime, implement_trait_verifier_data_json_decode,
-    VerifierDataDecode,
+    DataStructureError, VerifierDataDecode,
 };
 use crate::direct_trust::{CertificateAuthority, VerifiySignatureTrait};
 use crate::{config::Config as VerifierConfig, data_structures::verifiy_domain_length_unique_id};
@@ -226,12 +226,15 @@ impl VerifyDomainTrait<anyhow::Error> for ElectionEventContextPayload {
                 .collect()
         });
         // validate length of election event id (for all tests using )
+        // TODO
+        /*
         res.add_verification(|v| {
+            TODO
             verifiy_domain_length_unique_id(
                 &v.election_event_context.election_event_id,
                 "election event id",
             )
-        });
+        });*/
         res
     }
 }

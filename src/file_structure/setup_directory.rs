@@ -5,7 +5,7 @@ use super::{
         add_type_for_file_group_iter_trait, impl_iterator_over_data_payload, FileGroup,
         FileGroupIter, FileGroupIterTrait,
     },
-    CompletnessTestTrait,
+    CompletnessTestTrait, FileStructureError,
 };
 use crate::{
     config::Config,

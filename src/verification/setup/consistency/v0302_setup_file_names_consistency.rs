@@ -10,7 +10,7 @@ fn test_file_exists(file: &File, result: &mut VerificationResult) {
     if !file.exists() {
         result.push(VerificationEvent::new_failure(&format!(
             "File {} does not exist",
-            file.to_str()
+            file.path_to_str()
         )))
     }
 }

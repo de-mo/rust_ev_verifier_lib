@@ -2,7 +2,7 @@ use super::{
     super::{
         common_types::{EncryptionParametersDef, ProofUnderline, Signature},
         deserialize_seq_string_base64_to_seq_integer, implement_trait_verifier_data_json_decode,
-        VerifierDataDecode,
+        DataStructureError, VerifierDataDecode,
     },
     control_component_public_keys_payload::ControlComponentPublicKeys,
 };

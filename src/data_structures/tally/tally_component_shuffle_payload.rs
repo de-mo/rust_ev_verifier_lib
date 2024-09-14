@@ -1,7 +1,7 @@
 use super::super::{
     common_types::{EncryptionParametersDef, ExponentiatedEncryptedElement, Signature},
     deserialize_seq_string_base64_to_seq_integer, deserialize_string_base64_to_integer,
-    implement_trait_verifier_data_json_decode, VerifierDataDecode,
+    implement_trait_verifier_data_json_decode, DataStructureError, VerifierDataDecode,
 };
 use crate::{
     data_structures::common_types::DecryptionProof,

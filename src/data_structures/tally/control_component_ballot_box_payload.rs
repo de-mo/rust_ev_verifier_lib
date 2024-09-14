@@ -1,6 +1,6 @@
 use super::super::{
     common_types::{EncryptionParametersDef, ExponentiatedEncryptedElement, Signature},
-    implement_trait_verifier_data_json_decode, VerifierDataDecode,
+    implement_trait_verifier_data_json_decode, DataStructureError, VerifierDataDecode,
 };
 use crate::{
     data_structures::common_types::{DecryptionProof, Proof},
@@ -136,7 +136,7 @@ mod test {
             test_ballot_box_empty_path().join("controlComponentBallotBoxPayload_4.json"),
         )
         .unwrap();
-        let data = ControlComponentBallotBoxPayload::from_json(&json).unwrap();
+        let data = ControlComponentBallotBoxPayload::decode_json(&json).unwrap();
         let ks = CONFIG_TEST.keystore().unwrap();
         let sign_validate_res = data.verify_signatures(&ks);
         for r in sign_validate_res {

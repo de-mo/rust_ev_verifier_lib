@@ -1,6 +1,6 @@
 use super::super::{
     common_types::{EncryptionParametersDef, ExponentiatedEncryptedElement, Signature},
-    implement_trait_verifier_data_json_decode, VerifierDataDecode,
+    implement_trait_verifier_data_json_decode, VerifierDataDecode,DataStructureError, 
 };
 use super::tally_component_shuffle_payload::VerifiableShuffle;
 use crate::{

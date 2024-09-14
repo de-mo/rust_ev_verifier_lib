@@ -7,8 +7,10 @@ use self::{
     control_component_code_shares_payload::ControlComponentCodeSharesPayload,
     setup_component_verification_data_payload::SetupComponentVerificationDataPayload,
 };
-use super::{VerifierDataDecode, VerifierSetupDataTrait};
-use crate::file_structure::{file::File, FileReadMode, FileType};
+use super::{DataStructureError, VerifierDataDecode, VerifierSetupDataTrait};
+use crate::file_structure::{
+    file::File, FileReadMode, FileType, GetFileReadMode, GetFileTypeTrait,
+};
 use enum_kinds::EnumKind;
 
 /// Types of the setup directory
@@ -20,27 +22,39 @@ pub enum VerifierSetupData {
     ControlComponentCodeSharesPayload(ControlComponentCodeSharesPayload),
 }
 
-impl VerifierSetupDataType {
-    /// Get the type of the file for the [VerifierSetupData]
-    pub fn get_file_type(&self) -> FileType {
-        match self {
-            Self::SetupComponentVerificationDataPayload => FileType::Json,
-            Self::ControlComponentCodeSharesPayload => FileType::Json,
-        }
-    }
-
-    /// Get the read mode of the file for the [VerifierSetupData]
-    pub fn get_file_read_mode(&self) -> FileReadMode {
+impl GetFileReadMode for VerifierSetupDataType {
+    fn get_file_read_mode(&self) -> FileReadMode {
         match self {
             Self::SetupComponentVerificationDataPayload => FileReadMode::Memory,
             Self::ControlComponentCodeSharesPayload => FileReadMode::Memory,
         }
     }
+}
+
+impl GetFileTypeTrait for VerifierSetupDataType {
+    fn get_file_type(&self) -> FileType {
+        match self {
+            Self::SetupComponentVerificationDataPayload => FileType::Json,
+            Self::ControlComponentCodeSharesPayload => FileType::Json,
+        }
+    }
+}
+
+/*
+impl VerifierSetupDataType {
+    /// Get the type of the file for the [VerifierSetupData]
+
+
+    /// Get the read mode of the file for the [VerifierSetupData]
+
 
     /// Read from String as json or xml
     ///
     /// All the types have to oimplement the trait [VerifierDataDecode]
-    pub fn verifier_data_from_file(&self, f: &File) -> anyhow::Result<VerifierSetupData> {
+    pub fn verifier_data_from_file(
+        &self,
+        f: &File,
+    ) -> Result<VerifierSetupData, DataStructureError> {
         match self {
             VerifierSetupDataType::SetupComponentVerificationDataPayload => {
                 SetupComponentVerificationDataPayload::from_file(
@@ -60,7 +74,7 @@ impl VerifierSetupDataType {
             }
         }
     }
-}
+} */
 
 impl VerifierSetupDataTrait for VerifierSetupData {
     fn setup_component_verification_data_payload(

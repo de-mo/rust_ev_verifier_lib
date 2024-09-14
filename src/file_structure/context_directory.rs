@@ -1,14 +1,12 @@
 //! Module to implement the context directory
 
-use anyhow::ensure;
-
 use super::{
     file::{create_file, File},
     file_group::{
         add_type_for_file_group_iter_trait, impl_iterator_over_data_payload, FileGroup,
         FileGroupIter, FileGroupIterTrait,
     },
-    CompletnessTestTrait,
+    CompletnessTestTrait, FileStructureError,
 };
 use crate::{
     config::Config,
@@ -24,6 +22,7 @@ use crate::{
         create_verifier_context_data_type, VerifierContextDataTrait, VerifierDataType,
     },
 };
+use anyhow::{anyhow, ensure};
 use std::{
     fs,
     path::{Path, PathBuf},
@@ -216,22 +215,22 @@ impl ContextDirectoryTrait for ContextDirectory {
         &self,
     ) -> anyhow::Result<Box<SetupComponentPublicKeysPayload>> {
         self.setup_component_public_keys_payload_file
-            .get_data()
-            .map_err(|e| e.context("in setup_component_public_keys_payload"))
+            .get_verifier_data()
+            .map_err(|e| anyhow!(e).context("in setup_component_public_keys_payload"))
             .map(|d| Box::new(d.setup_component_public_keys_payload().unwrap().clone()))
     }
 
     fn election_event_context_payload(&self) -> anyhow::Result<Box<ElectionEventContextPayload>> {
         self.election_event_context_payload_file
-            .get_data()
-            .map_err(|e| e.context("in election_event_context_payload"))
+            .get_verifier_data()
+            .map_err(|e| anyhow!(e).context("in election_event_context_payload"))
             .map(|d| Box::new(d.election_event_context_payload().unwrap().clone()))
     }
 
     fn election_event_configuration(&self) -> anyhow::Result<Box<ElectionEventConfiguration>> {
         self.election_event_configuration_file
-            .get_data()
-            .map_err(|e| e.context("in election_event_configuration"))
+            .get_verifier_data()
+            .map_err(|e| anyhow!(e).context("in election_event_configuration"))
             .map(|d| Box::new(d.election_event_configuration().unwrap().clone()))
     }
 
@@ -290,8 +289,8 @@ impl ContextVCSDirectoryTrait for ContextVCSDirectory {
         &self,
     ) -> anyhow::Result<Box<SetupComponentTallyDataPayload>> {
         self.setup_component_tally_data_payload_file
-            .get_data()
-            .map_err(|e| e.context("in setup_component_tally_data_payload"))
+            .get_verifier_data()
+            .map_err(|e| anyhow!(e).context("in setup_component_tally_data_payload"))
             .map(|d| Box::new(d.setup_component_tally_data_payload().unwrap().clone()))
     }
 

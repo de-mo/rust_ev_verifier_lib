@@ -216,7 +216,7 @@ mod test {
             .context()
             .control_component_public_keys_payload_group()
             .get_file_with_number(2)
-            .get_data()
+            .get_verifier_data()
             .map(|d| Box::new(d.control_component_public_keys_payload().unwrap().clone()))
             .unwrap();
         cc_pk.encryption_group.set_p(&Integer::from(1234usize));

@@ -2,7 +2,7 @@ use crate::direct_trust::{CertificateAuthority, VerifiySignatureTrait};
 
 use super::super::{
     common_types::{EncryptionParametersDef, Signature},
-    implement_trait_verifier_data_json_decode, VerifierDataDecode,
+    implement_trait_verifier_data_json_decode, DataStructureError, VerifierDataDecode,
 };
 use anyhow::anyhow;
 use rust_ev_crypto_primitives::{
@@ -95,7 +95,7 @@ mod test {
             test_ballot_box_empty_path().join("tallyComponentVotesPayload.json"),
         )
         .unwrap();
-        let data = TallyComponentVotesPayload::from_json(&json).unwrap();
+        let data = TallyComponentVotesPayload::decode_json(&json).unwrap();
         let ks = CONFIG_TEST.keystore().unwrap();
         let sign_validate_res = data.verify_signatures(&ks);
         for r in sign_validate_res {

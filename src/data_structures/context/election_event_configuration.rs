@@ -1,6 +1,6 @@
 use super::super::{
     xml::{hashable::XMLFileHashable, xml_read_to_end_into_buffer, SchemaKind},
-    VerifierDataDecode,
+    DataStructureError, VerifierDataDecode,
 };
 use crate::{
     data_structures::common_types::Signature,
@@ -43,12 +43,10 @@ pub struct PartialDelivery {
 impl VerifyDomainTrait<anyhow::Error> for ElectionEventConfiguration {}
 
 impl VerifierDataDecode for ElectionEventConfiguration {
-    fn from_xml_file(p: &Path) -> anyhow::Result<Self> {
-        let mut reader = Reader::from_file(p).map_err(|e| {
-            anyhow!(e).context(format!(
-                "Error creating xml reader for file {}",
-                p.to_str().unwrap()
-            ))
+    fn stream_xml(p: &Path) -> Result<Self, DataStructureError> {
+        let mut reader = Reader::from_file(p).map_err(|e| DataStructureError::ParseQuickXML {
+            msg: format!("Error creating xml reader for file {}", p.to_str().unwrap()),
+            source: e,
         })?;
         let reader_config_mut = reader.config_mut();
         reader_config_mut.trim_text(true);
@@ -64,8 +62,10 @@ impl VerifierDataDecode for ElectionEventConfiguration {
         loop {
             match reader.read_event_into(&mut buf) {
                 Err(e) => {
-                    return Err(anyhow!(e)
-                        .context(format!("Error at position {}", reader.buffer_position())))
+                    return Err(DataStructureError::ParseQuickXML {
+                        msg: format!("Error at position {}", reader.buffer_position()),
+                        source: e,
+                    })
                 }
                 Ok(Event::Eof) => break,
                 Ok(Event::Start(e)) => {
@@ -79,11 +79,17 @@ impl VerifierDataDecode for ElectionEventConfiguration {
                             &mut buf,
                         )
                         .map_err(|e| {
-                            anyhow!(e).context("Error reading header bytes".to_string())
+                            DataStructureError::ParseQuickXML {
+                                msg: "Error reading header bytes".to_string(),
+                                source: e,
+                            }
                         })?;
                         config_header = Some(
                             xml_de_from_str(&String::from_utf8_lossy(&header_bytes)).map_err(
-                                |e| anyhow!(e).context("Error deserializing header".to_string()),
+                                |e| DataStructureError::ParseQuickXMLDE {
+                                    msg: "Error deserializing header".to_string(),
+                                    source: e,
+                                },
                             )?,
                         );
                     }
@@ -107,10 +113,14 @@ impl VerifierDataDecode for ElectionEventConfiguration {
             buf.clear();
         }
         if config_header.is_none() {
-            return Err(anyhow!("Header not found"));
+            return Err(DataStructureError::DataError(
+                "Header not found".to_string(),
+            ));
         }
         if signature.is_none() {
-            return Err(anyhow!("Signature not found"));
+            return Err(DataStructureError::DataError(
+                "Signature not found".to_string(),
+            ));
         }
         Ok(Self {
             path: p.to_path_buf(),
@@ -145,8 +155,8 @@ mod test {
     use super::*;
     use crate::config::test::test_datasets_context_path;
 
-    fn get_data_res() -> anyhow::Result<ElectionEventConfiguration> {
-        ElectionEventConfiguration::from_xml_file(
+    fn get_data_res() -> Result<ElectionEventConfiguration, DataStructureError> {
+        ElectionEventConfiguration::stream_xml(
             &test_datasets_context_path().join("configuration-anonymized.xml"),
         )
     }
