@@ -6,10 +6,30 @@ use std::{
 
 use anyhow::{anyhow, Context};
 use rust_ev_crypto_primitives::{
-    sign, verify_signature, ByteArray, HashableMessage, Keystore as BasisKeystore,
+    sign, verify_signature, ByteArray, DirectTrustError as BasisDirectTrustError, HashableMessage,
+    Keystore as BasisKeystore,
 };
+use thiserror::Error;
 
 pub struct Keystore(pub BasisKeystore);
+
+// Enum representing the direct trust errors
+#[derive(Error, Debug)]
+pub enum DirectTrustError {
+    #[error("IO error {msg} -> caused by: {source}")]
+    IO { msg: String, source: std::io::Error },
+    #[error("No file with extension {0} found")]
+    FileNotFound(String),
+    #[error("More than one file with extension {0} found")]
+    NotUniqueFile(String),
+    #[error("Keystore error {msg} -> caused by: {source}")]
+    Keystore {
+        msg: String,
+        source: BasisDirectTrustError,
+    },
+    #[error("No signing Keystore for Voting Server")]
+    NoSigningVotingServer,
+}
 
 /// List of valide Certificate authorities
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -69,9 +89,15 @@ impl Display for CertificateAuthority {
     }
 }
 
-pub fn find_unique_file_with_extension(path: &Path, extension: &str) -> anyhow::Result<PathBuf> {
+pub fn find_unique_file_with_extension(
+    path: &Path,
+    extension: &str,
+) -> Result<PathBuf, DirectTrustError> {
     let pathes = std::fs::read_dir(path)
-        .context(format!("{}", path.as_os_str().to_str().unwrap()))?
+        .map_err(|e| DirectTrustError::IO {
+            msg: format!("{}", path.as_os_str().to_str().unwrap()),
+            source: e,
+        })?
         .filter_map(|res| res.ok())
         .map(|f| f.path())
         .filter_map(|path| {
@@ -82,23 +108,29 @@ pub fn find_unique_file_with_extension(path: &Path, extension: &str) -> anyhow::
             }
         })
         .collect::<Vec<_>>();
-    if pathes.len() != 1 {
-        return Err(anyhow!("Too many files or no file found"));
+    match pathes.len() {
+        0 => Err(DirectTrustError::FileNotFound(extension.to_string())),
+        1 => Ok(pathes[0].clone()),
+        _ => Err(DirectTrustError::NotUniqueFile(extension.to_string())),
     }
-    Ok(pathes[0].clone())
 }
 
 impl TryFrom<&Path> for Keystore {
-    type Error = anyhow::Error;
+    type Error = DirectTrustError;
 
     fn try_from(value: &Path) -> Result<Self, Self::Error> {
-        let keystore_path =
-            find_unique_file_with_extension(value, "p12").context("Error reading keystore path")?;
-        let password_path =
-            find_unique_file_with_extension(value, "txt").context("Error reading password path")?;
+        let keystore_path = find_unique_file_with_extension(value, "p12")?;
+        let password_path = find_unique_file_with_extension(value, "txt")?;
         Ok(Keystore(
-            BasisKeystore::from_pkcs12(&keystore_path, &password_path)
-                .context("Problem reading the keystore")?,
+            BasisKeystore::from_pkcs12(&keystore_path, &password_path).map_err(|e| {
+                DirectTrustError::Keystore {
+                    msg: format!(
+                        "Problem reading the keystore in {}",
+                        value.as_os_str().to_str().unwrap()
+                    ),
+                    source: e,
+                }
+            })?,
         ))
     }
 }

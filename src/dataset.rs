@@ -1,4 +1,4 @@
-use anyhow::{anyhow, bail, ensure, Context};
+use anyhow::{anyhow, ensure, Context};
 use chrono::prelude::*;
 use enum_kinds::EnumKind;
 use rust_ev_crypto_primitives::{sha256_stream, Argon2id, ByteArray, Decrypter};
@@ -7,7 +7,7 @@ use std::{
     io::{BufReader, Read, Write},
     path::{Path, PathBuf},
 };
-use strum::AsRefStr;
+use strum::{AsRefStr, EnumString};
 
 /// Metadata containing the information of the zip dataset before and after extraction
 #[derive(Debug, Clone)]
@@ -20,7 +20,7 @@ pub struct DatasetMetadata {
 
 /// Datasettype containing the information about metadata
 #[derive(Debug, Clone, AsRefStr, EnumKind)]
-#[enum_kind(DatasetTypeKind)]
+#[enum_kind(DatasetTypeKind, derive(AsRefStr, EnumString))]
 pub enum DatasetType {
     Context(DatasetMetadata),
     Setup(DatasetMetadata),
@@ -40,19 +40,6 @@ impl DatasetMetadata {
             decrypted_zip_path: decrypted_zip_path.to_path_buf(),
             extracted_dir_path: extracted_dir_path.to_path_buf(),
             fingerprint: fingerprint.clone(),
-        }
-    }
-}
-
-impl TryFrom<&str> for DatasetTypeKind {
-    type Error = anyhow::Error;
-
-    fn try_from(value: &str) -> Result<Self, Self::Error> {
-        match value.to_lowercase().as_str() {
-            "context" => Ok(Self::Context),
-            "setup" => Ok(Self::Setup),
-            "tally" => Ok(Self::Tally),
-            _ => bail!("Error matching DatasetTypeKind from str"),
         }
     }
 }

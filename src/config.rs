@@ -1,9 +1,8 @@
 //! Module containing the contstants and the way to access them
 
 use super::consts;
-use super::direct_trust::Keystore;
+use super::direct_trust::{DirectTrustError, Keystore};
 use super::resources::VERIFICATION_LIST;
-use anyhow::Result;
 use std::path::{Path, PathBuf};
 
 // Directory structure
@@ -166,7 +165,7 @@ impl Config {
     }
 
     /// Get the keystore
-    pub fn keystore(&self) -> Result<Keystore> {
+    pub fn keystore(&self) -> Result<Keystore, DirectTrustError> {
         Keystore::try_from(self.direct_trust_dir_path().as_path())
     }
 }
@@ -287,7 +286,9 @@ pub(crate) mod test {
     }
 
     /// Get the signing keystore
-    pub fn signing_keystore(authority: CertificateAuthority) -> Result<BasisKeystore> {
+    pub fn signing_keystore(
+        authority: CertificateAuthority,
+    ) -> Result<BasisKeystore, DirectTrustError> {
         let (ks_name, pwd_name) = match authority {
             CertificateAuthority::Canton => (
                 CANTON_KEYSTORE_FILE_NAME,
@@ -300,7 +301,9 @@ pub(crate) mod test {
             CertificateAuthority::SdmTally => {
                 (TALLY_KEYSTORE_FILE_NAME, TALLY_KEYSTORE_PASSWORD_FILE_NAME)
             }
-            CertificateAuthority::VotingServer => bail!("No certificate for voting server"),
+            CertificateAuthority::VotingServer => {
+                return Err(DirectTrustError::NoSigningVotingServer)
+            }
             CertificateAuthority::ControlComponent1 => {
                 (CC1_KEYSTORE_FILE_NAME, CC1_KEYSTORE_PASSWORD_FILE_NAME)
             }
@@ -318,7 +321,10 @@ pub(crate) mod test {
             &get_mock_direct_trust_path().join(ks_name),
             &get_mock_direct_trust_path().join(pwd_name),
         )
-        .context("Problem reading the keystore for mocking")
+        .map_err(|e| DirectTrustError::Keystore {
+            msg: "Problem reading the keystore for mocking".to_string(),
+            source: e,
+        })
     }
 
     pub(crate) fn test_resources_path() -> PathBuf {
