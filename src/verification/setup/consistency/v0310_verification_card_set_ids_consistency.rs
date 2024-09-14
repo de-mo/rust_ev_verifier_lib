@@ -1,6 +1,4 @@
-use super::super::super::result::{
-    create_verification_error, create_verification_failure, VerificationEvent, VerificationResult,
-};
+use super::super::super::result::{VerificationEvent, VerificationResult};
 use crate::{
     config::Config,
     file_structure::{
@@ -9,27 +7,22 @@ use crate::{
         VerificationDirectoryTrait,
     },
 };
-use anyhow::anyhow;
-use log::debug;
 
 fn verrify_card_set_ids_setup_vcs<V: SetupVCSDirectoryTrait>(vcs_dir: &V) -> VerificationResult {
     let mut res = VerificationResult::new();
     let vcs_id = vcs_dir.get_name();
     for (chunk, payload_res) in vcs_dir.setup_component_verification_data_payload_iter() {
         if let Err(e) = payload_res {
-            res.push(create_verification_error!(
-                format!(
-                    "Cannot read payload for setup_component_verification_data.{}",
-                    chunk
-                ),
-                e
-            ));
+            res.push(VerificationEvent::new_error(&e).add_context(format!(
+                "Cannot read payload for setup_component_verification_data.{}",
+                chunk
+            )));
             break;
         }
         if payload_res.unwrap().verification_card_set_id != vcs_id {
             res.push(
-                create_verification_failure!(
-                    format!(
+                VerificationEvent::new_failure(
+                    &format!(
                         "verification card set in file setup_component_verification_data.{} doesn't match with expected {}",
                         chunk,
                         vcs_id
@@ -41,20 +34,17 @@ fn verrify_card_set_ids_setup_vcs<V: SetupVCSDirectoryTrait>(vcs_dir: &V) -> Ver
 
     for (chunk, payload_res) in vcs_dir.control_component_code_shares_payload_iter() {
         if let Err(e) = payload_res {
-            res.push(create_verification_error!(
-                format!(
-                    "Cannot read payload for setup_component_verification_data.{}",
-                    chunk
-                ),
-                e
-            ));
+            res.push(VerificationEvent::new_error(&e).add_context(format!(
+                "Cannot read payload for setup_component_verification_data.{}",
+                chunk
+            )));
             break;
         }
         for payload in payload_res.unwrap().0.iter() {
             if payload.verification_card_set_id != vcs_id {
                 res.push(
-                    create_verification_failure!(
-                        format!(
+                    VerificationEvent::new_failure(
+                        &format!(
                             "verification card set for node {} in file setup_component_verification_data.{} doesn't match with expected {}",
                             payload.node_id,
                             chunk,
@@ -77,8 +67,8 @@ fn verrify_card_set_ids_context_vcs<V: ContextVCSDirectoryTrait>(
         Ok(p) => {
             if p.verification_card_set_id != vcs_id {
                 res.push(
-                create_verification_failure!(
-                    format!(
+                VerificationEvent::new_failure(
+                    &format!(
                         "verification card set in file setup_component_tally_data_payload doesn't match with expected {}",
                         vcs_id
                     )
@@ -86,10 +76,10 @@ fn verrify_card_set_ids_context_vcs<V: ContextVCSDirectoryTrait>(
             );
             }
         }
-        Err(e) => res.push(create_verification_error!(
-            "Cannot read payload for setup_component_tally_data_payload",
-            e
-        )),
+        Err(e) => res.push(
+            VerificationEvent::new_error(&e)
+                .add_context("Cannot read payload for setup_component_tally_data_payload"),
+        ),
     }
     res
 }
@@ -103,14 +93,14 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
     let setup_dir = dir.unwrap_setup();
 
     for vcs_dir in context_dir.vcs_directories().iter() {
-        result.append_wtih_context(
+        result.append_with_context(
             &verrify_card_set_ids_context_vcs(vcs_dir),
             format!("context vcs directory {}", vcs_dir.get_name()),
         );
     }
 
     for vcs_dir in setup_dir.vcs_directories().iter() {
-        result.append_wtih_context(
+        result.append_with_context(
             &verrify_card_set_ids_setup_vcs(vcs_dir),
             format!("setup vcs directory {}", vcs_dir.get_name()),
         );

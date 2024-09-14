@@ -1,12 +1,8 @@
-use super::super::super::result::{
-    create_verification_error, create_verification_failure, VerificationEvent, VerificationResult,
-};
+use super::super::super::result::{VerificationEvent, VerificationResult};
 use crate::{
     config::Config,
     file_structure::{context_directory::ContextDirectoryTrait, VerificationDirectoryTrait},
 };
-use anyhow::anyhow;
-use log::debug;
 
 pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
     dir: &D,
@@ -17,20 +13,20 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
     let vcs_contexts = match context_dir.election_event_context_payload() {
         Ok(o) => o.election_event_context.verification_card_set_contexts,
         Err(e) => {
-            result.push(create_verification_error!(
-                "Cannot extract election_event_context_payload",
-                e
-            ));
+            result.push(
+                VerificationEvent::new_error(&e)
+                    .add_context("Cannot extract election_event_context_payload"),
+            );
             return;
         }
     };
     let total_voter = match context_dir.election_event_configuration() {
         Ok(o) => o.header.voter_total,
         Err(e) => {
-            result.push(create_verification_error!(
-                "Cannot extract election_event_context_payload",
-                e
-            ));
+            result.push(
+                VerificationEvent::new_error(&e)
+                    .add_context("Cannot extract election_event_context_payload"),
+            );
             return;
         }
     };
@@ -40,7 +36,7 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
             .map(|e| e.number_of_voting_cards)
             .sum::<usize>()
     {
-        result.push(create_verification_failure!(format!(
+        result.push(VerificationEvent::new_failure(&format!(
             "The sum of voting cards is not the same as total voters {}",
             total_voter
         )))

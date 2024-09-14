@@ -1,12 +1,8 @@
-use super::super::super::result::{
-    create_verification_error, create_verification_failure, VerificationEvent, VerificationResult,
-};
+use super::super::super::result::{VerificationEvent, VerificationResult};
 use crate::{
     config::Config,
     file_structure::{context_directory::ContextDirectoryTrait, VerificationDirectoryTrait},
 };
-use anyhow::anyhow;
-use log::debug;
 
 pub(super) fn fn_0502_verify_small_prime_group_members<D: VerificationDirectoryTrait>(
     dir: &D,
@@ -17,10 +13,10 @@ pub(super) fn fn_0502_verify_small_prime_group_members<D: VerificationDirectoryT
     let eg = match context_dir.election_event_context_payload() {
         Ok(eg) => eg,
         Err(e) => {
-            result.push(create_verification_error!(
-                "election_event_context_payload cannot be read",
-                e
-            ));
+            result.push(
+                VerificationEvent::new_error(&e)
+                    .add_context("election_event_context_payload cannot be read"),
+            );
             return;
         }
     };
@@ -30,15 +26,15 @@ pub(super) fn fn_0502_verify_small_prime_group_members<D: VerificationDirectoryT
     {
         Ok(p) => p,
         Err(e) => {
-            result.push(create_verification_error!(
-                "Error getting small prime group members",
-                e
-            ));
+            result.push(
+                VerificationEvent::new_error(&e)
+                    .add_context("Error getting small prime group members"),
+            );
             return;
         }
     };
     if eg.small_primes.len() != primes.len() {
-        result.push(create_verification_failure!(format!(
+        result.push(VerificationEvent::new_failure(&format!(
             "length of primes not the same: calculated: {} / expected {}",
             primes.len(),
             eg.small_primes.len()
@@ -49,8 +45,8 @@ pub(super) fn fn_0502_verify_small_prime_group_members<D: VerificationDirectoryT
             i += 1;
         }
         result.push(
-            create_verification_failure!(
-                format!(
+            VerificationEvent::new_failure(
+                &format!(
                     "Small prime group members are not the same. First error at position {}: calculated {} / expected {}",
                     i + 1,
                     primes[i],

@@ -8,9 +8,7 @@ pub mod suite;
 mod tally;
 pub mod verifications;
 
-use self::result::{
-    create_verification_error, create_verification_failure, VerificationEvent, VerificationResult,
-};
+use self::result::{VerificationEvent, VerificationResult};
 use crate::{
     config::Config, direct_trust::VerifiySignatureTrait, file_structure::VerificationDirectoryTrait,
 };
@@ -56,7 +54,7 @@ pub(super) fn verification_unimplemented<D: VerificationDirectoryTrait>(
     _config: &'static Config,
     result: &mut VerificationResult,
 ) {
-    result.push(create_verification_error!(anyhow!(
+    result.push(VerificationEvent::new_error(&anyhow!(
         "Verification is not implemented"
     )));
 }
@@ -70,7 +68,7 @@ where
     let ks = match config.keystore() {
         Ok(ks) => ks,
         Err(e) => {
-            result.push(create_verification_error!("Cannot read keystore", e));
+            result.push(VerificationEvent::new_error(&e).add_context("Cannot read keystore"));
             return result;
         }
     };
@@ -79,13 +77,12 @@ where
         match r {
             Ok(t) => {
                 if !t {
-                    result.push(create_verification_failure!(format!("Wrong signature")))
+                    result.push(VerificationEvent::new_failure("Wrong signature"))
                 }
             }
             Err(e) => {
-                result.push_with_context(
-                    VerificationEvent::error_from_str(&e.to_string()),
-                    format!("at position {}", i),
+                result.push(
+                    VerificationEvent::new_failure(e).add_context(format!("at position {}", i)),
                 );
             }
         }

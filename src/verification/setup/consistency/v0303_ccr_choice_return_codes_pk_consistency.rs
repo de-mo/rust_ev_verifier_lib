@@ -1,6 +1,4 @@
-use super::super::super::result::{
-    create_verification_error, create_verification_failure, VerificationEvent, VerificationResult,
-};
+use super::super::super::result::{VerificationEvent, VerificationResult};
 use crate::{
     config::Config,
     data_structures::{
@@ -9,8 +7,6 @@ use crate::{
     },
     file_structure::{context_directory::ContextDirectoryTrait, VerificationDirectoryTrait},
 };
-use anyhow::anyhow;
-use log::debug;
 
 fn validate_cc_ccr_enc_pk<S: ContextDirectoryTrait>(
     context_dir: &S,
@@ -27,21 +23,21 @@ fn validate_cc_ccr_enc_pk<S: ContextDirectoryTrait>(
     {
         Ok(d) => d.control_component_public_keys,
         Err(e) => {
-            result.push(create_verification_error!(
-                format!("Cannot read data from file {}", f.to_str()),
-                e
-            ));
+            result.push(
+                VerificationEvent::new_error(&e)
+                    .add_context(format!("Cannot read data from file {}", f.to_str())),
+            );
             return;
         }
     };
     if setup.ccrj_choice_return_codes_encryption_public_key.len()
         != cc_pk.ccrj_choice_return_codes_encryption_public_key.len()
     {
-        result.push(create_verification_failure!(format!("The length of CCR Choice Return Codes encryption public keys for control component {} are identical from both sources", node_id)));
+        result.push(VerificationEvent::new_failure(&format!("The length of CCR Choice Return Codes encryption public keys for control component {} are identical from both sources", node_id)));
     } else if setup.ccrj_choice_return_codes_encryption_public_key
         != cc_pk.ccrj_choice_return_codes_encryption_public_key
     {
-        result.push(create_verification_failure!(format!("The CCR Choice Return Codes encryption public keys for control component {} are identical from both sources", node_id)));
+        result.push(VerificationEvent::new_failure(&format!("The CCR Choice Return Codes encryption public keys for control component {} are identical from both sources", node_id)));
     }
 }
 
@@ -54,10 +50,10 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
     let sc_pk = match context_dir.setup_component_public_keys_payload() {
         Ok(o) => o,
         Err(e) => {
-            result.push(create_verification_error!(
-                "Cannot extract setup_component_public_keys_payload",
-                e
-            ));
+            result.push(
+                VerificationEvent::new_error(&e)
+                    .add_context("Cannot extract setup_component_public_keys_payload"),
+            );
             return;
         }
     };

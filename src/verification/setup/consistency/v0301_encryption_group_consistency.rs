@@ -1,6 +1,4 @@
-use super::super::super::result::{
-    create_verification_error, create_verification_failure, VerificationEvent, VerificationResult,
-};
+use super::super::super::result::{VerificationEvent, VerificationResult};
 use crate::{
     config::Config,
     file_structure::{
@@ -9,8 +7,6 @@ use crate::{
         VerificationDirectoryTrait,
     },
 };
-use anyhow::anyhow;
-use log::debug;
 use rust_ev_crypto_primitives::EncryptionParameters;
 
 fn verify_encryption_group(
@@ -19,13 +15,13 @@ fn verify_encryption_group(
 ) -> VerificationResult {
     let mut result = VerificationResult::new();
     if eg.p() != expected.p() {
-        result.push(create_verification_failure!(format!("p not equal",)));
+        result.push(VerificationEvent::new_failure("p not equal"));
     }
     if eg.q() != expected.q() {
-        result.push(create_verification_failure!(format!("q not equal",)));
+        result.push(VerificationEvent::new_failure("q not equal"));
     }
     if eg.g() != expected.g() {
-        result.push(create_verification_failure!(format!("g not equal",)));
+        result.push(VerificationEvent::new_failure("g not equal"));
     }
     result
 }
@@ -36,17 +32,14 @@ fn verify_encryption_group_for_context_vcs_dir<V: ContextVCSDirectoryTrait>(
     result: &mut VerificationResult,
 ) {
     match dir.setup_component_tally_data_payload() {
-        Ok(p) => result.append_wtih_context(
+        Ok(p) => result.append_with_context(
             &verify_encryption_group(&p.encryption_group, eg),
             format!("{}/setup_component_tally_data_payload", dir.get_name()),
         ),
-        Err(e) => result.push(create_verification_error!(
-            format!(
-                "{}/setup_component_tally_data_payload has wrong format",
-                dir.get_name()
-            ),
-            e
-        )),
+        Err(e) => result.push(VerificationEvent::new_error(&e).add_context(format!(
+            "{}/setup_component_tally_data_payload has wrong format",
+            dir.get_name()
+        ))),
     }
 }
 
@@ -57,7 +50,7 @@ fn verify_encryption_group_for_setup_vcs_dir<V: SetupVCSDirectoryTrait>(
 ) {
     for (i, f) in dir.setup_component_verification_data_payload_iter() {
         match f {
-            Ok(s) => result.append_wtih_context(
+            Ok(s) => result.append_with_context(
                 &verify_encryption_group(&s.encryption_group, eg),
                 format!(
                     "{}/setup_component_verification_data_payload.{}",
@@ -65,21 +58,18 @@ fn verify_encryption_group_for_setup_vcs_dir<V: SetupVCSDirectoryTrait>(
                     dir.get_name()
                 ),
             ),
-            Err(e) => result.push(create_verification_error!(
-                format!(
-                    "{}/setup_component_verification_data_payload.{} has wrong format",
-                    dir.get_name(),
-                    i
-                ),
-                e
-            )),
+            Err(e) => result.push(VerificationEvent::new_error(&e).add_context(format!(
+                "{}/setup_component_verification_data_payload.{} has wrong format",
+                dir.get_name(),
+                i
+            ))),
         }
     }
     for (i, f) in dir.control_component_code_shares_payload_iter() {
         match f {
             Ok(cc) => {
                 for (j, p) in cc.0.iter().enumerate() {
-                    result.append_wtih_context(
+                    result.append_with_context(
                         &verify_encryption_group(&p.encryption_group, eg),
                         format!(
                             "{}/control_component_code_shares_payload.{}_chunk{}_element{}",
@@ -91,14 +81,11 @@ fn verify_encryption_group_for_setup_vcs_dir<V: SetupVCSDirectoryTrait>(
                     )
                 }
             }
-            Err(e) => result.push(create_verification_error!(
-                format!(
-                    "{}/control_component_code_shares_payload_.{} has wrong format",
-                    dir.get_name(),
-                    i
-                ),
-                e
-            )),
+            Err(e) => result.push(VerificationEvent::new_error(&e).add_context(format!(
+                "{}/control_component_code_shares_payload_.{} has wrong format",
+                dir.get_name(),
+                i
+            ))),
         }
     }
 }
@@ -113,37 +100,34 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
     let eg = match config_dir.election_event_context_payload() {
         Ok(p) => p.encryption_group,
         Err(e) => {
-            result.push(create_verification_error!(
-                "election_event_context_payload cannot be read",
-                e
-            ));
+            result.push(
+                VerificationEvent::new_error(&e)
+                    .add_context("election_event_context_payload cannot be read"),
+            );
             return;
         }
     };
     for (i, f) in config_dir.control_component_public_keys_payload_iter() {
         match f {
-            Ok(cc) => result.append_wtih_context(
+            Ok(cc) => result.append_with_context(
                 &verify_encryption_group(&cc.encryption_group, &eg),
                 format!("control_component_public_keys_payload.{}", i),
             ),
-            Err(e) => result.push(create_verification_error!(
-                format!(
-                    "control_component_public_keys_payload.{} has wrong format",
-                    i
-                ),
-                e
-            )),
+            Err(e) => result.push(VerificationEvent::new_error(&e).add_context(format!(
+                "control_component_public_keys_payload.{} has wrong format",
+                i
+            ))),
         }
     }
     match config_dir.setup_component_public_keys_payload() {
-        Ok(p) => result.append_wtih_context(
+        Ok(p) => result.append_with_context(
             &verify_encryption_group(&p.encryption_group, &eg),
             "setup_component_public_keys_payload",
         ),
-        Err(e) => result.push(create_verification_error!(
-            "election_event_context_payload has wrong format",
-            e
-        )),
+        Err(e) => result.push(
+            VerificationEvent::new_error(&e)
+                .add_context("election_event_context_payload has wrong format"),
+        ),
     }
 
     for vcs in config_dir.vcs_directories().iter() {
@@ -187,7 +171,7 @@ mod test {
             &Integer::from(15usize),
             &Integer::from(3usize),
         ));
-        result.append_wtih_context(&verify_encryption_group(&eg, &eg_expected), "toto");
+        result.append_with_context(&verify_encryption_group(&eg, &eg_expected), "toto");
         assert!(result.is_ok());
         let mut result = VerificationResult::new();
         let eg = EncryptionParameters::from((
@@ -195,7 +179,7 @@ mod test {
             &Integer::from(15usize),
             &Integer::from(3usize),
         ));
-        result.append_wtih_context(&verify_encryption_group(&eg, &eg_expected), "toto");
+        result.append_with_context(&verify_encryption_group(&eg, &eg_expected), "toto");
         assert!(!result.has_errors());
         assert_eq!(result.failures().len(), 1);
         let mut result = VerificationResult::new();
@@ -204,7 +188,7 @@ mod test {
             &Integer::from(16usize),
             &Integer::from(4usize),
         ));
-        result.append_wtih_context(&verify_encryption_group(&eg, &eg_expected), "toto");
+        result.append_with_context(&verify_encryption_group(&eg, &eg_expected), "toto");
         assert!(!result.has_errors());
         assert_eq!(result.failures().len(), 3)
     }

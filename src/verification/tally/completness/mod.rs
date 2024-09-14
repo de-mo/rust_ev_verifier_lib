@@ -5,13 +5,10 @@ use crate::{
 
 use super::super::{
     meta_data::VerificationMetaDataList,
-    result::{create_verification_error, VerificationEvent, VerificationResult},
+    result::{VerificationEvent, VerificationResult},
     suite::VerificationList,
     verifications::Verification,
 };
-use anyhow::anyhow;
-use log::debug;
-
 pub fn get_verifications<'a>(
     metadata_list: &'a VerificationMetaDataList,
     config: &'static Config,
@@ -33,12 +30,12 @@ fn fn_0601_verify_tally_completeness<D: VerificationDirectoryTrait>(
     let context_dir = dir.context();
     match context_dir.test_completness() {
         Ok(v) => result.append_failures_from_string(&v),
-        Err(e) => result.push(create_verification_error!(e)),
+        Err(e) => result.push(VerificationEvent::new_error(&e)),
     }
     let tally_dir = dir.unwrap_tally();
     match tally_dir.test_completness() {
         Ok(v) => result.append_failures_from_string(&v),
-        Err(e) => result.push(create_verification_error!(e)),
+        Err(e) => result.push(VerificationEvent::new_error(&e)),
     }
 }
 

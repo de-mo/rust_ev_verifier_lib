@@ -1,6 +1,6 @@
 use super::super::{
     meta_data::VerificationMetaDataList,
-    result::{create_verification_error, VerificationEvent, VerificationResult},
+    result::{VerificationEvent, VerificationResult},
     suite::VerificationList,
     verifications::Verification,
 };
@@ -8,8 +8,6 @@ use crate::{
     config::Config,
     file_structure::{CompletnessTestTrait, VerificationDirectoryTrait},
 };
-use anyhow::anyhow;
-use log::debug;
 
 pub fn get_verifications<'a>(
     metadata_list: &'a VerificationMetaDataList,
@@ -32,12 +30,12 @@ fn fn_0101_verify_setup_completeness<D: VerificationDirectoryTrait>(
     let context_dir: &<D as VerificationDirectoryTrait>::ContextDirType = dir.context();
     match context_dir.test_completness() {
         Ok(v) => result.append_failures_from_string(&v),
-        Err(e) => result.push(create_verification_error!(e)),
+        Err(e) => result.push(VerificationEvent::new_error(&e)),
     }
     let setup_dir = dir.unwrap_setup();
     match setup_dir.test_completness() {
         Ok(v) => result.append_failures_from_string(&v),
-        Err(e) => result.push(create_verification_error!(e)),
+        Err(e) => result.push(VerificationEvent::new_error(&e)),
     }
 }
 

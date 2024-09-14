@@ -1,6 +1,4 @@
-use super::super::super::result::{
-    create_verification_error, create_verification_failure, VerificationEvent, VerificationResult,
-};
+use super::super::super::result::{VerificationEvent, VerificationResult};
 use crate::{
     config::Config,
     data_structures::{
@@ -20,8 +18,7 @@ use crate::{
     },
     verification::verify_signature_for_object,
 };
-use anyhow::anyhow;
-use log::debug;
+
 use rayon::prelude::*;
 use rust_ev_crypto_primitives::Integer;
 use rust_ev_crypto_primitives::{verify_exponentiation, EncryptionParameters};
@@ -74,10 +71,10 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
     let ee_context = match context_dir.election_event_context_payload() {
         Ok(p) => p.election_event_context,
         Err(e) => {
-            result.push(create_verification_error!(
-                "election_event_context_payload cannot be read",
-                e
-            ));
+            result.push(
+                VerificationEvent::new_error(&e)
+                    .add_context("election_event_context_payload cannot be read"),
+            );
             return;
         }
     };
@@ -102,16 +99,16 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
                 chunk_id
             );
             if let Err(e) = setup_verification_data_payload_result {
-                result.push(create_verification_error!(
-                    format!("{} cannot be read", setup_verif_data_chunk_name),
-                    e
-                ));
+                result.push(
+                    VerificationEvent::new_error(&e)
+                        .add_context(format!("{} cannot be read", setup_verif_data_chunk_name)),
+                );
                 break;
             }
             let setup_verification_data_payload = setup_verification_data_payload_result.unwrap();
 
             // Verify signature setup_component_verification_data
-            result.append_wtih_context(
+            result.append_with_context(
                 &algorithm_0301_verify_signature_setup_component_verification_data(
                     &setup_verification_data_payload,
                     config,
@@ -124,7 +121,7 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
             let vcs_context = match ee_context.find_verification_card_set_context(vcs_id) {
                 Some(c) => c,
                 None => {
-                    result.push(create_verification_error!(format!(
+                    result.push(VerificationEvent::new_error(&format!(
                         "vcs id {} not found in election_event_context_payload",
                         vcs_id
                     )));
@@ -142,8 +139,8 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
                             .unwrap()
                             .number_of_voters()
                 {
-                    result.push(create_verification_failure!(
-                                format!("Number of vcs {} for vcs id {} not the same as in the chunks of setup_verification_data",
+                    result.push(VerificationEvent::new_failure(
+                                &format!("Number of vcs {} for vcs id {} not the same as in the chunks of setup_verification_data",
                                 vcs_context.number_of_voters(), vcs_id_for_sum_vcs)
                             ));
                 };
@@ -167,7 +164,7 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
                                 .par_bridge()
                                 .map(|shares| {
                                     let mut result = VerificationResult::new();
-                                    result.append_wtih_context(&algorithm_0302_verify_signature_control_component_code_shares(
+                                    result.append_with_context(&algorithm_0302_verify_signature_control_component_code_shares(
                                         shares,
                                         config),
                                         format!("{}.{}", cc_share_chunk_name, shares.node_id),
@@ -186,7 +183,7 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
                                         shares.control_component_code_shares.iter().map(|e| &e.voter_choice_return_code_generation_public_key[0]).collect(),
                                         shares.control_component_code_shares.iter().map(|e| &e.exponentiated_encrypted_partial_choice_return_codes).collect(),
                                         shares.control_component_code_shares.iter().map(|e| &e.encrypted_partial_choice_return_code_exponentiation_proof).collect(),
-                                    ).add_context(format!("Node {}", shares.node_id)).add_context(format!("Chunk {}", cc_share_chunk_name));
+                                    ).clone_add_context(format!("Node {}", shares.node_id)).clone_add_context(format!("Chunk {}", cc_share_chunk_name));
                                     result.append(&mut res_algo_33);
                                     let context34 = ContextAlgorithm34 {
                                         eg: &setup_verification_data_payload.encryption_group,
@@ -201,7 +198,7 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
                                         shares.control_component_code_shares.iter().map(|e| &e.voter_vote_cast_return_code_generation_public_key[0]).collect(),
                                         shares.control_component_code_shares.iter().map(|e| &e.exponentiated_encrypted_confirmation_key).collect(),
                                         shares.control_component_code_shares.iter().map(|e| &e.encrypted_confirmation_key_exponentiation_proof).collect(),
-                                    ).add_context(format!("Node {}", shares.node_id)).add_context(format!("Chunk {}", cc_share_chunk_name));
+                                    ).clone_add_context(format!("Node {}", shares.node_id)).clone_add_context(format!("Chunk {}", cc_share_chunk_name));
                                     result.append(&mut res_algo_34);
                                     result
                                 })
@@ -210,10 +207,10 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
                         result.append(r);
                     }
                 }
-                Err(e) => result.push(create_verification_error!(
-                    format!("{} cannot be read", cc_share_chunk_name),
-                    e
-                )),
+                Err(e) => result.push(
+                    VerificationEvent::new_error(&e)
+                        .add_context(format!("{} cannot be read", cc_share_chunk_name)),
+                ),
             }
         }
     }
@@ -260,7 +257,7 @@ fn algorithm_0303_verify_encrypted_pcc_exponentiation_proofs_verification_card_s
                     voter_choice_return_code_generation_public_key[i],
                     exponentiated_encrypted_partial_choice_return_codes[i],
                     encrypted_partial_choice_return_code_exponentiation_proof[i]
-                ).add_context(format!("For vc_id {}", vc_id)).add_context(format!("At position {}", i))
+                ).clone_add_context(format!("For vc_id {}", vc_id)).clone_add_context(format!("At position {}", i))
             })
             .collect();
     for fs in failures.iter_mut() {
@@ -326,11 +323,11 @@ fn algorithm_0303_verify_encrypted_pcc_exponentiation_proofs_verification_card_s
         ];
         let pi_exp_pcc_j = encrypted_partial_choice_return_code_exponentiation_proof.clone();
         match verify_exponentiation(context.eg, &gs, &ys, pi_exp_pcc_j.as_tuple(), &i_aux) {
-            Err(e) => result.push(VerificationEvent::failure_from_error(e)),
+            Err(e) => result.push(VerificationEvent::new_failure(&e)),
             Ok(b) => {
                 if !b {
-                    result.push(create_verification_failure!(
-                        "Failure verifying encrypted_pcc_exponentiation_proofs"
+                    result.push(VerificationEvent::new_failure(
+                        "Failure verifying encrypted_pcc_exponentiation_proofs",
                     ))
                 }
             }
@@ -380,7 +377,7 @@ fn algorithm_0304_verify_encrypted_ckexponentiation_proofs_verification_card_set
                     voter_vote_cast_return_code_generation_public_key[i],
                     exponentiated_encrypted_confirmation_key[i],
                     encrypted_confirmation_key_exponentiation_proof[i]
-                ).add_context(format!("For vc_id {}", vc_id)).add_context(format!("At position {}", i))
+                ).clone_add_context(format!("For vc_id {}", vc_id)).clone_add_context(format!("At position {}", i))
             })
             .collect();
     for fs in failures.iter_mut() {
@@ -428,11 +425,11 @@ fn algorithm_0304_verify_encrypted_ckexponentiation_proofs_verification_card_set
         ];
         let pi_exp_pcc_j = encrypted_confirmation_key_exponentiation_proof.clone();
         match verify_exponentiation(context.eg, &gs, &ys, pi_exp_pcc_j.as_tuple(), &i_aux) {
-            Err(e) => result.push(VerificationEvent::failure_from_error(e)),
+            Err(e) => result.push(VerificationEvent::new_failure(&e)),
             Ok(b) => {
                 if !b {
-                    result.push(create_verification_failure!(
-                        "Failure verifying encrypted_ck_exponentiation_proofs"
+                    result.push(VerificationEvent::new_failure(
+                        "Failure verifying encrypted_ck_exponentiation_proofs",
                     ))
                 }
             }
@@ -448,7 +445,7 @@ fn verify_sizes(expected: &usize, vec_sizes: Vec<usize>, names: Vec<String>) -> 
     let mut result = VerificationResult::new();
     for (size, name) in zip(vec_sizes, names) {
         if &size != expected {
-            result.push(create_verification_failure!(format!(
+            result.push(VerificationEvent::new_failure(&format!(
                 "number of elements {} in {} are not equal to expected {}",
                 size, name, expected
             )));

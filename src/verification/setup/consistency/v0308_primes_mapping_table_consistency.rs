@@ -1,12 +1,9 @@
-use super::super::super::result::{
-    create_verification_error, create_verification_failure, VerificationEvent, VerificationResult,
-};
+use super::super::super::result::{VerificationEvent, VerificationResult};
 use crate::{
     config::Config,
     file_structure::{context_directory::ContextDirectoryTrait, VerificationDirectoryTrait},
 };
-use anyhow::anyhow;
-use log::debug;
+
 use std::collections::HashMap;
 
 pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
@@ -18,10 +15,10 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
     let ee_c_paylod = match context_dir.election_event_context_payload() {
         Ok(o) => o,
         Err(e) => {
-            result.push(create_verification_error!(
-                "Cannot extract election_event_context_payload",
-                e
-            ));
+            result.push(
+                VerificationEvent::new_error(&e)
+                    .add_context("Cannot extract election_event_context_payload"),
+            );
             return;
         }
     };
@@ -35,7 +32,7 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
             match primes_hashmaps.get(&p_table.encoded_voting_option) {
                 Some(option) => {
                     if option != &p_table.actual_voting_option {
-                        result.push(create_verification_failure!(format!(
+                        result.push(VerificationEvent::new_failure(&format!(
                             "The prime {} encode two different voting options {} and {}",
                             p_table.encoded_voting_option, p_table.actual_voting_option, option
                         )));

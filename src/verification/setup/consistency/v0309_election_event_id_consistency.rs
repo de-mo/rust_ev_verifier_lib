@@ -1,6 +1,4 @@
-use super::super::super::result::{
-    create_verification_error, create_verification_failure, VerificationEvent, VerificationResult,
-};
+use super::super::super::result::{VerificationEvent, VerificationResult};
 use crate::{
     config::Config,
     file_structure::{
@@ -9,13 +7,11 @@ use crate::{
         VerificationDirectoryTrait,
     },
 };
-use anyhow::anyhow;
-use log::debug;
 
 fn test_election_event_id(ee_id: &String, expected: &String) -> VerificationResult {
     let mut result = VerificationResult::new();
     if ee_id != expected {
-        result.push(create_verification_failure!(format!(
+        result.push(VerificationEvent::new_failure(&format!(
             "Election Event ID {} not equal to {}",
             ee_id, expected
         )));
@@ -29,17 +25,14 @@ fn test_ee_id_for_context_vcs_dir<V: ContextVCSDirectoryTrait>(
     result: &mut VerificationResult,
 ) {
     match dir.setup_component_tally_data_payload() {
-        Ok(p) => result.append_wtih_context(
+        Ok(p) => result.append_with_context(
             &test_election_event_id(&p.election_event_id, expected),
             format!("{}/setup_component_tally_data_payload", dir.get_name()),
         ),
-        Err(e) => result.push(create_verification_error!(
-            format!(
-                "{}/setup_component_tally_data_payload has wrong format",
-                dir.get_name()
-            ),
-            e
-        )),
+        Err(e) => result.push(VerificationEvent::new_error(&e).add_context(format!(
+            "{}/setup_component_tally_data_payload has wrong format",
+            dir.get_name()
+        ))),
     }
 }
 
@@ -50,17 +43,14 @@ fn test_ee_id_for_setup_vcs_dir<V: SetupVCSDirectoryTrait>(
 ) {
     for (i, f) in dir.control_component_code_shares_payload_iter() {
         match f {
-            Err(e) => result.push(create_verification_error!(
-                format!(
-                    "{}/control_component_code_shares_payload_.{} has wrong format",
-                    dir.get_name(),
-                    i
-                ),
-                e
-            )),
+            Err(e) => result.push(VerificationEvent::new_error(&e).add_context(format!(
+                "{}/control_component_code_shares_payload_.{} has wrong format",
+                dir.get_name(),
+                i
+            ))),
             Ok(cc) => {
                 for p in cc.0.iter() {
-                    result.append_wtih_context(
+                    result.append_with_context(
                         &test_election_event_id(&p.election_event_id, expected),
                         format!(
                             "{}/control_component_code_shares_payload.{}_chunk{}",
@@ -75,15 +65,12 @@ fn test_ee_id_for_setup_vcs_dir<V: SetupVCSDirectoryTrait>(
     }
     for (i, f) in dir.setup_component_verification_data_payload_iter() {
         match f {
-            Err(e) => result.push(create_verification_error!(
-                format!(
-                    "{}/setup_component_verification_data_payload.{} has wrong format",
-                    dir.get_name(),
-                    i
-                ),
-                e
-            )),
-            Ok(s) => result.append_wtih_context(
+            Err(e) => result.push(VerificationEvent::new_error(&e).add_context(format!(
+                "{}/setup_component_verification_data_payload.{} has wrong format",
+                dir.get_name(),
+                i
+            ))),
+            Ok(s) => result.append_with_context(
                 &test_election_event_id(&s.election_event_id, expected),
                 format!(
                     "{}/setup_component_verification_data_payload.{}",
@@ -105,33 +92,30 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
     let ee_id = match context_dir.election_event_context_payload() {
         Ok(o) => o.election_event_context.election_event_id,
         Err(e) => {
-            result.push(create_verification_error!(
-                "Cannot extract election_event_context_payload",
-                e
-            ));
+            result.push(
+                VerificationEvent::new_error(&e)
+                    .add_context("Cannot extract election_event_context_payload"),
+            );
             return;
         }
     };
     match context_dir.setup_component_public_keys_payload() {
-        Ok(p) => result.append_wtih_context(
+        Ok(p) => result.append_with_context(
             &test_election_event_id(&p.election_event_id, &ee_id),
             "setup_component_public_keys_payload",
         ),
-        Err(e) => result.push(create_verification_error!(
-            "election_event_context_payload has wrong format",
-            e
-        )),
+        Err(e) => result.push(
+            VerificationEvent::new_error(&e)
+                .add_context("election_event_context_payload has wrong format"),
+        ),
     }
     for (i, f) in context_dir.control_component_public_keys_payload_iter() {
         match f {
-            Err(e) => result.push(create_verification_error!(
-                format!(
-                    "control_component_public_keys_payload.{} has wrong format",
-                    i
-                ),
-                e
-            )),
-            Ok(cc) => result.append_wtih_context(
+            Err(e) => result.push(VerificationEvent::new_error(&e).add_context(format!(
+                "control_component_public_keys_payload.{} has wrong format",
+                i
+            ))),
+            Ok(cc) => result.append_with_context(
                 &test_election_event_id(&cc.election_event_id, &ee_id),
                 format!("control_component_public_keys_payload.{}", i),
             ),

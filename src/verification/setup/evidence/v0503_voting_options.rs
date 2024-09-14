@@ -1,12 +1,9 @@
-use super::super::super::result::{
-    create_verification_error, create_verification_failure, VerificationEvent, VerificationResult,
-};
+use super::super::super::result::{VerificationEvent, VerificationResult};
 use crate::{
     config::Config,
     file_structure::{context_directory::ContextDirectoryTrait, VerificationDirectoryTrait},
 };
-use anyhow::anyhow;
-use log::debug;
+
 use rust_ev_crypto_primitives::Constants;
 use rust_ev_crypto_primitives::Integer;
 
@@ -19,10 +16,10 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
     let ee_context = match context_dir.election_event_context_payload() {
         Ok(eg) => eg,
         Err(e) => {
-            result.push(create_verification_error!(
-                "election_event_context_payload cannot be read",
-                e
-            ));
+            result.push(
+                VerificationEvent::new_error(&e)
+                    .add_context("election_event_context_payload cannot be read"),
+            );
             return;
         }
     };
@@ -48,8 +45,8 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
         .copied()
         .collect();
     if p_prime != p_tilde {
-        result.push(create_verification_failure!(
-            "VerifA: prime group members and encoding voting options are not the same"
+        result.push(VerificationEvent::new_failure(
+            "VerifA: prime group members and encoding voting options are not the same",
         ))
     }
     let verifb = ee_context
@@ -63,7 +60,7 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
         )
         .fold(Integer::zero().clone(), |acc, e| acc * e);
     if &verifb >= ee_context.encryption_group.p() {
-        result.push(create_verification_failure!(
+        result.push(VerificationEvent::new_failure(
             "VerifB: The product of the phi last primes (the largest possible encoded vote) must be smaller than p"
         ))
     }

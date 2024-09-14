@@ -1,5 +1,7 @@
+use log::trace;
+
 use super::super::{
-    result::{create_verification_error, VerificationEvent, VerificationResult},
+    result::{VerificationEvent, VerificationResult},
     suite::VerificationList,
     verifications::Verification,
     verify_signature_for_object,
@@ -12,8 +14,6 @@ use crate::{
     },
     verification::meta_data::VerificationMetaDataList,
 };
-use anyhow::anyhow;
-use log::debug;
 
 pub fn get_verifications<'a>(
     metadata_list: &'a VerificationMetaDataList,
@@ -67,14 +67,14 @@ fn fn_0201_verify_signature_canton_config<D: VerificationDirectoryTrait>(
     let ee_config = match context_dir.election_event_configuration() {
         Ok(p) => p,
         Err(e) => {
-            result.push(create_verification_error!(
-                format!("{} cannot be read", "election_event_configuration"),
-                e
-            ));
+            result.push(
+                VerificationEvent::new_error(&e)
+                    .add_context(format!("{} cannot be read", "election_event_configuration")),
+            );
             return;
         }
     };
-    result.append_wtih_context(
+    result.append_with_context(
         &verify_signature_for_object(ee_config.as_ref(), config),
         "election_event_configuration",
     )
@@ -89,14 +89,14 @@ fn fn_0202_verify_signature_setup_component_public_keys<D: VerificationDirectory
     let payload = match context_dir.setup_component_public_keys_payload() {
         Ok(p) => p,
         Err(e) => {
-            result.push(create_verification_error!(
-                format!("{} cannot be read", "setup_component_public_keys_payload"),
-                e
-            ));
+            result.push(VerificationEvent::new_error(&e).add_context(format!(
+                "{} cannot be read",
+                "setup_component_public_keys_payload"
+            )));
             return;
         }
     };
-    result.append_wtih_context(
+    result.append_with_context(
         &verify_signature_for_object(payload.as_ref(), config),
         "setup_component_public_keys_payload",
     )
@@ -109,16 +109,16 @@ fn fn_0203_verify_signature_control_component_public_keys<D: VerificationDirecto
 ) {
     let context_dir = dir.context();
     for (i, cc) in context_dir.control_component_public_keys_payload_iter() {
-        debug!("Verification 2.03 for cc {}", i);
+        trace!("Verification 2.03 for cc {}", i);
         match cc {
-            Ok(cc) => result.append_wtih_context(
+            Ok(cc) => result.append_with_context(
                 &verify_signature_for_object(cc.as_ref(), config),
                 format!("control_component_public_keys_payload_{}", i),
             ),
-            Err(e) => result.push(create_verification_error!(
-                format!("control_component_public_keys_payload_{} cannot be read", i),
-                e
-            )),
+            Err(e) => result.push(VerificationEvent::new_error(&e).add_context(format!(
+                "control_component_public_keys_payload_{} cannot be read",
+                i
+            ))),
         }
     }
 }
@@ -130,16 +130,16 @@ fn fn_0204_verify_signature_setup_component_tally_data<D: VerificationDirectoryT
 ) {
     let context_dir = dir.context();
     for d in context_dir.vcs_directories() {
-        debug!("Verification 2.04 for vcs_dir {}", d.get_name());
+        trace!("Verification 2.04 for vcs_dir {}", d.get_name());
         match d.setup_component_tally_data_payload() {
-            Ok(p) => result.append_wtih_context(
+            Ok(p) => result.append_with_context(
                 &verify_signature_for_object(p.as_ref(), config),
                 format!("{}/setup_component_tally_data_payload.json", d.get_name(),),
             ),
-            Err(e) => result.push(create_verification_error!(
-                format!("{}/setup_component_tally_data_payload.json", d.get_name(),),
-                e
-            )),
+            Err(e) => result.push(VerificationEvent::new_error(&e).add_context(format!(
+                "{}/setup_component_tally_data_payload.json",
+                d.get_name(),
+            ))),
         }
     }
 }
@@ -153,14 +153,14 @@ fn fn_0205_verify_signature_election_event_context<D: VerificationDirectoryTrait
     let rp = match context_dir.election_event_context_payload() {
         Ok(p) => p,
         Err(e) => {
-            result.push(create_verification_error!(
-                format!("{} cannot be read", "election_event_context_payload"),
-                e
-            ));
+            result.push(VerificationEvent::new_error(&e).add_context(format!(
+                "{} cannot be read",
+                "election_event_context_payload"
+            )));
             return;
         }
     };
-    result.append_wtih_context(
+    result.append_with_context(
         &verify_signature_for_object(rp.as_ref(), config),
         "election_event_context_payload",
     )

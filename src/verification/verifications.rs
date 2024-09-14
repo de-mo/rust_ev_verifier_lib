@@ -180,16 +180,11 @@ impl<'a> Verification<'a, VerificationDirectory> {
 
 #[cfg(test)]
 mod test {
-    use super::{
-        super::{
-            result::{create_verification_error, create_verification_failure},
-            VerificationEvent, VerificationPeriod,
-        },
-        *,
+    use super::*;
+    use crate::{
+        config::test::CONFIG_TEST,
+        verification::{result::VerificationEvent, VerificationPeriod},
     };
-    use crate::config::test::CONFIG_TEST;
-    use anyhow::anyhow;
-    use log::debug;
     use std::path::Path;
 
     #[test]
@@ -248,9 +243,9 @@ mod test {
     #[test]
     fn run_error() {
         fn error(_: &VerificationDirectory, _: &'static Config, result: &mut VerificationResult) {
-            result.push(create_verification_error!("toto"));
-            result.push(create_verification_error!("toto2"));
-            result.push(create_verification_failure!("toto3"));
+            result.push(VerificationEvent::new_error("toto"));
+            result.push(VerificationEvent::new_error("toto2"));
+            result.push(VerificationEvent::new_failure("toto3"));
         }
         let md_list =
             VerificationMetaDataList::load(CONFIG_TEST.get_verification_list_str()).unwrap();
@@ -283,8 +278,8 @@ mod test {
     #[test]
     fn run_failure() {
         fn failure(_: &VerificationDirectory, _: &'static Config, result: &mut VerificationResult) {
-            result.push(create_verification_failure!("toto"));
-            result.push(create_verification_failure!("toto2"));
+            result.push(VerificationEvent::new_failure("toto"));
+            result.push(VerificationEvent::new_failure("toto2"));
         }
         let md_list =
             VerificationMetaDataList::load(CONFIG_TEST.get_verification_list_str()).unwrap();

@@ -1,12 +1,8 @@
-use super::super::super::result::{
-    create_verification_error, create_verification_failure, VerificationEvent, VerificationResult,
-};
+use super::super::super::result::{VerificationEvent, VerificationResult};
 use crate::{
     config::Config,
     file_structure::{context_directory::ContextDirectoryTrait, VerificationDirectoryTrait},
 };
-use anyhow::anyhow;
-use log::debug;
 use rust_ev_crypto_primitives::Integer;
 use rust_ev_crypto_primitives::{Constants, Operations};
 
@@ -19,20 +15,20 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
     let eg = match context_dir.election_event_context_payload() {
         Ok(o) => o.encryption_group,
         Err(e) => {
-            result.push(create_verification_error!(
-                "Cannot extract election_event_context_payload",
-                e
-            ));
+            result.push(
+                VerificationEvent::new_error(&e)
+                    .add_context("Cannot extract election_event_context_payload"),
+            );
             return;
         }
     };
     let sc_pk = match context_dir.setup_component_public_keys_payload() {
         Ok(o) => o,
         Err(e) => {
-            result.push(create_verification_error!(
-                "Cannot extract setup_component_public_keys_payload",
-                e
-            ));
+            result.push(
+                VerificationEvent::new_error(&e)
+                    .add_context("Cannot extract setup_component_public_keys_payload"),
+            );
             return;
         }
     };
@@ -51,7 +47,7 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
             eg.p(),
         );
         if &calculated_el_pk != el_pk_i {
-            result.push(create_verification_failure!(format!(
+            result.push(VerificationEvent::new_failure(&format!(
                 "The election public key EL_pk at {} is correctly combined",
                 i
             )));

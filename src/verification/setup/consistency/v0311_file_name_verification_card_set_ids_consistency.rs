@@ -1,6 +1,4 @@
-use super::super::super::result::{
-    create_verification_error, create_verification_failure, VerificationEvent, VerificationResult,
-};
+use super::super::super::result::{VerificationEvent, VerificationResult};
 use crate::{
     config::Config,
     file_structure::{
@@ -8,8 +6,6 @@ use crate::{
         VerificationDirectoryTrait,
     },
 };
-use anyhow::anyhow;
-use log::debug;
 
 fn verify_file_name_correct(vcs_ids: &[&str], dir_names: &[String]) -> VerificationResult {
     let mut res = VerificationResult::new();
@@ -18,7 +14,7 @@ fn verify_file_name_correct(vcs_ids: &[&str], dir_names: &[String]) -> Verificat
     let mut dir_names_ordered = dir_names.to_vec();
     dir_names_ordered.sort();
     if vcs_ids_ordered != dir_names_ordered {
-        res.push(create_verification_failure!(format!(
+        res.push(VerificationEvent::new_failure(&format!(
             "The subdirectory [{}] are not equal to the list of voting card set ids [{}]",
             dir_names_ordered.join(","),
             vcs_ids_ordered.join(",")
@@ -38,21 +34,21 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
     let ee_context = match context_dir.election_event_context_payload() {
         Ok(payload) => payload,
         Err(e) => {
-            result.push(create_verification_error!(
-                "Cannot read payload for election_event_context_payload",
-                e
-            ));
+            result.push(
+                VerificationEvent::new_error(&e)
+                    .add_context("Cannot read payload for election_event_context_payload"),
+            );
             return;
         }
     };
     let vcs_ids = ee_context.election_event_context.vcs_ids();
 
-    result.append_wtih_context(
+    result.append_with_context(
         &verify_file_name_correct(&vcs_ids, &context_dir.vcs_directory_names()),
         "Context directory",
     );
 
-    result.append_wtih_context(
+    result.append_with_context(
         &verify_file_name_correct(&vcs_ids, &setup_dir.vcs_directory_names()),
         "Setup directory",
     );

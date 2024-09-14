@@ -1,8 +1,6 @@
 use std::collections::{HashMap, HashSet};
 
-use super::super::super::result::{
-    create_verification_error, create_verification_failure, VerificationEvent, VerificationResult,
-};
+use super::super::super::result::{VerificationEvent, VerificationResult};
 use crate::{
     config::Config,
     file_structure::{
@@ -11,13 +9,11 @@ use crate::{
         VerificationDirectoryTrait,
     },
 };
-use anyhow::anyhow;
-use log::debug;
 
 fn verify_ids_same(vc_ids: &[String], expected: &[String]) -> VerificationResult {
     let mut res = VerificationResult::new();
     if vc_ids != expected {
-        res.push(create_verification_failure!(format!(
+        res.push(VerificationEvent::new_failure(&format!(
             "The voting card ids [{}] are not equal to the expected list of voting card ids [{}]",
             vc_ids.join(","),
             expected.join(",")
@@ -33,17 +29,17 @@ fn verrify_card_ids_context_vcs<V: ContextVCSDirectoryTrait>(
     let vc_ids = match vcs_dir.setup_component_tally_data_payload() {
         Ok(p) => p.verification_card_ids,
         Err(e) => {
-            res.push(create_verification_error!(
-                "Cannot read payload for setup_component_tally_data_payload",
-                e
-            ));
+            res.push(
+                VerificationEvent::new_error(&e)
+                    .add_context("Cannot read payload for setup_component_tally_data_payload"),
+            );
             return (vec![], res);
         }
     };
     let mut uniq = HashSet::new();
     let no_duplicate = vc_ids.iter().all(move |x| uniq.insert(x));
     if !no_duplicate {
-        res.push(create_verification_failure!(format!(
+        res.push(VerificationEvent::new_failure(&format!(
             "The list of vc_ids [{}] are not unique in setup_component_tally_data_payload",
             vc_ids.join(",")
         )));
@@ -63,13 +59,10 @@ fn verrify_card_ids_setup_vcs<V: SetupVCSDirectoryTrait>(
     hm_vc_ids.insert(4, vec![]);
     for (i, p) in vcs_dir.control_component_code_shares_payload_iter() {
         match p {
-            Err(e) => res.push(create_verification_error!(
-                format!(
-                    "Cannot read payload for control_component_code_shares_payload.{}",
-                    i
-                ),
-                e
-            )),
+            Err(e) => res.push(VerificationEvent::new_error(&e).add_context(format!(
+                "Cannot read payload for control_component_code_shares_payload.{}",
+                i
+            ))),
             Ok(p) => {
                 for share in p.0 {
                     let mut v: Vec<String> = share.vc_ids().iter().map(|s| s.to_string()).collect();
@@ -79,7 +72,7 @@ fn verrify_card_ids_setup_vcs<V: SetupVCSDirectoryTrait>(
         }
     }
     for (node_id, ids) in hm_vc_ids.iter() {
-        res.append_wtih_context(
+        res.append_with_context(
             &verify_ids_same(ids, expected),
             format!("control_component_code_shares_payload for node {node_id}"),
         );
@@ -87,20 +80,17 @@ fn verrify_card_ids_setup_vcs<V: SetupVCSDirectoryTrait>(
     let mut vc_ids = vec![];
     for (i, p) in vcs_dir.setup_component_verification_data_payload_iter() {
         match p {
-            Err(e) => res.push(create_verification_error!(
-                format!(
-                    "Cannot read payload for setup_component_verification_data_payload.{}",
-                    i
-                ),
-                e
-            )),
+            Err(e) => res.push(VerificationEvent::new_error(&e).add_context(format!(
+                "Cannot read payload for setup_component_verification_data_payload.{}",
+                i
+            ))),
             Ok(p) => {
                 let mut ids: Vec<String> = p.vc_ids().iter().map(|s| s.to_string()).collect();
                 vc_ids.append(&mut ids)
             }
         }
     }
-    res.append_wtih_context(
+    res.append_with_context(
         &verify_ids_same(&vc_ids, expected),
         "setup_component_verification_data_payload",
     );
@@ -119,7 +109,7 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
 
     for vcs_dir in context_dir.vcs_directories().iter() {
         let (vc_ids, res) = verrify_card_ids_context_vcs(vcs_dir);
-        result.append_wtih_context(
+        result.append_with_context(
             &res,
             format!("context vcs directory {}", vcs_dir.get_name()),
         );
@@ -129,7 +119,7 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
     for vcs_dir in setup_dir.vcs_directories().iter() {
         let v = hm_vc_ids.get(&vcs_dir.get_name()).unwrap();
         if !v.is_empty() {
-            result.append_wtih_context(
+            result.append_with_context(
                 &verrify_card_ids_setup_vcs(vcs_dir, v),
                 format!("setup vcs directory {}", vcs_dir.get_name()),
             );

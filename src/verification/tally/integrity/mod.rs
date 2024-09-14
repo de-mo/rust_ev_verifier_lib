@@ -1,5 +1,5 @@
 use super::super::{
-    result::{create_verification_failure, VerificationEvent, VerificationResult},
+    result::{VerificationEvent, VerificationResult},
     suite::VerificationList,
     verifications::Verification,
 };
@@ -11,8 +11,6 @@ use crate::{
     },
     verification::meta_data::VerificationMetaDataList,
 };
-use anyhow::anyhow;
-use log::debug;
 use rust_ev_crypto_primitives::VerifyDomainTrait;
 
 pub fn get_verifications<'a>(
@@ -32,29 +30,31 @@ fn validate_bb_dir<B: BBDirectoryTrait>(dir: &B, result: &mut VerificationResult
     match dir.tally_component_votes_payload() {
         Ok(d) => {
             for e in d.verifiy_domain() {
-                result.push(create_verification_failure!(
-                    "Error verifying domain for tally_component_votes_payload",
-                    e
+                result.push(VerificationEvent::new_failure(&e)
+                .add_context(
+                    "Error verifying domain for tally_component_votes_payload"
+                    
                 ))
             }
         }
-        Err(e) => result.push(create_verification_failure!(
-            "tally_component_votes_payload has wrong format",
-            e
+        Err(e) => result.push(VerificationEvent::new_failure(&e)
+        .add_context(
+            "tally_component_votes_payload has wrong format"
+            
         )),
     }
     match dir.tally_component_shuffle_payload() {
         Ok(d) => {
             for e in d.verifiy_domain() {
-                result.push(create_verification_failure!(
-                    "Error verifying domain for tally_component_shuffle_payload",
-                    e
+                result.push(VerificationEvent::new_failure(&e)
+                .add_context(
+                    "Error verifying domain for tally_component_shuffle_payload"
                 ))
             }
         }
-        Err(e) => result.push(create_verification_failure!(
-            "tally_component_shuffle_payload has wrong format",
-            e
+        Err(e) => result.push(VerificationEvent::new_failure(&e)
+        .add_context(
+            "tally_component_shuffle_payload has wrong format"
         )),
     }
 
@@ -62,23 +62,25 @@ fn validate_bb_dir<B: BBDirectoryTrait>(dir: &B, result: &mut VerificationResult
         match f {
             Ok(d) => {
                 for e in d.verifiy_domain() {
-                    result.push(create_verification_failure!(
+                    result.push(VerificationEvent::new_failure(&e)
+                    .add_context(
                         format!(
                              "Error verifying domain for {}/control_component_ballot_box_payload_iter.{}",
                     dir.get_name(),
                     i
-                        ),
-                        e
+                        )
+                        
                     ))
                 }
             }
-            Err(e) => result.push(create_verification_failure!(
+            Err(e) => result.push(VerificationEvent::new_failure(&e)
+            .add_context(
                 format!(
                     "{}/control_component_ballot_box_payload_iter.{} has wrong format",
                     dir.get_name(),
                     i
-                ),
-                e
+                )
+                
             )),
         }
     }
@@ -87,23 +89,25 @@ fn validate_bb_dir<B: BBDirectoryTrait>(dir: &B, result: &mut VerificationResult
         match f {
             Ok(d) => {
                 for e in d.verifiy_domain() {
-                    result.push(create_verification_failure!(
+                    result.push(VerificationEvent::new_failure(&e)
+                    .add_context(
                         format!(
                              "Error verifying domain for {}/control_component_shuffle_payload_iter.{}",
                     dir.get_name(),
                     i
-                        ),
-                        e
+                        )
+                        
                     ))
                 }
             }
-            Err(e) => result.push(create_verification_failure!(
+            Err(e) => result.push(VerificationEvent::new_failure(&e)
+            .add_context(
                 format!(
                     "{}/control_component_shuffle_payload_iter.{} has wrong format",
                     dir.get_name(),
                     i
-                ),
-                e
+                )
+                
             )),
         }
     }
