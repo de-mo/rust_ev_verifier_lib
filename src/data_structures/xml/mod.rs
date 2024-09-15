@@ -14,6 +14,11 @@ pub use schema::SchemaKind;
 use std::io::BufRead;
 use thiserror::Error;
 
+#[derive(Error, Debug)]
+pub enum XMLError {
+    #[error("Not implemented: {0}")]
+    NotImplemented(String),
+}
 /*
 // Enum representing the direct trust errors
 #[derive(Error, Debug)]

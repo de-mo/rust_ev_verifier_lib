@@ -2,7 +2,7 @@ use super::super::{
     xml::{hashable::XMLFileHashable, SchemaKind},
     DataStructureError, VerifierDataDecode,
 };
-use crate::direct_trust::{CertificateAuthority, VerifiySignatureTrait};
+use crate::direct_trust::{CertificateAuthority, VerifiySignatureTrait, VerifySignatureError};
 use rust_ev_crypto_primitives::{ByteArray, HashableMessage, RecursiveHashTrait};
 use std::path::{Path, PathBuf};
 
@@ -20,9 +20,14 @@ impl VerifierDataDecode for ECH0110 {
 }
 
 impl<'a> VerifiySignatureTrait<'a> for ECH0110 {
-    fn get_hashable(&'a self) -> anyhow::Result<HashableMessage<'a>> {
+    fn get_hashable(&'a self) -> Result<HashableMessage<'a>, VerifySignatureError> {
         let hashable = XMLFileHashable::new(&self.path, &SchemaKind::Ech0110, "eCH-0110:extension");
-        let hash = hashable.recursive_hash()?;
+        let hash = hashable
+            .recursive_hash()
+            .map_err(|e| VerifySignatureError::XMLError {
+                msg: String::default(),
+                source: e,
+            })?;
         Ok(HashableMessage::Hashed(hash))
     }
 

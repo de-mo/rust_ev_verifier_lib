@@ -4,7 +4,7 @@ use super::super::{
 };
 use crate::{
     data_structures::common_types::{DecryptionProof, Proof},
-    direct_trust::{CertificateAuthority, VerifiySignatureTrait},
+    direct_trust::{CertificateAuthority, VerifiySignatureTrait, VerifySignatureError},
 };
 use anyhow::anyhow;
 use rust_ev_crypto_primitives::{
@@ -90,7 +90,7 @@ impl<'a> From<&'a ContextIds> for HashableMessage<'a> {
 }
 
 impl<'a> VerifiySignatureTrait<'a> for ControlComponentBallotBoxPayload {
-    fn get_hashable(&'a self) -> anyhow::Result<HashableMessage<'a>> {
+    fn get_hashable(&'a self) -> Result<HashableMessage<'a>, VerifySignatureError> {
         Ok(HashableMessage::from(self))
     }
 

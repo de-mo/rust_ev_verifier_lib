@@ -3,7 +3,7 @@ use super::super::{
     deserialize_string_string_to_datetime, implement_trait_verifier_data_json_decode,
     DataStructureError, VerifierDataDecode,
 };
-use crate::direct_trust::{CertificateAuthority, VerifiySignatureTrait};
+use crate::direct_trust::{CertificateAuthority, VerifiySignatureTrait, VerifySignatureError};
 use crate::{config::Config as VerifierConfig, data_structures::verifiy_domain_length_unique_id};
 use anyhow::anyhow;
 use chrono::NaiveDate;
@@ -264,7 +264,7 @@ impl<'a> From<&'a ElectionEventContextPayload> for HashableMessage<'a> {
 }
 
 impl<'a> VerifiySignatureTrait<'a> for ElectionEventContextPayload {
-    fn get_hashable(&'a self) -> anyhow::Result<HashableMessage<'a>> {
+    fn get_hashable(&'a self) -> Result<HashableMessage<'a>, VerifySignatureError> {
         Ok(HashableMessage::from(self))
     }
 

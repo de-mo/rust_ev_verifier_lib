@@ -6,7 +6,7 @@ use super::{
     },
     control_component_public_keys_payload::ControlComponentPublicKeys,
 };
-use crate::direct_trust::{CertificateAuthority, VerifiySignatureTrait};
+use crate::direct_trust::{CertificateAuthority, VerifiySignatureTrait, VerifySignatureError};
 use anyhow::anyhow;
 use rust_ev_crypto_primitives::Integer;
 use rust_ev_crypto_primitives::{
@@ -39,7 +39,7 @@ impl<'a> From<&'a SetupComponentPublicKeysPayload> for HashableMessage<'a> {
 }
 
 impl<'a> VerifiySignatureTrait<'a> for SetupComponentPublicKeysPayload {
-    fn get_hashable(&'a self) -> anyhow::Result<HashableMessage<'a>> {
+    fn get_hashable(&'a self) -> Result<HashableMessage<'a>, VerifySignatureError> {
         Ok(HashableMessage::from(self))
     }
 

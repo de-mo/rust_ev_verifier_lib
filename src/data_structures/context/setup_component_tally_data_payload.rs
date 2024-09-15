@@ -3,7 +3,7 @@ use super::super::{
     deserialize_seq_seq_string_base64_to_seq_seq_integer,
     implement_trait_verifier_data_json_decode, DataStructureError, VerifierDataDecode,
 };
-use crate::direct_trust::{CertificateAuthority, VerifiySignatureTrait};
+use crate::direct_trust::{CertificateAuthority, VerifiySignatureTrait, VerifySignatureError};
 use anyhow::anyhow;
 use rust_ev_crypto_primitives::Integer;
 use rust_ev_crypto_primitives::{
@@ -51,7 +51,7 @@ impl<'a> From<&'a SetupComponentTallyDataPayload> for HashableMessage<'a> {
 }
 
 impl<'a> VerifiySignatureTrait<'a> for SetupComponentTallyDataPayload {
-    fn get_hashable(&'a self) -> anyhow::Result<HashableMessage<'a>> {
+    fn get_hashable(&'a self) -> Result<HashableMessage<'a>, VerifySignatureError> {
         Ok(HashableMessage::from(self))
     }
 

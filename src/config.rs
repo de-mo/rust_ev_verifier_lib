@@ -6,9 +6,9 @@ use super::resources::VERIFICATION_LIST;
 use std::path::{Path, PathBuf};
 
 // Directory structure
-pub const CONTEXT_DIR_NAME: &str = "context";
-pub const SETUP_DIR_NAME: &str = "setup";
-pub const TALLY_DIR_NAME: &str = "tally";
+const CONTEXT_DIR_NAME: &str = "context";
+const SETUP_DIR_NAME: &str = "setup";
+const TALLY_DIR_NAME: &str = "tally";
 const VCS_DIR_NAME: &str = "verificationCardSets";
 const BB_DIR_NAME: &str = "ballotBoxes";
 
@@ -178,7 +178,6 @@ pub(crate) mod test {
         file_structure::{mock::MockVerificationDirectory, VerificationDirectory},
         verification::VerificationPeriod,
     };
-    use anyhow::{bail, Context};
     use lazy_static::lazy_static;
     use rust_ev_crypto_primitives::Keystore as BasisKeystore;
 

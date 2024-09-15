@@ -4,9 +4,8 @@ use super::super::{
 };
 use crate::{
     data_structures::common_types::Signature,
-    direct_trust::{CertificateAuthority, VerifiySignatureTrait},
+    direct_trust::{CertificateAuthority, VerifiySignatureTrait, VerifySignatureError},
 };
-use anyhow::anyhow;
 use quick_xml::{
     de::from_str as xml_de_from_str,
     events::{BytesEnd, BytesStart, Event},
@@ -131,9 +130,14 @@ impl VerifierDataDecode for ElectionEventConfiguration {
 }
 
 impl<'a> VerifiySignatureTrait<'a> for ElectionEventConfiguration {
-    fn get_hashable(&'a self) -> anyhow::Result<HashableMessage<'a>> {
+    fn get_hashable(&'a self) -> Result<HashableMessage<'a>, VerifySignatureError> {
         let hashable = XMLFileHashable::new(&self.path, &SchemaKind::Config, "signature");
-        let hash = hashable.recursive_hash()?;
+        let hash = hashable
+            .recursive_hash()
+            .map_err(|e| VerifySignatureError::XMLError {
+                msg: String::default(),
+                source: e,
+            })?;
         Ok(HashableMessage::Hashed(hash))
     }
 

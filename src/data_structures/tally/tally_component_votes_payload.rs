@@ -1,4 +1,4 @@
-use crate::direct_trust::{CertificateAuthority, VerifiySignatureTrait};
+use crate::direct_trust::{CertificateAuthority, VerifiySignatureTrait, VerifySignatureError};
 
 use super::super::{
     common_types::{EncryptionParametersDef, Signature},
@@ -50,7 +50,7 @@ impl<'a> From<&'a TallyComponentVotesPayload> for HashableMessage<'a> {
 }
 
 impl<'a> VerifiySignatureTrait<'a> for TallyComponentVotesPayload {
-    fn get_hashable(&'a self) -> anyhow::Result<HashableMessage<'a>> {
+    fn get_hashable(&'a self) -> Result<HashableMessage<'a>, VerifySignatureError> {
         Ok(HashableMessage::from(self))
     }
 

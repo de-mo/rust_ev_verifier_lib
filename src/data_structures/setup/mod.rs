@@ -7,10 +7,7 @@ use self::{
     control_component_code_shares_payload::ControlComponentCodeSharesPayload,
     setup_component_verification_data_payload::SetupComponentVerificationDataPayload,
 };
-use super::{DataStructureError, VerifierDataDecode, VerifierSetupDataTrait};
-use crate::file_structure::{
-    file::File, FileReadMode, FileType, GetFileReadMode, GetFileTypeTrait,
-};
+use super::VerifierSetupDataTrait;
 use enum_kinds::EnumKind;
 
 /// Types of the setup directory
@@ -20,24 +17,6 @@ use enum_kinds::EnumKind;
 pub enum VerifierSetupData {
     SetupComponentVerificationDataPayload(SetupComponentVerificationDataPayload),
     ControlComponentCodeSharesPayload(ControlComponentCodeSharesPayload),
-}
-
-impl GetFileReadMode for VerifierSetupDataType {
-    fn get_file_read_mode(&self) -> FileReadMode {
-        match self {
-            Self::SetupComponentVerificationDataPayload => FileReadMode::Memory,
-            Self::ControlComponentCodeSharesPayload => FileReadMode::Memory,
-        }
-    }
-}
-
-impl GetFileTypeTrait for VerifierSetupDataType {
-    fn get_file_type(&self) -> FileType {
-        match self {
-            Self::SetupComponentVerificationDataPayload => FileType::Json,
-            Self::ControlComponentCodeSharesPayload => FileType::Json,
-        }
-    }
 }
 
 /*

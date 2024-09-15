@@ -3,11 +3,9 @@ use super::super::{
     deserialize_seq_string_base64_to_seq_integer, implement_trait_verifier_data_json_decode,
     DataStructureError, VerifierDataDecode,
 };
-use crate::direct_trust::{CertificateAuthority, VerifiySignatureTrait};
-use anyhow::anyhow;
-use rust_ev_crypto_primitives::Integer;
+use crate::direct_trust::{CertificateAuthority, VerifiySignatureTrait, VerifySignatureError};
 use rust_ev_crypto_primitives::{
-    ByteArray, EncryptionParameters, HashableMessage, VerifyDomainTrait,
+    ByteArray, EncryptionParameters, HashableMessage, Integer, VerifyDomainTrait,
 };
 use serde::Deserialize;
 
@@ -36,7 +34,7 @@ impl<'a> From<&'a ControlComponentPublicKeysPayload> for HashableMessage<'a> {
 }
 
 impl<'a> VerifiySignatureTrait<'a> for ControlComponentPublicKeysPayload {
-    fn get_hashable(&'a self) -> anyhow::Result<HashableMessage<'a>> {
+    fn get_hashable(&'a self) -> Result<HashableMessage<'a>, VerifySignatureError> {
         Ok(HashableMessage::from(self))
     }
 

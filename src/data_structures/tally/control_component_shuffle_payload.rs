@@ -1,11 +1,11 @@
 use super::super::{
     common_types::{EncryptionParametersDef, ExponentiatedEncryptedElement, Signature},
-    implement_trait_verifier_data_json_decode, VerifierDataDecode,DataStructureError, 
+    implement_trait_verifier_data_json_decode, DataStructureError, VerifierDataDecode,
 };
 use super::tally_component_shuffle_payload::VerifiableShuffle;
 use crate::{
     data_structures::common_types::DecryptionProof,
-    direct_trust::{CertificateAuthority, VerifiySignatureTrait},
+    direct_trust::{CertificateAuthority, VerifiySignatureTrait, VerifySignatureError},
 };
 use anyhow::anyhow;
 use rust_ev_crypto_primitives::{
@@ -71,7 +71,7 @@ impl<'a> From<&'a VerifiableDecryptions> for HashableMessage<'a> {
 }
 
 impl<'a> VerifiySignatureTrait<'a> for ControlComponentShufflePayload {
-    fn get_hashable(&'a self) -> anyhow::Result<HashableMessage<'a>> {
+    fn get_hashable(&'a self) -> Result<HashableMessage<'a>, VerifySignatureError> {
         Ok(HashableMessage::from(self))
     }
 

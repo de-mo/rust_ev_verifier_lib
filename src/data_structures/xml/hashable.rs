@@ -2,6 +2,7 @@ use super::{
     hashable_no_value,
     schema::{Schema, SchemaKind},
     schema_tree::{ComplexTypeChildKind, ElementNode},
+    XMLError,
 };
 use anyhow::{anyhow, Context};
 use quick_xml::{
@@ -56,9 +57,11 @@ impl XMLFileHashable {
 }
 
 impl RecursiveHashTrait for XMLFileHashable {
-    type Error = anyhow::Error;
+    type Error = XMLError;
 
     fn recursive_hash(&self) -> Result<ByteArray, Self::Error> {
+        todo!();
+        /*
         let mut reader = NsReader::from_file(&self.file).map_err(|e| {
             anyhow!(e).context(format!(
                 "Error creating xml reader for file {}",
@@ -89,19 +92,17 @@ impl RecursiveHashTrait for XMLFileHashable {
                 Err(e) => return Err(anyhow!(e).context("Error reader in recursive_hash")),
             }
             buf.clear();
-        }
+        } */
     }
 
     fn recursive_hash_of_length(&self, _length: usize) -> Result<ByteArray, Self::Error> {
-        Err(anyhow!(
-            "recursive_hash_of_length is not implemented for xml files"
+        Err(XMLError::NotImplemented(
+            "recursive_hash_of_length".to_string(),
         ))
     }
 
     fn recursive_hash_to_zq(&self, _q: &Integer) -> Result<Integer, Self::Error> {
-        Err(anyhow!(
-            "recursive_hash_to_zq is not implemented for xml files"
-        ))
+        Err(XMLError::NotImplemented("recursive_hash_to_zq".to_string()))
     }
 }
 

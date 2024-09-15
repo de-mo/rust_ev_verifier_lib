@@ -87,16 +87,6 @@ pub enum FileReadMode {
     Streaming,
 }
 
-pub trait GetFileTypeTrait {
-    /// Get [FileType]
-    fn get_file_type(&self) -> FileType;
-}
-
-pub trait GetFileReadMode {
-    /// Get [FileReadMode]
-    fn get_file_read_mode(&self) -> FileReadMode;
-}
-
 /// Trait defining functions to get the filename
 pub trait GetFileNameTrait {
     /// Get the file name as it is defiened
@@ -253,6 +243,30 @@ impl GetFileNameTrait for VerifierContextDataType {
     }
 }
 
+impl From<VerifierContextDataType> for FileReadMode {
+    fn from(value: VerifierContextDataType) -> Self {
+        match value {
+            VerifierContextDataType::ElectionEventContextPayload => FileReadMode::Memory,
+            VerifierContextDataType::SetupComponentPublicKeysPayload => FileReadMode::Memory,
+            VerifierContextDataType::ControlComponentPublicKeysPayload => FileReadMode::Memory,
+            VerifierContextDataType::SetupComponentTallyDataPayload => FileReadMode::Memory,
+            VerifierContextDataType::ElectionEventConfiguration => FileReadMode::Streaming,
+        }
+    }
+}
+
+impl From<VerifierContextDataType> for FileType {
+    fn from(value: VerifierContextDataType) -> Self {
+        match value {
+            VerifierContextDataType::ElectionEventContextPayload => FileType::Json,
+            VerifierContextDataType::SetupComponentPublicKeysPayload => FileType::Json,
+            VerifierContextDataType::ControlComponentPublicKeysPayload => FileType::Json,
+            VerifierContextDataType::SetupComponentTallyDataPayload => FileType::Json,
+            VerifierContextDataType::ElectionEventConfiguration => FileType::Xml,
+        }
+    }
+}
+
 impl GetFileNameTrait for VerifierSetupDataType {
     fn get_raw_file_name(&self) -> String {
         let s = match self {
@@ -262,6 +276,24 @@ impl GetFileNameTrait for VerifierSetupDataType {
             Self::ControlComponentCodeSharesPayload => "controlComponentCodeSharesPayload.{}.json",
         };
         s.to_string()
+    }
+}
+
+impl From<VerifierSetupDataType> for FileReadMode {
+    fn from(value: VerifierSetupDataType) -> Self {
+        match value {
+            VerifierSetupDataType::SetupComponentVerificationDataPayload => FileReadMode::Memory,
+            VerifierSetupDataType::ControlComponentCodeSharesPayload => FileReadMode::Memory,
+        }
+    }
+}
+
+impl From<VerifierSetupDataType> for FileType {
+    fn from(value: VerifierSetupDataType) -> Self {
+        match value {
+            VerifierSetupDataType::SetupComponentVerificationDataPayload => FileType::Json,
+            VerifierSetupDataType::ControlComponentCodeSharesPayload => FileType::Json,
+        }
     }
 }
 
@@ -280,12 +312,60 @@ impl GetFileNameTrait for VerifierTallyDataType {
     }
 }
 
+impl From<VerifierTallyDataType> for FileReadMode {
+    fn from(value: VerifierTallyDataType) -> Self {
+        match value {
+            VerifierTallyDataType::EVotingDecrypt => FileReadMode::Memory,
+            VerifierTallyDataType::ECH0110 => FileReadMode::Memory,
+            VerifierTallyDataType::ECH0222 => FileReadMode::Memory,
+            VerifierTallyDataType::TallyComponentVotesPayload => FileReadMode::Memory,
+            VerifierTallyDataType::TallyComponentShufflePayload => FileReadMode::Memory,
+            VerifierTallyDataType::ControlComponentBallotBoxPayload => FileReadMode::Memory,
+            VerifierTallyDataType::ControlComponentShufflePayload => FileReadMode::Memory,
+        }
+    }
+}
+
+impl From<VerifierTallyDataType> for FileType {
+    fn from(value: VerifierTallyDataType) -> Self {
+        match value {
+            VerifierTallyDataType::EVotingDecrypt => FileType::Xml,
+            VerifierTallyDataType::ECH0110 => FileType::Xml,
+            VerifierTallyDataType::ECH0222 => FileType::Xml,
+            VerifierTallyDataType::TallyComponentVotesPayload => FileType::Json,
+            VerifierTallyDataType::TallyComponentShufflePayload => FileType::Json,
+            VerifierTallyDataType::ControlComponentBallotBoxPayload => FileType::Json,
+            VerifierTallyDataType::ControlComponentShufflePayload => FileType::Json,
+        }
+    }
+}
+
 impl GetFileNameTrait for VerifierDataType {
     fn get_raw_file_name(&self) -> String {
         match self {
-            VerifierDataType::Context(c) => c.get_raw_file_name(),
+            VerifierDataType::Context(t) => t.get_raw_file_name(),
             VerifierDataType::Setup(t) => t.get_raw_file_name(),
             VerifierDataType::Tally(t) => t.get_raw_file_name(),
+        }
+    }
+}
+
+impl From<VerifierDataType> for FileReadMode {
+    fn from(value: VerifierDataType) -> Self {
+        match value {
+            VerifierDataType::Context(t) => FileReadMode::from(t),
+            VerifierDataType::Setup(t) => FileReadMode::from(t),
+            VerifierDataType::Tally(t) => FileReadMode::from(t),
+        }
+    }
+}
+
+impl From<VerifierDataType> for FileType {
+    fn from(value: VerifierDataType) -> Self {
+        match value {
+            VerifierDataType::Context(t) => FileType::from(t),
+            VerifierDataType::Setup(t) => FileType::from(t),
+            VerifierDataType::Tally(t) => FileType::from(t),
         }
     }
 }
@@ -295,7 +375,7 @@ mod test {
     use super::*;
     use crate::config::test::{
         test_ballot_box_path, test_context_verification_card_set_path, test_datasets_context_path,
-        test_datasets_setup_path, test_datasets_tally_path, test_setup_verification_card_set_path,
+        test_setup_verification_card_set_path,
     };
 
     #[test]

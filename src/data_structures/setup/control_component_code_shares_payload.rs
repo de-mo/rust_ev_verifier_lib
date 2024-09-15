@@ -1,9 +1,11 @@
 use super::super::{
     common_types::{EncryptionParametersDef, ExponentiatedEncryptedElement, Proof, Signature},
     deserialize_seq_string_base64_to_seq_integer, implement_trait_verifier_data_json_decode,
-    VerifierDataDecode,DataStructureError, 
+    DataStructureError, VerifierDataDecode,
 };
-use crate::direct_trust::{CertificateAuthority, Keystore, VerifiySignatureTrait};
+use crate::direct_trust::{
+    CertificateAuthority, Keystore, VerifiySignatureTrait, VerifySignatureError,
+};
 use anyhow::anyhow;
 use rust_ev_crypto_primitives::Integer;
 use rust_ev_crypto_primitives::{
@@ -121,7 +123,7 @@ impl<'a> From<&'a ControlComponentCodeShare> for HashableMessage<'a> {
 }
 
 impl<'a> VerifiySignatureTrait<'a> for ControlComponentCodeSharesPayloadInner {
-    fn get_hashable(&'a self) -> anyhow::Result<HashableMessage<'a>> {
+    fn get_hashable(&'a self) -> Result<HashableMessage<'a>, VerifySignatureError> {
         Ok(HashableMessage::from(self))
     }
 
@@ -144,7 +146,7 @@ impl<'a> VerifiySignatureTrait<'a> for ControlComponentCodeSharesPayloadInner {
 }
 
 impl<'a> VerifiySignatureTrait<'a> for ControlComponentCodeSharesPayload {
-    fn get_hashable(&'a self) -> anyhow::Result<HashableMessage<'a>> {
+    fn get_hashable(&'a self) -> Result<HashableMessage<'a>, VerifySignatureError> {
         unimplemented!()
     }
 
@@ -160,7 +162,7 @@ impl<'a> VerifiySignatureTrait<'a> for ControlComponentCodeSharesPayload {
         unimplemented!()
     }
 
-    fn verify_signatures(&'a self, keystore: &Keystore) -> Vec<anyhow::Result<bool>> {
+    fn verify_signatures(&'a self, keystore: &Keystore) -> Vec<Result<bool, VerifySignatureError>> {
         self.0
             .iter()
             .map(|e| e.verifiy_signature(keystore))

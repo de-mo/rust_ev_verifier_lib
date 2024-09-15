@@ -1,15 +1,15 @@
+use rust_ev_crypto_primitives::{
+    sign, verify_signature, ByteArray, DirectTrustError as BasisDirectTrustError, HashError,
+    HashableMessage, Keystore as BasisKeystore, SignatureError,
+};
 use std::{
     fmt::Display,
     path::{Path, PathBuf},
     slice::Iter,
 };
-
-use anyhow::{anyhow, Context};
-use rust_ev_crypto_primitives::{
-    sign, verify_signature, ByteArray, DirectTrustError as BasisDirectTrustError, HashableMessage,
-    Keystore as BasisKeystore,
-};
 use thiserror::Error;
+
+use crate::data_structures::XMLError;
 
 pub struct Keystore(pub BasisKeystore);
 
@@ -29,6 +29,33 @@ pub enum DirectTrustError {
     },
     #[error("No signing Keystore for Voting Server")]
     NoSigningVotingServer,
+}
+
+// Enum representing the direct trust errors
+#[derive(Error, Debug)]
+pub enum VerifySignatureError {
+    #[error("No certificate authority given")]
+    NoCA,
+    #[error("Signature error {msg} -> caused by: {source}")]
+    SignatureError { msg: String, source: SignatureError },
+    #[error("Hash error {msg} -> caused by: {source}")]
+    HashError { msg: String, source: HashError },
+    #[error("XML error {msg} -> caused by: {source}")]
+    XMLError { msg: String, source: XMLError },
+    /*
+    #[error("IO error {msg} -> caused by: {source}")]
+    IO { msg: String, source: std::io::Error },
+    #[error("No file with extension {0} found")]
+    FileNotFound(String),
+    #[error("More than one file with extension {0} found")]
+    NotUniqueFile(String),
+    #[error("Keystore error {msg} -> caused by: {source}")]
+    Keystore {
+        msg: String,
+        source: BasisDirectTrustError,
+    },
+    #[error("No signing Keystore for Voting Server")]
+    NoSigningVotingServer, */
 }
 
 /// List of valide Certificate authorities
@@ -147,7 +174,7 @@ where
     Self: 'a,
 {
     /// Get the hashable from the object
-    fn get_hashable(&'a self) -> anyhow::Result<HashableMessage<'a>>;
+    fn get_hashable(&'a self) -> Result<HashableMessage<'a>, VerifySignatureError>;
 
     /// Get the context data of the object according to the specifications
     fn get_context_data(&'a self) -> Vec<HashableMessage<'a>>;
@@ -167,14 +194,12 @@ where
     }
 
     /// Verfiy the signature according to the specifications of Verifier
-    fn verifiy_signature(&'a self, keystore: &Keystore) -> anyhow::Result<bool> {
+    fn verifiy_signature(&'a self, keystore: &Keystore) -> Result<bool, VerifySignatureError> {
         let ca = match self.get_certificate_authority() {
             Some(ca) => ca,
-            None => return Err(anyhow!("Error getting the certificate")),
+            None => return Err(VerifySignatureError::NoCA),
         };
-        let hashable_message = self
-            .get_hashable()
-            .context("Error getting the hashable message")?;
+        let hashable_message = self.get_hashable()?;
         verify_signature(
             &keystore.0,
             &ca.to_string(),
@@ -182,24 +207,30 @@ where
             &self.get_context_hashable(),
             &self.get_signature(),
         )
-        .context("Error verifying the signature")
+        .map_err(|e| VerifySignatureError::SignatureError {
+            msg: "Error verifying the signature".to_string(),
+            source: e,
+        })
     }
 
     /// Sign according to the specifications of Verifier
     ///
     /// Can be usefull to resign the payload after mocking it
-    fn sign(&'a self, keystore: &Keystore) -> anyhow::Result<ByteArray> {
-        let hashable_message = self
-            .get_hashable()
-            .context("Error getting the hashable message")?;
-        sign(&keystore.0, &hashable_message, &self.get_context_hashable()).context("Error signing")
+    fn sign(&'a self, keystore: &Keystore) -> Result<ByteArray, VerifySignatureError> {
+        let hashable_message = self.get_hashable()?;
+        sign(&keystore.0, &hashable_message, &self.get_context_hashable()).map_err(|e| {
+            VerifySignatureError::SignatureError {
+                msg: "Error signing".to_string(),
+                source: e,
+            }
+        })
     }
 
     /// Verify signatures of an array element
     ///
     /// Per default return an array of one element containing the result of the element verified
     /// The method must be rewritten for a array of elements
-    fn verify_signatures(&'a self, keystore: &Keystore) -> Vec<anyhow::Result<bool>> {
+    fn verify_signatures(&'a self, keystore: &Keystore) -> Vec<Result<bool, VerifySignatureError>> {
         vec![self.verifiy_signature(keystore)]
     }
 }

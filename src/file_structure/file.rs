@@ -1,6 +1,4 @@
-use super::{
-    FileReadMode, FileStructureError, FileType, GetFileNameTrait, GetFileReadMode, GetFileTypeTrait,
-};
+use super::{FileReadMode, FileStructureError, FileType, GetFileNameTrait};
 use crate::data_structures::{
     ControlComponentBallotBoxPayload, ControlComponentCodeSharesPayload,
     ControlComponentPublicKeysPayload, ControlComponentShufflePayload, DatasetType, EVotingDecrypt,
@@ -32,7 +30,7 @@ pub(crate) use create_file;
 
 macro_rules! read_data_call {
     ($s: expr, $t: expr, $p: ident, $e_p: ident, $e_d: ident) => {
-        $s.read_data::<$p>(&$t.get_file_type(), &$t.get_file_read_mode())
+        $s.read_data::<$p>(&FileType::from($t), &FileReadMode::from($t))
             .map($e_p::$p)
             .map(VerifierData::$e_d)
     };
@@ -184,7 +182,7 @@ impl File {
 
     fn read_data<D: VerifierDataDecode>(
         &self,
-        t: &FileType,
+        file_type: &FileType,
         mode: &FileReadMode,
     ) -> Result<D, FileStructureError> {
         match mode {
@@ -194,7 +192,7 @@ impl File {
                         path: self.path(),
                         source: e,
                     })?;
-                match t {
+                match file_type {
                     FileType::Json => D::decode_json(s.as_str()).map_err(|e| {
                         FileStructureError::ReadDataStructure {
                             path: self.path(),
@@ -217,7 +215,7 @@ impl File {
                     }
                 }
             }
-            FileReadMode::Streaming => match t {
+            FileReadMode::Streaming => match file_type {
                 FileType::Json => D::stream_json(self.path().as_path()).map_err(|e| {
                     FileStructureError::ReadDataStructure {
                         path: self.path(),

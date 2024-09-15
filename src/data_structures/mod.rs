@@ -33,10 +33,7 @@ pub use self::{
         VerifierTallyDataType,
     },
 };
-use crate::{
-    config::Config as VerifierConfig,
-    file_structure::{FileType, GetFileReadMode, GetFileTypeTrait},
-};
+use crate::config::Config as VerifierConfig;
 use chrono::NaiveDateTime;
 use quick_xml::{DeError as QuickXmDeError, Error as QuickXmlError};
 use roxmltree::{Document, Error as RoXmlTreeError};
@@ -45,6 +42,7 @@ use rust_ev_crypto_primitives::{ByteArray, Decode, Hexa};
 use serde::de::{Deserialize, Deserializer, Error as SerdeError};
 use std::path::Path;
 use thiserror::Error;
+pub use xml::XMLError;
 
 // Enum representing the direct trust errors
 #[derive(Error, Debug)]
@@ -238,26 +236,6 @@ macro_rules! implement_trait_verifier_data_json_decode {
     };
 }
 use implement_trait_verifier_data_json_decode;
-
-impl GetFileTypeTrait for VerifierDataType {
-    fn get_file_type(&self) -> FileType {
-        match self {
-            DatasetType::Context(t) => t.get_file_type(),
-            DatasetType::Setup(t) => t.get_file_type(),
-            DatasetType::Tally(t) => t.get_file_type(),
-        }
-    }
-}
-
-impl GetFileReadMode for VerifierDataType {
-    fn get_file_read_mode(&self) -> crate::file_structure::FileReadMode {
-        match self {
-            DatasetType::Context(t) => t.get_file_read_mode(),
-            DatasetType::Setup(t) => t.get_file_read_mode(),
-            DatasetType::Tally(t) => t.get_file_read_mode(),
-        }
-    }
-}
 
 impl VerifierContextDataTrait for VerifierData {
     fn setup_component_public_keys_payload(&self) -> Option<&SetupComponentPublicKeysPayload> {

@@ -5,9 +5,8 @@ use super::super::{
 };
 use crate::{
     data_structures::common_types::DecryptionProof,
-    direct_trust::{CertificateAuthority, VerifiySignatureTrait},
+    direct_trust::{CertificateAuthority, VerifiySignatureTrait, VerifySignatureError},
 };
-use anyhow::anyhow;
 use rust_ev_crypto_primitives::Integer;
 use rust_ev_crypto_primitives::{
     ByteArray, EncryptionParameters, HashableMessage, VerifyDomainTrait,
@@ -235,7 +234,7 @@ impl<'a> From<&'a DecryptedVote> for HashableMessage<'a> {
 }
 
 impl<'a> VerifiySignatureTrait<'a> for TallyComponentShufflePayload {
-    fn get_hashable(&'a self) -> anyhow::Result<HashableMessage<'a>> {
+    fn get_hashable(&'a self) -> Result<HashableMessage<'a>, VerifySignatureError> {
         Ok(HashableMessage::from(self))
     }
 
