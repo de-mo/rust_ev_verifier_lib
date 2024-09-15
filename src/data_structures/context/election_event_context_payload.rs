@@ -5,10 +5,8 @@ use super::super::{
 };
 use crate::direct_trust::{CertificateAuthority, VerifiySignatureTrait, VerifySignatureError};
 use crate::{config::Config as VerifierConfig, data_structures::verifiy_domain_length_unique_id};
-use anyhow::anyhow;
 use chrono::NaiveDate;
 use chrono::NaiveDateTime;
-use rayon::iter;
 use regex::Regex;
 use rust_ev_crypto_primitives::{
     ByteArray, DomainVerifications, EncryptionParameters, HashableMessage, VerifyDomainTrait,

@@ -1,7 +1,6 @@
 //! Module to define an iterator over the definition of the types in the schema, as a tree structure.
 
-use super::schema::Schema;
-use anyhow::anyhow;
+use super::{schema::Schema, SchemaError};
 use core::fmt;
 use quick_xml::name::QName;
 use roxmltree::{Document as RoDocument, Node as RoNode};
@@ -61,21 +60,21 @@ impl ElementNodeKind {
     /// Unwrap the [ElementNode] to the list of the children under the complex type
     ///
     /// Return error if the node is not complex
-    pub fn try_unwrap_complex_type(&self) -> anyhow::Result<&Vec<ComplexTypeChildKind>> {
+    pub fn try_unwrap_complex_type(&self) -> Result<&Vec<ComplexTypeChildKind>, SchemaError> {
         if let Self::ComplexType(n) = self {
             return Ok(n);
         }
-        Err(anyhow!("The node is not a complex type"))
+        Err(SchemaError::NotComplexType)
     }
 
     /// Unwrap the [ElementNode] to the native type
     ///
     /// Return `None` if the node is not native
-    pub fn try_unwrap_native(&self) -> anyhow::Result<&str> {
+    pub fn try_unwrap_native(&self) -> Result<&str, SchemaError> {
         if let Self::Native(s) = self {
             return Ok(s.as_str());
         }
-        Err(anyhow!("The node is not a complex type"))
+        Err(SchemaError::NotComplexType)
     }
 
     /// Unwrap the [ElementNode] to the list of the children under the complex type
@@ -103,7 +102,7 @@ impl ElementNodeKind {
     pub fn try_find_child_with_tag_name(
         &self,
         tag_name: &str,
-    ) -> anyhow::Result<Option<&ElementNode>> {
+    ) -> Result<Option<&ElementNode>, SchemaError> {
         let children = self.try_unwrap_complex_type()?;
         for c in children {
             match c {
@@ -136,7 +135,7 @@ impl ElementNodeKind {
     fn try_from_roxml_node(
         node: &RoNode<'_, '_>,
         schema: &'static Schema<'static>,
-    ) -> anyhow::Result<Self> {
+    ) -> Result<Self, SchemaError> {
         let mut res_node = None;
         let mut res_schema = schema;
         //println!("Schema node type {:?}", node.schema_node_type());
@@ -193,10 +192,9 @@ impl ElementNodeKind {
             res_node = Some(fcn);
         }
         match res_node {
-            None => Err(anyhow!(
-                "No type found for node {:?} with attributes: {:?}",
-                node.node_tag_name(),
-                node.attributes()
+            None => Err(SchemaError::TypeNotFound(
+                format!("{:?}", node.node_tag_name()),
+                format!("{:?}", node.attributes()),
             )),
             Some(n) => {
                 if n.is_schema_complex_type() {
@@ -213,10 +211,10 @@ impl ElementNodeKind {
                         n.native_type_from_simple_type(res_schema)?,
                     ));
                 }
-                Err(anyhow!(
+                Err(SchemaError::NotCorrectNodeType(format!(
                     "The node {} ist not a simple type or a complex type",
                     n.node_tag_name()
-                ))
+                )))
             }
         }
     }
@@ -241,31 +239,31 @@ impl ComplexTypeChildKind {
     /// Unwrap the [ComplexTypeChildKind] to an [ElementNode]
     ///
     /// Return error if the child is not an element
-    fn try_unwrap_element(&self) -> anyhow::Result<&ElementNode> {
+    fn try_unwrap_element(&self) -> Result<&ElementNode, SchemaError> {
         if let Self::Element(n) = self {
             return Ok(n);
         }
-        Err(anyhow!("The node is not a an element"))
+        Err(SchemaError::NotElement)
     }
 
     /// Unwrap the [ComplexTypeChildKind] to a list of [ElementNode]
     ///
     /// Return error if the child is not an sequence
-    fn try_unwrap_sequence(&self) -> anyhow::Result<&Vec<ElementNode>> {
+    fn try_unwrap_sequence(&self) -> Result<&Vec<ElementNode>, SchemaError> {
         if let Self::Sequence(n) = self {
             return Ok(n);
         }
-        Err(anyhow!("The node is not a sequence"))
+        Err(SchemaError::NotSequence)
     }
 
     /// Unwrap the [ComplexTypeChildKind] to a list of [ElementNode]
     ///
     /// Return error if the child is not an choice
-    fn try_unwrap_choice(&self) -> anyhow::Result<&Vec<ComplexTypeChildKind>> {
+    fn try_unwrap_choice(&self) -> Result<&Vec<ComplexTypeChildKind>, SchemaError> {
         if let Self::Choice(n) = self {
             return Ok(n);
         }
-        Err(anyhow!("The node is not a choice"))
+        Err(SchemaError::NotChoice)
     }
 
     /// Unwrap the [ComplexTypeChildKind] to an [ElementNode]
@@ -307,7 +305,7 @@ impl ComplexTypeChildKind {
     fn try_from_roxml_node(
         node: &RoNode<'_, '_>,
         schema: &'static Schema<'static>,
-    ) -> anyhow::Result<Self> {
+    ) -> Result<Self, SchemaError> {
         // Manage the case if it is an element
         if node.is_schema_element() {
             return Ok(Self::Element(ElementNode::try_from_roxml_node(
@@ -332,22 +330,22 @@ impl ComplexTypeChildKind {
             }
             return Ok(Self::Sequence(res));
         }
-        anyhow::bail!(
+        return Err(SchemaError::NotCorrectNodeType(format!(
             "The node should be an element, a sequence or a choice, not {:?}",
             node.tag_name()
-        )
+        )));
     }
 }
 
 impl TryFrom<&'static Schema<'static>> for ElementNode {
-    type Error = anyhow::Error;
+    type Error = SchemaError;
 
     fn try_from(schema: &'static Schema<'static>) -> Result<Self, Self::Error> {
         let root = schema.root_element();
         let node = root
             .children()
             .find(|e| e.is_schema_element())
-            .ok_or(anyhow!("First element not found"))?;
+            .ok_or(SchemaError::FirstElementNotFound)?;
         Self::try_from_roxml_node(&node, schema)
     }
 }
@@ -374,10 +372,9 @@ impl ElementNode {
     pub fn try_from_roxml_node(
         node: &RoNode<'_, '_>,
         schema: &'static Schema<'static>,
-    ) -> anyhow::Result<Self> {
-        let name = node.attr_name().ok_or(anyhow!(
-            "Attribute name not found for {}",
-            node.node_tag_name()
+    ) -> Result<Self, SchemaError> {
+        let name = node.attr_name().ok_or(SchemaError::AttributeMissing(
+            node.node_tag_name().to_string(),
         ))?;
         Ok(Self {
             schema,
@@ -470,7 +467,7 @@ trait AdditionalMethodsRoxmlNode<'a>: Sized {
     ///
     /// # Error
     /// If the children cannot be found
-    fn children_of_sequence_or_choice(&'a self) -> anyhow::Result<Vec<Self>>;
+    fn children_of_sequence_or_choice(&'a self) -> Result<Vec<Self>, SchemaError>;
 
     /// Return a vector with the relevant children of the complex type
     ///
@@ -478,7 +475,7 @@ trait AdditionalMethodsRoxmlNode<'a>: Sized {
     ///
     /// # Error
     /// If the children cannot be found
-    fn children_complex_type(&'a self) -> anyhow::Result<Vec<Self>>;
+    fn children_complex_type(&'a self) -> Result<Vec<Self>, SchemaError>;
 
     /// Return the native type behind a simple type
     ///
@@ -487,7 +484,7 @@ trait AdditionalMethodsRoxmlNode<'a>: Sized {
     fn native_type_from_simple_type(
         &self,
         schema: &'static Schema<'static>,
-    ) -> anyhow::Result<String>;
+    ) -> Result<String, SchemaError>;
 }
 
 impl<'a> AdditionalMethodsRoxmlDocument<'a> for RoDocument<'a> {
@@ -509,12 +506,12 @@ impl<'a> AdditionalMethodsRoxmlNode<'a> for RoNode<'a, 'a> {
         self.tag_name().name()
     }
 
-    fn children_of_sequence_or_choice(&'a self) -> anyhow::Result<Vec<Self>> {
+    fn children_of_sequence_or_choice(&'a self) -> Result<Vec<Self>, SchemaError> {
         if !self.is_schema_sequence() && !self.is_schema_choice() {
-            return Err(anyhow!(
+            return Err(SchemaError::NotCorrectNodeType(format!(
                 "The tag {} must be a a sequence or a choice",
                 self.node_tag_name()
-            ));
+            )));
         }
         Ok(self
             .children()
@@ -522,18 +519,20 @@ impl<'a> AdditionalMethodsRoxmlNode<'a> for RoNode<'a, 'a> {
             .collect())
     }
 
-    fn children_complex_type(&'a self) -> anyhow::Result<Vec<Self>> {
+    fn children_complex_type(&'a self) -> Result<Vec<Self>, SchemaError> {
         if !self.is_schema_complex_type() {
-            return Err(anyhow!(
+            return Err(SchemaError::NotCorrectNodeType(format!(
                 "The tag {} must be a complex type",
                 self.node_tag_name()
-            ));
+            )));
         }
         let seq = self
             .first_element_child()
-            .ok_or(anyhow!("Missing first child"))?;
+            .ok_or(SchemaError::FirstElementNotFound)?;
         if !seq.is_schema_sequence() {
-            return Err(anyhow!("The first child of the tag must be a sequence"));
+            return Err(SchemaError::NotCorrectNodeType(
+                "The first child of the tag must be a sequence".to_string(),
+            ));
         }
         Ok(seq
             .children()
@@ -544,21 +543,24 @@ impl<'a> AdditionalMethodsRoxmlNode<'a> for RoNode<'a, 'a> {
     fn native_type_from_simple_type(
         &self,
         schema: &'static Schema<'static>,
-    ) -> anyhow::Result<String> {
+    ) -> Result<String, SchemaError> {
         if !self.is_schema_simple_type() {
-            return Err(anyhow!(
+            return Err(SchemaError::NotCorrectNodeType(format!(
                 "The tag {} must be a simple type",
                 self.node_tag_name()
-            ));
+            )));
         }
         let restriction = self
         .children()
         .find(|e| e.node_tag_name() == "restriction")
-        .ok_or(anyhow!("Simple type tag {} must have a child with tag restriction. Other constructs are not implemented", self.node_tag_name()))?;
+        .ok_or(
+            SchemaError::NotCorrectNodeType(format!(
+               "Simple type tag {} must have a child with tag restriction. Other constructs are not implemented", self.node_tag_name())
+            ))?;
         let base = QName(
             restriction
                 .find_attribute("base")
-                .ok_or(anyhow!("The atribute base is missing for restriction."))?
+                .ok_or(SchemaError::AttributeMissing("base".to_string()))?
                 .as_bytes(),
         );
         if let Some(prefix) = base.prefix() {
@@ -577,10 +579,9 @@ impl<'a> AdditionalMethodsRoxmlNode<'a> for RoNode<'a, 'a> {
                     {
                         Some(n) => return n.native_type_from_simple_type(schema),
                         None => {
-                            return Err(anyhow!(
-                                "Simple Type {:?} not found in schema {}",
-                                base,
-                                schema.xmlschema_namespace_name()
+                            return Err(SchemaError::TypeNotFound(
+                                format!("{:?}", base),
+                                schema.xmlschema_namespace_name().to_string(),
                             ))
                         }
                     }
@@ -598,22 +599,26 @@ impl<'a> AdditionalMethodsRoxmlNode<'a> for RoNode<'a, 'a> {
                     {
                         Some(n) => return n.native_type_from_simple_type(sub_schema),
                         None => {
-                            return Err(anyhow!(
-                                "Simple Type {:?} not found in schema {}",
-                                base,
-                                schema.xmlschema_namespace_name()
+                            return Err(SchemaError::TypeNotFound(
+                                format!("{:?}", base),
+                                schema.xmlschema_namespace_name().to_string(),
                             ))
                         }
                     }
                 }
                 // Not qualified -> the result remains none
-                _ => return Err(anyhow!("Simple Type {:?} has no valid prefix", base)),
+                _ => {
+                    return Err(SchemaError::PrefixError(format!(
+                        "Simple Type {:?} has no valid prefix",
+                        base
+                    )))
+                }
             }
         }
-        Err(anyhow!(
+        Err(SchemaError::PrefixError(format!(
             "Simple Type {:?} has no prefix. Prefix expected",
             base
-        ))
+        )))
     }
 }
 

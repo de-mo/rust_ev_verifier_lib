@@ -4,16 +4,13 @@ use super::{
     schema_tree::{ComplexTypeChildKind, ElementNode},
     XMLError,
 };
-use anyhow::{anyhow, Context};
 use quick_xml::{
     events::Event,
     name::{Namespace, QName, ResolveResult::*},
     reader::NsReader,
 };
 use rust_ev_crypto_primitives::Integer;
-use rust_ev_crypto_primitives::{
-    ByteArray, Decode, HashError, HashableMessage, RecursiveHashTrait,
-};
+use rust_ev_crypto_primitives::{ByteArray, Decode, HashableMessage, RecursiveHashTrait};
 use std::{
     collections::HashMap,
     fs::File,
@@ -60,16 +57,18 @@ impl RecursiveHashTrait for XMLFileHashable {
     type Error = XMLError;
 
     fn recursive_hash(&self) -> Result<ByteArray, Self::Error> {
-        todo!();
-        /*
-        let mut reader = NsReader::from_file(&self.file).map_err(|e| {
-            anyhow!(e).context(format!(
+        let mut reader = NsReader::from_file(&self.file).map_err(|e| XMLError::QuickXML {
+            msg: format!(
                 "Error creating xml reader for file {}",
                 self.file.to_str().unwrap()
-            ))
+            ),
+            source: e,
         })?;
         let mut buf = Vec::new();
-        let schema_node = ElementNode::try_from(self.schema)?;
+        let schema_node = ElementNode::try_from(self.schema).map_err(|e| XMLError::Schema {
+            msg: String::default(),
+            source: e,
+        })?;
         let _ns = self.schema.target_namespace_name().as_bytes();
         loop {
             //match reader.read_resolved_event_into(/*&mut buf*/).unwrap() {
@@ -89,10 +88,15 @@ impl RecursiveHashTrait for XMLFileHashable {
                 }
                 Ok((_, Event::Eof)) => panic!("tag {} not found", schema_node.name()),
                 Ok(_) => (),
-                Err(e) => return Err(anyhow!(e).context("Error reader in recursive_hash")),
+                Err(e) => {
+                    return Err(XMLError::QuickXML {
+                        msg: "Error reader in recursive_hash".to_string(),
+                        source: e,
+                    })
+                }
             }
             buf.clear();
-        } */
+        }
     }
 
     fn recursive_hash_of_length(&self, _length: usize) -> Result<ByteArray, Self::Error> {
@@ -126,7 +130,7 @@ impl<'a> NodeHashable<'a> {
     }
 
     /// Hash a native type
-    fn hash_native_type(&mut self, native_type: &str) -> anyhow::Result<ByteArray> {
+    fn hash_native_type(&mut self, native_type: &str) -> Result<ByteArray, XMLError> {
         let mut buf = Vec::new();
         match self.reader.read_event_into(&mut buf) {
             Ok(Event::Text(b)) => Ok(NativeTypeConverter::new(
@@ -135,9 +139,15 @@ impl<'a> NodeHashable<'a> {
             )?
             .to_hashable()?
             .recursive_hash()
-            .unwrap()),
-            Ok(e) => Err(anyhow!("Text expected. {:?} found", e)),
-            Err(e) => Err(anyhow!(e).context("Error in hash_native_type getting the type")),
+            .map_err(|e| XMLError::HashError {
+                msg: "hash_native_type".to_string(),
+                source: e,
+            })?),
+            Ok(e) => Err(XMLError::TextExpected(format!("{:?}", e))),
+            Err(e) => Err(XMLError::QuickXML {
+                msg: "Error in hash_native_type getting the type".to_string(),
+                source: e,
+            }),
         }
     }
 
@@ -145,19 +155,21 @@ impl<'a> NodeHashable<'a> {
     ///
     /// # Error
     /// If the child is not found or an error during the calulation
-    fn get_hash_from_child(&mut self, tag_name: &str) -> anyhow::Result<ByteArray> {
+    fn get_hash_from_child(&mut self, tag_name: &str) -> Result<ByteArray, XMLError> {
         let schema_node = match self
             .schema_node
             .node_kind()
-            .try_find_child_with_tag_name(tag_name)?
-        {
+            .try_find_child_with_tag_name(tag_name)
+            .map_err(|e| XMLError::Schema {
+                msg: String::default(),
+                source: e,
+            })? {
             Some(e) => e,
             None => {
-                return Err(anyhow!(
-                    "tag {} not found in xsd with schema node {:?}",
-                    tag_name,
-                    self.schema_node
-                ))
+                return Err(XMLError::TagNotFound {
+                    tag: tag_name.to_string(),
+                    node: format!("{:?}", self.schema_node),
+                })
             }
         };
         NodeHashable::new(
@@ -253,9 +265,17 @@ impl<'a> NodeHashable<'a> {
     fn hash_hashed_children(
         &self,
         hashed_children: &HashMap<String, Vec<ByteArray>>,
-    ) -> anyhow::Result<ByteArray> {
+    ) -> Result<ByteArray, XMLError> {
         let mut hashables: Vec<HashableMessage> = vec![];
-        for c in self.schema_node.node_kind().try_unwrap_complex_type()? {
+        for c in self
+            .schema_node
+            .node_kind()
+            .try_unwrap_complex_type()
+            .map_err(|e| XMLError::Schema {
+                msg: String::default(),
+                source: e,
+            })?
+        {
             match c {
                 ComplexTypeChildKind::Element(e) => {
                     self.push_hashed_from_element_node(&mut hashables, e, hashed_children)
@@ -272,7 +292,7 @@ impl<'a> NodeHashable<'a> {
     }
 
     /// Hash a complex type
-    fn hash_complex_type(&mut self) -> anyhow::Result<ByteArray> {
+    fn hash_complex_type(&mut self) -> Result<ByteArray, XMLError> {
         let mut buf = Vec::new();
         let mut hm: HashMap<String, Vec<ByteArray>> = HashMap::new();
         let mut is_in_exclusion = false;
@@ -281,7 +301,8 @@ impl<'a> NodeHashable<'a> {
                 Ok(Event::Start(e)) => {
                     if !is_in_exclusion {
                         let tag_local_name = e.local_name();
-                        let tag_name = str::from_utf8(tag_local_name.as_ref())?;
+                        let tag_name =
+                            str::from_utf8(tag_local_name.as_ref()).map_err(XMLError::Uft8)?;
                         if e.name() == QName(self.exclusion.as_bytes()) {
                             is_in_exclusion = true;
                         } else {
@@ -303,7 +324,10 @@ impl<'a> NodeHashable<'a> {
                 }
                 Ok(_) => {}
                 Err(e) => {
-                    return Err(anyhow!(e).context("Error in hash_complex_type getting the type"));
+                    return Err(XMLError::QuickXML {
+                        msg: "Error in hash_complex_type getting the type".to_string(),
+                        source: e,
+                    });
                 }
             }
             buf.clear();
@@ -312,11 +336,16 @@ impl<'a> NodeHashable<'a> {
     }
 
     /// Try to hash the node
-    fn recursive_hash(&mut self) -> anyhow::Result<ByteArray> {
+    fn recursive_hash(&mut self) -> Result<ByteArray, XMLError> {
         if self.schema_node.node_kind().is_complex_type() {
             self.hash_complex_type()
         } else {
-            self.hash_native_type(self.schema_node.node_kind().try_unwrap_native()?)
+            self.hash_native_type(self.schema_node.node_kind().try_unwrap_native().map_err(
+                |e| XMLError::Schema {
+                    msg: String::default(),
+                    source: e,
+                },
+            )?)
         }
     }
 }
@@ -330,7 +359,7 @@ enum NativeTypeConverter {
 }
 
 impl NativeTypeConverter {
-    pub fn new(value: &str, native_type: &str) -> anyhow::Result<Self> {
+    pub fn new(value: &str, native_type: &str) -> Result<Self, XMLError> {
         let res = value.to_string();
         Ok(match native_type {
             "boolean" => Self::Boolean(res),
@@ -354,16 +383,11 @@ impl NativeTypeConverter {
             "date" => Self::String(res),
             "anyURI" => Self::String(res),
             "token" => Self::String(res),
-            _ => {
-                return Err(anyhow!(
-                    "Error creating NativeTypeConverter: type {} unknowm",
-                    native_type
-                ))
-            }
+            _ => return Err(XMLError::TypeUnknown(native_type.to_string())),
         })
     }
 
-    fn to_hashable(&self) -> anyhow::Result<HashableMessage<'_>> {
+    fn to_hashable(&self) -> Result<HashableMessage<'_>, XMLError> {
         match self {
             Self::Boolean(b) => {
                 let res = match b.as_str() {
@@ -371,17 +395,17 @@ impl NativeTypeConverter {
                     "false" => "false",
                     "0" => "true",
                     "1" => "false",
-                    _ => return Err(anyhow!("Value {} is not a correct boolean", b)),
+                    _ => return Err(XMLError::NotBoolean(b.clone())),
                 };
                 Ok(HashableMessage::from(res))
             }
             Self::Numeric(b) => Ok(HashableMessage::from(
                 b.parse::<usize>()
-                    .context(format!("{b} is not a valid numeric"))?,
+                    .map_err(|e| XMLError::NotInt(b.clone(), e))?,
             )),
             Self::Binary(b) => Ok(HashableMessage::from(
                 ByteArray::base64_decode(b.as_str())
-                    .context(format!("{b} is not a valid byte array"))?,
+                    .map_err(|e| XMLError::NotByteArray(b.clone(), e))?,
             )),
             Self::String(b) => Ok(HashableMessage::from(b)),
         }

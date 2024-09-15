@@ -4,11 +4,12 @@
 //! Use the object [OnceLock] to create the structure only once from the static string. Action is thread safe
 
 use crate::resources;
-use anyhow::{anyhow, Context, Result};
 use core::fmt;
 use roxmltree::{Document, Node as RoNode};
 use std::collections::HashMap;
 use std::sync::OnceLock;
+
+use super::{SchemaError, XMLError};
 
 const NS_ECH_0006: &str = "http://www.ech.ch/xmlns/eCH-0006/2";
 const NS_ECH_0007: &str = "http://www.ech.ch/xmlns/eCH-0007/6";
@@ -79,7 +80,7 @@ impl SchemaKind {
     /// Get the schema structure
     ///
     /// Error if a nerror occurs
-    pub fn try_schema(&self) -> anyhow::Result<&'static Schema<'static>> {
+    pub fn try_schema(&self) -> Result<&'static Schema<'static>, SchemaError> {
         match self {
             SchemaKind::Ech0006 => {
                 let xsd = Schema::try_new(Some(*self), resources::XSD_ECH_0006)?;
@@ -135,7 +136,7 @@ impl SchemaKind {
         self.try_schema().unwrap()
     }
 
-    pub fn get_schema_from_namespace(ns: &str) -> Result<&'static Schema<'static>> {
+    pub fn get_schema_from_namespace(ns: &str) -> Result<&'static Schema<'static>, SchemaError> {
         match ns {
             NS_ECH_0006 => Ok(SchemaKind::Ech0006.schema()),
             NS_ECH_0007 => Ok(SchemaKind::Ech0007.schema()),
@@ -145,7 +146,7 @@ impl SchemaKind {
             NS_ECH_0058 => Ok(SchemaKind::Ech0058.schema()),
             NS_ECH_0155 => Ok(SchemaKind::Ech0155.schema()),
             NS_ECH_0222 => Ok(SchemaKind::Ech0222.schema()),
-            _ => Err(anyhow!("No schema for namespace {} found", ns)),
+            _ => Err(SchemaError::NoSchemaFound(ns.to_string())),
         }
     }
 }
@@ -156,14 +157,20 @@ impl<'a> Schema<'a> {
     /// Return an error in the following cases:
     /// - It is not possible to create it
     /// - Targetnamespace is missing
-    pub fn try_new(schema_kind: Option<SchemaKind>, xsd_str: &'static str) -> Result<Self> {
-        let doc = Document::parse(xsd_str).with_context(|| "Failed to read the schema")?;
+    pub fn try_new(
+        schema_kind: Option<SchemaKind>,
+        xsd_str: &'static str,
+    ) -> Result<Self, SchemaError> {
+        let doc = Document::parse(xsd_str).map_err(|e| SchemaError::RoXML {
+            msg: "Failed to read the schema".to_string(),
+            source: e,
+        })?;
         let root = doc.root_element();
         let target_ns_uri = root
             .attributes()
             .find(|attr| attr.name() == "targetNamespace")
             .map(|a| a.value().to_string())
-            .ok_or(anyhow!("targetNamespace is missing"))?;
+            .ok_or(SchemaError::NoTargetNamespace)?;
         let mut hm = HashMap::new();
         for ns in root.namespaces() {
             hm.insert(ns.name().unwrap().to_string(), ns.uri().to_string());
@@ -171,16 +178,12 @@ impl<'a> Schema<'a> {
         let target_ns_name = hm
             .iter()
             .find(|(_, uri)| uri == &&target_ns_uri)
-            .ok_or(anyhow!(
-                "The name of the target namespace is not defined in the list of namespaces"
-            ))?
+            .ok_or(SchemaError::NotInNamespaces("target namespace".to_string()))?
             .0;
         let schema_ns_name = hm
             .iter()
             .find(|(_, uri)| uri.as_str() == XML_SCHEMA_URI)
-            .ok_or(anyhow!(
-                "The name of the xml schema is not defined in the list of namespaces"
-            ))?
+            .ok_or(SchemaError::NotInNamespaces("xml schema".to_string()))?
             .0;
         let mut res = Self {
             document: doc,
@@ -196,25 +199,24 @@ impl<'a> Schema<'a> {
         Ok(res)
     }
 
-    fn collect_import(&mut self) -> Result<HashMap<String, &'a Schema<'a>>> {
+    fn collect_import(&mut self) -> Result<HashMap<String, &'a Schema<'a>>, SchemaError> {
         let tag_iter = self.root_element().children().filter(|e| {
             let tag = e.tag_name();
             tag.name() == "import" && tag.namespace() == Some(XML_SCHEMA_URI)
         });
-        let nss_res: Vec<Result<String>> = tag_iter
+        let nss = tag_iter
             .map(|e| {
                 e.attributes()
                     .find(|attr| attr.name() == "namespace")
                     .map(|a| a.value().to_string())
-                    .ok_or(anyhow!("namespace is missing"))
+                    .ok_or(SchemaError::NoNamespaceAttribute)
             })
-            .collect();
+            .collect::<Result<Vec<_>, _>>()?;
         let mut res = HashMap::new();
-        for ns_res in nss_res {
-            let ns = ns_res?;
+        for ns in nss {
             res.insert(
                 ns.clone(),
-                SchemaKind::get_schema_from_namespace(ns.as_str()).context("Collection import")?,
+                SchemaKind::get_schema_from_namespace(ns.as_str())?,
             );
         }
         Ok(res)
@@ -253,9 +255,9 @@ impl<'a> Schema<'a> {
     ///
     /// # Error
     /// Return an error if the namespace is not found
-    pub fn sub_schema(&'a self, namespace: &str) -> Result<&'a Schema<'a>> {
+    pub fn sub_schema(&'a self, namespace: &str) -> Result<&'a Schema<'a>, SchemaError> {
         self.sub_schemas.get(namespace).map_or(
-            Err(anyhow!("Namespace {} not found in import", namespace)),
+            Err(SchemaError::NoNamespaceImport(namespace.to_string())),
             |&s| Ok(s),
         )
     }
@@ -265,9 +267,9 @@ impl<'a> Schema<'a> {
     /// # Error
     /// Return an error if the namespace is not found
     #[allow(dead_code)]
-    pub fn sub_schema_name(&'a self, namespace_name: &str) -> Result<&'a Schema<'a>> {
+    pub fn sub_schema_name(&'a self, namespace_name: &str) -> Result<&'a Schema<'a>, SchemaError> {
         self.namespace_uri(namespace_name).map_or(
-            Err(anyhow!("Namespace name {} not found", namespace_name)),
+            Err(SchemaError::NoNamespaceName(namespace_name.to_string())),
             |uri| self.sub_schema(uri),
         )
     }
