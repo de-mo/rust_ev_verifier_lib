@@ -1,7 +1,7 @@
 use std::path::Path;
 
 use crate::{
-    config::{Config as VerifierConfig, CONTEXT_DIR_NAME, SETUP_DIR_NAME, TALLY_DIR_NAME},
+    config::Config as VerifierConfig,
     file_structure::{CompletnessTestTrait, VerificationDirectory, VerificationDirectoryTrait},
     verification::{meta_data::VerificationMetaDataList, VerificationPeriod},
 };
@@ -32,25 +32,28 @@ pub fn check_verification_dir(period: &VerificationPeriod, path: &Path) -> anyho
         format!("Given directory {:?} does not exist", path)
     );
     ensure!(
-        path.join(CONTEXT_DIR_NAME).is_dir(),
+        path.join(VerifierConfig::context_dir_name()).is_dir(),
         format!(
             "Directory {} does not exist in directory {:?}",
-            CONTEXT_DIR_NAME, path
+            VerifierConfig::context_dir_name(),
+            path
         )
     );
     match period {
         VerificationPeriod::Setup => ensure!(
-            path.join(SETUP_DIR_NAME).is_dir(),
+            path.join(VerifierConfig::setup_dir_name()).is_dir(),
             format!(
                 "Directory {} does not exist in directory {:?}",
-                SETUP_DIR_NAME, path
+                VerifierConfig::setup_dir_name(),
+                path
             )
         ),
         VerificationPeriod::Tally => ensure!(
-            path.join(TALLY_DIR_NAME).is_dir(),
+            path.join(VerifierConfig::tally_dir_name()).is_dir(),
             format!(
                 "Directory {} does not exist in directory {:?}",
-                TALLY_DIR_NAME, path
+                VerifierConfig::tally_dir_name(),
+                path
             )
         ),
     }
