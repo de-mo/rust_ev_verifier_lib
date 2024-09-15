@@ -1,13 +1,13 @@
 //! Module implementing the structure of files and directories
 //! to collect data for the verifications
 //!
-pub mod context_directory;
-pub mod file;
-pub mod file_group;
-pub mod setup_directory;
-pub mod tally_directory;
+pub(crate) mod context_directory;
+pub(crate) mod file;
+pub(crate) mod file_group;
+pub(crate) mod setup_directory;
+pub(crate) mod tally_directory;
 
-use self::{
+pub use self::{
     context_directory::{ContextDirectory, ContextDirectoryTrait},
     setup_directory::SetupDirectoryTrait,
     tally_directory::TallyDirectoryTrait,
@@ -46,25 +46,6 @@ pub enum FileStructureError {
     },
     #[error("Path is not a directory {0}")]
     PathIsNotDir(PathBuf),
-    /*
-    #[error("Path doesn't exists {0}")]
-    PathNotExist(PathBuf),
-    #[error("Path is not a directory {0}")]
-    PathIsNotDir(PathBuf),
-    #[error("Crypto error {msg} -> caused by: {source}")]
-    CryptoError {
-        msg: String,
-        source: BasisCryptoError,
-    },
-    #[error("Byte length error {0}")]
-    ByteLengthError(String),
-    #[error("Error Unzipping {file}: {source}")]
-    Unzip {
-        file: PathBuf,
-        source: zip_extract::ZipExtractError,
-    },
-    #[error("Kind {0} delivered. Only context, setup and tally possible")]
-    WrongKindStr(String), */
 }
 
 #[derive(Clone)]
@@ -76,19 +57,19 @@ pub struct VerificationDirectory {
 }
 
 /// Enum to define the type of the file (Json or Xml)
-pub enum FileType {
+enum FileType {
     Json,
     Xml,
 }
 
 /// Enum representing the mode to read a fie (Memory or streaming).
-pub enum FileReadMode {
+enum FileReadMode {
     Memory,
     Streaming,
 }
 
 /// Trait defining functions to get the filename
-pub trait GetFileNameTrait {
+trait GetFileNameTrait {
     /// Get the file name as it is defiened
     fn get_raw_file_name(&self) -> String;
 
@@ -182,19 +163,19 @@ impl VerificationDirectory {
     }
 
     /// Is setup
-    #[allow(dead_code)]
+
     pub fn is_setup(&self) -> bool {
         self.setup.is_some()
     }
 
     /// Is tally
-    #[allow(dead_code)]
+
     pub fn is_tally(&self) -> bool {
         self.tally.is_some()
     }
 
     /// Are the entries valid
-    #[allow(dead_code)]
+
     pub fn is_valid(&self) -> bool {
         self.is_setup() != self.is_tally()
     }
@@ -466,7 +447,7 @@ mod test {
 }
 
 #[cfg(any(test, doc))]
-#[allow(dead_code)]
+
 pub mod mock {
     //! Module defining mocking structure for [VerificationDirectory]
     //!

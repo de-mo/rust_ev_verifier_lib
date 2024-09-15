@@ -4,7 +4,7 @@ use crate::{
     file_structure::{context_directory::ContextDirectoryTrait, VerificationDirectoryTrait},
 };
 use rust_ev_crypto_primitives::Integer;
-use rust_ev_crypto_primitives::{Constants, Operations};
+use rust_ev_crypto_primitives::{ConstantsTrait, OperationsTrait};
 
 pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
     dir: &D,

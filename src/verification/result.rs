@@ -74,9 +74,8 @@ impl VerificationEvent {
         self.kind.is_failure()
     }
 
-    /// Source of the event as [anyhow::Error]
-    #[allow(dead_code)]
-    fn source(&self) -> &str {
+    /// Source of the event
+    pub fn source(&self) -> &str {
         self.source.as_str()
     }
 }
@@ -128,7 +127,7 @@ impl VerificationResult {
     }
 
     /// Get the errors and the failures (all events)
-    #[allow(dead_code)]
+
     pub fn errors_and_failures(&self) -> Vec<&VerificationEvent> {
         self.results.iter().collect()
     }
@@ -164,7 +163,7 @@ impl VerificationResult {
     }
 
     /// Push a new error or failure to the VerificationResult add the given context
-    #[allow(dead_code)]
+
     pub fn push_with_context<C>(&mut self, e: VerificationEvent, context: C)
     where
         C: Clone + Display + Send + Sync + 'static,
@@ -188,13 +187,13 @@ impl VerificationResult {
     }
 
     /// Append the results of ohter to self, emptying the vectors of other
-    #[allow(dead_code)]
+
     pub fn append_vec(&mut self, other: &mut Vec<VerificationEvent>) {
         self.results.append(other);
     }
 
     /// Append strings to self as errors
-    #[allow(dead_code)]
+
     pub fn append_errors_from_string(&mut self, errors: &[String]) {
         let events: Vec<VerificationEvent> = errors
             .iter()
@@ -206,7 +205,7 @@ impl VerificationResult {
     }
 
     /// Append strings to self as failures
-    #[allow(dead_code)]
+
     pub fn append_failures_from_string(&mut self, failures: &[String]) {
         let events: Vec<VerificationEvent> = failures
             .iter()
@@ -227,7 +226,7 @@ impl From<&VerificationEvent> for VerificationResult {
 impl From<&[VerificationEvent]> for VerificationResult {
     fn from(value: &[VerificationEvent]) -> Self {
         Self {
-            results: value.iter().cloned().collect::<Vec<_>>(),
+            results: value.to_vec(),
         }
     }
 }

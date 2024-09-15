@@ -120,7 +120,7 @@ impl SetupDirectory {
     }
 
     /// Get location
-    #[allow(dead_code)]
+
     pub fn get_location(&self) -> &Path {
         self.location.as_path()
     }
@@ -168,7 +168,7 @@ impl SetupVCSDirectory {
     }
 
     /// Get location
-    #[allow(dead_code)]
+
     pub fn get_location(&self) -> &Path {
         self.location.as_path()
     }
@@ -253,10 +253,7 @@ mod test {
         assert_eq!(dir.get_location(), setup_location);
         let expected = test_all_setup_vcs_paths();
         for d in dir.vcs_directories().iter() {
-            let j = expected
-                .iter()
-                .position(|l| &d.get_location() == l)
-                .unwrap();
+            let j = expected.iter().position(|l| d.get_location() == l).unwrap();
             assert_eq!(d.get_location(), expected[j])
         }
     }
@@ -288,7 +285,7 @@ mod test {
 }
 
 #[cfg(any(test, doc))]
-#[allow(dead_code)]
+
 pub mod mock {
     //! Module defining mocking structure for [VCSDirectory] and [SetupDirectory]
     //!

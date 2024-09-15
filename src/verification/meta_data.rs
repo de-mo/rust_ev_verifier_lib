@@ -22,11 +22,9 @@ pub struct VerificationMetaData {
     name: String,
 
     /// Algorithm in the specifications
-    #[allow(dead_code)]
     algorithm: String,
 
     /// Description of the verification
-    #[allow(dead_code)]
     description: String,
 
     /// Period (Set or Tally) of the verification
@@ -46,7 +44,6 @@ impl VerificationMetaDataList {
         })
     }
 
-    #[allow(dead_code)]
     pub fn load_period(data: &str, period: &VerificationPeriod) -> Result<Self, VerificationError> {
         Ok(Self(
             Self::load(data)?
@@ -62,12 +59,10 @@ impl VerificationMetaDataList {
         self.0.iter().find(|e| e.id == id)
     }
 
-    #[allow(dead_code)]
     pub fn id_list(&self) -> Vec<String> {
         self.0.iter().map(|e| e.id.clone()).collect::<Vec<String>>()
     }
 
-    #[allow(dead_code)]
     pub fn id_list_for_period(&self, period: &VerificationPeriod) -> Vec<String> {
         self.0
             .iter()
@@ -76,22 +71,18 @@ impl VerificationMetaDataList {
             .collect::<Vec<String>>()
     }
 
-    #[allow(dead_code)]
     pub fn len(&self) -> usize {
         self.0.len()
     }
 
-    #[allow(dead_code)]
     pub fn is_empty(&self) -> bool {
         self.len() == 0
     }
 
-    #[allow(dead_code)]
     pub fn get(&self, id: &str) -> Option<&VerificationMetaData> {
         self.iter().find(|&e| e.id == id)
     }
 
-    #[allow(dead_code)]
     pub fn iter(&self) -> std::slice::Iter<VerificationMetaData> {
         self.0.iter()
     }
@@ -106,12 +97,10 @@ impl VerificationMetaData {
         &self.name
     }
 
-    #[allow(dead_code)]
     pub fn algorithm(&self) -> &String {
         &self.algorithm
     }
 
-    #[allow(dead_code)]
     pub fn description(&self) -> &String {
         &self.description
     }
@@ -124,7 +113,6 @@ impl VerificationMetaData {
         &self.category
     }
 
-    #[allow(dead_code)]
     pub fn from_id(id: &str, data: &str) -> Option<Self> {
         match VerificationMetaDataList::load(data) {
             Ok(l) => l.get(id).cloned(),

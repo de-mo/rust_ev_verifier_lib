@@ -6,7 +6,7 @@ use super::super::{
 use crate::direct_trust::{CertificateAuthority, VerifiySignatureTrait, VerifySignatureError};
 use rust_ev_crypto_primitives::Integer;
 use rust_ev_crypto_primitives::{
-    ByteArray, EncryptionParameters, HashableMessage, VerifyDomainTrait,
+    elgamal::EncryptionParameters, ByteArray, HashableMessage, VerifyDomainTrait,
 };
 use serde::Deserialize;
 
@@ -26,7 +26,6 @@ pub struct SetupComponentVerificationDataPayload {
 implement_trait_verifier_data_json_decode!(SetupComponentVerificationDataPayload);
 
 impl SetupComponentVerificationDataPayload {
-    #[allow(dead_code)]
     pub fn find_setup_component_verification_data_inner<'a>(
         &'a self,
         vc_id: &String,
@@ -90,7 +89,7 @@ impl SetupComponentVerificationDataPayload {
 impl VerifyDomainTrait<String> for SetupComponentVerificationDataPayload {}
 
 impl<'a> VerifiySignatureTrait<'a> for SetupComponentVerificationDataPayload {
-    fn get_hashable(&'a self) -> Result<HashableMessage<'a>, VerifySignatureError> {
+    fn get_hashable(&'a self) -> Result<HashableMessage<'a>, Box<VerifySignatureError>> {
         Ok(HashableMessage::from(self))
     }
 

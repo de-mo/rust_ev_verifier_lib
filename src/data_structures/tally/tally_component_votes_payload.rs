@@ -6,7 +6,7 @@ use super::super::{
 };
 
 use rust_ev_crypto_primitives::{
-    ByteArray, EncryptionParameters, HashableMessage, VerifyDomainTrait,
+    elgamal::EncryptionParameters, ByteArray, HashableMessage, VerifyDomainTrait,
 };
 use serde::Deserialize;
 
@@ -50,7 +50,7 @@ impl<'a> From<&'a TallyComponentVotesPayload> for HashableMessage<'a> {
 }
 
 impl<'a> VerifiySignatureTrait<'a> for TallyComponentVotesPayload {
-    fn get_hashable(&'a self) -> Result<HashableMessage<'a>, VerifySignatureError> {
+    fn get_hashable(&'a self) -> Result<HashableMessage<'a>, Box<VerifySignatureError>> {
         Ok(HashableMessage::from(self))
     }
 

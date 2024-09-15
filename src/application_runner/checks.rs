@@ -3,7 +3,7 @@ use std::path::Path;
 use crate::{
     config::Config as VerifierConfig,
     file_structure::{CompletnessTestTrait, VerificationDirectory, VerificationDirectoryTrait},
-    verification::{meta_data::VerificationMetaDataList, VerificationPeriod},
+    verification::{VerificationMetaDataList, VerificationPeriod},
 };
 
 /// Check some elements at start of the application.

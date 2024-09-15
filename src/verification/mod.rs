@@ -1,13 +1,20 @@
 //! Module implementing all the verifications
 
-pub mod manual;
-pub mod meta_data;
-pub mod result;
+mod manual;
+mod meta_data;
+mod result;
 mod setup;
-pub mod suite;
+mod suite;
 mod tally;
-pub mod verifications;
-use self::result::{VerificationEvent, VerificationResult};
+mod verifications;
+
+pub use self::{
+    manual::*,
+    meta_data::*,
+    result::{VerificationEvent, VerificationResult},
+    suite::VerificationSuite,
+};
+
 use crate::{
     config::Config,
     direct_trust::{DirectTrustError, VerifiySignatureTrait},
@@ -16,6 +23,7 @@ use crate::{
 use thiserror::Error;
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq, Hash, strum::EnumString, strum::AsRefStr)]
+#[strum(serialize_all = "lowercase")]
 pub enum VerificationCategory {
     Authenticity,
     Consistency,
@@ -25,6 +33,7 @@ pub enum VerificationCategory {
 }
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq, strum::EnumString, strum::AsRefStr)]
+#[strum(serialize_all = "lowercase")]
 pub enum VerificationStatus {
     Stopped,
     Running,
@@ -32,6 +41,7 @@ pub enum VerificationStatus {
 }
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq, Hash, strum::EnumString, strum::AsRefStr)]
+#[strum(serialize_all = "lowercase")]
 pub enum VerificationPeriod {
     Setup,
     Tally,
@@ -47,10 +57,6 @@ pub enum VerificationError {
     },
     #[error(transparent)]
     DirectTrust(DirectTrustError),
-    #[error(transparent)]
-    CryptoDirectTrust(rust_ev_crypto_primitives::DirectTrustError),
-    #[error(transparent)]
-    CryptioBasis(rust_ev_crypto_primitives::BasisCryptoError),
     #[error("metadata for verification id {0} not found")]
     MetadataNotFound(String),
     #[error("{0}")]
@@ -58,7 +64,6 @@ pub enum VerificationError {
 }
 
 impl VerificationPeriod {
-    #[allow(dead_code)]
     pub fn is_setup(&self) -> bool {
         self == &VerificationPeriod::Setup
     }

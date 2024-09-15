@@ -9,7 +9,7 @@ use crate::{
 };
 use rust_ev_crypto_primitives::Integer;
 use rust_ev_crypto_primitives::{
-    ByteArray, EncryptionParameters, HashableMessage, VerifyDomainTrait,
+    elgamal::EncryptionParameters, ByteArray, HashableMessage, VerifyDomainTrait,
 };
 use serde::Deserialize;
 
@@ -234,7 +234,7 @@ impl<'a> From<&'a DecryptedVote> for HashableMessage<'a> {
 }
 
 impl<'a> VerifiySignatureTrait<'a> for TallyComponentShufflePayload {
-    fn get_hashable(&'a self) -> Result<HashableMessage<'a>, VerifySignatureError> {
+    fn get_hashable(&'a self) -> Result<HashableMessage<'a>, Box<VerifySignatureError>> {
         Ok(HashableMessage::from(self))
     }
 
@@ -265,7 +265,7 @@ mod test {
         },
         *,
     };
-    use crate::config::test::{test_ballot_box_path, CONFIG_TEST};
+    use crate::config::test::test_ballot_box_path;
     use std::fs;
 
     test_data_structure!(

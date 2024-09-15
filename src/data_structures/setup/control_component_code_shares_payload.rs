@@ -8,7 +8,7 @@ use crate::direct_trust::{
 };
 use rust_ev_crypto_primitives::Integer;
 use rust_ev_crypto_primitives::{
-    ByteArray, EncryptionParameters, HashableMessage, VerifyDomainTrait,
+    elgamal::EncryptionParameters, ByteArray, HashableMessage, VerifyDomainTrait,
 };
 use serde::Deserialize;
 
@@ -122,7 +122,7 @@ impl<'a> From<&'a ControlComponentCodeShare> for HashableMessage<'a> {
 }
 
 impl<'a> VerifiySignatureTrait<'a> for ControlComponentCodeSharesPayloadInner {
-    fn get_hashable(&'a self) -> Result<HashableMessage<'a>, VerifySignatureError> {
+    fn get_hashable(&'a self) -> Result<HashableMessage<'a>, Box<VerifySignatureError>> {
         Ok(HashableMessage::from(self))
     }
 
@@ -145,7 +145,7 @@ impl<'a> VerifiySignatureTrait<'a> for ControlComponentCodeSharesPayloadInner {
 }
 
 impl<'a> VerifiySignatureTrait<'a> for ControlComponentCodeSharesPayload {
-    fn get_hashable(&'a self) -> Result<HashableMessage<'a>, VerifySignatureError> {
+    fn get_hashable(&'a self) -> Result<HashableMessage<'a>, Box<VerifySignatureError>> {
         unimplemented!()
     }
 
@@ -161,7 +161,10 @@ impl<'a> VerifiySignatureTrait<'a> for ControlComponentCodeSharesPayload {
         unimplemented!()
     }
 
-    fn verify_signatures(&'a self, keystore: &Keystore) -> Vec<Result<bool, VerifySignatureError>> {
+    fn verify_signatures(
+        &'a self,
+        keystore: &Keystore,
+    ) -> Vec<Result<bool, Box<VerifySignatureError>>> {
         self.0
             .iter()
             .map(|e| e.verifiy_signature(keystore))

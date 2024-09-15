@@ -9,7 +9,8 @@ use chrono::NaiveDate;
 use chrono::NaiveDateTime;
 use regex::Regex;
 use rust_ev_crypto_primitives::{
-    ByteArray, DomainVerifications, EncryptionParameters, HashableMessage, VerifyDomainTrait,
+    elgamal::EncryptionParameters, ByteArray, DomainVerifications, HashableMessage,
+    VerifyDomainTrait,
 };
 use serde::Deserialize;
 
@@ -254,7 +255,7 @@ impl<'a> From<&'a ElectionEventContextPayload> for HashableMessage<'a> {
 }
 
 impl<'a> VerifiySignatureTrait<'a> for ElectionEventContextPayload {
-    fn get_hashable(&'a self) -> Result<HashableMessage<'a>, VerifySignatureError> {
+    fn get_hashable(&'a self) -> Result<HashableMessage<'a>, Box<VerifySignatureError>> {
         Ok(HashableMessage::from(self))
     }
 
@@ -331,7 +332,7 @@ impl<'a> From<&'a PTableElement> for HashableMessage<'a> {
 
 #[cfg(test)]
 mod test {
-    use rust_ev_crypto_primitives::{Encode, RecursiveHashTrait};
+    use rust_ev_crypto_primitives::{EncodeTrait, RecursiveHashTrait};
 
     use super::{
         super::super::test::{

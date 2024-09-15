@@ -52,7 +52,7 @@ impl ElementNodeKind {
     }
 
     /// Is the node a native type
-    #[allow(dead_code)]
+    
     pub fn is_native(&self) -> bool {
         self.try_unwrap_native().is_ok()
     }

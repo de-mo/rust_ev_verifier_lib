@@ -130,7 +130,7 @@ impl VerifierDataDecode for ElectionEventConfiguration {
 }
 
 impl<'a> VerifiySignatureTrait<'a> for ElectionEventConfiguration {
-    fn get_hashable(&'a self) -> Result<HashableMessage<'a>, VerifySignatureError> {
+    fn get_hashable(&'a self) -> Result<HashableMessage<'a>, Box<VerifySignatureError>> {
         let hashable = XMLFileHashable::new(&self.path, &SchemaKind::Config, "signature");
         let hash = hashable
             .recursive_hash()

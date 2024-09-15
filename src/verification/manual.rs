@@ -1,16 +1,14 @@
 use chrono::NaiveDate;
-use rust_ev_crypto_primitives::Encode;
+use rust_ev_crypto_primitives::EncodeTrait;
 use std::collections::HashMap;
 
-use crate::{
-    config::Config, direct_trust::CertificateAuthority, file_structure::VerificationDirectoryTrait,
-};
+use crate::{config::Config, file_structure::VerificationDirectoryTrait};
 
 use super::{meta_data::VerificationMetaDataList, VerificationError, VerificationPeriod};
 
 /// Data for the manual verifications, containing all the data that
 /// are necessary for Setup and for Tally
-struct ManualVerificationsAllPeriod<'a, D: VerificationDirectoryTrait> {
+pub struct ManualVerificationsAllPeriod<'a, D: VerificationDirectoryTrait> {
     verification_directory: &'a D,
     certificate_fingerprints: HashMap<String, String>,
     election_name: u32,
@@ -24,19 +22,19 @@ struct ManualVerificationsAllPeriod<'a, D: VerificationDirectoryTrait> {
 }
 
 /// Data for the manual verifications on the setup
-struct ManualVerificationsSetup<'a, D: VerificationDirectoryTrait> {
+pub struct ManualVerificationsSetup<'a, D: VerificationDirectoryTrait> {
     manual_verifications_all_periods: ManualVerificationsAllPeriod<'a, D>,
     number_of_tests: u8,
 }
 
 /// Data for the manual verifications on the tally
-struct ManualVerificationsTally<'a, D: VerificationDirectoryTrait> {
+pub struct ManualVerificationsTally<'a, D: VerificationDirectoryTrait> {
     manual_verifications_all_periods: ManualVerificationsAllPeriod<'a, D>,
     number_of_tests: u8,
 }
 
 /// Data for the manual verifications
-enum ManualVerifications<'a, D: VerificationDirectoryTrait> {
+pub enum ManualVerifications<'a, D: VerificationDirectoryTrait> {
     Setup(ManualVerificationsSetup<'a, D>),
     Tally(ManualVerificationsTally<'a, D>),
 }
@@ -44,21 +42,12 @@ enum ManualVerifications<'a, D: VerificationDirectoryTrait> {
 impl<'a, D: VerificationDirectoryTrait> ManualVerificationsAllPeriod<'a, D> {
     pub fn new(directory: &'a D, config: &'static Config) -> Result<Self, VerificationError> {
         let keystore = config.keystore().map_err(VerificationError::DirectTrust)?;
-        let mut fingerprints = HashMap::new();
-        for ca in CertificateAuthority::iter() {
-            fingerprints.insert(
-                ca.to_string(),
-                keystore
-                    .0
-                    .public_certificate(&ca.to_string())
-                    .map_err(VerificationError::CryptoDirectTrust)?
-                    .signing_certificate()
-                    .digest()
-                    .map_err(VerificationError::CryptioBasis)?
-                    .base16_encode()
-                    .unwrap(),
-            );
-        }
+        let fingerprints = keystore
+            .fingerprints()
+            .map_err(VerificationError::DirectTrust)?
+            .iter()
+            .map(|(k, v)| (k.to_string(), v.base16_encode().unwrap()))
+            .collect::<HashMap<_, _>>();
         Ok(Self {
             verification_directory: directory,
             certificate_fingerprints: fingerprints,
@@ -75,6 +64,10 @@ impl<'a, D: VerificationDirectoryTrait> ManualVerificationsAllPeriod<'a, D> {
 
     pub fn fingerprints(&self) -> &HashMap<String, String> {
         &self.certificate_fingerprints
+    }
+
+    pub fn verification_directory(&self) -> &D {
+        self.verification_directory
     }
 
     pub fn to_hashmap(&self) -> HashMap<String, String> {

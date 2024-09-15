@@ -3,7 +3,9 @@
 mod checks;
 mod runner;
 
+pub use checks::*;
 pub use runner::{no_action_after_fn, no_action_before_fn, RunParallel, Runner};
+
 use thiserror::Error;
 
 use crate::verification::VerificationError;

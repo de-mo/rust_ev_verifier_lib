@@ -2,7 +2,9 @@
 
 use super::{deserialize_seq_string_base64_to_seq_integer, deserialize_string_base64_to_integer};
 use rust_ev_crypto_primitives::Integer;
-use rust_ev_crypto_primitives::{ByteArray, Decode, EncryptionParameters, HashableMessage};
+use rust_ev_crypto_primitives::{
+    elgamal::EncryptionParameters, ByteArray, DecodeTrait, HashableMessage,
+};
 use serde::Deserialize;
 
 /// Struct representing an encryption group

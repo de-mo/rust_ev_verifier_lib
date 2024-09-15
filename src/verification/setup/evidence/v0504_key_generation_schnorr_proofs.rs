@@ -7,7 +7,9 @@ use crate::{
 
 use rayon::prelude::*;
 use rust_ev_crypto_primitives::Integer;
-use rust_ev_crypto_primitives::{verify_schnorr, EncryptionParameters};
+use rust_ev_crypto_primitives::{
+    elgamal::EncryptionParameters, zero_knowledge_proofs::verify_schnorr,
+};
 use std::iter::zip;
 
 pub(super) fn fn_verification<D: VerificationDirectoryTrait>(

@@ -1,8 +1,11 @@
 use rust_ev_crypto_primitives::{
-    sign, verify_signature, ByteArray, DirectTrustError as BasisDirectTrustError, HashError,
-    HashableMessage, Keystore as BasisKeystore, SignatureError,
+    basic_crypto_functions::BasisCryptoError,
+    direct_trust::{DirectTrustError as BasisDirectTrustError, Keystore as BasisKeystore},
+    signature::{sign, verify_signature, SignatureError},
+    ByteArray, HashableMessage,
 };
 use std::{
+    collections::HashMap,
     fmt::Display,
     path::{Path, PathBuf},
     slice::Iter,
@@ -11,7 +14,7 @@ use thiserror::Error;
 
 use crate::data_structures::XMLError;
 
-pub struct Keystore(pub BasisKeystore);
+pub struct Keystore(pub(crate) BasisKeystore);
 
 // Enum representing the direct trust errors
 #[derive(Error, Debug)]
@@ -27,6 +30,11 @@ pub enum DirectTrustError {
         msg: String,
         source: BasisDirectTrustError,
     },
+    #[error("Crypto error {msg} -> caused by: {source}")]
+    Crypto {
+        msg: String,
+        source: BasisCryptoError,
+    },
     #[error("No signing Keystore for Voting Server")]
     NoSigningVotingServer,
 }
@@ -38,33 +46,16 @@ pub enum VerifySignatureError {
     NoCA,
     #[error("Signature error {msg} -> caused by: {source}")]
     SignatureError { msg: String, source: SignatureError },
-    #[error("Hash error {msg} -> caused by: {source}")]
-    HashError { msg: String, source: HashError },
     #[error("XML error {msg} -> caused by: {source}")]
     XMLError { msg: String, source: XMLError },
-    /*
-    #[error("IO error {msg} -> caused by: {source}")]
-    IO { msg: String, source: std::io::Error },
-    #[error("No file with extension {0} found")]
-    FileNotFound(String),
-    #[error("More than one file with extension {0} found")]
-    NotUniqueFile(String),
-    #[error("Keystore error {msg} -> caused by: {source}")]
-    Keystore {
-        msg: String,
-        source: BasisDirectTrustError,
-    },
-    #[error("No signing Keystore for Voting Server")]
-    NoSigningVotingServer, */
 }
 
 /// List of valide Certificate authorities
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum CertificateAuthority {
     Canton,
     SdmConfig,
     SdmTally,
-    VotingServer,
     ControlComponent1,
     ControlComponent2,
     ControlComponent3,
@@ -83,11 +74,10 @@ impl CertificateAuthority {
     }
 
     pub fn iter() -> Iter<'static, CertificateAuthority> {
-        static AUTHORITIES: [CertificateAuthority; 8] = [
+        static AUTHORITIES: [CertificateAuthority; 7] = [
             CertificateAuthority::Canton,
             CertificateAuthority::SdmConfig,
             CertificateAuthority::SdmTally,
-            CertificateAuthority::VotingServer,
             CertificateAuthority::ControlComponent1,
             CertificateAuthority::ControlComponent2,
             CertificateAuthority::ControlComponent3,
@@ -106,7 +96,6 @@ impl Display for CertificateAuthority {
                 CertificateAuthority::Canton => "canton",
                 CertificateAuthority::SdmConfig => "sdm_config",
                 CertificateAuthority::SdmTally => "sdm_tally",
-                CertificateAuthority::VotingServer => "voting_server",
                 CertificateAuthority::ControlComponent1 => "control_component_1",
                 CertificateAuthority::ControlComponent2 => "control_component_2",
                 CertificateAuthority::ControlComponent3 => "control_component_3",
@@ -116,13 +105,13 @@ impl Display for CertificateAuthority {
     }
 }
 
-pub fn find_unique_file_with_extension(
+fn find_unique_file_with_extension(
     path: &Path,
     extension: &str,
 ) -> Result<PathBuf, DirectTrustError> {
     let pathes = std::fs::read_dir(path)
         .map_err(|e| DirectTrustError::IO {
-            msg: format!("{}", path.as_os_str().to_str().unwrap()),
+            msg: path.as_os_str().to_str().unwrap().to_string(),
             source: e,
         })?
         .filter_map(|res| res.ok())
@@ -162,6 +151,33 @@ impl TryFrom<&Path> for Keystore {
     }
 }
 
+impl Keystore {
+    pub fn fingerprints(
+        &self,
+    ) -> Result<HashMap<CertificateAuthority, ByteArray>, DirectTrustError> {
+        let mut res = HashMap::new();
+        for ca in CertificateAuthority::iter() {
+            res.insert(*ca, self.fingerprint(*ca)?);
+        }
+        Ok(res)
+    }
+
+    pub fn fingerprint(&self, ca: CertificateAuthority) -> Result<ByteArray, DirectTrustError> {
+        self.0
+            .public_certificate(&ca.to_string())
+            .map_err(|e| DirectTrustError::Keystore {
+                msg: "calculating fingerprint".to_string(),
+                source: e,
+            })?
+            .signing_certificate()
+            .digest()
+            .map_err(|e| DirectTrustError::Crypto {
+                msg: "calculating fingerprint".to_string(),
+                source: e,
+            })
+    }
+}
+
 /// Trait that must be implemented for each object implementing a signature to be verified
 ///
 /// The following function are to be implemented for the object to make it running:
@@ -174,7 +190,7 @@ where
     Self: 'a,
 {
     /// Get the hashable from the object
-    fn get_hashable(&'a self) -> Result<HashableMessage<'a>, VerifySignatureError>;
+    fn get_hashable(&'a self) -> Result<HashableMessage<'a>, Box<VerifySignatureError>>;
 
     /// Get the context data of the object according to the specifications
     fn get_context_data(&'a self) -> Vec<HashableMessage<'a>>;
@@ -194,10 +210,10 @@ where
     }
 
     /// Verfiy the signature according to the specifications of Verifier
-    fn verifiy_signature(&'a self, keystore: &Keystore) -> Result<bool, VerifySignatureError> {
+    fn verifiy_signature(&'a self, keystore: &Keystore) -> Result<bool, Box<VerifySignatureError>> {
         let ca = match self.get_certificate_authority() {
             Some(ca) => ca,
-            None => return Err(VerifySignatureError::NoCA),
+            None => return Err(Box::new(VerifySignatureError::NoCA)),
         };
         let hashable_message = self.get_hashable()?;
         verify_signature(
@@ -207,22 +223,24 @@ where
             &self.get_context_hashable(),
             &self.get_signature(),
         )
-        .map_err(|e| VerifySignatureError::SignatureError {
-            msg: "Error verifying the signature".to_string(),
-            source: e,
+        .map_err(|e| {
+            Box::new(VerifySignatureError::SignatureError {
+                msg: "Error verifying the signature".to_string(),
+                source: e,
+            })
         })
     }
 
     /// Sign according to the specifications of Verifier
     ///
     /// Can be usefull to resign the payload after mocking it
-    fn sign(&'a self, keystore: &Keystore) -> Result<ByteArray, VerifySignatureError> {
+    fn sign(&'a self, keystore: &Keystore) -> Result<ByteArray, Box<VerifySignatureError>> {
         let hashable_message = self.get_hashable()?;
         sign(&keystore.0, &hashable_message, &self.get_context_hashable()).map_err(|e| {
-            VerifySignatureError::SignatureError {
+            Box::new(VerifySignatureError::SignatureError {
                 msg: "Error signing".to_string(),
                 source: e,
-            }
+            })
         })
     }
 
@@ -230,7 +248,10 @@ where
     ///
     /// Per default return an array of one element containing the result of the element verified
     /// The method must be rewritten for a array of elements
-    fn verify_signatures(&'a self, keystore: &Keystore) -> Vec<Result<bool, VerifySignatureError>> {
+    fn verify_signatures(
+        &'a self,
+        keystore: &Keystore,
+    ) -> Vec<Result<bool, Box<VerifySignatureError>>> {
         vec![self.verifiy_signature(keystore)]
     }
 }
@@ -255,10 +276,6 @@ mod test {
         assert!(dt
             .0
             .public_certificate(&CertificateAuthority::SdmTally.to_string())
-            .is_ok());
-        assert!(dt
-            .0
-            .public_certificate(&CertificateAuthority::VotingServer.to_string())
             .is_ok());
         assert!(dt
             .0

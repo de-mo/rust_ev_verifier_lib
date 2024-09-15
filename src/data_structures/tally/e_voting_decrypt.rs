@@ -20,7 +20,7 @@ impl VerifierDataDecode for EVotingDecrypt {
 }
 
 impl<'a> VerifiySignatureTrait<'a> for EVotingDecrypt {
-    fn get_hashable(&'a self) -> Result<HashableMessage<'a>, VerifySignatureError> {
+    fn get_hashable(&'a self) -> Result<HashableMessage<'a>, Box<VerifySignatureError>> {
         let hashable = XMLFileHashable::new(&self.path, &SchemaKind::Decrypt, "signature");
         let hash = hashable
             .recursive_hash()

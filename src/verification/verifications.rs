@@ -87,7 +87,7 @@ impl<'a> Verification<'a, VerificationDirectory> {
     }
 
     /// Get the meta data of the verification
-    #[allow(dead_code)]
+    
     pub fn meta_data(&'a self) -> &'a VerificationMetaData {
         self.meta_data
     }

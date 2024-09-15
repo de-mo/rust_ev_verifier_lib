@@ -52,7 +52,7 @@ impl<'a> VerificationSuite<'a> {
     /// All verifications
     ///
     /// The excluded verifications are not collected
-    #[allow(dead_code)]
+    
     pub fn verifications(&'a self) -> &'a VerificationList {
         &self.list
     }
@@ -60,7 +60,7 @@ impl<'a> VerificationSuite<'a> {
     /// All verifications mutable
     ///
     /// The excluded verifications are not collected
-    #[allow(dead_code)]
+    
     pub fn verifications_mut(&'a mut self) -> &'a mut VerificationList {
         &mut self.list
     }
@@ -72,7 +72,7 @@ impl<'a> VerificationSuite<'a> {
         self.list.0.len()
     }
 
-    #[allow(dead_code)]
+    
     pub fn is_empty(&self) -> bool {
         self.len() == 0
     }
@@ -90,7 +90,7 @@ impl<'a> VerificationSuite<'a> {
     /// List of all verifications for a category
     ///
     /// The excluded verifications are not collected
-    #[allow(dead_code)]
+    
     pub fn get_verifications_for_category(
         &self,
         category: VerificationCategory,
@@ -105,7 +105,7 @@ impl<'a> VerificationSuite<'a> {
     /// List of ids of all verifications
     ///
     /// The excluded verifications are not collected
-    #[allow(dead_code)]
+    
     pub fn collect_id(&self) -> Vec<String> {
         let mut list: Vec<String> = self.list.0.iter().map(|v| v.id().clone()).collect();
         list.sort();
@@ -115,7 +115,7 @@ impl<'a> VerificationSuite<'a> {
     /// Find a verification with id
     ///
     /// The excluded verifications are not searchable
-    #[allow(dead_code)]
+    
     pub fn find_by_id(&self, id: &str) -> Option<&Verification<'a, VerificationDirectory>> {
         self.list.0.iter().find(|&v| v.meta_data().id() == id)
     }

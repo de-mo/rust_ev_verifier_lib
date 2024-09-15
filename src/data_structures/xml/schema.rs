@@ -35,7 +35,7 @@ static SCHEMA_CELL_ECH_CONFIG: OnceLock<Schema> = OnceLock::new();
 const XML_SCHEMA_URI: &str = "http://www.w3.org/2001/XMLSchema";
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
-#[allow(dead_code)]
+
 /// Enumarate for the kind of schemas.
 pub enum SchemaKind {
     Ech0006,
@@ -52,7 +52,7 @@ pub enum SchemaKind {
 }
 
 /// Schema containing the structure of the schema
-#[allow(dead_code)]
+
 pub struct Schema<'a> {
     document: Document<'a>,
     schema_kind: Option<SchemaKind>,
@@ -225,7 +225,7 @@ impl<'a> Schema<'a> {
     /// Try to create a new schema of kind [schema_kind] with the static str [xsd_str]
     ///
     /// Panic if it is not possible to create it
-    #[allow(dead_code)]
+    
     pub fn new(schema_kind: Option<SchemaKind>, xsd_str: &'static str) -> Self {
         Self::try_new(schema_kind, xsd_str).unwrap()
     }
@@ -236,7 +236,7 @@ impl<'a> Schema<'a> {
     }
 
     /// The source document of type [Document]
-    #[allow(dead_code)]
+    
     pub fn document(&self) -> &Document {
         &self.document
     }
@@ -266,7 +266,7 @@ impl<'a> Schema<'a> {
     ///
     /// # Error
     /// Return an error if the namespace is not found
-    #[allow(dead_code)]
+    
     pub fn sub_schema_name(&'a self, namespace_name: &str) -> Result<&'a Schema<'a>, SchemaError> {
         self.namespace_uri(namespace_name).map_or(
             Err(SchemaError::NoNamespaceName(namespace_name.to_string())),
@@ -275,19 +275,19 @@ impl<'a> Schema<'a> {
     }
 
     /// Return the namespace uri given by the namespace name. `None` if not found
-    #[allow(dead_code)]
+    
     pub fn namespace_uri(&self, namespace_name: &str) -> Option<&str> {
         self.namespaces.get(namespace_name).map(|uri| uri.as_str())
     }
 
     /// Check if the schema with the given namespace exists
-    #[allow(dead_code)]
+    
     pub fn contains_schema(&self, namespace: &str) -> bool {
         self.namespaces.contains_key(namespace)
     }
 
     /// Check if the schema with the given namespace name exists
-    #[allow(dead_code)]
+    
     pub fn contains_schema_with_namespace_name(&self, namespace_name: &str) -> bool {
         match self.namespaces.get(namespace_name) {
             Some(uri) => self.contains_schema(uri),

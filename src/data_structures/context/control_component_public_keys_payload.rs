@@ -5,7 +5,7 @@ use super::super::{
 };
 use crate::direct_trust::{CertificateAuthority, VerifiySignatureTrait, VerifySignatureError};
 use rust_ev_crypto_primitives::{
-    ByteArray, EncryptionParameters, HashableMessage, Integer, VerifyDomainTrait,
+    elgamal::EncryptionParameters, ByteArray, HashableMessage, Integer, VerifyDomainTrait,
 };
 use serde::Deserialize;
 
@@ -34,7 +34,7 @@ impl<'a> From<&'a ControlComponentPublicKeysPayload> for HashableMessage<'a> {
 }
 
 impl<'a> VerifiySignatureTrait<'a> for ControlComponentPublicKeysPayload {
-    fn get_hashable(&'a self) -> Result<HashableMessage<'a>, VerifySignatureError> {
+    fn get_hashable(&'a self) -> Result<HashableMessage<'a>, Box<VerifySignatureError>> {
         Ok(HashableMessage::from(self))
     }
 

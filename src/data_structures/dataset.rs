@@ -10,7 +10,7 @@ pub enum DatasetType<C, S, T> {
     Tally(T),
 }
 
-#[allow(dead_code)]
+
 impl<C: Clone, S: Clone, T: Clone> DatasetType<C, S, T> {
     /// Is context
     pub fn is_context(&self) -> bool {

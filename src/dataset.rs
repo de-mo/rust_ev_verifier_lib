@@ -1,6 +1,10 @@
 use chrono::prelude::*;
 use enum_kinds::EnumKind;
-use rust_ev_crypto_primitives::{sha256_stream, Argon2id, BasisCryptoError, ByteArray, Decrypter};
+use rust_ev_crypto_primitives::{
+    argon2::Argon2id,
+    basic_crypto_functions::{sha256_stream, BasisCryptoError, Decrypter},
+    ByteArray,
+};
 use std::{
     fs::File,
     io::{BufReader, Read, Write},
@@ -39,10 +43,10 @@ pub enum DatasetError {
 /// Metadata containing the information of the zip dataset before and after extraction
 #[derive(Debug, Clone)]
 pub struct DatasetMetadata {
-    pub source_path: PathBuf,
-    pub decrypted_zip_path: PathBuf,
-    pub extracted_dir_path: PathBuf,
-    pub fingerprint: ByteArray,
+    source_path: PathBuf,
+    decrypted_zip_path: PathBuf,
+    extracted_dir_path: PathBuf,
+    fingerprint: ByteArray,
 }
 
 /// Datasettype containing the information about metadata
@@ -69,6 +73,20 @@ impl DatasetMetadata {
             fingerprint: fingerprint.clone(),
         }
     }
+
+    pub fn source_path(&self) -> &Path {
+        &self.source_path
+    }
+
+    pub fn decrypted_zip_path(&self) -> &Path {
+        &self.decrypted_zip_path
+    }
+    pub fn extracted_dir_path(&self) -> &Path {
+        &self.extracted_dir_path
+    }
+    pub fn fingerprint(&self) -> &ByteArray {
+        &self.fingerprint
+    }
 }
 
 impl DatasetType {
@@ -80,7 +98,10 @@ impl DatasetType {
         }
     }
 
-    pub fn get_from_context_str_with_inputs(
+    /// Extract the data as datatype give with the name of the dataset type.
+    ///
+    /// Return [DatasetType] with the correct metadata or Error if something goes wrong
+    pub fn from_dataset_str_with_inputs(
         datasettype_str: &str,
         input: &Path,
         password: &str,

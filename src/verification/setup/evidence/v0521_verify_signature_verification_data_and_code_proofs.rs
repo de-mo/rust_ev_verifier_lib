@@ -21,7 +21,9 @@ use crate::{
 
 use rayon::prelude::*;
 use rust_ev_crypto_primitives::Integer;
-use rust_ev_crypto_primitives::{verify_exponentiation, EncryptionParameters};
+use rust_ev_crypto_primitives::{
+    elgamal::EncryptionParameters, zero_knowledge_proofs::verify_exponentiation,
+};
 use std::iter::zip;
 
 /// Context data for algorithm 3.3 according to the specifications
@@ -30,8 +32,7 @@ struct ContextAlgorithm33<'a, 'b, 'c, 'd, 'e> {
     node_id: usize,
     ee_id: &'b String,
     vc_ids: &'c Vec<&'d String>,
-    #[allow(dead_code)]
-    setup_component_verification_data: &'e Vec<SetupComponentVerificationDataInner>,
+    _setup_component_verification_data: &'e Vec<SetupComponentVerificationDataInner>,
     nb_voting_options: usize,
 }
 
@@ -41,8 +42,7 @@ struct ContextAlgorithm34<'a, 'b, 'c, 'd, 'e> {
     node_id: usize,
     ee_id: &'b String,
     vc_ids: &'c Vec<&'d String>,
-    #[allow(dead_code)]
-    setup_component_verification_data: &'e Vec<SetupComponentVerificationDataInner>,
+    _setup_component_verification_data: &'e Vec<SetupComponentVerificationDataInner>,
 }
 
 fn algorithm_0301_verify_signature_setup_component_verification_data(
@@ -175,7 +175,7 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
                                         ee_id: &setup_verification_data_payload.election_event_id,
                                         vc_ids: &verification_card_ids,
                                         nb_voting_options: vcs_context.number_of_voting_options(),
-                                        setup_component_verification_data: &setup_verification_data_payload.setup_component_verification_data
+                                        _setup_component_verification_data: &setup_verification_data_payload.setup_component_verification_data
                                     };
                                     let mut res_algo_33 = algorithm_0303_verify_encrypted_pcc_exponentiation_proofs_verification_card_set(
                                         &context33,
@@ -190,7 +190,7 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
                                         node_id: shares.node_id,
                                         ee_id: &setup_verification_data_payload.election_event_id,
                                         vc_ids: &verification_card_ids,
-                                        setup_component_verification_data: &setup_verification_data_payload.setup_component_verification_data
+                                        _setup_component_verification_data: &setup_verification_data_payload.setup_component_verification_data
                                     };
                                     let mut res_algo_34 = algorithm_0304_verify_encrypted_ckexponentiation_proofs_verification_card_set(
                                         &context34,

@@ -284,7 +284,6 @@ impl TallyDirectory {
         res
     }
 
-    #[allow(dead_code)]
     pub fn get_location(&self) -> &Path {
         self.location.as_path()
     }
@@ -315,7 +314,6 @@ impl BBDirectory {
         }
     }
 
-    #[allow(dead_code)]
     pub fn get_location(&self) -> &Path {
         self.location.as_path()
     }
@@ -336,7 +334,7 @@ mod test {
 }
 
 #[cfg(any(test, doc))]
-#[allow(dead_code)]
+
 pub mod mock {
     //! Module defining mocking structure for [VCSDirectory] and [SetupDirectory]
     //!

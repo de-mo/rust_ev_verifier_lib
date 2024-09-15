@@ -140,7 +140,7 @@ pub fn hashable_no_value(t: &str) -> HashableMessage {
     HashableMessage::from(s)
 }
 
-#[allow(dead_code)]
+
 /// Return the [HashableMessage] from an option using [hashable_no_value] for `None`
 pub fn hashable_from_option<'a>(
     opt: Option<HashableMessage<'a>>,

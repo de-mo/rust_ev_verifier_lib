@@ -61,18 +61,17 @@ impl Config {
     }
 
     /// Maximum supported number of write-in options according to the specification
-    #[allow(dead_code)]
+
     pub fn maximum_supported_number_of_write_in_options() -> usize {
         consts::MAXIMUM_SUPPORTED_NUMBER_OF_WRITE_IN_OPTIONS
     }
 
     /// Maximum supported number of write-in options + 1 to the specification
-    #[allow(dead_code)]
+
     pub fn delta_sup() -> usize {
         consts::MAXIMUM_SUPPORTED_NUMBER_OF_WRITE_IN_OPTIONS + 1
     }
 
-    #[allow(dead_code)]
     pub fn maximum_write_in_option_length() -> usize {
         consts::MAXIMUM_WRITE_IN_OPTION_LENGTH
     }
@@ -82,7 +81,6 @@ impl Config {
         consts::CHARACTER_LENGTH_OF_UNIQUE_IDENTIFIERS
     }
 
-    #[allow(dead_code)]
     pub fn maximum_actual_voting_option_length() -> usize {
         consts::MAXIMUM_ACTUAL_VOTING_OPTION_LENGTH
     }
@@ -155,7 +153,7 @@ impl Config {
     }
 
     /// The path to the directory where direct trust keystore is stored
-    fn direct_trust_dir_path(&self) -> PathBuf {
+    pub fn direct_trust_dir_path(&self) -> PathBuf {
         self.root_dir_path().join(DIRECT_TRUST_DIR_NAME)
     }
 
@@ -179,7 +177,7 @@ pub(crate) mod test {
         verification::VerificationPeriod,
     };
     use lazy_static::lazy_static;
-    use rust_ev_crypto_primitives::Keystore as BasisKeystore;
+    use rust_ev_crypto_primitives::direct_trust::Keystore as BasisKeystore;
 
     const CANTON_KEYSTORE_FILE_NAME: &str = "local_direct_trust_keystore_canton.p12";
     const CANTON_KEYSTORE_PASSWORD_FILE_NAME: &str = "local_direct_trust_pw_canton.txt";
@@ -276,6 +274,7 @@ pub(crate) mod test {
         MockVerificationDirectory::new(&VerificationPeriod::Setup, &test_datasets_path())
     }
 
+    #[allow(dead_code)]
     pub(crate) fn get_test_verifier_mock_tally_dir() -> MockVerificationDirectory {
         MockVerificationDirectory::new(&VerificationPeriod::Setup, &test_datasets_path())
     }
@@ -299,9 +298,6 @@ pub(crate) mod test {
             ),
             CertificateAuthority::SdmTally => {
                 (TALLY_KEYSTORE_FILE_NAME, TALLY_KEYSTORE_PASSWORD_FILE_NAME)
-            }
-            CertificateAuthority::VotingServer => {
-                return Err(DirectTrustError::NoSigningVotingServer)
             }
             CertificateAuthority::ControlComponent1 => {
                 (CC1_KEYSTORE_FILE_NAME, CC1_KEYSTORE_PASSWORD_FILE_NAME)

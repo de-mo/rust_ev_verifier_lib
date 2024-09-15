@@ -55,7 +55,7 @@ impl File {
         }
     }
 
-    #[allow(dead_code)]
+    
     pub fn location(&self) -> PathBuf {
         self.path.parent().unwrap().to_path_buf()
     }

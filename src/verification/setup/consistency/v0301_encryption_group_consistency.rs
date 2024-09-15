@@ -7,7 +7,7 @@ use crate::{
         VerificationDirectoryTrait,
     },
 };
-use rust_ev_crypto_primitives::EncryptionParameters;
+use rust_ev_crypto_primitives::elgamal::EncryptionParameters;
 
 fn verify_encryption_group(
     eg: &EncryptionParameters,

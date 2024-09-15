@@ -38,7 +38,7 @@ use chrono::NaiveDateTime;
 use quick_xml::{DeError as QuickXmDeError, Error as QuickXmlError};
 use roxmltree::{Document, Error as RoXmlTreeError};
 use rust_ev_crypto_primitives::Integer;
-use rust_ev_crypto_primitives::{ByteArray, Decode, Hexa};
+use rust_ev_crypto_primitives::{ByteArray, DecodeTrait, Hexa};
 use serde::de::{Deserialize, Deserializer, Error as SerdeError};
 use std::path::Path;
 use thiserror::Error;
@@ -406,7 +406,6 @@ where
     deserializer.deserialize_seq(Visitor)
 }
 
-#[allow(dead_code)]
 fn deserialize_seq_string_base64_to_seq_integer<'de, D>(
     deserializer: D,
 ) -> Result<Vec<Integer>, D::Error>
