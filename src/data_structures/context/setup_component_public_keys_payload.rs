@@ -7,7 +7,6 @@ use super::{
     control_component_public_keys_payload::ControlComponentPublicKeys,
 };
 use crate::direct_trust::{CertificateAuthority, VerifiySignatureTrait, VerifySignatureError};
-use anyhow::anyhow;
 use rust_ev_crypto_primitives::Integer;
 use rust_ev_crypto_primitives::{
     ByteArray, EncryptionParameters, HashableMessage, VerifyDomainTrait,

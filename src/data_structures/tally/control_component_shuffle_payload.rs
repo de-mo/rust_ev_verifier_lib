@@ -7,7 +7,7 @@ use crate::{
     data_structures::common_types::DecryptionProof,
     direct_trust::{CertificateAuthority, VerifiySignatureTrait, VerifySignatureError},
 };
-use anyhow::anyhow;
+
 use rust_ev_crypto_primitives::{
     ByteArray, EncryptionParameters, HashableMessage, VerifyDomainTrait,
 };

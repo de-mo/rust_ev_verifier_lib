@@ -22,7 +22,6 @@ use crate::{
         create_verifier_context_data_type, VerifierContextDataTrait, VerifierDataType,
     },
 };
-use anyhow::{anyhow, ensure};
 use std::{
     fs,
     path::{Path, PathBuf},
@@ -65,10 +64,14 @@ pub trait ContextDirectoryTrait: CompletnessTestTrait {
     fn vcs_directories(&self) -> &Vec<Self::VCSDirType>;
     fn setup_component_public_keys_payload(
         &self,
-    ) -> anyhow::Result<Box<SetupComponentPublicKeysPayload>>;
+    ) -> Result<Box<SetupComponentPublicKeysPayload>, FileStructureError>;
 
-    fn election_event_context_payload(&self) -> anyhow::Result<Box<ElectionEventContextPayload>>;
-    fn election_event_configuration(&self) -> anyhow::Result<Box<ElectionEventConfiguration>>;
+    fn election_event_context_payload(
+        &self,
+    ) -> Result<Box<ElectionEventContextPayload>, FileStructureError>;
+    fn election_event_configuration(
+        &self,
+    ) -> Result<Box<ElectionEventConfiguration>, FileStructureError>;
 
     fn control_component_public_keys_payload_iter(
         &self,
@@ -92,7 +95,7 @@ pub trait ContextVCSDirectoryTrait: CompletnessTestTrait {
     fn setup_component_tally_data_payload_file(&self) -> &File;
     fn setup_component_tally_data_payload(
         &self,
-    ) -> anyhow::Result<Box<SetupComponentTallyDataPayload>>;
+    ) -> Result<Box<SetupComponentTallyDataPayload>, FileStructureError>;
     fn get_name(&self) -> String;
 }
 
@@ -153,8 +156,10 @@ impl ContextDirectory {
 macro_rules! impl_completness_test_trait_for_context {
     ($t: ident) => {
         impl CompletnessTestTrait for $t {
-            fn test_completness(&self) -> anyhow::Result<Vec<String>> {
-                ensure!(self.location.is_dir());
+            fn test_completness(&self) -> Result<Vec<String>, FileStructureError> {
+                if !self.location.is_dir() {
+                    return Err(FileStructureError::PathIsNotDir(self.location.to_path_buf()))
+                }
                 let mut missings = vec![];
                 if !self.election_event_context_payload_file().exists() {
                     missings.push("election_event_context_payload does not exist".to_string());
@@ -213,24 +218,25 @@ impl ContextDirectoryTrait for ContextDirectory {
 
     fn setup_component_public_keys_payload(
         &self,
-    ) -> anyhow::Result<Box<SetupComponentPublicKeysPayload>> {
+    ) -> Result<Box<SetupComponentPublicKeysPayload>, FileStructureError> {
         self.setup_component_public_keys_payload_file
             .get_verifier_data()
-            .map_err(|e| anyhow!(e).context("in setup_component_public_keys_payload"))
             .map(|d| Box::new(d.setup_component_public_keys_payload().unwrap().clone()))
     }
 
-    fn election_event_context_payload(&self) -> anyhow::Result<Box<ElectionEventContextPayload>> {
+    fn election_event_context_payload(
+        &self,
+    ) -> Result<Box<ElectionEventContextPayload>, FileStructureError> {
         self.election_event_context_payload_file
             .get_verifier_data()
-            .map_err(|e| anyhow!(e).context("in election_event_context_payload"))
             .map(|d| Box::new(d.election_event_context_payload().unwrap().clone()))
     }
 
-    fn election_event_configuration(&self) -> anyhow::Result<Box<ElectionEventConfiguration>> {
+    fn election_event_configuration(
+        &self,
+    ) -> Result<Box<ElectionEventConfiguration>, FileStructureError> {
         self.election_event_configuration_file
             .get_verifier_data()
-            .map_err(|e| anyhow!(e).context("in election_event_configuration"))
             .map(|d| Box::new(d.election_event_configuration().unwrap().clone()))
     }
 
@@ -244,8 +250,12 @@ impl ContextDirectoryTrait for ContextDirectory {
 macro_rules! impl_completness_test_trait_for_context_vcs {
     ($t: ident) => {
         impl CompletnessTestTrait for $t {
-            fn test_completness(&self) -> anyhow::Result<Vec<String>> {
-                ensure!(self.location.is_dir());
+            fn test_completness(&self) -> Result<Vec<String>, FileStructureError> {
+                if !self.location.is_dir() {
+                    return Err(FileStructureError::PathIsNotDir(
+                        self.location.to_path_buf(),
+                    ));
+                }
                 let mut missings = vec![];
                 if !self.setup_component_tally_data_payload_file().exists() {
                     missings.push(format!(
@@ -287,10 +297,9 @@ impl ContextVCSDirectoryTrait for ContextVCSDirectory {
     }
     fn setup_component_tally_data_payload(
         &self,
-    ) -> anyhow::Result<Box<SetupComponentTallyDataPayload>> {
+    ) -> Result<Box<SetupComponentTallyDataPayload>, FileStructureError> {
         self.setup_component_tally_data_payload_file
             .get_verifier_data()
-            .map_err(|e| anyhow!(e).context("in setup_component_tally_data_payload"))
             .map(|d| Box::new(d.setup_component_tally_data_payload().unwrap().clone()))
     }
 
@@ -367,7 +376,6 @@ pub mod mock {
         super::mock::{mock_payload, wrap_file_group_getter, wrap_payload_getter},
         *,
     };
-    use anyhow::anyhow;
 
     /// Mock for [MockContextVCSDirectory]
     pub struct MockContextVCSDirectory {
@@ -375,7 +383,7 @@ pub mod mock {
         dir: ContextVCSDirectory,
         mocked_setup_component_tally_data_payload_file: Option<File>,
         mocked_setup_component_tally_data_payload:
-            Option<anyhow::Result<Box<SetupComponentTallyDataPayload>>>,
+            Option<Result<Box<SetupComponentTallyDataPayload>, FileStructureError>>,
         mocked_get_name: Option<String>,
     }
 
@@ -388,11 +396,11 @@ pub mod mock {
         mocked_election_event_configuration_file: Option<File>,
         mocked_control_component_public_keys_payload_group: Option<FileGroup>,
         mocked_setup_component_public_keys_payload:
-            Option<anyhow::Result<Box<SetupComponentPublicKeysPayload>>>,
+            Option<Result<Box<SetupComponentPublicKeysPayload>, FileStructureError>>,
         mocked_election_event_context_payload:
-            Option<anyhow::Result<Box<ElectionEventContextPayload>>>,
+            Option<Result<Box<ElectionEventContextPayload>, FileStructureError>>,
         mocked_election_event_configuration:
-            Option<anyhow::Result<Box<ElectionEventConfiguration>>>,
+            Option<Result<Box<ElectionEventConfiguration>, FileStructureError>>,
         mocked_control_component_public_keys_payloads:
             HashMap<usize, ControlComponentPublicKeysPayloadAsResult>,
         vcs_directories: Vec<MockContextVCSDirectory>,

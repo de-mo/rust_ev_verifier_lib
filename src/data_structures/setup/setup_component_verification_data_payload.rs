@@ -4,7 +4,6 @@ use super::super::{
     DataStructureError, VerifierDataDecode,
 };
 use crate::direct_trust::{CertificateAuthority, VerifiySignatureTrait, VerifySignatureError};
-use anyhow::anyhow;
 use rust_ev_crypto_primitives::Integer;
 use rust_ev_crypto_primitives::{
     ByteArray, EncryptionParameters, HashableMessage, VerifyDomainTrait,

@@ -37,8 +37,6 @@ pub enum FileStructureError {
     PathNotFile(PathBuf),
     #[error("Error parsing xml {msg} -> caused by: {source}")]
     ParseRoXML { msg: String, source: RoXmlTreeError },
-    #[error("Any error {msg} -> caused by: {source}")]
-    Any { msg: String, source: anyhow::Error },
     #[error("Mock error: {0}")]
     Mock(String),
     #[error("Error reading data structure {path} -> caudes by: {source}")]
@@ -46,6 +44,8 @@ pub enum FileStructureError {
         path: PathBuf,
         source: DataStructureError,
     },
+    #[error("Path is not a directory {0}")]
+    PathIsNotDir(PathBuf),
     /*
     #[error("Path doesn't exists {0}")]
     PathNotExist(PathBuf),
@@ -160,7 +160,7 @@ pub trait VerificationDirectoryTrait {
 }
 
 pub trait CompletnessTestTrait {
-    fn test_completness(&self) -> anyhow::Result<Vec<String>>;
+    fn test_completness(&self) -> Result<Vec<String>, FileStructureError>;
 }
 
 impl VerificationDirectory {
@@ -593,11 +593,11 @@ pub mod mock {
     /// - $payload: Type of the pyalod
     macro_rules! wrap_payload_getter {
         ($fct: ident, $mock: ident, $payload: ty) => {
-            fn $fct(&self) -> anyhow::Result<Box<$payload>> {
+            fn $fct(&self) -> Result<Box<$payload>, FileStructureError> {
                 match &self.$mock {
                     Some(e) => match e {
                         Ok(b) => Ok(Box::new(*b.clone())),
-                        Err(r) => Err(anyhow!(format!("{}", r))),
+                        Err(r) => Err(FileStructureError::Mock(r.to_string())),
                     },
                     None => self.dir.$fct(),
                 }
@@ -614,10 +614,10 @@ pub mod mock {
     /// - $payload: Type of the payload
     macro_rules! mock_payload {
         ($fct: ident, $mock: ident, $payload: ty) => {
-            pub fn $fct(&mut self, data: &anyhow::Result<&$payload>) {
+            pub fn $fct(&mut self, data: &Result<&$payload, FileStructureError>) {
                 self.$mock = match data {
                     Ok(d) => Some(Ok(Box::new(d.clone().to_owned()))),
-                    Err(e) => Some(Err(anyhow!(format!("{}", e)))),
+                    Err(e) => Some(Err(FileStructureError::Mock(e.to_string()))),
                 };
             }
         };

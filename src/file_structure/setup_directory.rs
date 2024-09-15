@@ -136,7 +136,7 @@ impl SetupDirectoryTrait for SetupDirectory {
 macro_rules! impl_completness_test_trait_for_setup {
     ($t: ident) => {
         impl CompletnessTestTrait for $t {
-            fn test_completness(&self) -> anyhow::Result<Vec<String>> {
+            fn test_completness(&self) -> Result<Vec<String>, FileStructureError> {
                 let mut missings = vec![];
                 if self.vcs_directories().is_empty() {
                     missings.push("No vcs directory found".to_string());
@@ -177,7 +177,7 @@ impl SetupVCSDirectory {
 macro_rules! impl_completness_test_trait_for_setup_vcs {
     ($t: ident) => {
         impl CompletnessTestTrait for $t {
-            fn test_completness(&self) -> anyhow::Result<Vec<String>> {
+            fn test_completness(&self) -> Result<Vec<String>, FileStructureError> {
                 let mut missings = vec![];
                 if !self
                     .setup_component_verification_data_payload_group()
@@ -304,7 +304,6 @@ pub mod mock {
         super::mock::wrap_file_group_getter,
         *,
     };
-    use anyhow::anyhow;
 
     /// Mock for [SetupVCSDirectory]
     pub struct MockSetupVCSDirectory {

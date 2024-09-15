@@ -19,7 +19,6 @@ use crate::{
         VerifierDataType, VerifierTallyDataTrait,
     },
 };
-use anyhow::{anyhow, Context};
 use std::{
     fs,
     path::{Path, PathBuf},
@@ -80,8 +79,12 @@ pub trait BBDirectoryTrait: CompletnessTestTrait {
     fn tally_component_shuffle_payload_file(&self) -> &File;
     fn control_component_ballot_box_payload_group(&self) -> &FileGroup;
     fn control_component_shuffle_payload_group(&self) -> &FileGroup;
-    fn tally_component_votes_payload(&self) -> anyhow::Result<Box<TallyComponentVotesPayload>>;
-    fn tally_component_shuffle_payload(&self) -> anyhow::Result<Box<TallyComponentShufflePayload>>;
+    fn tally_component_votes_payload(
+        &self,
+    ) -> Result<Box<TallyComponentVotesPayload>, FileStructureError>;
+    fn tally_component_shuffle_payload(
+        &self,
+    ) -> Result<Box<TallyComponentShufflePayload>, FileStructureError>;
     fn control_component_ballot_box_payload_iter(
         &self,
     ) -> Self::ControlComponentBallotBoxPayloadAsResultIterType;
@@ -126,7 +129,7 @@ impl TallyDirectoryTrait for TallyDirectory {
 macro_rules! impl_completness_test_trait_for_tally {
     ($t: ident) => {
         impl CompletnessTestTrait for $t {
-            fn test_completness(&self) -> anyhow::Result<Vec<String>> {
+            fn test_completness(&self) -> Result<Vec<String>, FileStructureError> {
                 let mut missings = vec![];
                 if !self.ech_0110_file().exists() {
                     missings.push("ech_0110 does not exist".to_string())
@@ -167,16 +170,18 @@ impl BBDirectoryTrait for BBDirectory {
     fn control_component_shuffle_payload_group(&self) -> &FileGroup {
         &self.control_component_shuffle_payload_group
     }
-    fn tally_component_votes_payload(&self) -> anyhow::Result<Box<TallyComponentVotesPayload>> {
+    fn tally_component_votes_payload(
+        &self,
+    ) -> Result<Box<TallyComponentVotesPayload>, FileStructureError> {
         self.tally_component_votes_payload_file
             .get_verifier_data()
-            .map_err(|e| anyhow!(e).context("in tally_component_votes_payload"))
             .map(|d| Box::new(d.tally_component_votes_payload().unwrap().clone()))
     }
-    fn tally_component_shuffle_payload(&self) -> anyhow::Result<Box<TallyComponentShufflePayload>> {
+    fn tally_component_shuffle_payload(
+        &self,
+    ) -> Result<Box<TallyComponentShufflePayload>, FileStructureError> {
         self.tally_component_shuffle_payload_file
             .get_verifier_data()
-            .map_err(|e| anyhow!(e).context("in tally_component_shuffle_payload"))
             .map(|d| Box::new(d.tally_component_shuffle_payload().unwrap().clone()))
     }
 
@@ -205,7 +210,7 @@ impl BBDirectoryTrait for BBDirectory {
 macro_rules! impl_completness_test_trait_for_tally_bb {
     ($t: ident) => {
         impl CompletnessTestTrait for $t {
-            fn test_completness(&self) -> anyhow::Result<Vec<String>> {
+            fn test_completness(&self) -> Result<Vec<String>, FileStructureError> {
                 let mut missings = vec![];
                 if !self.tally_component_shuffle_payload_file().exists() {
                     missings.push(format!(
@@ -343,7 +348,7 @@ pub mod mock {
         impl_iterator_over_data_payload_mock, wrap_payload_iter,
     };
     use crate::file_structure::mock::wrap_payload_getter;
-    use anyhow::anyhow;
+
     use std::collections::HashMap;
 
     /// Mock for [BBDirectory]
@@ -355,9 +360,9 @@ pub mod mock {
         mocked_control_component_ballot_box_payload_group: Option<FileGroup>,
         mocked_control_component_shuffle_payload_group: Option<FileGroup>,
         mocked_tally_component_votes_payload:
-            Option<anyhow::Result<Box<TallyComponentVotesPayload>>>,
+            Option<Result<Box<TallyComponentVotesPayload>, FileStructureError>>,
         mocked_tally_component_shuffle_payload:
-            Option<anyhow::Result<Box<TallyComponentShufflePayload>>>,
+            Option<Result<Box<TallyComponentShufflePayload>, FileStructureError>>,
         mocked_control_component_ballot_box_payloads:
             HashMap<usize, ControlComponentBallotBoxPayloadAsResult>,
         mocked_control_component_shuffle_payloads:

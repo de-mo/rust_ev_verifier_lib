@@ -4,7 +4,7 @@ use super::super::{
     common_types::{EncryptionParametersDef, Signature},
     implement_trait_verifier_data_json_decode, DataStructureError, VerifierDataDecode,
 };
-use anyhow::anyhow;
+
 use rust_ev_crypto_primitives::{
     ByteArray, EncryptionParameters, HashableMessage, VerifyDomainTrait,
 };
