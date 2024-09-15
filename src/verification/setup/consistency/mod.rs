@@ -13,7 +13,7 @@ mod v0312_verification_card_ids_consistency;
 mod v0313_total_voters_consistency;
 mod v0315_chunk_consistency;
 
-use crate::config::Config;
+use crate::{config::Config, verification::VerificationError};
 
 use super::super::{
     meta_data::VerificationMetaDataList, suite::VerificationList, verification_unimplemented,
@@ -23,7 +23,7 @@ use super::super::{
 pub fn get_verifications<'a>(
     metadata_list: &'a VerificationMetaDataList,
     config: &'static Config,
-) -> anyhow::Result<VerificationList<'a>> {
+) -> Result<VerificationList<'a>, VerificationError> {
     Ok(VerificationList(vec![
         Verification::new(
             "03.01",

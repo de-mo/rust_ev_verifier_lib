@@ -9,14 +9,14 @@ use crate::{
         tally_directory::{BBDirectoryTrait, TallyDirectoryTrait},
         VerificationDirectoryTrait,
     },
-    verification::meta_data::VerificationMetaDataList,
+    verification::{meta_data::VerificationMetaDataList, VerificationError},
 };
 use rust_ev_crypto_primitives::VerifyDomainTrait;
 
 pub fn get_verifications<'a>(
     metadata_list: &'a VerificationMetaDataList,
     config: &'static Config,
-) -> anyhow::Result<VerificationList<'a>> {
+) -> Result<VerificationList<'a>, VerificationError> {
     Ok(VerificationList(vec![Verification::new(
         "09.01",
         "VerifyTallyIntegrity",

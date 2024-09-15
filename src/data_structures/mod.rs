@@ -44,16 +44,11 @@ use std::path::Path;
 use thiserror::Error;
 pub use xml::XMLError;
 
-// Enum representing the direct trust errors
+// Enum representing the datza structure errors
 #[derive(Error, Debug)]
 pub enum DataStructureError {
     #[error("IO error {msg} -> caused by: {source}")]
     IO { msg: String, source: std::io::Error },
-    /*#[error("Error in file/file groupe {msg} -> caused by: {source}")]
-    FileStructure {
-        msg: String,
-        source: FileStructureError,
-    },*/
     #[error("Not implemented: {0}")]
     NotImplemented(String),
     #[error("Error parsing xml {msg} -> caused by: {source}")]
@@ -69,27 +64,6 @@ pub enum DataStructureError {
     },
     #[error("Data error {0}")]
     DataError(String),
-    /*
-    #[error("Path doesn't exists {0}")]
-    PathNotExist(PathBuf),
-    #[error("Path is not a file {0}")]
-    PathNotFile(PathBuf),
-    #[error("Path is not a directory {0}")]
-    PathIsNotDir(PathBuf),
-    #[error("Crypto error {msg} -> caused by: {source}")]
-    CryptoError {
-        msg: String,
-        source: BasisCryptoError,
-    },
-    #[error("Byte length error {0}")]
-    ByteLengthError(String),
-    #[error("Error Unzipping {file}: {source}")]
-    Unzip {
-        file: PathBuf,
-        source: zip_extract::ZipExtractError,
-    },
-    #[error("Kind {0} delivered. Only context, setup and tally possible")]
-    WrongKindStr(String), */
 }
 
 /// The type VerifierData implement an option between

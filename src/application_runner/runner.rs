@@ -1,4 +1,3 @@
-use anyhow::bail;
 //use futures::{stream::FuturesUnordered, StreamExt};
 use crate::{
     application_runner::checks::{check_complete, check_verification_dir},
@@ -10,7 +9,7 @@ use crate::{
 };
 use tracing::{info, warn};
 //use std::future::Future;
-use super::checks::start_check;
+use super::{checks::start_check, RunnerError};
 use rayon::prelude::*;
 use std::{iter::zip, sync::Mutex};
 use std::{
@@ -119,15 +118,18 @@ where
         config: &'static VerifierConfig,
         action_before: impl Fn(&str) + Send + Sync + 'static,
         action_after: impl Fn(&str, Vec<String>, Vec<String>) + Send + Sync + 'static,
-    ) -> anyhow::Result<Runner<'a, T>> {
-        start_check(config)?;
-        check_verification_dir(period, path)?;
+    ) -> Result<Runner<'a, T>, RunnerError> {
+        start_check(config).map_err(RunnerError::CheckError)?;
+        check_verification_dir(period, path).map_err(RunnerError::CheckError)?;
         let directory = VerificationDirectory::new(period, path);
-        check_complete(period, &directory)?;
+        check_complete(period, &directory).map_err(RunnerError::CheckError)?;
         Ok(Runner {
             path: path.to_path_buf(),
             verification_directory: directory,
-            verifications: Box::new(VerificationSuite::new(period, metadata, exclusion, config)?),
+            verifications: Box::new(
+                VerificationSuite::new(period, metadata, exclusion, config)
+                    .map_err(RunnerError::Verification)?,
+            ),
             start_time: None,
             duration: None,
             run_strategy,
@@ -139,15 +141,21 @@ where
 
     /// Reset the verifications
     #[allow(dead_code)]
-    pub fn reset(&'a mut self, metadata_list: &'a VerificationMetaDataList) -> anyhow::Result<()> {
+    pub fn reset(
+        &'a mut self,
+        metadata_list: &'a VerificationMetaDataList,
+    ) -> Result<(), RunnerError> {
         self.start_time = None;
         self.duration = None;
-        self.verifications = Box::new(VerificationSuite::new(
-            self.period(),
-            metadata_list,
-            self.verifications.exclusion(),
-            self.config,
-        )?);
+        self.verifications = Box::new(
+            VerificationSuite::new(
+                self.period(),
+                metadata_list,
+                self.verifications.exclusion(),
+                self.config,
+            )
+            .map_err(RunnerError::Verification)?,
+        );
         Ok(())
     }
 
@@ -155,14 +163,12 @@ where
     pub fn run_all<'c: 'a>(
         &'c mut self,
         metadata_list: &'a VerificationMetaDataList,
-    ) -> anyhow::Result<()> {
+    ) -> Result<(), RunnerError> {
         if self.is_running() {
-            bail!(format!("Runner is already running. Cannot be started"));
+            return Err(RunnerError::IsRunning);
         }
         if self.is_finished() {
-            bail!(format!(
-                "Runner is already running. Cannot be started before resetting it"
-            ));
+            return Err(RunnerError::HasAlreadyRun);
         }
         self.start_time = Some(SystemTime::now());
         info!(

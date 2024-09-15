@@ -5,58 +5,46 @@ use crate::{
     file_structure::{CompletnessTestTrait, VerificationDirectory, VerificationDirectoryTrait},
     verification::{meta_data::VerificationMetaDataList, VerificationPeriod},
 };
-use anyhow::{anyhow, ensure};
 
 /// Check some elements at start of the application.
 ///
 /// Must be called by the application at the beginning. If error, then cannot continue
-pub fn start_check(config: &'static VerifierConfig) -> anyhow::Result<()> {
+pub fn start_check(config: &'static VerifierConfig) -> Result<(), String> {
     let md_list_check = VerificationMetaDataList::load(config.get_verification_list_str());
-    ensure!(
-        md_list_check.is_ok(),
-        format!(
+    if md_list_check.is_err() {
+        return Err(format!(
             "List of verifications has an error: {}",
             md_list_check.unwrap_err()
-        )
-    );
+        ));
+    }
     config
         .keystore()
-        .map_err(|e| anyhow!("Cannot read keystore").context(e))?;
+        .map_err(|e| format!("Cannot read keystore: {}", e))?;
     Ok(())
 }
 
 /// Check that the verification directory correct ist
-pub fn check_verification_dir(period: &VerificationPeriod, path: &Path) -> anyhow::Result<()> {
-    ensure!(
-        path.is_dir(),
-        format!("Given directory {:?} does not exist", path)
-    );
-    ensure!(
-        path.join(VerifierConfig::context_dir_name()).is_dir(),
-        format!(
+pub fn check_verification_dir(period: &VerificationPeriod, path: &Path) -> Result<(), String> {
+    if !path.is_dir() {
+        return Err(format!("Given directory {:?} does not exist", path));
+    };
+    if !path.join(VerifierConfig::context_dir_name()).is_dir() {
+        return Err(format!(
             "Directory {} does not exist in directory {:?}",
             VerifierConfig::context_dir_name(),
             path
-        )
-    );
-    match period {
-        VerificationPeriod::Setup => ensure!(
-            path.join(VerifierConfig::setup_dir_name()).is_dir(),
-            format!(
-                "Directory {} does not exist in directory {:?}",
-                VerifierConfig::setup_dir_name(),
-                path
-            )
-        ),
-        VerificationPeriod::Tally => ensure!(
-            path.join(VerifierConfig::tally_dir_name()).is_dir(),
-            format!(
-                "Directory {} does not exist in directory {:?}",
-                VerifierConfig::tally_dir_name(),
-                path
-            )
-        ),
-    }
+        ));
+    };
+    let dir_name = match period {
+        VerificationPeriod::Setup => VerifierConfig::setup_dir_name(),
+        VerificationPeriod::Tally => VerifierConfig::tally_dir_name(),
+    };
+    if !path.join(dir_name).is_dir() {
+        return Err(format!(
+            "Directory {} does not exist in directory {:?}",
+            dir_name, path
+        ));
+    };
     Ok(())
 }
 
@@ -64,25 +52,33 @@ pub fn check_verification_dir(period: &VerificationPeriod, path: &Path) -> anyho
 pub fn check_complete(
     period: &VerificationPeriod,
     dir: &VerificationDirectory,
-) -> anyhow::Result<()> {
-    let context_complete = dir.context().test_completness()?;
+) -> Result<(), String> {
+    let context_complete = dir
+        .context()
+        .test_completness()
+        .map_err(|e| e.to_string())?;
     if !context_complete.is_empty() {
-        let mut e = anyhow!("Context directory not complete");
-        for elt in context_complete.iter() {
-            e = e.context(elt.clone());
-        }
-        return Err(e);
+        return Err(format!(
+            "Context directory not complete: {}",
+            context_complete.join(" / ")
+        ));
     }
     let complete = match period {
-        VerificationPeriod::Setup => dir.unwrap_setup().test_completness()?,
-        VerificationPeriod::Tally => dir.unwrap_tally().test_completness()?,
+        VerificationPeriod::Setup => dir
+            .unwrap_setup()
+            .test_completness()
+            .map_err(|e| e.to_string())?,
+        VerificationPeriod::Tally => dir
+            .unwrap_tally()
+            .test_completness()
+            .map_err(|e| e.to_string())?,
     };
     if !complete.is_empty() {
-        let mut e = anyhow!(format!("directory {} not complete", period.to_string()));
-        for elt in complete.iter() {
-            e = e.context(elt.clone());
-        }
-        return Err(e);
+        return Err(format!(
+            "{} directory not complete: {}",
+            period.as_ref(),
+            complete.join(" / ")
+        ));
     }
     Ok(())
 }

@@ -2,4 +2,23 @@
 
 mod checks;
 mod runner;
+
 pub use runner::{no_action_after_fn, no_action_before_fn, RunParallel, Runner};
+use thiserror::Error;
+
+use crate::verification::VerificationError;
+
+// Enum representing the datza structure errors
+#[derive(Error, Debug)]
+pub enum RunnerError {
+    #[error("IO error {msg} -> caused by: {source}")]
+    IO { msg: String, source: std::io::Error },
+    #[error("Check error: {0}")]
+    CheckError(String),
+    #[error(transparent)]
+    Verification(VerificationError),
+    #[error("Runner is already running. Cannot be started")]
+    IsRunning,
+    #[error("Runner has already run. Cannot be started before resetting it")]
+    HasAlreadyRun,
+}

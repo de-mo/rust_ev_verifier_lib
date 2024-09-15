@@ -3,7 +3,7 @@
 use super::{
     meta_data::VerificationMetaDataList, setup::get_verifications as get_verifications_setup,
     tally::get_verifications as get_verifications_tally, verifications::Verification,
-    VerificationCategory, VerificationPeriod,
+    VerificationCategory, VerificationError, VerificationPeriod,
 };
 use crate::{config::Config, file_structure::VerificationDirectory};
 
@@ -27,7 +27,7 @@ impl<'a> VerificationSuite<'a> {
         metadata_list: &'a VerificationMetaDataList,
         exclusion: &[String],
         config: &'static Config,
-    ) -> anyhow::Result<VerificationSuite<'a>> {
+    ) -> Result<VerificationSuite<'a>, VerificationError> {
         let mut all_verifs = match period {
             VerificationPeriod::Setup => get_verifications_setup(metadata_list, config)?,
 

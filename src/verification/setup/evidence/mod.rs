@@ -5,12 +5,15 @@ mod v0504_key_generation_schnorr_proofs;
 mod v0521_verify_signature_verification_data_and_code_proofs;
 
 use super::super::{suite::VerificationList, verifications::Verification};
-use crate::{config::Config, verification::meta_data::VerificationMetaDataList};
+use crate::{
+    config::Config,
+    verification::{meta_data::VerificationMetaDataList, VerificationError},
+};
 
 pub fn get_verifications<'a>(
     metadata_list: &'a VerificationMetaDataList,
     config: &'static Config,
-) -> anyhow::Result<VerificationList<'a>> {
+) -> Result<VerificationList<'a>, VerificationError> {
     Ok(VerificationList(vec![
         Verification::new(
             "05.01",

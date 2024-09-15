@@ -6,12 +6,12 @@ mod integrity;
 
 use crate::config::Config;
 
-use super::{meta_data::VerificationMetaDataList, suite::VerificationList};
+use super::{meta_data::VerificationMetaDataList, suite::VerificationList, VerificationError};
 
 pub fn get_verifications<'a>(
     metadata_list: &'a VerificationMetaDataList,
     config: &'static Config,
-) -> anyhow::Result<VerificationList<'a>> {
+) -> Result<VerificationList<'a>, VerificationError> {
     let mut res = VerificationList(vec![]);
     res.0
         .append(&mut authenticity::get_verifications(metadata_list, config)?.0);

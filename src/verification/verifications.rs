@@ -2,13 +2,12 @@
 use super::{
     meta_data::{VerificationMetaData, VerificationMetaDataList},
     result::VerificationResult,
-    VerificationStatus,
+    VerificationError, VerificationStatus,
 };
 use crate::{
     config::Config,
     file_structure::{VerificationDirectory, VerificationDirectoryTrait},
 };
-use anyhow::bail;
 use std::time::{Duration, SystemTime};
 use tracing::{info, warn};
 
@@ -58,20 +57,18 @@ impl<'a> Verification<'a, VerificationDirectory> {
             + 'static,
         metadata_list: &'a VerificationMetaDataList,
         config: &'static Config,
-    ) -> anyhow::Result<Self> {
+    ) -> Result<Self, VerificationError> {
         let meta_data = match metadata_list.meta_data_from_id(id) {
             Some(m) => m,
-            None => {
-                bail!(format!("metadata for verification id {} not found", id))
-            }
+            None => return Err(VerificationError::MetadataNotFound(id.to_string())),
         };
         if name != meta_data.name() {
-            bail!(format!(
+            return Err(VerificationError::Generic(format!(
                 "name {} for verification id {} doesn't match with give name {}",
                 meta_data.name(),
                 id,
                 name
-            ))
+            )));
         }
         Ok(Verification {
             id: id.to_string(),

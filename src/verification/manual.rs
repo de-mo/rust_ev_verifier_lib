@@ -1,4 +1,3 @@
-use anyhow::Context;
 use chrono::NaiveDate;
 use rust_ev_crypto_primitives::Encode;
 use std::collections::HashMap;
@@ -7,7 +6,7 @@ use crate::{
     config::Config, direct_trust::CertificateAuthority, file_structure::VerificationDirectoryTrait,
 };
 
-use super::{meta_data::VerificationMetaDataList, VerificationPeriod};
+use super::{meta_data::VerificationMetaDataList, VerificationError, VerificationPeriod};
 
 /// Data for the manual verifications, containing all the data that
 /// are necessary for Setup and for Tally
@@ -43,17 +42,19 @@ enum ManualVerifications<'a, D: VerificationDirectoryTrait> {
 }
 
 impl<'a, D: VerificationDirectoryTrait> ManualVerificationsAllPeriod<'a, D> {
-    pub fn new(directory: &'a D, config: &'static Config) -> anyhow::Result<Self> {
-        let keystore = config.keystore()?;
+    pub fn new(directory: &'a D, config: &'static Config) -> Result<Self, VerificationError> {
+        let keystore = config.keystore().map_err(VerificationError::DirectTrust)?;
         let mut fingerprints = HashMap::new();
         for ca in CertificateAuthority::iter() {
             fingerprints.insert(
                 ca.to_string(),
                 keystore
                     .0
-                    .public_certificate(&ca.to_string())?
+                    .public_certificate(&ca.to_string())
+                    .map_err(VerificationError::CryptoDirectTrust)?
                     .signing_certificate()
-                    .digest()?
+                    .digest()
+                    .map_err(VerificationError::CryptioBasis)?
                     .base16_encode()
                     .unwrap(),
             );
@@ -113,7 +114,7 @@ impl<'a, D: VerificationDirectoryTrait> ManualVerificationsSetup<'a, D> {
         directory: &'a D,
         config: &'static Config,
         metadata: &VerificationMetaDataList,
-    ) -> anyhow::Result<Self> {
+    ) -> Result<Self, VerificationError> {
         Ok(Self {
             manual_verifications_all_periods: ManualVerificationsAllPeriod::new(directory, config)?,
             number_of_tests: metadata.len() as u8,
@@ -139,7 +140,7 @@ impl<'a, D: VerificationDirectoryTrait> ManualVerificationsTally<'a, D> {
         directory: &'a D,
         config: &'static Config,
         metadata: &VerificationMetaDataList,
-    ) -> anyhow::Result<Self> {
+    ) -> Result<Self, VerificationError> {
         Ok(Self {
             manual_verifications_all_periods: ManualVerificationsAllPeriod::new(directory, config)?,
             number_of_tests: metadata.len() as u8,
@@ -165,17 +166,15 @@ impl<'a, D: VerificationDirectoryTrait> ManualVerifications<'a, D> {
         period: VerificationPeriod,
         directory: &'a D,
         config: &'static Config,
-    ) -> anyhow::Result<Self> {
+    ) -> Result<Self, VerificationError> {
         let meta_data =
             VerificationMetaDataList::load_period(config.get_verification_list_str(), &period)?;
         match period {
             VerificationPeriod::Setup => Ok(ManualVerifications::Setup(
-                ManualVerificationsSetup::new(directory, config, &meta_data)
-                    .context("Error creating manual verifications for setup")?,
+                ManualVerificationsSetup::new(directory, config, &meta_data)?,
             )),
             VerificationPeriod::Tally => Ok(ManualVerifications::Tally(
-                ManualVerificationsTally::new(directory, config, &meta_data)
-                    .context("Error creating manual verifications for tally")?,
+                ManualVerificationsTally::new(directory, config, &meta_data)?,
             )),
         }
     }

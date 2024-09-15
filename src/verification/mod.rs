@@ -7,15 +7,15 @@ mod setup;
 pub mod suite;
 mod tally;
 pub mod verifications;
-
 use self::result::{VerificationEvent, VerificationResult};
 use crate::{
-    config::Config, direct_trust::VerifiySignatureTrait, file_structure::VerificationDirectoryTrait,
+    config::Config,
+    direct_trust::{DirectTrustError, VerifiySignatureTrait},
+    file_structure::VerificationDirectoryTrait,
 };
-use anyhow::{anyhow, bail, Result};
-use std::fmt::Display;
+use thiserror::Error;
 
-#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash, strum::EnumString, strum::AsRefStr)]
 pub enum VerificationCategory {
     Authenticity,
     Consistency,
@@ -24,17 +24,37 @@ pub enum VerificationCategory {
     Evidence,
 }
 
-#[derive(Copy, Clone, Debug, PartialEq, Eq)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq, strum::EnumString, strum::AsRefStr)]
 pub enum VerificationStatus {
     Stopped,
     Running,
     Finished,
 }
 
-#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash, strum::EnumString, strum::AsRefStr)]
 pub enum VerificationPeriod {
     Setup,
     Tally,
+}
+
+// Enum representing the verification errors
+#[derive(Error, Debug)]
+pub enum VerificationError {
+    #[error("Error parsing json {msg} -> caused by: {source}")]
+    ParseJSON {
+        msg: String,
+        source: serde_json::Error,
+    },
+    #[error(transparent)]
+    DirectTrust(DirectTrustError),
+    #[error(transparent)]
+    CryptoDirectTrust(rust_ev_crypto_primitives::DirectTrustError),
+    #[error(transparent)]
+    CryptioBasis(rust_ev_crypto_primitives::BasisCryptoError),
+    #[error("metadata for verification id {0} not found")]
+    MetadataNotFound(String),
+    #[error("{0}")]
+    Generic(String),
 }
 
 impl VerificationPeriod {
@@ -53,9 +73,9 @@ pub(super) fn verification_unimplemented<D: VerificationDirectoryTrait>(
     _config: &'static Config,
     result: &mut VerificationResult,
 ) {
-    result.push(VerificationEvent::new_error(&anyhow!(
-        "Verification is not implemented"
-    )));
+    result.push(VerificationEvent::new_error(
+        "Verification is not implemented",
+    ));
 }
 
 /// Verify the signatue for a given object implementing [VerifiySignatureTrait]
@@ -87,68 +107,4 @@ where
         }
     }
     result
-}
-
-impl TryFrom<&str> for VerificationPeriod {
-    type Error = anyhow::Error;
-
-    fn try_from(value: &str) -> Result<Self, Self::Error> {
-        match value {
-            "setup" => Ok(VerificationPeriod::Setup),
-            "tally" => Ok(VerificationPeriod::Tally),
-            _ => bail!(format!("Cannot read period from value '{}'", value)),
-        }
-    }
-}
-
-impl TryFrom<&String> for VerificationPeriod {
-    type Error = anyhow::Error;
-
-    fn try_from(value: &String) -> Result<Self, Self::Error> {
-        Self::try_from(value.as_str())
-    }
-}
-
-impl TryFrom<&str> for VerificationCategory {
-    type Error = anyhow::Error;
-
-    fn try_from(value: &str) -> Result<Self, Self::Error> {
-        match value {
-            "authenticity" => Ok(VerificationCategory::Authenticity),
-            "completness" => Ok(VerificationCategory::Completness),
-            "consistency" => Ok(VerificationCategory::Consistency),
-            "integrity" => Ok(VerificationCategory::Integrity),
-            "evidence" => Ok(VerificationCategory::Evidence),
-            _ => bail!(format!("Cannot category period from value '{}'", value)),
-        }
-    }
-}
-
-impl TryFrom<&String> for VerificationCategory {
-    type Error = anyhow::Error;
-
-    fn try_from(value: &String) -> Result<Self, Self::Error> {
-        Self::try_from(value.as_str())
-    }
-}
-
-impl Display for VerificationPeriod {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            VerificationPeriod::Setup => write!(f, "setup"),
-            VerificationPeriod::Tally => write!(f, "tally"),
-        }
-    }
-}
-
-impl Display for VerificationCategory {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            VerificationCategory::Authenticity => write!(f, "authenticity"),
-            VerificationCategory::Consistency => write!(f, "consistency"),
-            VerificationCategory::Completness => write!(f, "completness"),
-            VerificationCategory::Integrity => write!(f, "integrity"),
-            VerificationCategory::Evidence => write!(f, "evidence"),
-        }
-    }
 }

@@ -9,14 +9,14 @@ use crate::{
     },
     verification::{
         meta_data::VerificationMetaDataList, result::VerificationResult,
-        verification_unimplemented, verify_signature_for_object,
+        verification_unimplemented, verify_signature_for_object, VerificationError,
     },
 };
 
 pub fn get_verifications<'a>(
     metadata_list: &'a VerificationMetaDataList,
     config: &'static Config,
-) -> anyhow::Result<VerificationList<'a>> {
+) -> Result<VerificationList<'a>, VerificationError> {
     Ok(VerificationList(vec![
         Verification::new(
             "07.01",

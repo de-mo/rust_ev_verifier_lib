@@ -2,8 +2,7 @@
 //!
 //! The metadata list is loaded from the file in resources.
 
-use super::{VerificationCategory, VerificationPeriod};
-use anyhow::anyhow;
+use super::{VerificationCategory, VerificationError, VerificationPeriod};
 use serde::{
     de::{Deserialize as Deserialize2, Deserializer, Error},
     Deserialize,
@@ -40,13 +39,15 @@ pub struct VerificationMetaData {
 }
 
 impl VerificationMetaDataList {
-    pub fn load(data: &str) -> anyhow::Result<Self> {
-        serde_json::from_str(data)
-            .map_err(|e| anyhow!(e).context("Cannot deserialize the verification list from json"))
+    pub fn load(data: &str) -> Result<Self, VerificationError> {
+        serde_json::from_str(data).map_err(|e| VerificationError::ParseJSON {
+            msg: "Cannot deserialize the verification list from json".to_string(),
+            source: e,
+        })
     }
 
     #[allow(dead_code)]
-    pub fn load_period(data: &str, period: &VerificationPeriod) -> anyhow::Result<Self> {
+    pub fn load_period(data: &str, period: &VerificationPeriod) -> Result<Self, VerificationError> {
         Ok(Self(
             Self::load(data)?
                 .0
@@ -138,7 +139,7 @@ where
 {
     let buf = String::deserialize(deserializer)?;
 
-    VerificationPeriod::try_from(&buf).map_err(|e| Error::custom(e.to_string()))
+    VerificationPeriod::try_from(buf.as_str()).map_err(|e| Error::custom(e.to_string()))
 }
 
 fn deserialize_string_to_category<'de, D>(deserializer: D) -> Result<VerificationCategory, D::Error>
@@ -147,7 +148,7 @@ where
 {
     let buf = String::deserialize(deserializer)?;
 
-    VerificationCategory::try_from(&buf).map_err(|e| Error::custom(e.to_string()))
+    VerificationCategory::try_from(buf.as_str()).map_err(|e| Error::custom(e.to_string()))
 }
 
 #[cfg(test)]

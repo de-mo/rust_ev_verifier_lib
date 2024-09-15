@@ -12,13 +12,13 @@ use crate::{
         context_directory::{ContextDirectoryTrait, ContextVCSDirectoryTrait},
         VerificationDirectoryTrait,
     },
-    verification::meta_data::VerificationMetaDataList,
+    verification::{meta_data::VerificationMetaDataList, VerificationError},
 };
 
 pub fn get_verifications<'a>(
     metadata_list: &'a VerificationMetaDataList,
     config: &'static Config,
-) -> anyhow::Result<VerificationList<'a>> {
+) -> Result<VerificationList<'a>, VerificationError> {
     Ok(VerificationList(vec![
         Verification::new(
             "02.01",
