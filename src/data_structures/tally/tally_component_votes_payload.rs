@@ -26,7 +26,7 @@ pub struct TallyComponentVotesPayload {
 
 implement_trait_verifier_data_json_decode!(TallyComponentVotesPayload);
 
-impl VerifyDomainTrait<anyhow::Error> for TallyComponentVotesPayload {}
+impl VerifyDomainTrait<String> for TallyComponentVotesPayload {}
 
 impl<'a> From<&'a TallyComponentVotesPayload> for HashableMessage<'a> {
     fn from(value: &'a TallyComponentVotesPayload) -> Self {

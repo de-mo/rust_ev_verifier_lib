@@ -108,7 +108,7 @@ pub struct DecryptedVote {
     pub message: Vec<String>,
 }
 
-impl VerifyDomainTrait<anyhow::Error> for TallyComponentShufflePayload {}
+impl VerifyDomainTrait<String> for TallyComponentShufflePayload {}
 
 impl<'a> From<&'a TallyComponentShufflePayload> for HashableMessage<'a> {
     fn from(value: &'a TallyComponentShufflePayload) -> Self {

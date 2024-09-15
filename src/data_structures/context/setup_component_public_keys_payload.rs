@@ -26,7 +26,7 @@ pub struct SetupComponentPublicKeysPayload {
 
 implement_trait_verifier_data_json_decode!(SetupComponentPublicKeysPayload);
 
-impl VerifyDomainTrait<anyhow::Error> for SetupComponentPublicKeysPayload {}
+impl VerifyDomainTrait<String> for SetupComponentPublicKeysPayload {}
 
 impl<'a> From<&'a SetupComponentPublicKeysPayload> for HashableMessage<'a> {
     fn from(value: &'a SetupComponentPublicKeysPayload) -> Self {

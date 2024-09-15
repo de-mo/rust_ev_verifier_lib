@@ -112,35 +112,35 @@ impl ElectionEventContext {
 /// Validate seed according to the specifications of Swiss Post
 ///
 /// seed = <Canton>_<Date>_<TT|TP|PP>_nn
-fn validate_seed(seed: &str) -> Vec<anyhow::Error> {
+fn validate_seed(seed: &str) -> Vec<String> {
     let mut res = vec![];
     if seed.len() != 16 {
-        return vec![anyhow!(format!(
+        return vec![format!(
             "The seed {} must be of size 16, actual ist {}",
             seed,
             seed.len(),
-        ))];
+        )];
     }
     let re = Regex::new(r"[A-Z]{2}_\d{8}_(TT|TP|PP)\d{2}").unwrap();
     if !re.is_match(seed) {
-        return vec![anyhow!(format!(
+        return vec![format!(
             "The seed {} does not match the format  CT_YYYYMMDD_XYnm",
             seed,
-        ))];
+        )];
     }
     let date = seed.get(3..11).unwrap();
     if let Err(e) = NaiveDate::parse_from_str(date, "%Y%m%d") {
-        res.push(anyhow!(format!(
+        res.push(format!(
             "the date {} of the seed {} is not valid: {}",
             seed, date, e
-        )))
+        ))
     }
     let event_type = seed.get(12..14).unwrap();
     if event_type != "TT" && event_type != "TP" && event_type != "PP" {
-        res.push(anyhow!(format!(
+        res.push(format!(
             "the event type {} of the seed {} is not valid. Must be TT, TP or PP",
             seed, event_type
-        )))
+        ))
     }
     res
 }
@@ -150,25 +150,23 @@ fn validate_seed(seed: &str) -> Vec<anyhow::Error> {
 /// - Size is equal to the max. supported voting options
 /// - Is sorted correctly (for 05.02)
 /// - The first ist greater or equal than 5 (for 05.02)
-fn validate_small_primes(small_primes: &[usize]) -> Vec<anyhow::Error> {
+fn validate_small_primes(small_primes: &[usize]) -> Vec<String> {
     let mut res = vec![];
     // Len is correct
     if !small_primes.len() == VerifierConfig::maximum_number_of_supported_voting_options_n_sup() {
-        res.push(anyhow!(format!(
+        res.push(format!(
             "The list of small primes {} is not equal to the maximal number of voting options {}",
             small_primes.len(),
             VerifierConfig::maximum_number_of_supported_voting_options_n_sup()
-        )));
+        ));
     }
     // is sorted
     if !small_primes.windows(2).all(|p| p[0] < p[1]) {
-        res.push(anyhow!("Small primes list is not in ascending order"));
+        res.push("Small primes list is not in ascending order".to_string());
     }
     // for 5.02
     if small_primes[0] < 5 {
-        res.push(anyhow!(
-            "The small primes contain 2 or 3, what is not allowed"
-        ));
+        res.push("The small primes contain 2 or 3, what is not allowed".to_string());
     };
     res
 }
@@ -177,43 +175,41 @@ fn validate_small_primes(small_primes: &[usize]) -> Vec<anyhow::Error> {
 ///
 /// - The number of voting options expected is the same than counted
 /// - The number is greater than 0 and less than the maximum supported voting options (for 05.03)
-fn validate_voting_options_number(p_table: &PrimesMappingTable) -> Vec<anyhow::Error> {
+fn validate_voting_options_number(p_table: &PrimesMappingTable) -> Vec<String> {
     let mut res = vec![];
     // Value number_of_voting_options is correct
     if p_table.number_of_voting_options != p_table.p_table.len() {
-        res.push(anyhow!(format!(
+        res.push(format!(
             "The  number of voting options expected {} is not the same that the number of voting options listed {}",
             p_table.number_of_voting_options,
             p_table.p_table.len()
-        )));
+        ));
     }
     // number of voting options must be greater that 0
     if p_table.number_of_voting_options == 0 {
-        res.push(anyhow!(
-            "The  number of voting options must be greater than 0",
-        ));
+        res.push("The  number of voting options must be greater than 0".to_string());
     }
     // number of voting options must be smaller or equal than max. supported voting options
     if p_table.number_of_voting_options
         > VerifierConfig::maximum_number_of_supported_voting_options_n_sup()
     {
-        res.push(anyhow!(format!(
+        res.push(format!(
             "The  number of voting options expected {} must be smaller or equal the the max. supported voting options {}",
             p_table.number_of_voting_options,
             VerifierConfig::maximum_number_of_supported_voting_options_n_sup()
-        )));
+        ));
     }
     res
 }
 
-impl VerifyDomainTrait<anyhow::Error> for ElectionEventContextPayload {
-    fn new_domain_verifications() -> DomainVerifications<Self, anyhow::Error> {
+impl VerifyDomainTrait<String> for ElectionEventContextPayload {
+    fn new_domain_verifications() -> DomainVerifications<Self, String> {
         let mut res = DomainVerifications::default();
         res.add_verification(|v: &Self| {
             v.encryption_group
                 .verifiy_domain()
                 .iter()
-                .map(|e| anyhow!(e.to_string()))
+                .map(|e| e.to_string())
                 .collect::<Vec<_>>()
         });
         res.add_verification(|v: &Self| validate_seed(&v.seed));
@@ -225,22 +221,18 @@ impl VerifyDomainTrait<anyhow::Error> for ElectionEventContextPayload {
                 .map(|c| validate_voting_options_number(&c.primes_mapping_table))
                 .collect()
         });
-        // validate length of election event id (for all tests using )
-        // TODO
-        /*
         res.add_verification(|v| {
-            TODO
             verifiy_domain_length_unique_id(
                 &v.election_event_context.election_event_id,
                 "election event id",
             )
-        });*/
+        });
         res
     }
 }
 
-impl VerifyDomainTrait<anyhow::Error> for VerificationCardSetContext {
-    fn new_domain_verifications() -> DomainVerifications<Self, anyhow::Error> {
+impl VerifyDomainTrait<String> for VerificationCardSetContext {
+    fn new_domain_verifications() -> DomainVerifications<Self, String> {
         let mut res = DomainVerifications::default();
         res.add_verification(|v: &Self| validate_voting_options_number(&v.primes_mapping_table));
         res

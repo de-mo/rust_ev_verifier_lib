@@ -39,7 +39,7 @@ pub struct PartialDelivery {
     pub voter_to: usize,
 }
 
-impl VerifyDomainTrait<anyhow::Error> for ElectionEventConfiguration {}
+impl VerifyDomainTrait<String> for ElectionEventConfiguration {}
 
 impl VerifierDataDecode for ElectionEventConfiguration {
     fn stream_xml(p: &Path) -> Result<Self, DataStructureError> {

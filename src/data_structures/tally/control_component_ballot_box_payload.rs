@@ -44,7 +44,7 @@ pub struct ContextIds {
     pub verification_card_id: String,
 }
 
-impl VerifyDomainTrait<anyhow::Error> for ControlComponentBallotBoxPayload {}
+impl VerifyDomainTrait<String> for ControlComponentBallotBoxPayload {}
 
 impl<'a> From<&'a ControlComponentBallotBoxPayload> for HashableMessage<'a> {
     fn from(value: &'a ControlComponentBallotBoxPayload) -> Self {

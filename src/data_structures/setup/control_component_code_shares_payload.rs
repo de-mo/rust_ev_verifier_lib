@@ -6,7 +6,6 @@ use super::super::{
 use crate::direct_trust::{
     CertificateAuthority, Keystore, VerifiySignatureTrait, VerifySignatureError,
 };
-use anyhow::anyhow;
 use rust_ev_crypto_primitives::Integer;
 use rust_ev_crypto_primitives::{
     ByteArray, EncryptionParameters, HashableMessage, VerifyDomainTrait,
@@ -63,26 +62,26 @@ impl ControlComponentCodeSharesPayloadInner {
     }
 }
 
-impl VerifyDomainTrait<anyhow::Error> for ControlComponentCodeSharesPayloadInner {}
+impl VerifyDomainTrait<String> for ControlComponentCodeSharesPayloadInner {}
 
-impl VerifyDomainTrait<anyhow::Error> for ControlComponentCodeSharesPayload {
-    fn verifiy_domain(&self) -> Vec<anyhow::Error> {
-        let mut errors: Vec<anyhow::Error> = self
+impl VerifyDomainTrait<String> for ControlComponentCodeSharesPayload {
+    fn verifiy_domain(&self) -> Vec<String> {
+        let mut errors: Vec<String> = self
             .0
             .iter()
             .enumerate()
             .filter(|(j, c)| j + 1 != c.node_id)
             .map(|(j, c)| {
-                anyhow!(format!(
+                format!(
                     "The entry at position {} is not correspond to the node id {}",
                     j + 1,
                     c.node_id
-                ))
+                )
             })
             .collect();
         for (j, c) in self.0.iter().enumerate() {
             for error in c.verifiy_domain() {
-                errors.push(error.context(format!("node at position {}", j + 1)))
+                errors.push(format!("{} (node at position {})", error, j + 1))
             }
         }
         errors

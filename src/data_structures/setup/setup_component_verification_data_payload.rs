@@ -88,7 +88,7 @@ impl SetupComponentVerificationDataPayload {
     }
 }
 
-impl VerifyDomainTrait<anyhow::Error> for SetupComponentVerificationDataPayload {}
+impl VerifyDomainTrait<String> for SetupComponentVerificationDataPayload {}
 
 impl<'a> VerifiySignatureTrait<'a> for SetupComponentVerificationDataPayload {
     fn get_hashable(&'a self) -> Result<HashableMessage<'a>, VerifySignatureError> {
