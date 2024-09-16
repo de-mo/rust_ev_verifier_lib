@@ -1,15 +1,20 @@
 //! Module implementing [SetupOrTally]
 
-use strum::AsRefStr;
+use enum_kinds::EnumKind;
+use strum::{AsRefStr, EnumString};
 
 /// Generic Enum that is a type of context, setup or tally
-#[derive(Clone, AsRefStr)]
+#[derive(Clone, AsRefStr, EnumKind)]
+#[enum_kind(
+    DatasetTypeKind,
+    derive(Hash, AsRefStr, EnumString),
+    strum(serialize_all = "lowercase")
+)]
 pub enum DatasetType<C, S, T> {
     Context(C),
     Setup(S),
     Tally(T),
 }
-
 
 impl<C: Clone, S: Clone, T: Clone> DatasetType<C, S, T> {
     /// Is context

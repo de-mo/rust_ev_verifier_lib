@@ -1,17 +1,17 @@
-use chrono::prelude::*;
-use enum_kinds::EnumKind;
+use chrono::Local;
 use rust_ev_crypto_primitives::{
     argon2::Argon2id,
     basic_crypto_functions::{sha256_stream, BasisCryptoError, Decrypter},
-    ByteArray,
+    ByteArray, EncodeTrait,
 };
 use std::{
     fs::File,
     io::{BufReader, Read, Write},
     path::{Path, PathBuf},
 };
-use strum::{AsRefStr, EnumString};
 use thiserror::Error;
+
+use crate::data_structures::dataset::DatasetTypeKind;
 
 // Enum representing the direct trust errors
 #[derive(Error, Debug)]
@@ -43,30 +43,24 @@ pub enum DatasetError {
 /// Metadata containing the information of the zip dataset before and after extraction
 #[derive(Debug, Clone)]
 pub struct DatasetMetadata {
+    dataset_kind: DatasetTypeKind,
     source_path: PathBuf,
     decrypted_zip_path: PathBuf,
     extracted_dir_path: PathBuf,
     fingerprint: ByteArray,
 }
 
-/// Datasettype containing the information about metadata
-#[derive(Debug, Clone, AsRefStr, EnumKind)]
-#[enum_kind(DatasetTypeKind, derive(AsRefStr, EnumString))]
-pub enum DatasetType {
-    Context(DatasetMetadata),
-    Setup(DatasetMetadata),
-    Tally(DatasetMetadata),
-}
-
 impl DatasetMetadata {
     /// New [DatasetMetadata]
     pub fn new(
+        dataset_kind: DatasetTypeKind,
         source_path: &Path,
         decrypted_zip_path: &Path,
         extracted_dir_path: &Path,
         fingerprint: &ByteArray,
     ) -> Self {
         Self {
+            dataset_kind,
             source_path: source_path.to_path_buf(),
             decrypted_zip_path: decrypted_zip_path.to_path_buf(),
             extracted_dir_path: extracted_dir_path.to_path_buf(),
@@ -87,93 +81,49 @@ impl DatasetMetadata {
     pub fn fingerprint(&self) -> &ByteArray {
         &self.fingerprint
     }
-}
 
-impl DatasetType {
-    pub fn metadata(&self) -> &DatasetMetadata {
-        match self {
-            DatasetType::Context(m) => m,
-            DatasetType::Setup(m) => m,
-            DatasetType::Tally(m) => m,
-        }
+    pub fn fingerprint_str(&self) -> String {
+        self.fingerprint().base16_encode().unwrap()
+    }
+
+    pub fn kind(&self) -> DatasetTypeKind {
+        self.dataset_kind
+    }
+
+    /// Extract the data as datatype given with the kind of the dataset type.
+    ///
+    /// Return [DatasetType] with the correct metadata or Error if something goes wrong
+    pub fn extract_dataset_kind_with_inputs(
+        kind: DatasetTypeKind,
+        input: &Path,
+        password: &str,
+        extract_dir: &Path,
+        zip_temp_dir_path: &Path,
+    ) -> Result<Self, DatasetError> {
+        Self::process_dataset_operations(kind, input, password, extract_dir, zip_temp_dir_path)
     }
 
     /// Extract the data as datatype give with the name of the dataset type.
     ///
     /// Return [DatasetType] with the correct metadata or Error if something goes wrong
-    pub fn from_dataset_str_with_inputs(
+    pub fn extract_dataset_str_with_inputs(
         datasettype_str: &str,
         input: &Path,
         password: &str,
         extract_dir: &Path,
         zip_temp_dir_path: &Path,
     ) -> Result<Self, DatasetError> {
-        match DatasetTypeKind::try_from(datasettype_str)
-            .map_err(|_| DatasetError::WrongKindStr(datasettype_str.to_string()))?
-        {
-            DatasetTypeKind::Context => {
-                Self::context(input, password, extract_dir, zip_temp_dir_path)
-            }
-            DatasetTypeKind::Setup => Self::setup(input, password, extract_dir, zip_temp_dir_path),
-            DatasetTypeKind::Tally => Self::tally(input, password, extract_dir, zip_temp_dir_path),
-        }
-    }
-
-    /// Extract the data as context datatype.
-    ///
-    /// Return [DatasetType] with the correct metadata or Error if something goes wrong
-    pub fn context(
-        input: &Path,
-        password: &str,
-        extract_dir: &Path,
-        zip_temp_dir_path: &Path,
-    ) -> Result<Self, DatasetError> {
-        Ok(Self::Context(Self::process_dataset_operations(
+        Self::extract_dataset_kind_with_inputs(
+            DatasetTypeKind::try_from(datasettype_str)
+                .map_err(|_| DatasetError::WrongKindStr(datasettype_str.to_string()))?,
             input,
             password,
             extract_dir,
-            "context",
             zip_temp_dir_path,
-        )?))
+        )
     }
 
-    /// Extract the data as setup datatype.
-    ///
-    /// Return [DatasetType] with the correct metadata or Error if something goes wrong
-    pub fn setup(
-        input: &Path,
-        password: &str,
-        extract_dir: &Path,
-        zip_temp_dir_path: &Path,
-    ) -> Result<Self, DatasetError> {
-        Ok(Self::Setup(Self::process_dataset_operations(
-            input,
-            password,
-            extract_dir,
-            "setup",
-            zip_temp_dir_path,
-        )?))
-    }
-
-    /// Extract the data as tally datatype.
-    ///
-    /// Return [DatasetType] with the correct metadata or Error if something goes wrong
-    pub fn tally(
-        input: &Path,
-        password: &str,
-        extract_dir: &Path,
-        zip_temp_dir_path: &Path,
-    ) -> Result<Self, DatasetError> {
-        Ok(Self::Tally(Self::process_dataset_operations(
-            input,
-            password,
-            extract_dir,
-            "tally",
-            zip_temp_dir_path,
-        )?))
-    }
-
-    fn fingerprint(input: &Path) -> Result<ByteArray, DatasetError> {
+    fn calculate_fingerprint(input: &Path) -> Result<ByteArray, DatasetError> {
         let f = std::fs::File::open(input).map_err(|e| DatasetError::IO {
             msg: "Opening file for calculation of fingerprint".to_string(),
             source: e,
@@ -186,10 +136,10 @@ impl DatasetType {
     }
 
     fn process_dataset_operations(
+        datasetkind: DatasetTypeKind,
         input: &Path,
         password: &str,
         extract_dir: &Path,
-        datasettype_str: &str,
         zip_temp_dir_path: &Path,
     ) -> Result<DatasetMetadata, DatasetError> {
         if !input.exists() {
@@ -204,8 +154,8 @@ impl DatasetType {
         if !zip_temp_dir_path.is_dir() {
             return Err(DatasetError::PathIsNotDir(zip_temp_dir_path.to_path_buf()));
         }
-        let fingerprint = Self::fingerprint(input)?;
-        let extract_dir_with_context = extract_dir.join(datasettype_str);
+        let fingerprint = Self::calculate_fingerprint(input)?;
+        let extract_dir_with_context = extract_dir.join(datasetkind.as_ref());
         let mut reader = EncryptedZipReader::new(
             input,
             password,
@@ -214,6 +164,7 @@ impl DatasetType {
         )?;
         reader.unzip()?;
         Ok(DatasetMetadata::new(
+            datasetkind,
             input,
             &extract_dir_with_context,
             &reader.temp_zip,
