@@ -35,13 +35,13 @@ fn validate_context_vcs_dir<V: ContextVCSDirectoryTrait>(dir: &V, result: &mut V
             for e in d.verifiy_domain() {
                 result.push(VerificationEvent::new_failure(&e).add_context(format!(
                     "Error verifying domain for {}/setup_component_tally_data_payload",
-                    dir.get_name()
+                    dir.name()
                 )))
             }
         }
         Err(e) => result.push(VerificationEvent::new_failure(&e).add_context(format!(
             "{}/setup_component_tally_data_payload has wrong format",
-            dir.get_name()
+            dir.name()
         ))),
     }
 }
@@ -53,7 +53,7 @@ fn validate_setup_vcs_dir<V: SetupVCSDirectoryTrait>(dir: &V, result: &mut Verif
                 for e in d.verifiy_domain() {
                     result.push(VerificationEvent::new_failure(&e).add_context(format!(
                         "Error verifying domain for {}/control_component_public_keys_payload.{}",
-                        dir.get_name(),
+                        dir.name(),
                         i
                     )))
                 }
@@ -62,7 +62,7 @@ fn validate_setup_vcs_dir<V: SetupVCSDirectoryTrait>(dir: &V, result: &mut Verif
             .add_context(
                 format!(
                     "{}/control_component_code_shares_payload.{} has wrong format",
-                    dir.get_name(),
+                    dir.name(),
                     i
                 )                
             )),
@@ -76,7 +76,7 @@ fn validate_setup_vcs_dir<V: SetupVCSDirectoryTrait>(dir: &V, result: &mut Verif
                     .add_context(
                         format!(
                             "Error verifying domain for {}/setup_component_verification_data_payload.{}",
-                            dir.get_name(),
+                            dir.name(),
                             i
                         )
                         
@@ -87,7 +87,7 @@ fn validate_setup_vcs_dir<V: SetupVCSDirectoryTrait>(dir: &V, result: &mut Verif
             .add_context(
                 format!(
                     "{}/setup_component_verification_data_payload.{} has wrong format",
-                    dir.get_name(),
+                    dir.name(),
                     i
                 )
                 

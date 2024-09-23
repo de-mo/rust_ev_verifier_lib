@@ -27,11 +27,11 @@ fn test_ee_id_for_context_vcs_dir<V: ContextVCSDirectoryTrait>(
     match dir.setup_component_tally_data_payload() {
         Ok(p) => result.append_with_context(
             &test_election_event_id(&p.election_event_id, expected),
-            format!("{}/setup_component_tally_data_payload", dir.get_name()),
+            format!("{}/setup_component_tally_data_payload", dir.name()),
         ),
         Err(e) => result.push(VerificationEvent::new_error(&e).add_context(format!(
             "{}/setup_component_tally_data_payload has wrong format",
-            dir.get_name()
+            dir.name()
         ))),
     }
 }
@@ -45,7 +45,7 @@ fn test_ee_id_for_setup_vcs_dir<V: SetupVCSDirectoryTrait>(
         match f {
             Err(e) => result.push(VerificationEvent::new_error(&e).add_context(format!(
                 "{}/control_component_code_shares_payload_.{} has wrong format",
-                dir.get_name(),
+                dir.name(),
                 i
             ))),
             Ok(cc) => {
@@ -54,7 +54,7 @@ fn test_ee_id_for_setup_vcs_dir<V: SetupVCSDirectoryTrait>(
                         &test_election_event_id(&p.election_event_id, expected),
                         format!(
                             "{}/control_component_code_shares_payload.{}_chunk{}",
-                            dir.get_name(),
+                            dir.name(),
                             i,
                             p.chunk_id
                         ),
@@ -67,7 +67,7 @@ fn test_ee_id_for_setup_vcs_dir<V: SetupVCSDirectoryTrait>(
         match f {
             Err(e) => result.push(VerificationEvent::new_error(&e).add_context(format!(
                 "{}/setup_component_verification_data_payload.{} has wrong format",
-                dir.get_name(),
+                dir.name(),
                 i
             ))),
             Ok(s) => result.append_with_context(
@@ -75,7 +75,7 @@ fn test_ee_id_for_setup_vcs_dir<V: SetupVCSDirectoryTrait>(
                 format!(
                     "{}/setup_component_verification_data_payload.{}",
                     i,
-                    dir.get_name()
+                    dir.name()
                 ),
             ),
         }

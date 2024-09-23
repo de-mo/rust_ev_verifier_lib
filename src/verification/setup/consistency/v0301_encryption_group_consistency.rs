@@ -34,11 +34,11 @@ fn verify_encryption_group_for_context_vcs_dir<V: ContextVCSDirectoryTrait>(
     match dir.setup_component_tally_data_payload() {
         Ok(p) => result.append_with_context(
             &verify_encryption_group(&p.encryption_group, eg),
-            format!("{}/setup_component_tally_data_payload", dir.get_name()),
+            format!("{}/setup_component_tally_data_payload", dir.name()),
         ),
         Err(e) => result.push(VerificationEvent::new_error(&e).add_context(format!(
             "{}/setup_component_tally_data_payload has wrong format",
-            dir.get_name()
+            dir.name()
         ))),
     }
 }
@@ -55,12 +55,12 @@ fn verify_encryption_group_for_setup_vcs_dir<V: SetupVCSDirectoryTrait>(
                 format!(
                     "{}/setup_component_verification_data_payload.{}",
                     i,
-                    dir.get_name()
+                    dir.name()
                 ),
             ),
             Err(e) => result.push(VerificationEvent::new_error(&e).add_context(format!(
                 "{}/setup_component_verification_data_payload.{} has wrong format",
-                dir.get_name(),
+                dir.name(),
                 i
             ))),
         }
@@ -73,7 +73,7 @@ fn verify_encryption_group_for_setup_vcs_dir<V: SetupVCSDirectoryTrait>(
                         &verify_encryption_group(&p.encryption_group, eg),
                         format!(
                             "{}/control_component_code_shares_payload.{}_chunk{}_element{}",
-                            dir.get_name(),
+                            dir.name(),
                             i,
                             p.chunk_id,
                             j
@@ -83,7 +83,7 @@ fn verify_encryption_group_for_setup_vcs_dir<V: SetupVCSDirectoryTrait>(
             }
             Err(e) => result.push(VerificationEvent::new_error(&e).add_context(format!(
                 "{}/control_component_code_shares_payload_.{} has wrong format",
-                dir.get_name(),
+                dir.name(),
                 i
             ))),
         }
@@ -199,11 +199,11 @@ mod test {
         let mut mock_dir = get_mock_verifier_dir();
         fn_verification(&mock_dir, &CONFIG_TEST, &mut result);
         assert!(result.is_ok());
-        let mut eec = mock_dir.context().election_event_context_payload().unwrap();
-        eec.encryption_group.set_p(&Integer::from(1234usize));
         mock_dir
             .context_mut()
-            .mock_election_event_context_payload(&Ok(&eec));
+            .mock_control_component_public_keys_payload(2, |d| {
+                d.encryption_group.set_p(&Integer::from(1234usize));
+            });
         fn_verification(&mock_dir, &CONFIG_TEST, &mut result);
         assert!(result.has_failures());
     }
@@ -212,18 +212,12 @@ mod test {
     fn test_wrong_control_component_public_keys() {
         let mut result = VerificationResult::new();
         let mut mock_dir = get_mock_verifier_dir();
-        let mut cc_pk = mock_dir
-            .context()
-            .control_component_public_keys_payload_group()
-            .get_file_with_number(2)
-            .get_verifier_data()
-            .map(|d| Box::new(d.control_component_public_keys_payload().unwrap().clone()))
-            .unwrap();
-        cc_pk.encryption_group.set_p(&Integer::from(1234usize));
-        cc_pk.encryption_group.set_q(&Integer::from(1234usize));
         mock_dir
             .context_mut()
-            .mock_control_component_public_keys_payloads(2, &Ok(&cc_pk));
+            .mock_control_component_public_keys_payload(2, |d| {
+                d.encryption_group.set_p(&Integer::from(1234usize));
+                d.encryption_group.set_q(&Integer::from(1234usize))
+            });
         fn_verification(&mock_dir, &CONFIG_TEST, &mut result);
         assert!(result.has_failures());
     }

@@ -109,19 +109,16 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
 
     for vcs_dir in context_dir.vcs_directories().iter() {
         let (vc_ids, res) = verrify_card_ids_context_vcs(vcs_dir);
-        result.append_with_context(
-            &res,
-            format!("context vcs directory {}", vcs_dir.get_name()),
-        );
-        hm_vc_ids.insert(vcs_dir.get_name(), vc_ids);
+        result.append_with_context(&res, format!("context vcs directory {}", vcs_dir.name()));
+        hm_vc_ids.insert(vcs_dir.name(), vc_ids);
     }
 
     for vcs_dir in setup_dir.vcs_directories().iter() {
-        let v = hm_vc_ids.get(&vcs_dir.get_name()).unwrap();
+        let v = hm_vc_ids.get(&vcs_dir.name()).unwrap();
         if !v.is_empty() {
             result.append_with_context(
                 &verrify_card_ids_setup_vcs(vcs_dir, v),
-                format!("setup vcs directory {}", vcs_dir.get_name()),
+                format!("setup vcs directory {}", vcs_dir.name()),
             );
         }
     }

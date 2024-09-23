@@ -130,15 +130,15 @@ fn fn_0204_verify_signature_setup_component_tally_data<D: VerificationDirectoryT
 ) {
     let context_dir = dir.context();
     for d in context_dir.vcs_directories() {
-        trace!("Verification 2.04 for vcs_dir {}", d.get_name());
+        trace!("Verification 2.04 for vcs_dir {}", d.name());
         match d.setup_component_tally_data_payload() {
             Ok(p) => result.append_with_context(
                 &verify_signature_for_object(p.as_ref(), config),
-                format!("{}/setup_component_tally_data_payload.json", d.get_name(),),
+                format!("{}/setup_component_tally_data_payload.json", d.name(),),
             ),
             Err(e) => result.push(VerificationEvent::new_error(&e).add_context(format!(
                 "{}/setup_component_tally_data_payload.json",
-                d.get_name(),
+                d.name(),
             ))),
         }
     }

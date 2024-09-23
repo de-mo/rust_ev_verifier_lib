@@ -53,12 +53,14 @@ pub trait TallyDirectoryTrait: CompletnessTestTrait {
     fn e_voting_decrypt_file(&self) -> &File;
     fn ech_0110_file(&self) -> &File;
     fn ech_0222_file(&self) -> &File;
-    fn bb_directories(&self) -> &Vec<Self::BBDirType>;
+    fn bb_directories(&self) -> &[Self::BBDirType];
 
     /// Collect the names of the ballot box directories
     fn bb_directory_names(&self) -> Vec<String> {
-        self.bb_directories().iter().map(|d| d.get_name()).collect()
+        self.bb_directories().iter().map(|d| d.name()).collect()
     }
+
+    fn location(&self) -> &Path;
 }
 
 /// Trait to set the necessary functions for the struct [BBDirectory] that
@@ -72,8 +74,8 @@ pub trait BBDirectoryTrait: CompletnessTestTrait {
         ControlComponentBallotBoxPayloadAsResult
     );
     add_type_for_file_group_iter_trait!(
-        ControlComponentShufflePayloadloadAsResultIterType,
-        ControlComponentShufflePayloadloadAsResult
+        ControlComponentShufflePayloadAsResultIterType,
+        ControlComponentShufflePayloadAsResult
     );
     fn tally_component_votes_payload_file(&self) -> &File;
     fn tally_component_shuffle_payload_file(&self) -> &File;
@@ -90,9 +92,10 @@ pub trait BBDirectoryTrait: CompletnessTestTrait {
     ) -> Self::ControlComponentBallotBoxPayloadAsResultIterType;
     fn control_component_shuffle_payload_iter(
         &self,
-    ) -> Self::ControlComponentShufflePayloadloadAsResultIterType;
+    ) -> Self::ControlComponentShufflePayloadAsResultIterType;
 
-    fn get_name(&self) -> String;
+    fn name(&self) -> String;
+    fn location(&self) -> &Path;
 }
 
 impl_iterator_over_data_payload!(
@@ -105,7 +108,7 @@ impl_iterator_over_data_payload!(
 impl_iterator_over_data_payload!(
     ControlComponentShufflePayload,
     control_component_shuffle_payload,
-    ControlComponentShufflePayloadloadAsResult,
+    ControlComponentShufflePayloadAsResult,
     ControlComponentShufflePayloadAsResultIter
 );
 
@@ -121,8 +124,12 @@ impl TallyDirectoryTrait for TallyDirectory {
     fn ech_0222_file(&self) -> &File {
         &self.ech_0222_file
     }
-    fn bb_directories(&self) -> &Vec<BBDirectory> {
+    fn bb_directories(&self) -> &[BBDirectory] {
         &self.bb_directories
+    }
+
+    fn location(&self) -> &Path {
+        self.location.as_path()
     }
 }
 
@@ -151,12 +158,14 @@ macro_rules! impl_completness_test_trait_for_tally {
         }
     };
 }
+pub(crate) use impl_completness_test_trait_for_tally;
+
 impl_completness_test_trait_for_tally!(TallyDirectory);
 
 impl BBDirectoryTrait for BBDirectory {
     type ControlComponentBallotBoxPayloadAsResultIterType =
         ControlComponentBallotBoxPayloadAsResultIter;
-    type ControlComponentShufflePayloadloadAsResultIterType =
+    type ControlComponentShufflePayloadAsResultIterType =
         ControlComponentShufflePayloadAsResultIter;
     fn tally_component_votes_payload_file(&self) -> &File {
         &self.tally_component_votes_payload_file
@@ -193,17 +202,21 @@ impl BBDirectoryTrait for BBDirectory {
 
     fn control_component_shuffle_payload_iter(
         &self,
-    ) -> Self::ControlComponentShufflePayloadloadAsResultIterType {
+    ) -> Self::ControlComponentShufflePayloadAsResultIterType {
         FileGroupIter::new(&self.control_component_shuffle_payload_group)
     }
 
-    fn get_name(&self) -> String {
+    fn name(&self) -> String {
         self.location
             .file_name()
             .unwrap()
             .to_str()
             .unwrap()
             .to_string()
+    }
+
+    fn location(&self) -> &Path {
+        self.location.as_path()
     }
 }
 
@@ -215,13 +228,13 @@ macro_rules! impl_completness_test_trait_for_tally_bb {
                 if !self.tally_component_shuffle_payload_file().exists() {
                     missings.push(format!(
                         "{:?}/tally_component_shuffle_payload does not exist",
-                        self.location.file_name().unwrap()
+                        self.location().file_name().unwrap()
                     ))
                 }
                 if !self.tally_component_shuffle_payload_file().exists() {
                     missings.push(format!(
                         "{:?}/tally_component_shuffle_payload does not exist",
-                        self.location.file_name().unwrap()
+                        self.location().file_name().unwrap()
                     ))
                 }
                 if self
@@ -231,7 +244,7 @@ macro_rules! impl_completness_test_trait_for_tally_bb {
                 {
                     missings.push(format!(
                         "{:?}/control_component_ballot_box_payload missing. only these parts are present: {:?}",
-                        self.location.file_name().unwrap(),
+                        self.location().file_name().unwrap(),
                         self
                             .control_component_ballot_box_payload_group()
                             .get_numbers()
@@ -244,7 +257,7 @@ macro_rules! impl_completness_test_trait_for_tally_bb {
                 {
                     missings.push(format!(
                         "{:?}/control_component_shuffle_payload_group missing. only these parts are present: {:?}",
-                        self.location.file_name().unwrap(),
+                        self.location().file_name().unwrap(),
                         self
                             .control_component_shuffle_payload_group()
                             .get_numbers()
@@ -255,6 +268,8 @@ macro_rules! impl_completness_test_trait_for_tally_bb {
         }
     };
 }
+pub(crate) use impl_completness_test_trait_for_tally_bb;
+
 impl_completness_test_trait_for_tally_bb!(BBDirectory);
 
 impl TallyDirectory {
@@ -333,6 +348,7 @@ mod test {
     }
 }
 
+/*
 #[cfg(any(test, doc))]
 
 pub mod mock {
@@ -529,3 +545,4 @@ pub mod mock {
         }
     }
 }
+ */

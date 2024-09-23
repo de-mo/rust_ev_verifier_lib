@@ -10,7 +10,7 @@ use crate::{
 
 fn verrify_card_set_ids_setup_vcs<V: SetupVCSDirectoryTrait>(vcs_dir: &V) -> VerificationResult {
     let mut res = VerificationResult::new();
-    let vcs_id = vcs_dir.get_name();
+    let vcs_id = vcs_dir.name();
     for (chunk, payload_res) in vcs_dir.setup_component_verification_data_payload_iter() {
         if let Err(e) = payload_res {
             res.push(VerificationEvent::new_error(&e).add_context(format!(
@@ -62,7 +62,7 @@ fn verrify_card_set_ids_context_vcs<V: ContextVCSDirectoryTrait>(
     vcs_dir: &V,
 ) -> VerificationResult {
     let mut res = VerificationResult::new();
-    let vcs_id = vcs_dir.get_name();
+    let vcs_id = vcs_dir.name();
     match vcs_dir.setup_component_tally_data_payload() {
         Ok(p) => {
             if p.verification_card_set_id != vcs_id {
@@ -95,14 +95,14 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
     for vcs_dir in context_dir.vcs_directories().iter() {
         result.append_with_context(
             &verrify_card_set_ids_context_vcs(vcs_dir),
-            format!("context vcs directory {}", vcs_dir.get_name()),
+            format!("context vcs directory {}", vcs_dir.name()),
         );
     }
 
     for vcs_dir in setup_dir.vcs_directories().iter() {
         result.append_with_context(
             &verrify_card_set_ids_setup_vcs(vcs_dir),
-            format!("setup vcs directory {}", vcs_dir.get_name()),
+            format!("setup vcs directory {}", vcs_dir.name()),
         );
     }
 }

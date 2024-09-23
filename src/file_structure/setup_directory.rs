@@ -46,15 +46,14 @@ pub struct SetupVCSDirectory {
 /// test (negative tests)
 pub trait SetupDirectoryTrait: CompletnessTestTrait {
     type VCSDirType: SetupVCSDirectoryTrait;
-    fn vcs_directories(&self) -> &Vec<Self::VCSDirType>;
+    fn vcs_directories(&self) -> &[Self::VCSDirType];
 
     /// Collect the names of the vcs directories
     fn vcs_directory_names(&self) -> Vec<String> {
-        self.vcs_directories()
-            .iter()
-            .map(|d| d.get_name())
-            .collect()
+        self.vcs_directories().iter().map(|d| d.name()).collect()
     }
+
+    fn location(&self) -> &Path;
 }
 
 /// Trait to set the necessary functions for the struct [SetupVCSDirectory] that
@@ -81,7 +80,10 @@ pub trait SetupVCSDirectoryTrait: CompletnessTestTrait {
     fn control_component_code_shares_payload_iter(
         &self,
     ) -> Self::ControlComponentCodeSharesPayloadAsResultIterType;
-    fn get_name(&self) -> String;
+
+    fn name(&self) -> String;
+
+    fn location(&self) -> &Path;
 }
 
 impl_iterator_over_data_payload!(
@@ -118,18 +120,16 @@ impl SetupDirectory {
         }
         res
     }
-
-    /// Get location
-
-    pub fn get_location(&self) -> &Path {
-        self.location.as_path()
-    }
 }
 
 impl SetupDirectoryTrait for SetupDirectory {
     type VCSDirType = SetupVCSDirectory;
-    fn vcs_directories(&self) -> &Vec<SetupVCSDirectory> {
+    fn vcs_directories(&self) -> &[Self::VCSDirType] {
         &self.vcs_directories
+    }
+
+    fn location(&self) -> &Path {
+        self.location.as_path()
     }
 }
 
@@ -149,6 +149,8 @@ macro_rules! impl_completness_test_trait_for_setup {
         }
     };
 }
+pub(crate) use impl_completness_test_trait_for_setup;
+
 impl_completness_test_trait_for_setup!(SetupDirectory);
 
 impl SetupVCSDirectory {
@@ -166,12 +168,6 @@ impl SetupVCSDirectory {
             ),
         }
     }
-
-    /// Get location
-
-    pub fn get_location(&self) -> &Path {
-        self.location.as_path()
-    }
 }
 
 macro_rules! impl_completness_test_trait_for_setup_vcs {
@@ -185,7 +181,7 @@ macro_rules! impl_completness_test_trait_for_setup_vcs {
                 {
                     missings.push(format!(
                         "{:?}/setup_component_verification_data_payload does not exist",
-                        self.location.file_name().unwrap()
+                        self.location().file_name().unwrap()
                     ))
                 }
                 if !self
@@ -194,7 +190,7 @@ macro_rules! impl_completness_test_trait_for_setup_vcs {
                 {
                     missings.push(format!(
                         "{:?}/control_component_code_shares_payload does not exist",
-                        self.location.file_name().unwrap()
+                        self.location().file_name().unwrap()
                     ))
                 }
                 Ok(missings)
@@ -202,6 +198,8 @@ macro_rules! impl_completness_test_trait_for_setup_vcs {
         }
     };
 }
+pub(crate) use impl_completness_test_trait_for_setup_vcs;
+
 impl_completness_test_trait_for_setup_vcs!(SetupVCSDirectory);
 
 impl SetupVCSDirectoryTrait for SetupVCSDirectory {
@@ -228,13 +226,17 @@ impl SetupVCSDirectoryTrait for SetupVCSDirectory {
     ) -> Self::ControlComponentCodeSharesPayloadAsResultIterType {
         FileGroupIter::new(&self.control_component_code_shares_payload_group)
     }
-    fn get_name(&self) -> String {
+    fn name(&self) -> String {
         self.location
             .file_name()
             .unwrap()
             .to_str()
             .unwrap()
             .to_string()
+    }
+
+    fn location(&self) -> &Path {
+        self.location.as_path()
     }
 }
 
@@ -250,11 +252,11 @@ mod test {
     fn test_setup_dir() {
         let setup_location = test_datasets_setup_path().join("setup");
         let dir = SetupDirectory::new(setup_location.parent().unwrap());
-        assert_eq!(dir.get_location(), setup_location);
+        assert_eq!(dir.location(), setup_location);
         let expected = test_all_setup_vcs_paths();
         for d in dir.vcs_directories().iter() {
-            let j = expected.iter().position(|l| d.get_location() == l).unwrap();
-            assert_eq!(d.get_location(), expected[j])
+            let j = expected.iter().position(|l| d.location() == l).unwrap();
+            assert_eq!(d.location(), expected[j])
         }
     }
 
@@ -262,7 +264,7 @@ mod test {
     fn test_vcs_dir() {
         let location = test_setup_verification_card_set_path();
         let dir = SetupVCSDirectory::new(&location);
-        assert_eq!(dir.get_location(), location);
+        assert_eq!(dir.location(), location);
         for (i, p) in dir.control_component_code_shares_payload_iter() {
             assert!(p.is_ok());
             for k in p.unwrap().0.iter() {
@@ -281,168 +283,5 @@ mod test {
         let c = dir.test_completness();
         assert!(c.is_ok());
         assert!(c.unwrap().is_empty());
-    }
-}
-
-#[cfg(any(test, doc))]
-
-pub mod mock {
-    //! Module defining mocking structure for [VCSDirectory] and [SetupDirectory]
-    //!
-    //! The mocks read the correct data from the file. It is possible to change any data
-    //! with the functions mock_
-    use std::collections::HashMap;
-
-    use super::{
-        super::file_group::mock::{
-            impl_iterator_over_data_payload_mock, mock_payload_iter, wrap_payload_iter,
-            MockFileGroupIter,
-        },
-        super::mock::wrap_file_group_getter,
-        *,
-    };
-
-    /// Mock for [SetupVCSDirectory]
-    pub struct MockSetupVCSDirectory {
-        location: PathBuf,
-        dir: SetupVCSDirectory,
-        mocked_setup_component_verification_data_payload_group: Option<FileGroup>,
-        mocked_control_component_code_shares_payload_group: Option<FileGroup>,
-        mocked_setup_component_verification_data_payloads:
-            HashMap<usize, SetupComponentVerificationDataPayloadAsResult>,
-        mocked_control_component_code_shares_payloads:
-            HashMap<usize, ControlComponentCodeSharesPayloadAsResult>,
-        mocked_get_name: Option<String>,
-    }
-
-    impl_iterator_over_data_payload_mock!(
-        SetupComponentVerificationDataPayload,
-        SetupComponentVerificationDataPayloadAsResult,
-        SetupComponentVerificationDataPayloadAsResultIter,
-        MockSetupComponentVerificationDataPayloadAsResultIter
-    );
-
-    impl_iterator_over_data_payload_mock!(
-        ControlComponentCodeSharesPayload,
-        ControlComponentCodeSharesPayloadAsResult,
-        ControlComponentCodeSharesPayloadAsResultIter,
-        MockControlComponentCodeSharesPayloadAsResultIter
-    );
-
-    /// Mock for [SetupDirectory]
-    pub struct MockSetupDirectory {
-        location: PathBuf,
-        dir: SetupDirectory,
-        vcs_directories: Vec<MockSetupVCSDirectory>,
-    }
-
-    impl_completness_test_trait_for_setup!(MockSetupDirectory);
-    impl_completness_test_trait_for_setup_vcs!(MockSetupVCSDirectory);
-
-    impl SetupVCSDirectoryTrait for MockSetupVCSDirectory {
-        type SetupComponentVerificationDataPayloadAsResultIterType =
-            MockSetupComponentVerificationDataPayloadAsResultIter;
-        type ControlComponentCodeSharesPayloadAsResultIterType =
-            MockControlComponentCodeSharesPayloadAsResultIter;
-
-        wrap_file_group_getter!(
-            setup_component_verification_data_payload_group,
-            mocked_setup_component_verification_data_payload_group,
-            FileGroup
-        );
-        wrap_file_group_getter!(
-            control_component_code_shares_payload_group,
-            mocked_control_component_code_shares_payload_group,
-            FileGroup
-        );
-
-        wrap_payload_iter!(
-            setup_component_verification_data_payload_iter,
-            SetupComponentVerificationDataPayloadAsResultIterType,
-            MockSetupComponentVerificationDataPayloadAsResultIter,
-            mocked_setup_component_verification_data_payloads
-        );
-
-        wrap_payload_iter!(
-            control_component_code_shares_payload_iter,
-            ControlComponentCodeSharesPayloadAsResultIterType,
-            MockControlComponentCodeSharesPayloadAsResultIter,
-            mocked_control_component_code_shares_payloads
-        );
-
-        fn get_name(&self) -> String {
-            match &self.mocked_get_name {
-                Some(e) => e.clone(),
-                None => self.dir.get_name(),
-            }
-        }
-    }
-
-    impl SetupDirectoryTrait for MockSetupDirectory {
-        type VCSDirType = MockSetupVCSDirectory;
-
-        fn vcs_directories(&self) -> &Vec<MockSetupVCSDirectory> {
-            &self.vcs_directories
-        }
-    }
-
-    impl MockSetupVCSDirectory {
-        /// New [MockSetupVCSDirectory]
-        pub fn new(location: &Path) -> Self {
-            MockSetupVCSDirectory {
-                location: location.to_path_buf(),
-                dir: SetupVCSDirectory::new(location),
-                mocked_setup_component_verification_data_payload_group: None,
-                mocked_control_component_code_shares_payload_group: None,
-                mocked_setup_component_verification_data_payloads: HashMap::new(),
-                mocked_control_component_code_shares_payloads: HashMap::new(),
-                mocked_get_name: None,
-            }
-        }
-
-        pub fn mock_setup_component_verification_data_payload_group(&mut self, data: &FileGroup) {
-            self.mocked_setup_component_verification_data_payload_group = Some(data.clone());
-        }
-        pub fn mock_control_component_code_shares_payload_group(&mut self, data: &FileGroup) {
-            self.mocked_control_component_code_shares_payload_group = Some(data.clone());
-        }
-
-        mock_payload_iter!(
-            mock_setup_component_verification_data_payloads,
-            mocked_setup_component_verification_data_payloads,
-            SetupComponentVerificationDataPayload
-        );
-
-        mock_payload_iter!(
-            mock_control_component_code_shares_payloads,
-            mocked_control_component_code_shares_payloads,
-            ControlComponentCodeSharesPayload
-        );
-
-        pub fn mock_get_name(&mut self, data: &str) {
-            self.mocked_get_name = Some(data.to_string())
-        }
-    }
-
-    impl MockSetupDirectory {
-        /// New
-        pub fn new(data_location: &Path) -> Self {
-            let setup_dir = SetupDirectory::new(data_location);
-            let vcs_dirs: Vec<MockSetupVCSDirectory> = setup_dir
-                .vcs_directories
-                .iter()
-                .map(|d| MockSetupVCSDirectory::new(&d.location))
-                .collect();
-            MockSetupDirectory {
-                location: setup_dir.location.to_owned(),
-                dir: setup_dir,
-                vcs_directories: vcs_dirs,
-            }
-        }
-
-        /// Get the vcs_directories mutable in order to mock them
-        pub fn vcs_directories_mut(&mut self) -> Vec<&mut MockSetupVCSDirectory> {
-            self.vcs_directories.iter_mut().collect()
-        }
     }
 }

@@ -81,21 +81,13 @@ mod test {
     #[test]
     fn test_nok_add_vcs() {
         let mut dir = get_mock_verifier_dir();
-        let mut election_event_context_payload =
-            dir.context().election_event_context_payload().unwrap();
-        let mut context = election_event_context_payload
-            .as_ref()
-            .election_event_context
-            .verification_card_set_contexts[0]
-            .clone();
-        context.verification_card_set_id = "toto".to_string();
-        election_event_context_payload
-            .as_mut()
-            .election_event_context
-            .verification_card_set_contexts
-            .push(context);
-        dir.context_mut()
-            .mock_election_event_context_payload(&Ok(&election_event_context_payload));
+        dir.context_mut().mock_election_event_context_payload(|d| {
+            let mut context = d.election_event_context.verification_card_set_contexts[0].clone();
+            context.verification_card_set_id = "toto".to_string();
+            d.election_event_context
+                .verification_card_set_contexts
+                .push(context);
+        });
         let mut result = VerificationResult::new();
         fn_verification(&dir, &CONFIG_TEST, &mut result);
         assert!(result.has_failures());
@@ -105,15 +97,10 @@ mod test {
     #[test]
     fn test_nok_change_vcs_id() {
         let mut dir = get_mock_verifier_dir();
-        let mut election_event_context_payload =
-            dir.context().election_event_context_payload().unwrap();
-        election_event_context_payload
-            .as_mut()
-            .election_event_context
-            .verification_card_set_contexts[0]
-            .verification_card_set_id = "toto".to_string();
-        dir.context_mut()
-            .mock_election_event_context_payload(&Ok(&election_event_context_payload));
+        dir.context_mut().mock_election_event_context_payload(|d| {
+            d.election_event_context.verification_card_set_contexts[0].verification_card_set_id =
+                "toto".to_string();
+        });
         let mut result = VerificationResult::new();
         fn_verification(&dir, &CONFIG_TEST, &mut result);
         assert!(result.has_failures());
@@ -123,15 +110,11 @@ mod test {
     #[test]
     fn test_nok_change_remove_vcs() {
         let mut dir = get_mock_verifier_dir();
-        let mut election_event_context_payload =
-            dir.context().election_event_context_payload().unwrap();
-        election_event_context_payload
-            .as_mut()
-            .election_event_context
-            .verification_card_set_contexts
-            .pop();
-        dir.context_mut()
-            .mock_election_event_context_payload(&Ok(&election_event_context_payload));
+        dir.context_mut().mock_election_event_context_payload(|d| {
+            d.election_event_context
+                .verification_card_set_contexts
+                .pop();
+        });
         let mut result = VerificationResult::new();
         fn_verification(&dir, &CONFIG_TEST, &mut result);
         assert!(result.has_failures());

@@ -90,12 +90,12 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
         {
             let setup_verif_data_chunk_name = format!(
                 "{}/setup_component_verification_data_payload.{}",
-                vcs_dir.get_name(),
+                vcs_dir.name(),
                 chunk_id
             );
             let cc_share_chunk_name = format!(
                 "{}/control_component_code_shares_payload.{}",
-                vcs_dir.get_name(),
+                vcs_dir.name(),
                 chunk_id
             );
             if let Err(e) = setup_verification_data_payload_result {

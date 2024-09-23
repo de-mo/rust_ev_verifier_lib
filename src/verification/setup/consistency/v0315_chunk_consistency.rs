@@ -34,12 +34,12 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
         verify_uninterrupted_monotonic_sequence(
             vcs.setup_component_verification_data_payload_group(),
             result,
-            &vcs.get_name(),
+            &vcs.name(),
         );
         verify_uninterrupted_monotonic_sequence(
             vcs.control_component_code_shares_payload_group(),
             result,
-            &vcs.get_name(),
+            &vcs.name(),
         );
         for (i, elt) in vcs.setup_component_verification_data_payload_iter() {
             match elt {
@@ -48,14 +48,14 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
                         result.push(VerificationEvent::new_failure(&format!(
                             "The chunkID nr {} does not matches the chunkID in the file name in {} for setup_component_verification_data_payload",
                             i,
-                            vcs.get_name()
+                            vcs.name()
                         )))
                     }
                 }
                 Err(e) => result.push(VerificationEvent::new_error(&e).add_context(format!(
                     "Error getting setup_component_verification_data_payload for chunk {} in {}",
                     i,
-                    vcs.get_name()
+                    vcs.name()
                 ))),
             }
         }
@@ -67,7 +67,7 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
                             result.push(VerificationEvent::new_failure(&format!(
                             "The chunkID nr {} does not matches the chunkID in the file name in {} for control_component_code_shares_payload at pos {}",
                             i,
-                            vcs.get_name(), j
+                            vcs.name(), j
                         )))
                         }
                     }
@@ -75,7 +75,7 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
                 Err(e) => result.push(VerificationEvent::new_error(&e).add_context(format!(
                     "Error getting control_component_code_shares_payload for chunk {} in {}",
                     i,
-                    vcs.get_name()
+                    vcs.name()
                 ))),
             }
         }

@@ -66,7 +66,7 @@ fn validate_bb_dir<B: BBDirectoryTrait>(dir: &B, result: &mut VerificationResult
                     .add_context(
                         format!(
                              "Error verifying domain for {}/control_component_ballot_box_payload_iter.{}",
-                    dir.get_name(),
+                    dir.name(),
                     i
                         )
                         
@@ -77,7 +77,7 @@ fn validate_bb_dir<B: BBDirectoryTrait>(dir: &B, result: &mut VerificationResult
             .add_context(
                 format!(
                     "{}/control_component_ballot_box_payload_iter.{} has wrong format",
-                    dir.get_name(),
+                    dir.name(),
                     i
                 )
                 
@@ -93,7 +93,7 @@ fn validate_bb_dir<B: BBDirectoryTrait>(dir: &B, result: &mut VerificationResult
                     .add_context(
                         format!(
                              "Error verifying domain for {}/control_component_shuffle_payload_iter.{}",
-                    dir.get_name(),
+                    dir.name(),
                     i
                         )
                         
@@ -104,7 +104,7 @@ fn validate_bb_dir<B: BBDirectoryTrait>(dir: &B, result: &mut VerificationResult
             .add_context(
                 format!(
                     "{}/control_component_shuffle_payload_iter.{} has wrong format",
-                    dir.get_name(),
+                    dir.name(),
                     i
                 )
                 
