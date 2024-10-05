@@ -3,7 +3,10 @@ use super::super::{
     DataStructureError, VerifierDataDecode,
 };
 use crate::{
-    data_structures::common_types::Signature,
+    data_structures::{
+        common_types::Signature,
+        xml::{impl_iterator_for_tag_many_iter, TagManyIter, TagManyWithIterator},
+    },
     direct_trust::{CertificateAuthority, VerifiySignatureTrait, VerifySignatureError},
 };
 use quick_xml::{
@@ -15,12 +18,29 @@ use rust_ev_crypto_primitives::{
     ByteArray, HashableMessage, RecursiveHashTrait, VerifyDomainTrait,
 };
 use serde::Deserialize;
-use std::path::{Path, PathBuf};
+use std::{
+    fs::File,
+    io::{BufRead, BufReader},
+    path::{Path, PathBuf},
+};
 
-#[derive(Debug, Clone)]
+const HEADER_TAG: &str = "header";
+const SIGNATURE_TAG: &str = "signature";
+const CONTEST_TAG: &str = "contest";
+const AUTHORIZATIONS_TAG: &str = "authorizations";
+const AUTHORIZATION_TAG: &str = "authorization";
+const REGISTER_TAG: &str = "register";
+const VOTER_TAG: &str = "voter";
+const VOTE_INFORMATION_TAG: &str = "voteInformation";
+const ELECTION_GROUP_BALLOT_TAG: &str = "electionGroupBallot";
+
+#[derive(Clone, Debug)]
 pub struct ElectionEventConfiguration {
     pub path: PathBuf,
     pub header: ConfigHeader,
+    pub contest: Contest,
+    pub authorizations: TagManyWithIterator<Authorization>,
+    pub register: TagManyWithIterator<Voter>,
     pub signature: Signature,
 }
 
@@ -29,15 +49,68 @@ pub struct ElectionEventConfiguration {
 pub struct ConfigHeader {
     pub file_date: String,
     pub voter_total: usize,
-    pub partial_delivery: Option<PartialDelivery>,
+}
+
+#[derive(Clone, Debug)]
+pub struct Contest {
+    file_path: PathBuf,
+    position_in_buffer: usize,
+    votes: TagManyWithIterator<VoteInformation>,
+    election_groups: TagManyWithIterator<ElectionGroupBallot>,
 }
 
 #[derive(Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
-pub struct PartialDelivery {
-    pub voter_from: usize,
-    pub voter_to: usize,
+pub struct Voter {
+    pub voter_identification: String,
 }
+
+#[derive(Deserialize, Debug, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct Authorization {
+    pub authorization_identification: String,
+}
+
+#[derive(Deserialize, Debug, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct VoteInformation {
+    pub vote: Vote,
+}
+
+#[derive(Deserialize, Debug, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct Vote {
+    pub vote_identification: String,
+    pub domain_of_influence: String,
+    pub vote_position: usize,
+}
+
+#[derive(Deserialize, Debug, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct ElectionGroupBallot {
+    pub election_group_identification: String,
+    pub domain_of_influence: String,
+    pub election_group_position: usize,
+    pub election_information: Vec<ElectionInformation>,
+}
+
+#[derive(Deserialize, Debug, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct ElectionInformation {
+    pub election: Election,
+}
+
+#[derive(Deserialize, Debug, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct Election {
+    pub election_identification: String,
+    pub type_of_election: usize,
+}
+
+impl_iterator_for_tag_many_iter!(Authorization);
+impl_iterator_for_tag_many_iter!(Voter);
+impl_iterator_for_tag_many_iter!(VoteInformation);
+impl_iterator_for_tag_many_iter!(ElectionGroupBallot);
 
 impl VerifyDomainTrait<String> for ElectionEventConfiguration {}
 
@@ -50,12 +123,13 @@ impl VerifierDataDecode for ElectionEventConfiguration {
         let reader_config_mut = reader.config_mut();
         reader_config_mut.trim_text(true);
 
-        let header_tag = "header";
-        let signature_tag = "signature";
         let mut signature_started = false;
 
         let mut signature: Option<Signature> = None;
         let mut config_header: Option<ConfigHeader> = None;
+        let mut contest: Option<Contest> = None;
+        let mut authorizations: Option<TagManyWithIterator<Authorization>> = None;
+        let mut register: Option<TagManyWithIterator<Voter>> = None;
 
         let mut buf = Vec::new();
         loop {
@@ -68,33 +142,50 @@ impl VerifierDataDecode for ElectionEventConfiguration {
                 }
                 Ok(Event::Eof) => break,
                 Ok(Event::Start(e)) => {
-                    if e == BytesStart::new(signature_tag) {
+                    if e == BytesStart::new(SIGNATURE_TAG) {
                         signature_started = true;
                     }
-                    if e == BytesStart::new(header_tag) {
-                        let header_bytes = xml_read_to_end_into_buffer(
-                            &mut reader,
-                            &BytesStart::new(header_tag),
-                            &mut buf,
-                        )
-                        .map_err(|e| {
-                            DataStructureError::ParseQuickXML {
-                                msg: "Error reading header bytes".to_string(),
+                    if e == BytesStart::new(HEADER_TAG) {
+                        config_header = Some(ConfigHeader::read_header_from_reader(&mut reader)?);
+                    }
+                    if e == BytesStart::new(CONTEST_TAG) {
+                        contest = Some(Contest::new(p, reader.buffer_position() as usize));
+                        let mut buffer = vec![];
+                        xml_read_to_end_into_buffer(&mut reader, CONTEST_TAG, &mut buffer)
+                            .map_err(|e| DataStructureError::ParseQuickXML {
+                                msg: "Error reading contest bytes".to_string(),
                                 source: e,
-                            }
+                            })?;
+                    }
+                    if e == BytesStart::new(AUTHORIZATIONS_TAG) {
+                        authorizations = Some(TagManyWithIterator::<Authorization>::new(
+                            p,
+                            reader.buffer_position() as usize,
+                            AUTHORIZATION_TAG,
+                        ));
+                        let mut buffer = vec![];
+                        xml_read_to_end_into_buffer(&mut reader, AUTHORIZATIONS_TAG, &mut buffer)
+                            .map_err(|e| DataStructureError::ParseQuickXML {
+                            msg: "Error reading authorizations bytes".to_string(),
+                            source: e,
                         })?;
-                        config_header = Some(
-                            xml_de_from_str(&String::from_utf8_lossy(&header_bytes)).map_err(
-                                |e| DataStructureError::ParseQuickXMLDE {
-                                    msg: "Error deserializing header".to_string(),
-                                    source: e,
-                                },
-                            )?,
-                        );
+                    }
+                    if e == BytesStart::new(REGISTER_TAG) {
+                        register = Some(TagManyWithIterator::<Voter>::new(
+                            p,
+                            reader.buffer_position() as usize,
+                            VOTER_TAG,
+                        ));
+                        let mut buffer = vec![];
+                        xml_read_to_end_into_buffer(&mut reader, REGISTER_TAG, &mut buffer)
+                            .map_err(|e| DataStructureError::ParseQuickXML {
+                                msg: "Error reading regitrer bytes".to_string(),
+                                source: e,
+                            })?;
                     }
                 }
                 Ok(Event::End(e)) => {
-                    if e == BytesEnd::new(signature_tag) {
+                    if e == BytesEnd::new(SIGNATURE_TAG) {
                         signature_started = false;
                     }
                 }
@@ -111,26 +202,106 @@ impl VerifierDataDecode for ElectionEventConfiguration {
             // if we don't keep a borrow elsewhere, we can clear the buffer to keep memory usage low
             buf.clear();
         }
-        if config_header.is_none() {
-            return Err(DataStructureError::DataError(
-                "Header not found".to_string(),
-            ));
-        }
-        if signature.is_none() {
-            return Err(DataStructureError::DataError(
-                "Signature not found".to_string(),
-            ));
-        }
         Ok(Self {
             path: p.to_path_buf(),
-            header: config_header.unwrap(),
+            header: config_header.ok_or(DataStructureError::DataError(
+                "Header not found".to_string(),
+            ))?,
+            contest: contest.ok_or(DataStructureError::DataError(
+                "Context not found".to_string(),
+            ))?,
+            authorizations: authorizations.ok_or(DataStructureError::DataError(
+                "Authorizations not found".to_string(),
+            ))?,
+            register: register.ok_or(DataStructureError::DataError(
+                "Register not found".to_string(),
+            ))?,
             signature: signature.unwrap(),
         })
     }
 }
 
+impl ConfigHeader {
+    pub fn read_header_from_reader<R: BufRead>(
+        reader: &mut Reader<R>,
+    ) -> Result<Self, DataStructureError> {
+        let mut header_bytes = vec![];
+        xml_read_to_end_into_buffer(reader, HEADER_TAG, &mut header_bytes).map_err(|e| {
+            DataStructureError::ParseQuickXML {
+                msg: "Error reading header bytes".to_string(),
+                source: e,
+            }
+        })?;
+        xml_de_from_str(&String::from_utf8_lossy(&header_bytes)).map_err(|e| {
+            DataStructureError::ParseQuickXMLDE {
+                msg: "Error deserializing header".to_string(),
+                source: e,
+            }
+        })
+    }
+}
+
+impl Contest {
+    pub fn new(path: &Path, position_in_buffer: usize) -> Self {
+        Self {
+            file_path: path.to_path_buf(),
+            position_in_buffer,
+            votes: TagManyWithIterator::<VoteInformation>::new(
+                path,
+                position_in_buffer,
+                VOTE_INFORMATION_TAG,
+            ),
+            election_groups: TagManyWithIterator::<ElectionGroupBallot>::new(
+                path,
+                position_in_buffer,
+                ELECTION_GROUP_BALLOT_TAG,
+            ),
+        }
+    }
+}
+
+pub struct VoterIter {
+    reader: Reader<BufReader<File>>,
+}
+
+impl Iterator for VoterIter {
+    type Item = Voter;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let mut buf = Vec::new();
+        loop {
+            match self.reader.read_event_into(&mut buf) {
+                Err(e) => return None,
+                Ok(Event::Eof) => return None,
+                Ok(Event::Start(e)) => {
+                    if e == BytesStart::new("voter") {
+                        let mut buffer = vec![];
+                        return match xml_read_to_end_into_buffer(
+                            &mut self.reader,
+                            "voter",
+                            &mut buffer,
+                        ) {
+                            Ok(_) => {
+                                match xml_de_from_str::<Voter>(&String::from_utf8_lossy(&buffer)) {
+                                    Ok(v) => Some(v),
+                                    Err(_) => None,
+                                }
+                            }
+                            Err(_) => None,
+                        };
+                    }
+                }
+                // There are several other `Event`s we do not consider here
+                _ => (),
+            }
+            // if we don't keep a borrow elsewhere, we can clear the buffer to keep memory usage low
+            buf.clear();
+        }
+    }
+}
+
 impl<'a> VerifiySignatureTrait<'a> for ElectionEventConfiguration {
-    fn get_hashable(&'a self) -> Result<HashableMessage<'a>, Box<VerifySignatureError>> {
+    fn get_hashable(&self) -> Result<HashableMessage, Box<VerifySignatureError>> {
         let hashable = XMLFileHashable::new(&self.path, &SchemaKind::Config, "signature");
         let hash = hashable
             .recursive_hash()
@@ -141,7 +312,7 @@ impl<'a> VerifiySignatureTrait<'a> for ElectionEventConfiguration {
         Ok(HashableMessage::Hashed(hash))
     }
 
-    fn get_context_data(&self) -> Vec<HashableMessage<'a>> {
+    fn get_context_data(&self) -> Vec<HashableMessage> {
         vec![HashableMessage::from("configuration")]
     }
 
@@ -176,4 +347,47 @@ mod test {
 
     #[test]
     fn verify_signature() {}
+
+    #[test]
+    fn test_voters() {
+        let data = get_data_res().unwrap();
+        let mut it = data.register.iter().unwrap();
+        assert_eq!(it.count(), 43);
+        it = data.register.iter().unwrap();
+        assert_eq!(it.next().unwrap().voter_identification, "100001");
+    }
+
+    #[test]
+    fn test_authorizations() {
+        let data = get_data_res().unwrap();
+        let mut it = data.authorizations.iter().unwrap();
+        assert_eq!(it.count(), 4);
+        it = data.authorizations.iter().unwrap();
+        assert_eq!(
+            it.next().unwrap().authorization_identification,
+            "516e2551-ee42-3401-9988-7dfebd0ac0c0"
+        );
+    }
+
+    #[test]
+    fn test_votes() {
+        let data = get_data_res().unwrap();
+        let mut it = data.contest.votes.iter().unwrap();
+        assert_eq!(it.count(), 1);
+        it = data.contest.votes.iter().unwrap();
+        assert_eq!(it.next().unwrap().vote.vote_identification, "ch_test");
+    }
+
+    #[test]
+    fn test_elections() {
+        let data = get_data_res().unwrap();
+        let mut it = data.contest.election_groups.iter().unwrap();
+        assert_eq!(it.count(), 2);
+        it = data.contest.election_groups.iter().unwrap();
+        assert_eq!(it.next().unwrap().election_group_identification, "nrw_test");
+        assert_eq!(
+            it.next().unwrap().election_group_identification,
+            "majorz_test"
+        );
+    }
 }

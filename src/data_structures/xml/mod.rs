@@ -2,6 +2,7 @@
 pub mod hashable;
 mod schema;
 mod schema_tree;
+mod shared_types;
 
 use quick_xml::{
     events::{BytesStart, Event},
@@ -11,6 +12,7 @@ use quick_xml::{
 use roxmltree::Error as RoXmlTreeError;
 use rust_ev_crypto_primitives::{ByteArrayError, HashError, HashableMessage};
 pub use schema::SchemaKind;
+pub(super) use shared_types::{impl_iterator_for_tag_many_iter, TagManyIter, TagManyWithIterator};
 use std::{io::BufRead, num::ParseIntError, str::Utf8Error};
 use thiserror::Error;
 
@@ -76,53 +78,29 @@ pub enum XMLError {
     Uft8(Utf8Error),
 }
 
-/*
-// Enum representing the direct trust errors
-#[derive(Error, Debug)]
-pub enum ParseXMLError {
-    #[error("IO error for {path} -> caused by: {source}")]
-    IO {
-        path: PathBuf,
-        source: std::io::Error,
-    },
-    #[error("Error parsing xml {msg} -> caused by: {source}")]
-    ParseQuickXML { msg: String, source: QuickXmlError },
-
-    #[error("Path is not a file {0}")]
-    PathNotFile(PathBuf),
-    #[error("Any error {msg} -> caused by: {source}")]
-    Any { msg: String, source: anyhow::Error },
-    #[error("Mock error: {0}")]
-    Mock(String),
-    #[error("Error reading data structure {path} -> caudes by: {source}")]
-    ReadDataStructure {
-        path: PathBuf,
-        source: DataStructureError,
-    },
-}*/
-
 // reads from a start tag all the way to the corresponding end tag,
 // returns the bytes of the whole tag
 pub fn xml_read_to_end_into_buffer<R: BufRead>(
     reader: &mut Reader<R>,
-    start_tag: &BytesStart,
-    junk_buf: &mut Vec<u8>,
-) -> Result<Vec<u8>, QuickXmlError> {
+    tag_name: &str,
+    buffer: &mut Vec<u8>,
+) -> Result<(), QuickXmlError> {
+    let start_tag = BytesStart::new(tag_name);
     let mut depth = 0;
-    let mut output_buf: Vec<u8> = Vec::new();
-    let mut w = Writer::new(&mut output_buf);
+    let mut temp_buffer = vec![];
+    let mut w = Writer::new(buffer);
     let tag_name = start_tag.name();
     w.write_event(Event::Start(start_tag.clone()))?;
     loop {
-        junk_buf.clear();
-        let event = reader.read_event_into(junk_buf)?;
+        temp_buffer.clear();
+        let event = reader.read_event_into(&mut temp_buffer)?;
         w.write_event(event.clone())?;
 
         match event {
             Event::Start(e) if e.name() == tag_name => depth += 1,
             Event::End(e) if e.name() == tag_name => {
                 if depth == 0 {
-                    return Ok(output_buf);
+                    return Ok(());
                 }
                 depth -= 1;
             }
@@ -139,7 +117,6 @@ pub fn hashable_no_value(t: &str) -> HashableMessage {
     let s: String = format!("no {} value", t).to_string();
     HashableMessage::from(s)
 }
-
 
 /// Return the [HashableMessage] from an option using [hashable_no_value] for `None`
 pub fn hashable_from_option<'a>(
