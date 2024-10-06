@@ -1,7 +1,5 @@
-use quick_xml::{
-    events::{BytesStart, Event},
-    reader, Reader,
-};
+use crate::data_structures::DataStructureError;
+use quick_xml::Reader;
 use std::{
     fmt::Debug,
     fs::File,
@@ -9,10 +7,6 @@ use std::{
     marker::PhantomData,
     path::{Path, PathBuf},
 };
-
-use crate::data_structures::DataStructureError;
-
-use super::xml_read_to_end_into_buffer;
 
 #[derive(Clone, Debug)]
 pub struct TagManyWithIterator<T>
@@ -93,7 +87,7 @@ macro_rules! impl_iterator_for_tag_many_iter {
                 let mut reader = self.reader();
                 loop {
                     match reader.read_event_into(&mut buf) {
-                        Err(e) => return None,
+                        Err(_) => return None,
                         Ok(Event::Eof) => return None,
                         Ok(Event::Start(e)) => {
                             if e == BytesStart::new(&tag_name) {
