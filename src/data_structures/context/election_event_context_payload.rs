@@ -12,6 +12,8 @@ use rust_ev_crypto_primitives::{
     elgamal::EncryptionParameters, ByteArray, DomainVerifications, HashableMessage,
     VerifyDomainTrait,
 };
+use rust_ev_system_library::preliminaries::PTableElement;
+use serde::de::{Deserialize as DeDeserialize, Deserializer, Error as SerdeError};
 use serde::Deserialize;
 
 #[derive(Deserialize, Debug, Clone)]
@@ -66,6 +68,7 @@ pub struct VerificationCardSetContext {
 pub struct PrimesMappingTable {
     #[serde(with = "EncryptionParametersDef")]
     pub encryption_group: EncryptionParameters,
+    #[serde(deserialize_with = "deserialize_p_table")]
     pub p_table: Vec<PTableElement>,
     pub number_of_voting_options: usize,
 }
@@ -73,11 +76,54 @@ pub struct PrimesMappingTable {
 #[derive(Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 #[warn(dead_code)]
-pub struct PTableElement {
+pub struct PTableElementDef {
     pub actual_voting_option: String,
     pub encoded_voting_option: usize,
     pub semantic_information: String,
     pub correctness_information: String,
+}
+
+impl From<PTableElementDef> for PTableElement {
+    fn from(def: PTableElementDef) -> Self {
+        Self {
+            actual_voting_option: def.actual_voting_option,
+            encoded_voting_option: def.encoded_voting_option,
+            semantic_information: def.semantic_information,
+            correctness_information: def.correctness_information,
+        }
+    }
+}
+
+#[allow(dead_code)]
+fn deserialize_p_table<'de, D>(deserializer: D) -> Result<Vec<PTableElement>, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    struct Visitor;
+
+    impl<'de> ::serde::de::Visitor<'de> for Visitor {
+        type Value = Vec<PTableElement>;
+
+        fn expecting(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
+            write!(f, "a sequence of string")
+        }
+
+        fn visit_seq<A>(self, mut seq: A) -> Result<Self::Value, A::Error>
+        where
+            A: serde::de::SeqAccess<'de>,
+        {
+            let mut vec = <Self::Value>::new();
+
+            while let Some(v) = (seq.next_element())? {
+                let r_b = PTableElement::from(
+                    serde_json::from_value::<PTableElementDef>(v).map_err(A::Error::custom)?,
+                );
+                vec.push(r_b);
+            }
+            Ok(vec)
+        }
+    }
+    deserializer.deserialize_seq(Visitor)
 }
 
 impl VerificationCardSetContext {
@@ -316,17 +362,6 @@ impl<'a> From<&'a PrimesMappingTable> for HashableMessage<'a> {
     fn from(value: &'a PrimesMappingTable) -> Self {
         let l: Vec<HashableMessage> = value.p_table.iter().map(Self::from).collect();
         Self::from(vec![Self::from(&value.encryption_group), Self::from(l)])
-    }
-}
-
-impl<'a> From<&'a PTableElement> for HashableMessage<'a> {
-    fn from(value: &'a PTableElement) -> Self {
-        Self::from(vec![
-            Self::from(&value.actual_voting_option),
-            Self::from(&value.encoded_voting_option),
-            Self::from(&value.semantic_information),
-            Self::from(&value.correctness_information),
-        ])
     }
 }
 

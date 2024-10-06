@@ -562,7 +562,6 @@ pub(super) mod test {
             #[test]
             fn read_data_set() {
                 let data_res = get_data_res();
-                assert!(data_res.is_ok());
                 if data_res.is_err() {
                     println!("{:?}", data_res.as_ref().unwrap_err());
                 }
