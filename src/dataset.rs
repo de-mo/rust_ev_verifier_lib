@@ -10,6 +10,7 @@ use std::{
     path::{Path, PathBuf},
 };
 use thiserror::Error;
+use tracing::{debug, instrument, trace, Level};
 
 use crate::data_structures::dataset::DatasetTypeKind;
 
@@ -135,7 +136,8 @@ impl DatasetMetadata {
         })
     }
 
-    fn process_dataset_operations(
+    #[instrument(skip(password))]
+    pub fn process_dataset_operations(
         datasetkind: DatasetTypeKind,
         input: &Path,
         password: &str,
@@ -154,6 +156,7 @@ impl DatasetMetadata {
         if !zip_temp_dir_path.is_dir() {
             return Err(DatasetError::PathIsNotDir(zip_temp_dir_path.to_path_buf()));
         }
+        trace!("Start process_dataset_operations");
         let fingerprint = Self::calculate_fingerprint(input)?;
         let extract_dir_with_context = extract_dir.join(datasetkind.as_ref());
         let mut reader = EncryptedZipReader::new(
@@ -162,7 +165,9 @@ impl DatasetMetadata {
             &extract_dir_with_context,
             zip_temp_dir_path,
         )?;
+        trace!("Zip decrypter");
         reader.unzip()?;
+        trace!("unzip finished");
         Ok(DatasetMetadata::new(
             datasetkind,
             input,

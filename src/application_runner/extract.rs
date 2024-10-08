@@ -1,5 +1,3 @@
-use tracing::info;
-
 use super::RunnerError;
 use crate::{
     data_structures::dataset::DatasetTypeKind, dataset::DatasetMetadata,
@@ -9,6 +7,7 @@ use std::{
     collections::HashMap,
     path::{Path, PathBuf},
 };
+use tracing::{info, instrument};
 
 pub struct ExtractDataSetResults {
     metadata_hm: HashMap<DatasetTypeKind, DatasetMetadata>,
@@ -24,6 +23,7 @@ impl ExtractDataSetResults {
         self.metadata_hm.get(kind)
     }
 
+    #[instrument(skip(password, config))]
     pub fn extract_datasets(
         period: VerificationPeriod,
         context_zip_file: &Path,
