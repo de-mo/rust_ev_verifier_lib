@@ -10,7 +10,7 @@ use crate::{config::Config, file_structure::VerificationDirectory};
 /// Enum for the suite of verifications
 pub struct VerificationSuite<'a> {
     period: VerificationPeriod,
-    pub list: Box<VerificationList<'a>>,
+    list: VerificationList<'a>,
     exclusion: Vec<String>,
 }
 
@@ -25,21 +25,25 @@ impl<'a> VerificationSuite<'a> {
     pub fn new(
         period: &VerificationPeriod,
         metadata_list: &'a VerificationMetaDataList,
-        exclusion: &[String],
+        exclusion: &[&str],
         config: &'static Config,
     ) -> Result<VerificationSuite<'a>, VerificationError> {
-        let mut all_verifs = match period {
+        let all_verifs = match period {
             VerificationPeriod::Setup => get_verifications_setup(metadata_list, config)?,
 
             VerificationPeriod::Tally => get_verifications_tally(metadata_list, config)?,
         };
-        let all_ids: Vec<String> = all_verifs.0.iter().map(|v| v.id().clone()).collect();
-        all_verifs.0.retain(|x| !exclusion.contains(x.id()));
-        let mut excl: Vec<String> = exclusion.to_vec();
+        let all_ids: Vec<String> = all_verifs.0.iter().map(|v| v.id().to_string()).collect();
+        let verifs = all_verifs
+            .0
+            .into_iter()
+            .filter(|v| !exclusion.contains(&v.id()))
+            .collect::<Vec<_>>();
+        let mut excl: Vec<String> = exclusion.iter().map(|s| s.to_string()).collect();
         excl.retain(|s| all_ids.contains(s));
         Ok(VerificationSuite {
             period: *period,
-            list: Box::new(all_verifs),
+            list: VerificationList(verifs),
             exclusion: excl,
         })
     }
@@ -52,7 +56,7 @@ impl<'a> VerificationSuite<'a> {
     /// All verifications
     ///
     /// The excluded verifications are not collected
-    
+
     pub fn verifications(&'a self) -> &'a VerificationList {
         &self.list
     }
@@ -60,7 +64,7 @@ impl<'a> VerificationSuite<'a> {
     /// All verifications mutable
     ///
     /// The excluded verifications are not collected
-    
+
     pub fn verifications_mut(&'a mut self) -> &'a mut VerificationList {
         &mut self.list
     }
@@ -72,14 +76,16 @@ impl<'a> VerificationSuite<'a> {
         self.list.0.len()
     }
 
-    
     pub fn is_empty(&self) -> bool {
         self.len() == 0
     }
 
     /// List of excluded verifications
-    pub fn exclusion(&self) -> &Vec<String> {
-        &self.exclusion
+    pub fn exclusion(&self) -> Vec<&str> {
+        self.exclusion
+            .iter()
+            .map(|x| x.as_ref())
+            .collect::<Vec<_>>()
     }
 
     /// Length of excluded verifications
@@ -90,7 +96,7 @@ impl<'a> VerificationSuite<'a> {
     /// List of all verifications for a category
     ///
     /// The excluded verifications are not collected
-    
+
     pub fn get_verifications_for_category(
         &self,
         category: VerificationCategory,
@@ -105,9 +111,9 @@ impl<'a> VerificationSuite<'a> {
     /// List of ids of all verifications
     ///
     /// The excluded verifications are not collected
-    
-    pub fn collect_id(&self) -> Vec<String> {
-        let mut list: Vec<String> = self.list.0.iter().map(|v| v.id().clone()).collect();
+
+    pub fn collect_id(&self) -> Vec<&str> {
+        let mut list: Vec<&str> = self.list.0.iter().map(|v| v.id()).collect();
         list.sort();
         list
     }
@@ -115,7 +121,7 @@ impl<'a> VerificationSuite<'a> {
     /// Find a verification with id
     ///
     /// The excluded verifications are not searchable
-    
+
     pub fn find_by_id(&self, id: &str) -> Option<&Verification<'a, VerificationDirectory>> {
         self.list.0.iter().find(|&v| v.meta_data().id() == id)
     }
@@ -143,14 +149,13 @@ mod test {
         assert!(r_verifs.is_ok());
         let verifs = r_verifs.unwrap();
         let setup: Vec<VerificationMetaData> = metadata_list
-            .0
             .iter()
             .filter(|v| v.period() == &VerificationPeriod::Setup)
             .cloned()
             .collect();
         assert_eq!(verifs.len(), setup.len());
         let verif_ids = verifs.collect_id();
-        let metadata_ids: Vec<String> = setup.iter().map(|v| v.id()).cloned().collect();
+        let metadata_ids: Vec<&str> = setup.iter().map(|v| v.id()).collect();
         assert_eq!(verif_ids, metadata_ids)
     }
 
@@ -171,14 +176,13 @@ mod test {
         assert!(r_verifs.is_ok());
         let verifs = r_verifs.unwrap();
         let tally: Vec<VerificationMetaData> = metadata_list
-            .0
             .iter()
             .filter(|v| v.period() == &VerificationPeriod::Tally)
             .cloned()
             .collect();
         assert_eq!(verifs.len(), tally.len());
         let verif_ids = verifs.collect_id();
-        let metadata_ids: Vec<String> = tally.iter().map(|v| v.id()).cloned().collect();
+        let metadata_ids: Vec<&str> = tally.iter().map(|v| v.id()).collect();
         assert_eq!(verif_ids, metadata_ids)
     }
 

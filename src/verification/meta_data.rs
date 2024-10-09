@@ -10,7 +10,7 @@ use serde::{
 
 /// List of Verification Metadata
 #[derive(Deserialize, Debug, Clone)]
-pub struct VerificationMetaDataList(pub Vec<VerificationMetaData>);
+pub struct VerificationMetaDataList(Vec<VerificationMetaData>);
 
 /// Metadata of a verification
 #[derive(Deserialize, Debug, Clone)]
@@ -59,16 +59,16 @@ impl VerificationMetaDataList {
         self.0.iter().find(|e| e.id == id)
     }
 
-    pub fn id_list(&self) -> Vec<String> {
-        self.0.iter().map(|e| e.id.clone()).collect::<Vec<String>>()
+    pub fn id_list(&self) -> Vec<&str> {
+        self.0.iter().map(|e| e.id.as_str()).collect::<Vec<_>>()
     }
 
-    pub fn id_list_for_period(&self, period: &VerificationPeriod) -> Vec<String> {
+    pub fn id_list_for_period(&self, period: &VerificationPeriod) -> Vec<&str> {
         self.0
             .iter()
             .filter(|e| &e.period == period)
-            .map(|e| e.id.clone())
-            .collect::<Vec<String>>()
+            .map(|e| e.id.as_str())
+            .collect::<Vec<_>>()
     }
 
     pub fn len(&self) -> usize {
@@ -86,22 +86,26 @@ impl VerificationMetaDataList {
     pub fn iter(&self) -> std::slice::Iter<VerificationMetaData> {
         self.0.iter()
     }
+
+    pub fn list(&self) -> &[VerificationMetaData] {
+        &self.0
+    }
 }
 
 impl VerificationMetaData {
-    pub fn id(&self) -> &String {
+    pub fn id(&self) -> &str {
         &self.id
     }
 
-    pub fn name(&self) -> &String {
+    pub fn name(&self) -> &str {
         &self.name
     }
 
-    pub fn algorithm(&self) -> &String {
+    pub fn algorithm(&self) -> &str {
         &self.algorithm
     }
 
-    pub fn description(&self) -> &String {
+    pub fn description(&self) -> &str {
         &self.description
     }
 
@@ -111,13 +115,6 @@ impl VerificationMetaData {
 
     pub fn category(&self) -> &VerificationCategory {
         &self.category
-    }
-
-    pub fn from_id(id: &str, data: &str) -> Option<Self> {
-        match VerificationMetaDataList::load(data) {
-            Ok(l) => l.get(id).cloned(),
-            Err(_) => None,
-        }
     }
 }
 

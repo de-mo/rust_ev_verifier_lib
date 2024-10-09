@@ -14,8 +14,6 @@ use tracing::{info, warn};
 /// Struct representing a verification
 #[allow(clippy::type_complexity)]
 pub struct Verification<'a, D: VerificationDirectoryTrait> {
-    /// Id of the verification
-    id: String,
     /// Metadata of the verification
     ///
     /// The meta data is a reference to the metadata list loaded from json
@@ -71,7 +69,6 @@ impl<'a> Verification<'a, VerificationDirectory> {
             )));
         }
         Ok(Verification {
-            id: id.to_string(),
             meta_data,
             status: VerificationStatus::Stopped,
             verification_fn: Box::new(verification_fn),
@@ -82,12 +79,12 @@ impl<'a> Verification<'a, VerificationDirectory> {
     }
 
     /// Get the id of the verification
-    pub fn id(&self) -> &String {
-        &self.id
+    pub fn id(&self) -> &str {
+        self.meta_data.id()
     }
 
     /// Get the meta data of the verification
-    
+
     pub fn meta_data(&'a self) -> &'a VerificationMetaData {
         self.meta_data
     }

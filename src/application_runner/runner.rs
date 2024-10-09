@@ -44,7 +44,7 @@ impl<'a> RunStrategy<'a> for RunSequential {
         action_before: impl Fn(&str) + Send + Sync,
         action_after: impl Fn(&str, Vec<String>, Vec<String>) + Send + Sync,
     ) {
-        let it = verifications.list.0.iter_mut();
+        let it = verifications.verifications_mut().0.iter_mut();
         for v in it {
             action_before(v.id());
             v.run(directory);
@@ -66,18 +66,25 @@ impl<'a> RunStrategy<'a> for RunParallel {
         action_after: impl Fn(&str, Vec<String>, Vec<String>) + Send + Sync,
     ) {
         let dirs = vec![directory; verifications.len()];
-        zip(verifications.list.0.iter_mut().map(Mutex::new), dirs)
-            .par_bridge()
-            .for_each(|(vm, d)| {
-                let mut v = vm.lock().unwrap();
-                action_before(v.id());
-                v.run(d);
-                action_after(
-                    v.id(),
-                    v.verification_result().errors_to_string(),
-                    v.verification_result().failures_to_string(),
-                );
-            });
+        zip(
+            verifications
+                .verifications_mut()
+                .0
+                .iter_mut()
+                .map(Mutex::new),
+            dirs,
+        )
+        .par_bridge()
+        .for_each(|(vm, d)| {
+            let mut v = vm.lock().unwrap();
+            action_before(v.id());
+            v.run(d);
+            action_after(
+                v.id(),
+                v.verification_result().errors_to_string(),
+                v.verification_result().failures_to_string(),
+            );
+        });
     }
 }
 
@@ -111,7 +118,7 @@ where
         path: &Path,
         period: &VerificationPeriod,
         metadata: &'a VerificationMetaDataList,
-        exclusion: &[String],
+        exclusion: &[&str],
         run_strategy: T,
         config: &'static VerifierConfig,
         action_before: impl Fn(&str) + Send + Sync + 'static,
@@ -149,7 +156,7 @@ where
             VerificationSuite::new(
                 self.period(),
                 metadata_list,
-                self.verifications.exclusion(),
+                self.verifications.exclusion().as_slice(),
                 self.config,
             )
             .map_err(RunnerError::Verification)?,
