@@ -1,5 +1,5 @@
 //! Trait implementing group of files with the same structure (in particular for the files from the control components)
-use super::{file::File, FileStructureError, GetFileNameTrait};
+use super::{file::File, GetFileNameTrait};
 use crate::data_structures::VerifierDataType;
 use std::{
     fs,

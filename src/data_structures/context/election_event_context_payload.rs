@@ -13,7 +13,7 @@ use rust_ev_crypto_primitives::{
     VerifyDomainTrait,
 };
 use rust_ev_system_library::preliminaries::PTableElement;
-use serde::de::{Deserialize as DeDeserialize, Deserializer, Error as SerdeError};
+use serde::de::{Deserializer, Error as SerdeError};
 use serde::Deserialize;
 
 #[derive(Deserialize, Debug, Clone)]

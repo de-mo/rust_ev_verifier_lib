@@ -10,7 +10,7 @@ use std::{
     path::{Path, PathBuf},
 };
 use thiserror::Error;
-use tracing::{debug, instrument, trace, Level};
+use tracing::{instrument, trace};
 
 use crate::data_structures::dataset::DatasetTypeKind;
 

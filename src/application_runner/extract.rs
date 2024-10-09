@@ -1,7 +1,7 @@
 use super::RunnerError;
 use crate::{
     data_structures::dataset::DatasetTypeKind, dataset::DatasetMetadata,
-    file_structure::VerificationDirectory, verification::VerificationPeriod, Config,
+    verification::VerificationPeriod, Config,
 };
 use std::{
     collections::HashMap,
@@ -16,7 +16,7 @@ pub struct ExtractDataSetResults {
 
 impl ExtractDataSetResults {
     pub fn location(&self) -> &Path {
-        &self.location.as_path()
+        &self.location
     }
 
     pub fn dataset_metadata(&self, kind: &DatasetTypeKind) -> Option<&DatasetMetadata> {

@@ -238,18 +238,13 @@ impl<'a> NodeHashable<'a> {
                 self.push_hashed_from_element_node(hashables, e.unwrap_element(), hashed_children)
             }
             None => {
-                match element_nodes.iter().find(|e| {
+                if let Some(e) = element_nodes.iter().find(|e| {
                     e.is_sequence()
                         && e.unwrap_sequence()
                             .iter()
                             .any(|e| hashed_children.contains_key(e.name()))
                 }) {
-                    Some(e) => self.push_hashed_from_sequence(
-                        hashables,
-                        e.unwrap_sequence(),
-                        hashed_children,
-                    ),
-                    None => (),
+                    self.push_hashed_from_sequence(hashables, e.unwrap_sequence(), hashed_children)
                 }
             }
         }

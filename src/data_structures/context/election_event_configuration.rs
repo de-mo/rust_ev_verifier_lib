@@ -271,7 +271,7 @@ impl Iterator for VoterIter {
         let mut buf = Vec::new();
         loop {
             match self.reader.read_event_into(&mut buf) {
-                Err(e) => return None,
+                Err(_) => return None,
                 Ok(Event::Eof) => return None,
                 Ok(Event::Start(e)) => {
                     if e == BytesStart::new("voter") {
