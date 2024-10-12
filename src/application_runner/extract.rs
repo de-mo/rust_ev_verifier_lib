@@ -30,7 +30,7 @@ impl ExtractDataSetResults {
         setup_zip_file: Option<&Path>,
         tally_zip_file: Option<&Path>,
         password: &str,
-        config: &Config,
+        config: &'static Config,
     ) -> Result<Self, RunnerError> {
         let dataset_root_path = config.create_dataset_dir_path();
         let mut hm = HashMap::new();
