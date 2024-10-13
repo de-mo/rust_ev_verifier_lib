@@ -9,7 +9,7 @@ use crate::{
     file_structure::{VerificationDirectory, VerificationDirectoryTrait},
 };
 use std::time::{Duration, SystemTime};
-use tracing::{info, warn};
+use tracing::{error, info, warn};
 
 /// Struct representing a verification
 #[allow(clippy::type_complexity)]
@@ -154,19 +154,21 @@ impl<'a> Verification<'a, VerificationDirectory> {
             );
         }
         if self.has_errors().unwrap() {
-            warn!(
-                "Verification {} ({}) finished with errors. Duration: {}s",
+            error!(
+                "Verification {} ({}) finished with errors. Duration: {}s \n{}",
                 self.meta_data.name(),
                 self.meta_data.id(),
-                self.duration.unwrap().as_secs_f32()
+                self.duration.unwrap().as_secs_f32(),
+                self.result.errors_to_string().join("\n")
             );
         }
         if self.has_failures().unwrap() {
             warn!(
-                "Verification {} ({}) finished with failures. Duration: {}s",
+                "Verification {} ({}) finished with failures. Duration: {}s \n{}",
                 self.meta_data.name(),
                 self.meta_data.id(),
-                self.duration.unwrap().as_secs_f32()
+                self.duration.unwrap().as_secs_f32(),
+                self.result.failures_to_string().join("\n")
             );
         }
     }
