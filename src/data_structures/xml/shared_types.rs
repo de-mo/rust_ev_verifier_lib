@@ -101,10 +101,18 @@ macro_rules! impl_iterator_for_tag_many_iter {
                                         let s = String::from_utf8_lossy(&buffer);
                                         match quick_xml::de::from_str::<$type>(&s) {
                                             Ok(v) => Some(v),
-                                            Err(_) => None,
+                                            Err(e) => {
+                                                error!("Error reading vote {:#?}", e);
+                                                println!("Error reading vote {:#?}", e);
+                                                None
+                                            }
                                         }
                                     }
-                                    Err(_) => None,
+                                    Err(e) => {
+                                        error!("Error reading vote {:#?}", e);
+                                        println!("Error reading vote {:#?}", e);
+                                        None
+                                    }
                                 };
                             }
                         }
