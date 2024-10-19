@@ -14,8 +14,8 @@ keywords = ["math", "e-voting", "crypto"]
 [dependencies]
 rust_ev_crypto_primitives = "0.6"
 #rust_ev_crypto_primitives = { path = "../rust_ev_crypto_primitives" }
-rust_ev_system_library = "0.1"
-#rust_ev_system_library = { path = "../rust_ev_system_library" }
+#rust_ev_system_library = "0.1"
+rust_ev_system_library = { path = "../rust_ev_system_library" }
 thiserror = "1"
 enum-kinds = "0.5"
 tracing = "0.1"
