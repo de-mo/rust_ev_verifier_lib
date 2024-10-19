@@ -1,3 +1,6 @@
+mod election;
+mod vote;
+
 use super::super::{
     xml::{hashable::XMLFileHashable, xml_read_to_end_into_buffer, SchemaKind},
     DataStructureError, VerifierDataDecode,
@@ -9,6 +12,7 @@ use crate::{
     },
     direct_trust::{CertificateAuthority, VerifiySignatureTrait, VerifySignatureError},
 };
+pub use election::{Candidate, Election, ElectionInformation, List, WriteInCandidate};
 use quick_xml::{
     de::from_str as xml_de_from_str,
     events::{BytesEnd, BytesStart, Event},
@@ -23,6 +27,8 @@ use std::{
     io::{BufRead, BufReader},
     path::{Path, PathBuf},
 };
+use tracing::error;
+pub use vote::{Answer, StandardQuestion, Vote};
 
 const HEADER_TAG: &str = "header";
 const SIGNATURE_TAG: &str = "signature";
@@ -55,8 +61,8 @@ pub struct ConfigHeader {
 pub struct Contest {
     file_path: PathBuf,
     position_in_buffer: usize,
-    votes: TagManyWithIterator<VoteInformation>,
-    election_groups: TagManyWithIterator<ElectionGroupBallot>,
+    pub votes: TagManyWithIterator<VoteInformation>,
+    pub election_groups: TagManyWithIterator<ElectionGroupBallot>,
 }
 
 #[derive(Deserialize, Debug, Clone)]
@@ -69,6 +75,20 @@ pub struct Voter {
 #[serde(rename_all = "camelCase")]
 pub struct Authorization {
     pub authorization_identification: String,
+    pub authorization_alias: String,
+    pub authorization_object: Vec<AuthorizationObject>,
+}
+
+#[derive(Deserialize, Debug, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct AuthorizationObject {
+    pub domain_of_influence: DomainOfInfluence,
+}
+
+#[derive(Deserialize, Debug, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct DomainOfInfluence {
+    pub domain_of_influence_identification: String,
 }
 
 #[derive(Deserialize, Debug, Clone)]
@@ -79,32 +99,11 @@ pub struct VoteInformation {
 
 #[derive(Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
-pub struct Vote {
-    pub vote_identification: String,
-    pub domain_of_influence: String,
-    pub vote_position: usize,
-}
-
-#[derive(Deserialize, Debug, Clone)]
-#[serde(rename_all = "camelCase")]
 pub struct ElectionGroupBallot {
     pub election_group_identification: String,
     pub domain_of_influence: String,
     pub election_group_position: usize,
     pub election_information: Vec<ElectionInformation>,
-}
-
-#[derive(Deserialize, Debug, Clone)]
-#[serde(rename_all = "camelCase")]
-pub struct ElectionInformation {
-    pub election: Election,
-}
-
-#[derive(Deserialize, Debug, Clone)]
-#[serde(rename_all = "camelCase")]
-pub struct Election {
-    pub election_identification: String,
-    pub type_of_election: usize,
 }
 
 impl_iterator_for_tag_many_iter!(Authorization);
@@ -300,6 +299,23 @@ impl Iterator for VoterIter {
     }
 }
 
+impl VoteInformation {
+    pub fn has_authorization(&self, auth: &Authorization) -> bool {
+        auth.authorization_object.iter().any(|a| {
+            self.vote.domain_of_influence
+                == a.domain_of_influence.domain_of_influence_identification
+        })
+    }
+}
+
+impl ElectionGroupBallot {
+    pub fn has_authorization(&self, auth: &Authorization) -> bool {
+        auth.authorization_object.iter().any(|a| {
+            self.domain_of_influence == a.domain_of_influence.domain_of_influence_identification
+        })
+    }
+}
+
 impl<'a> VerifiySignatureTrait<'a> for ElectionEventConfiguration {
     fn get_hashable(&self) -> Result<HashableMessage, Box<VerifySignatureError>> {
         let hashable = XMLFileHashable::new(&self.path, &SchemaKind::Config, "signature");
@@ -363,9 +379,16 @@ mod test {
         let mut it = data.authorizations.iter().unwrap();
         assert_eq!(it.count(), 4);
         it = data.authorizations.iter().unwrap();
+        let auth = it.next().unwrap();
         assert_eq!(
-            it.next().unwrap().authorization_identification,
+            auth.authorization_identification,
             "516e2551-ee42-3401-9988-7dfebd0ac0c0"
+        );
+        assert_eq!(
+            auth.authorization_object[0]
+                .domain_of_influence
+                .domain_of_influence_identification,
+            "doid-ch1-mu"
         );
     }
 
