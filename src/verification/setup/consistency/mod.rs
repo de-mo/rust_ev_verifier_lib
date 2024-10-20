@@ -11,6 +11,7 @@ mod v0310_verification_card_set_ids_consistency;
 mod v0311_file_name_verification_card_set_ids_consistency;
 mod v0312_verification_card_ids_consistency;
 mod v0313_total_voters_consistency;
+mod v0314_verify_node_ids_consistency;
 mod v0315_chunk_consistency;
 
 use crate::{config::Config, verification::VerificationError};
@@ -119,7 +120,7 @@ pub fn get_verifications<'a>(
         Verification::new(
             "03.14",
             "VerifyNodeIdsConsistency",
-            verification_unimplemented,
+            v0314_verify_node_ids_consistency::fn_verification,
             metadata_list,
             config,
         )?,
