@@ -90,6 +90,14 @@ impl Display for VerificationEvent {
     }
 }
 
+impl Extend<VerificationEvent> for VerificationResult {
+    fn extend<T: IntoIterator<Item = VerificationEvent>>(&mut self, iter: T) {
+        for elt in iter {
+            self.push(elt);
+        }
+    }
+}
+
 impl VerificationResult {
     /// Return `true` if no error and not failure
     pub fn is_ok(&self) -> bool {
