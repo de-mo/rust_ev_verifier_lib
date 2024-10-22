@@ -1,6 +1,6 @@
 use super::{
     super::{
-        common_types::{EncryptionParametersDef, ProofUnderline, Signature},
+        common_types::{EncryptionParametersDef, SchnorrProof, Signature},
         deserialize_seq_string_base64_to_seq_integer, implement_trait_verifier_data_json_decode,
         DataStructureError, VerifierDataDecode,
     },
@@ -65,7 +65,7 @@ pub struct SetupComponentPublicKeys {
     pub combined_control_component_public_keys: Vec<ControlComponentPublicKeys>,
     #[serde(deserialize_with = "deserialize_seq_string_base64_to_seq_integer")]
     pub electoral_board_public_key: Vec<Integer>,
-    pub electoral_board_schnorr_proofs: Vec<ProofUnderline>,
+    pub electoral_board_schnorr_proofs: Vec<SchnorrProof>,
     #[serde(deserialize_with = "deserialize_seq_string_base64_to_seq_integer")]
     pub election_public_key: Vec<Integer>,
     #[serde(deserialize_with = "deserialize_seq_string_base64_to_seq_integer")]

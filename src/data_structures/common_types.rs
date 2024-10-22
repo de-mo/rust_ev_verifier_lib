@@ -48,49 +48,24 @@ impl Signature {
     }
 }
 
-/// A proof (e,z) where the keys are _e and _z in json
-#[derive(Deserialize, Debug, Clone)]
-pub struct ProofUnderline {
-    #[serde(deserialize_with = "deserialize_string_base64_to_integer")]
-    #[serde(rename = "_e")]
-    pub e: Integer,
-    #[serde(deserialize_with = "deserialize_string_base64_to_integer")]
-    #[serde(rename = "_z")]
-    pub z: Integer,
-}
-
-impl<'a> From<&'a ProofUnderline> for HashableMessage<'a> {
-    fn from(value: &'a ProofUnderline) -> Self {
-        Self::from(vec![Self::from(&(value.e)), Self::from(&(value.z))])
-    }
-}
-
 /// A proof (e,z) where the keys are e and z in json
 #[derive(Deserialize, Debug, Clone)]
-pub struct Proof {
+pub struct SchnorrProof {
     #[serde(deserialize_with = "deserialize_string_base64_to_integer")]
+    #[serde(alias = "_e", alias = "_e")]
     pub e: Integer,
     #[serde(deserialize_with = "deserialize_string_base64_to_integer")]
+    #[serde(alias = "_z", alias = "_z")]
     pub z: Integer,
 }
 
-/// The possibility to transorm a [ProofUnderline] to [Proof]
-impl From<&ProofUnderline> for Proof {
-    fn from(value: &ProofUnderline) -> Self {
-        Proof {
-            e: value.e.clone(),
-            z: value.z.clone(),
-        }
-    }
-}
-
-impl<'a> From<&'a Proof> for HashableMessage<'a> {
-    fn from(value: &'a Proof) -> Self {
+impl<'a> From<&'a SchnorrProof> for HashableMessage<'a> {
+    fn from(value: &'a SchnorrProof) -> Self {
         Self::from(vec![Self::from(&(value.e)), Self::from(&(value.z))])
     }
 }
 
-impl Proof {
+impl SchnorrProof {
     pub fn as_tuple(&self) -> (&Integer, &Integer) {
         (&self.e, &self.z)
     }

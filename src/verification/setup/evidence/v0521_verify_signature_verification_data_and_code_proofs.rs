@@ -2,7 +2,7 @@ use super::super::super::result::{VerificationEvent, VerificationResult};
 use crate::{
     config::Config,
     data_structures::{
-        common_types::{ExponentiatedEncryptedElement, Proof},
+        common_types::{ExponentiatedEncryptedElement, SchnorrProof},
         setup::{
             control_component_code_shares_payload::ControlComponentCodeSharesPayloadInner,
             setup_component_verification_data_payload::{
@@ -222,7 +222,7 @@ fn algorithm_0303_verify_encrypted_pcc_exponentiation_proofs_verification_card_s
     encrypted_hashed_squared_partial_choice_return_codes: Vec<&ExponentiatedEncryptedElement>,
     voter_choice_return_code_generation_public_key: Vec<&Integer>,
     exponentiated_encrypted_partial_choice_return_codes: Vec<&ExponentiatedEncryptedElement>,
-    encrypted_partial_choice_return_code_exponentiation_proof: Vec<&Proof>,
+    encrypted_partial_choice_return_code_exponentiation_proof: Vec<&SchnorrProof>,
 ) -> VerificationResult {
     let mut result = VerificationResult::new();
     let verif_size_res = verify_sizes(
@@ -273,7 +273,7 @@ fn algorithm_0303_verify_encrypted_pcc_exponentiation_proofs_verification_card_s
     encrypted_hashed_squared_partial_choice_return_codes: &ExponentiatedEncryptedElement,
     voter_choice_return_code_generation_public_key: &Integer,
     exponentiated_encrypted_partial_choice_return_codes: &ExponentiatedEncryptedElement,
-    encrypted_partial_choice_return_code_exponentiation_proof: &Proof,
+    encrypted_partial_choice_return_code_exponentiation_proof: &SchnorrProof,
 ) -> VerificationResult {
     let mut result = VerificationResult::new();
     let verif_size_res = verify_sizes(
@@ -342,7 +342,7 @@ fn algorithm_0304_verify_encrypted_ckexponentiation_proofs_verification_card_set
     encrypted_hashed_squared_confirmation_key: Vec<&ExponentiatedEncryptedElement>,
     voter_vote_cast_return_code_generation_public_key: Vec<&Integer>,
     exponentiated_encrypted_confirmation_key: Vec<&ExponentiatedEncryptedElement>,
-    encrypted_confirmation_key_exponentiation_proof: Vec<&Proof>,
+    encrypted_confirmation_key_exponentiation_proof: Vec<&SchnorrProof>,
 ) -> VerificationResult {
     let mut result = VerificationResult::new();
     let verif_size_res = verify_sizes(
@@ -393,7 +393,7 @@ fn algorithm_0304_verify_encrypted_ckexponentiation_proofs_verification_card_set
     encrypted_hashed_squared_confirmation_key: &ExponentiatedEncryptedElement,
     voter_vote_cast_return_code_generation_public_key: &Integer,
     exponentiated_encrypted_confirmation_key: &ExponentiatedEncryptedElement,
-    encrypted_confirmation_key_exponentiation_proof: &Proof,
+    encrypted_confirmation_key_exponentiation_proof: &SchnorrProof,
 ) -> VerificationResult {
     let mut result = VerificationResult::new();
     let verif_size_res = verify_sizes(

@@ -1,5 +1,5 @@
 use super::super::{
-    common_types::{EncryptionParametersDef, ProofUnderline, Signature},
+    common_types::{EncryptionParametersDef, SchnorrProof, Signature},
     deserialize_seq_string_base64_to_seq_integer, implement_trait_verifier_data_json_decode,
     DataStructureError, VerifierDataDecode,
 };
@@ -61,10 +61,10 @@ pub struct ControlComponentPublicKeys {
     pub node_id: usize,
     #[serde(deserialize_with = "deserialize_seq_string_base64_to_seq_integer")]
     pub ccrj_choice_return_codes_encryption_public_key: Vec<Integer>,
-    pub ccrj_schnorr_proofs: Vec<ProofUnderline>,
+    pub ccrj_schnorr_proofs: Vec<SchnorrProof>,
     #[serde(deserialize_with = "deserialize_seq_string_base64_to_seq_integer")]
     pub ccmj_election_public_key: Vec<Integer>,
-    pub ccmj_schnorr_proofs: Vec<ProofUnderline>,
+    pub ccmj_schnorr_proofs: Vec<SchnorrProof>,
 }
 
 impl<'a> From<&'a ControlComponentPublicKeys> for HashableMessage<'a> {

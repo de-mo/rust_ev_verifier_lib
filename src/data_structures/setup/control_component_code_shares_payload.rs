@@ -1,5 +1,7 @@
 use super::super::{
-    common_types::{EncryptionParametersDef, ExponentiatedEncryptedElement, Proof, Signature},
+    common_types::{
+        EncryptionParametersDef, ExponentiatedEncryptedElement, SchnorrProof, Signature,
+    },
     deserialize_seq_string_base64_to_seq_integer, implement_trait_verifier_data_json_decode,
     DataStructureError, VerifierDataDecode,
 };
@@ -40,8 +42,8 @@ pub struct ControlComponentCodeShare {
     pub voter_vote_cast_return_code_generation_public_key: Vec<Integer>,
     pub exponentiated_encrypted_partial_choice_return_codes: ExponentiatedEncryptedElement,
     pub exponentiated_encrypted_confirmation_key: ExponentiatedEncryptedElement,
-    pub encrypted_partial_choice_return_code_exponentiation_proof: Proof,
-    pub encrypted_confirmation_key_exponentiation_proof: Proof,
+    pub encrypted_partial_choice_return_code_exponentiation_proof: SchnorrProof,
+    pub encrypted_confirmation_key_exponentiation_proof: SchnorrProof,
 }
 
 impl ControlComponentCodeSharesPayloadInner {

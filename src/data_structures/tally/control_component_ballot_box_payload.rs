@@ -3,7 +3,7 @@ use super::super::{
     implement_trait_verifier_data_json_decode, DataStructureError, VerifierDataDecode,
 };
 use crate::{
-    data_structures::common_types::{DecryptionProof, Proof},
+    data_structures::common_types::{DecryptionProof, SchnorrProof},
     direct_trust::{CertificateAuthority, VerifiySignatureTrait, VerifySignatureError},
 };
 
@@ -32,7 +32,7 @@ pub struct ConfirmedEncryptedVote {
     pub encrypted_vote: ExponentiatedEncryptedElement,
     pub exponentiated_encrypted_vote: ExponentiatedEncryptedElement,
     pub encrypted_partial_choice_return_codes: ExponentiatedEncryptedElement,
-    pub exponentiation_proof: Proof,
+    pub exponentiation_proof: SchnorrProof,
     pub plaintext_equality_proof: DecryptionProof,
 }
 
