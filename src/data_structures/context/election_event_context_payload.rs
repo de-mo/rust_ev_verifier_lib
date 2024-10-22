@@ -10,9 +10,12 @@ use chrono::NaiveDateTime;
 use regex::Regex;
 use rust_ev_crypto_primitives::{
     elgamal::EncryptionParameters, ByteArray, DomainVerifications, HashableMessage,
-    VerifyDomainTrait,
+    RecursiveHashTrait, VerifyDomainTrait,
 };
-use rust_ev_system_library::preliminaries::PTableElement;
+use rust_ev_system_library::preliminaries::{
+    GetHashElectionEventContextContext, PTableElement,
+    VerificationCardSetContext as VerificationCardSetContextInSystemLibrary,
+};
 use serde::de::{Deserializer, Error as SerdeError};
 use serde::Deserialize;
 
@@ -94,7 +97,6 @@ impl From<PTableElementDef> for PTableElement {
     }
 }
 
-#[allow(dead_code)]
 fn deserialize_p_table<'de, D>(deserializer: D) -> Result<Vec<PTableElement>, D::Error>
 where
     D: Deserializer<'de>,
@@ -321,47 +323,52 @@ impl<'a> VerifiySignatureTrait<'a> for ElectionEventContextPayload {
     }
 }
 
+impl<'a> From<&'a ElectionEventContext> for GetHashElectionEventContextContext<'a, 'a> {
+    fn from(value: &'a ElectionEventContext) -> Self {
+        Self {
+            encryption_parameters: &value.verification_card_set_contexts[0]
+                .primes_mapping_table
+                .encryption_group,
+            ee: &value.election_event_id,
+            ee_alias: &value.election_event_alias,
+            ee_descr: &value.election_event_description,
+            vcs_contexts: value
+                .verification_card_set_contexts
+                .iter()
+                .map(VerificationCardSetContextInSystemLibrary::from)
+                .collect::<Vec<_>>(),
+            t_s_ee: &value.start_time,
+            t_f_ee: &value.finish_time,
+            n_max: value.maximum_number_of_voting_options,
+            phi_max: value.maximum_number_of_selections,
+            delta_max: value.maximum_number_of_write_ins_plus_one,
+        }
+    }
+}
+
 impl<'a> From<&'a ElectionEventContext> for HashableMessage<'a> {
     fn from(value: &'a ElectionEventContext) -> Self {
-        let mut elts = vec![Self::from(&value.election_event_id)];
-        elts.push(Self::from(&value.election_event_alias));
-        elts.push(Self::from(&value.election_event_description));
-        let l: Vec<HashableMessage> = value
-            .verification_card_set_contexts
-            .iter()
-            .map(Self::from)
-            .collect();
-        elts.push(Self::from(l));
-        elts.push(Self::from(&value.start_time));
-        elts.push(Self::from(&value.finish_time));
-        elts.push(Self::from(&value.maximum_number_of_voting_options));
-        elts.push(Self::from(&value.maximum_number_of_selections));
-        elts.push(Self::from(&value.maximum_number_of_write_ins_plus_one));
-        Self::from(elts)
+        let temp = GetHashElectionEventContextContext::from(value);
+        let hashed = HashableMessage::from(&temp).recursive_hash().unwrap();
+        HashableMessage::Hashed(hashed)
     }
 }
 
-impl<'a> From<&'a VerificationCardSetContext> for HashableMessage<'a> {
+impl<'a> From<&'a VerificationCardSetContext> for VerificationCardSetContextInSystemLibrary<'a> {
     fn from(value: &'a VerificationCardSetContext) -> Self {
-        Self::from(vec![
-            Self::from(&value.verification_card_set_id),
-            Self::from(&value.verification_card_set_alias),
-            Self::from(&value.verification_card_set_description),
-            Self::from(&value.ballot_box_id),
-            Self::from(&value.ballot_box_start_time),
-            Self::from(&value.ballot_box_finish_time),
-            Self::from(value.test_ballot_box),
-            Self::from(&value.number_of_voting_cards),
-            Self::from(&value.grace_period),
-            Self::from(&value.primes_mapping_table),
-        ])
-    }
-}
-
-impl<'a> From<&'a PrimesMappingTable> for HashableMessage<'a> {
-    fn from(value: &'a PrimesMappingTable) -> Self {
-        let l: Vec<HashableMessage> = value.p_table.iter().map(Self::from).collect();
-        Self::from(vec![Self::from(&value.encryption_group), Self::from(l)])
+        Self {
+            vcs: &value.verification_card_set_id,
+            vcs_alias: &value.verification_card_set_alias,
+            vcs_desc: &value.verification_card_set_description,
+            bb: &value.ballot_box_id,
+            t_s_bb: &value.ballot_box_start_time,
+            t_f_bb: &value.ballot_box_finish_time,
+            test_ballot_box: value.test_ballot_box,
+            upper_n_upper_e: value.number_of_voting_cards,
+            grace_period: value.grace_period,
+            p_table: &value.primes_mapping_table.p_table,
+            encryption_parameters: &value.primes_mapping_table.encryption_group,
+        }
     }
 }
 
@@ -422,7 +429,7 @@ mod test {
     #[serde(rename_all = "camelCase")]
     struct TestDataStructureInner {
         description: String,
-        context: ElectionEventContextPayload,
+        context: ElectionEventContext,
         output: Output,
     }
 

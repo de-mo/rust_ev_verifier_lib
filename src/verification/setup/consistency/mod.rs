@@ -17,8 +17,7 @@ mod v0315_chunk_consistency;
 use crate::{config::Config, verification::VerificationError};
 
 use super::super::{
-    meta_data::VerificationMetaDataList, suite::VerificationList, verification_unimplemented,
-    verifications::Verification,
+    meta_data::VerificationMetaDataList, suite::VerificationList, verifications::Verification,
 };
 
 pub fn get_verifications<'a>(

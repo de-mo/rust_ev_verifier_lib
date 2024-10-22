@@ -1,16 +1,12 @@
 use super::super::super::result::{VerificationEvent, VerificationResult};
 use crate::{
     config::Config,
-    data_structures::common_types::Proof,
     file_structure::{context_directory::ContextDirectoryTrait, VerificationDirectoryTrait},
 };
-
-use rayon::prelude::*;
-use rust_ev_crypto_primitives::Integer;
-use rust_ev_crypto_primitives::{
-    elgamal::EncryptionParameters, zero_knowledge_proofs::verify_schnorr,
+use rust_ev_system_library::preliminaries::{
+    GetHashElectionEventContextContext, VerifyKeyGenerationSchnorrProofsInput,
+    VerifyKeyGenerationSchnorrProofsOuput,
 };
-use std::iter::zip;
 
 pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
     dir: &D,
@@ -28,7 +24,7 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
             return;
         }
     };
-    let setup_ppk = match context_dir.setup_component_public_keys_payload() {
+    let setup_cc_ppk_payload = match context_dir.setup_component_public_keys_payload() {
         Ok(eg) => eg,
         Err(e) => {
             result.push(
@@ -39,129 +35,98 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
         }
     };
 
-    // CC proofs
-    for combined_cc_pk in setup_ppk
+    let get_hash_election_event_context =
+        GetHashElectionEventContextContext::from(&ee_context.election_event_context);
+
+    // Prepare inputs
+    let pk_ccr = setup_cc_ppk_payload
         .setup_component_public_keys
         .combined_control_component_public_keys
-    {
-        let j = combined_cc_pk.node_id;
-
-        // CCRj Schnorr Proofs
-        let i_aux_ccr_j = vec![
-            ee_context.election_event_context.election_event_id.clone(),
-            "GenKeysCCR".to_string(),
-            j.to_string(),
-        ];
-        let proofs: Vec<Proof> = combined_cc_pk
-            .ccrj_schnorr_proofs
-            .iter()
-            .map(Proof::from)
-            .collect();
-
-        let mut res = run_verify_schnorr_proofs(
-            &ee_context.encryption_group,
-            &combined_cc_pk.ccrj_choice_return_codes_encryption_public_key,
-            &proofs,
-            &i_aux_ccr_j,
-        )
-        .clone_add_context("Test VerifSchnorrCCRji")
-        .clone_add_context("Proof CCR_j")
-        .clone_add_context(format!("node {}", j));
-        result.append(&mut res);
-
-        // CCMj Schnorr Proofs
-        let i_aux_ccm_j = vec![
-            ee_context.election_event_context.election_event_id.clone(),
-            "SetupTallyCCM".to_string(),
-            j.to_string(),
-        ];
-        let proofs: Vec<Proof> = combined_cc_pk
-            .ccmj_schnorr_proofs
-            .iter()
-            .map(Proof::from)
-            .collect();
-
-        let mut res = run_verify_schnorr_proofs(
-            &ee_context.encryption_group,
-            &combined_cc_pk.ccmj_election_public_key,
-            &proofs,
-            &i_aux_ccm_j,
-        )
-        .clone_add_context("Test VerifSchnorrCCMji")
-        .clone_add_context("Proof CCM_j")
-        .clone_add_context(format!("node {}", j));
-        result.append(&mut res);
-    }
-
-    // EB proofs
-    let i_aux_eb = vec![
-        ee_context.election_event_context.election_event_id.clone(),
-        "SetupTallyEB".to_string(),
-    ];
-    let proofs: Vec<Proof> = setup_ppk
+        .iter()
+        .map(|cc| {
+            cc.ccrj_choice_return_codes_encryption_public_key
+                .iter()
+                .collect::<Vec<_>>()
+        })
+        .collect::<Vec<_>>();
+    let pi_pkccr = setup_cc_ppk_payload
+        .setup_component_public_keys
+        .combined_control_component_public_keys
+        .iter()
+        .map(|cc| {
+            cc.ccrj_schnorr_proofs
+                .iter()
+                .map(|p| p.as_tuple())
+                .collect::<Vec<_>>()
+        })
+        .collect::<Vec<_>>();
+    let el_pk = setup_cc_ppk_payload
+        .setup_component_public_keys
+        .combined_control_component_public_keys
+        .iter()
+        .map(|cc| cc.ccmj_election_public_key.iter().collect::<Vec<_>>())
+        .collect::<Vec<_>>();
+    let pi_elpk = setup_cc_ppk_payload
+        .setup_component_public_keys
+        .combined_control_component_public_keys
+        .iter()
+        .map(|cc| {
+            cc.ccmj_schnorr_proofs
+                .iter()
+                .map(|p| p.as_tuple())
+                .collect::<Vec<_>>()
+        })
+        .collect::<Vec<_>>();
+    let eb_pk = setup_cc_ppk_payload
+        .setup_component_public_keys
+        .electoral_board_public_key
+        .iter()
+        .collect::<Vec<_>>();
+    let pi_eb = setup_cc_ppk_payload
         .setup_component_public_keys
         .electoral_board_schnorr_proofs
         .iter()
-        .map(Proof::from)
-        .collect();
-    let mut res = run_verify_schnorr_proofs(
-        &ee_context.encryption_group,
-        &setup_ppk
-            .setup_component_public_keys
-            .electoral_board_public_key,
-        &proofs,
-        &i_aux_eb,
-    )
-    .clone_add_context("Test VerifSchnorrELi")
-    .clone_add_context("Proof Electoral board");
-    result.append(&mut res);
-}
+        .map(|p| p.as_tuple())
+        .collect::<Vec<_>>();
+    let verify_key_generation_schnorr_proofs_input = VerifyKeyGenerationSchnorrProofsInput {
+        pk_ccr: pk_ccr.as_slice(),
+        pi_pkccr: pi_pkccr.as_slice(),
+        el_pk: el_pk.as_slice(),
+        pi_elpk: pi_elpk.as_slice(),
+        eb_pk: &eb_pk,
+        pi_eb: &pi_eb,
+    };
 
-fn run_verify_schnorr_proofs(
-    eg: &EncryptionParameters,
-    pks: &Vec<Integer>,
-    pis: &Vec<Proof>,
-    i_aux: &Vec<String>,
-) -> VerificationResult {
-    let mut res = VerificationResult::new();
-    if pks.len() != pis.len() {
-        res.push(VerificationEvent::new_error(
-            "The length of pks and pis is not the same",
-        ));
-    } else {
-        let failures: Vec<Option<VerificationEvent>> = zip(pks, pis)
-            .enumerate()
-            .par_bridge()
-            .map(|(i, (pk, pi))| {
-                run_verify_schnorr_proof(eg, pi, pk, i_aux)
-                    .map(|e| e.add_context(format!("at position {}", i)))
-            })
-            .collect();
-        failures.into_iter().for_each(|o| {
-            if let Some(f) = o {
-                res.push(f)
-            }
-        });
-    }
-    res
-}
+    let verif_schnorr_key_generation =
+        VerifyKeyGenerationSchnorrProofsOuput::verify_key_generation_schnorr_proofs(
+            &get_hash_election_event_context,
+            &verify_key_generation_schnorr_proofs_input,
+        );
 
-#[allow(clippy::too_many_arguments)]
-fn run_verify_schnorr_proof(
-    eg: &EncryptionParameters,
-    schnorr: &Proof,
-    y: &Integer,
-    i_aux: &Vec<String>,
-) -> Option<VerificationEvent> {
-    match verify_schnorr(eg, schnorr.as_tuple(), y, i_aux) {
-        Err(e) => return Some(VerificationEvent::new_failure(&e)),
-        Ok(b) => {
-            if !b {
-                return Some(VerificationEvent::new_failure("Schnorr proofs not ok"));
-            }
-        }
-    }
-    None
+    result.extend(
+        verif_schnorr_key_generation
+            .errors
+            .iter()
+            .map(VerificationEvent::new_error)
+            .chain(
+                verif_schnorr_key_generation
+                    .verif_schnorr_ccm
+                    .iter()
+                    .map(|e| VerificationEvent::new_error(e).add_context("verif_schnorr_ccm")),
+            )
+            .chain(
+                verif_schnorr_key_generation
+                    .verif_schnorr_ccr
+                    .iter()
+                    .map(|e| VerificationEvent::new_error(e).add_context("verif_schnorr_ccr")),
+            )
+            .chain(
+                verif_schnorr_key_generation
+                    .verif_schnorr_eb
+                    .iter()
+                    .map(|e| VerificationEvent::new_error(e).add_context("verif_schnorr_eb")),
+            ),
+    );
 }
 
 #[cfg(test)]

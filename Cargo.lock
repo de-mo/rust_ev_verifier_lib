@@ -821,8 +821,11 @@ dependencies = [
 name = "rust_ev_system_library"
 version = "0.1.0"
 dependencies = [
+ "chrono",
+ "rayon",
  "rust_ev_crypto_primitives",
  "thiserror",
+ "tracing",
 ]
 
 [[package]]
