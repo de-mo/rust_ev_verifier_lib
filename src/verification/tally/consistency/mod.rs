@@ -1,3 +1,6 @@
+mod v0810_verify_file_name_node_ids_consistency;
+mod v0811_verify_encryption_group_consistency;
+
 use super::super::{suite::VerificationList, verifications::Verification};
 use crate::{
     config::Config,
@@ -77,14 +80,14 @@ pub fn get_verifications<'a>(
         Verification::new(
             "08.10",
             "VerifyFileNameNodeIdsConsistency",
-            verification_unimplemented,
+            v0810_verify_file_name_node_ids_consistency::fn_verification,
             metadata_list,
             config,
         )?,
         Verification::new(
             "08.11",
             "VerifyEncryptionGroupConsistency",
-            verification_unimplemented,
+            v0811_verify_encryption_group_consistency::fn_verification,
             metadata_list,
             config,
         )?,
