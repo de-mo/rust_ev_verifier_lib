@@ -10,12 +10,13 @@ license = "Apache-2.0"
 readme = "README.md"
 categories = ["cryptography", "mathematics"]
 keywords = ["math", "e-voting", "crypto"]
+exclude = ["./specs", "./datasets", "./data", "./log", "./test_temp_dir", "./temp"]
 
 [dependencies]
 rust_ev_crypto_primitives = "0.6"
 #rust_ev_crypto_primitives = { path = "../rust_ev_crypto_primitives" }
-#rust_ev_system_library = "0.1"
-rust_ev_system_library = { path = "../rust_ev_system_library" }
+rust_ev_system_library = "0.1.1"
+#rust_ev_system_library = { path = "../rust_ev_system_library" }
 thiserror = "1"
 enum-kinds = "0.5"
 tracing = "0.1"
