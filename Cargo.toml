@@ -10,7 +10,7 @@ license = "Apache-2.0"
 readme = "README.md"
 categories = ["cryptography", "mathematics"]
 keywords = ["math", "e-voting", "crypto"]
-exclude = ["./specs", "./datasets", "./data", "./log", "./test_temp_dir", "./temp"]
+exclude = ["/specs", "/datasets", "/data", "/log", "/test_temp_dir", "/temp"]
 
 [dependencies]
 rust_ev_crypto_primitives = "0.6"
