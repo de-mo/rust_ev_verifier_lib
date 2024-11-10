@@ -48,7 +48,7 @@ The following table gives the situation of the development of the verifications 
 | Tally | 07.07        | Implemented     | Done (Errors with XML)  |
 | Tally | 08.01        | Implemented     | Done (without negative) |
 | Tally | 08.02        | Implemented     | Done (without negative) |
-| Tally | 08.03        | Not implemented
+| Tally | 08.03        | Implemented     | Done (without negative) |
 | Tally | 08.04        | Not implemented
 | Tally | 08.05        | Not implemented
 | Tally | 08.06        | Not implemented
