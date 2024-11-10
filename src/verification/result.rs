@@ -142,7 +142,7 @@ impl VerificationResult {
 
     /// New VerificationResult
     pub fn new() -> Self {
-        VerificationResult { results: vec![] }
+        Self { results: vec![] }
     }
 
     /// Add the context to the contexts of self
@@ -201,7 +201,6 @@ impl VerificationResult {
     }
 
     /// Append strings to self as errors
-
     pub fn append_errors_from_string(&mut self, errors: &[String]) {
         let events: Vec<VerificationEvent> = errors
             .iter()
@@ -213,7 +212,6 @@ impl VerificationResult {
     }
 
     /// Append strings to self as failures
-
     pub fn append_failures_from_string(&mut self, failures: &[String]) {
         let events: Vec<VerificationEvent> = failures
             .iter()
@@ -222,6 +220,29 @@ impl VerificationResult {
         for e in events {
             self.push(e)
         }
+    }
+
+    /// Join a &[<Self>] with context
+    pub fn join_with_context<C>(data: &[Self], context: C) -> Self
+    where
+        C: Clone + Display + Send + Sync + 'static,
+    {
+        let mut res = Self::new();
+        for d in data.iter() {
+            res.append_with_context(d, context.clone());
+        }
+        res
+    }
+
+    /// Join a &[<Self>]
+    pub fn join(data: &[Self]) -> Self {
+        let mut res = Self::new();
+        for d in data.iter() {
+            for e in d.results.iter() {
+                res.push(e.clone());
+            }
+        }
+        res
     }
 }
 
