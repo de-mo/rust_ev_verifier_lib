@@ -820,8 +820,6 @@ dependencies = [
 [[package]]
 name = "rust_ev_system_library"
 version = "0.1.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "97182c5dda03afcfd5ddc8b2f5b887f8d3a012fb0644d9d60787eabb7cfb0a0d"
 dependencies = [
  "chrono",
  "rayon",
