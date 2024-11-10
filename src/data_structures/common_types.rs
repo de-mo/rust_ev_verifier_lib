@@ -95,6 +95,12 @@ pub struct ExponentiatedEncryptedElement {
     pub phis: Vec<Integer>,
 }
 
+impl ExponentiatedEncryptedElement {
+    pub fn number_of_ciphertext_elements(&self) -> usize {
+        self.phis.len()
+    }
+}
+
 impl<'a> From<&'a ExponentiatedEncryptedElement> for HashableMessage<'a> {
     fn from(value: &'a ExponentiatedEncryptedElement) -> Self {
         let mut elts = vec![];
