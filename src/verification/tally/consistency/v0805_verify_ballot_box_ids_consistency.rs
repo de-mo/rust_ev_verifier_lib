@@ -14,57 +14,68 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
     let tally_dir = dir.unwrap_tally();
 
     for bb_dir in tally_dir.bb_directories().iter() {
-        let bb_id = bb_dir.name();
+        result.append_with_context(
+            &verify_for_bb_directory(bb_dir),
+            format!("Ballot box directory {}", bb_dir.name()),
+        );
+    }
+}
 
-        for (i, cc_bb_payload_res) in bb_dir.control_component_ballot_box_payload_iter() {
-            match cc_bb_payload_res {
-                Ok(p) => {
-                    if p.ballot_box_id != bb_id {
-                        result.push(VerificationEvent::new_failure(&format!(
-                        "bb_id (={}) in {}/control_component_ballot_box_payload_{} is not the same than the directory",
-                        &p.ballot_box_id, bb_id, i
-                    )));
-                    }
-                }
-                Err(e) => result.push(VerificationEvent::new_error(&e).add_context(format!(
-                    "{}/control_component_ballot_box_payload_{} cannot be read",
-                    bb_id, i
-                ))),
-            }
-        }
+fn verify_for_bb_directory<B: BBDirectoryTrait>(bb_dir: &B) -> VerificationResult {
+    let mut result = VerificationResult::new();
 
-        for (i, cc_bb_payload_res) in bb_dir.control_component_shuffle_payload_iter() {
-            match cc_bb_payload_res {
-                Ok(p) => {
-                    if p.ballot_box_id != bb_id {
-                        result.push(VerificationEvent::new_failure(&format!(
-                        "bb_id (={}) in {}/control_component_shuffle_payload_{} is not the same than the directory",
-                        &p.ballot_box_id, bb_id, i
-                    )));
-                    }
-                }
-                Err(e) => result.push(VerificationEvent::new_error(&e).add_context(format!(
-                    "{}/control_component_shuffle_payload_{} cannot be read",
-                    bb_id, i
-                ))),
-            }
-        }
+    let bb_id = bb_dir.name();
 
-        match bb_dir.tally_component_shuffle_payload() {
+    for (i, cc_bb_payload_res) in bb_dir.control_component_ballot_box_payload_iter() {
+        match cc_bb_payload_res {
             Ok(p) => {
                 if p.ballot_box_id != bb_id {
                     result.push(VerificationEvent::new_failure(&format!(
-                    "bb_id (={}) in {}/tally_component_shuffle_payload is not the same than the directory",
-                    &p.ballot_box_id, bb_id
+                    "bb_id (={}) in {}/control_component_ballot_box_payload_{} is not the same than the directory",
+                    &p.ballot_box_id, bb_id, i
                 )));
                 }
             }
             Err(e) => result.push(VerificationEvent::new_error(&e).add_context(format!(
-                "{}/tally_component_shuffle_payload cannot be read",
-                bb_id
+                "{}/control_component_ballot_box_payload_{} cannot be read",
+                bb_id, i
             ))),
         }
     }
+
+    for (i, cc_bb_payload_res) in bb_dir.control_component_shuffle_payload_iter() {
+        match cc_bb_payload_res {
+            Ok(p) => {
+                if p.ballot_box_id != bb_id {
+                    result.push(VerificationEvent::new_failure(&format!(
+                    "bb_id (={}) in {}/control_component_shuffle_payload_{} is not the same than the directory",
+                    &p.ballot_box_id, bb_id, i
+                )));
+                }
+            }
+            Err(e) => result.push(VerificationEvent::new_error(&e).add_context(format!(
+                "{}/control_component_shuffle_payload_{} cannot be read",
+                bb_id, i
+            ))),
+        }
+    }
+
+    match bb_dir.tally_component_shuffle_payload() {
+        Ok(p) => {
+            if p.ballot_box_id != bb_id {
+                result.push(VerificationEvent::new_failure(&format!(
+                "bb_id (={}) in {}/tally_component_shuffle_payload is not the same than the directory",
+                &p.ballot_box_id, bb_id
+            )));
+            }
+        }
+        Err(e) => result.push(VerificationEvent::new_error(&e).add_context(format!(
+            "{}/tally_component_shuffle_payload cannot be read",
+            bb_id
+        ))),
+    }
+
+    result
 }
 
 #[cfg(test)]
