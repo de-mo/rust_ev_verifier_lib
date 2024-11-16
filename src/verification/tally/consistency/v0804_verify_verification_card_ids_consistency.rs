@@ -37,7 +37,7 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
                     VerificationEvent::new_error(&e)
                         .add_context("setup_component_tally_data_payload cannot be read"),
                 );
-                return;
+                break;
             }
         };
         let hs_vc_ids = payload
@@ -52,7 +52,7 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
                     "ballot box id for vcs_id {} not found in setup_component_tally_data_payload",
                     vcs_id
                 )));
-                return;
+                break;
             }
         };
         let bb_dir = match tally_dir
@@ -66,7 +66,7 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
                     "ballot box for bb_id {} not found in the ballot box directories",
                     bb_id
                 )));
-                return;
+                break;
             }
         };
         for (i, cc_bb_paylod) in bb_dir.control_component_ballot_box_payload_iter() {
@@ -89,7 +89,6 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
                     "The voting card ids in {}/control_component_ballot_box_payload_{} are not a subset of the vc ids in {}/setup_component_tally_data_payload",
                     bb_id, i, vcs_id
                 )));
-                return;
             }
         }
     }
