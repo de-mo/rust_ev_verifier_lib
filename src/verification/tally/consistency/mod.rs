@@ -6,15 +6,14 @@ mod v0805_verify_ballot_box_ids_consistency;
 mod v0806_verify_file_name_ballot_box_ids_consistency;
 mod v0807_verify_number_confirmed_encrypted_votes_consistency;
 mod v0808_verify_election_event_id_consistency;
+mod v0809_verify_node_ids_consistency;
 mod v0810_verify_file_name_node_ids_consistency;
 mod v0811_verify_encryption_group_consistency;
 
 use super::super::{suite::VerificationList, verifications::Verification};
 use crate::{
     config::Config,
-    verification::{
-        meta_data::VerificationMetaDataList, verification_unimplemented, VerificationError,
-    },
+    verification::{meta_data::VerificationMetaDataList, VerificationError},
 };
 
 pub fn get_verifications<'a>(
@@ -81,7 +80,7 @@ pub fn get_verifications<'a>(
         Verification::new(
             "08.09",
             "VerifyNodeIdsConsistency",
-            verification_unimplemented,
+            v0809_verify_node_ids_consistency::fn_verification,
             metadata_list,
             config,
         )?,
