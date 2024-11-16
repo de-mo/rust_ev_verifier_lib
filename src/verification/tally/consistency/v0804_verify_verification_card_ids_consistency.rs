@@ -8,7 +8,6 @@ use crate::{
         ContextDirectoryTrait, TallyDirectoryTrait, VerificationDirectoryTrait,
     },
 };
-use rust_ev_system_library::preliminaries::PTableTrait;
 
 pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
     dir: &D,
