@@ -1,6 +1,7 @@
 mod v0801_verify_confirmed_encrypted_votes_consistency;
 mod v0802_verify_ciphertexts_consistency;
 mod v0803_verify_plaintexts_consistency;
+mod v0804_verify_verification_card_ids_consistency;
 mod v0810_verify_file_name_node_ids_consistency;
 mod v0811_verify_encryption_group_consistency;
 
@@ -41,7 +42,7 @@ pub fn get_verifications<'a>(
         Verification::new(
             "08.04",
             "VerifyVerificationCardIdsConsistency",
-            verification_unimplemented,
+            v0804_verify_verification_card_ids_consistency::fn_verification,
             metadata_list,
             config,
         )?,
