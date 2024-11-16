@@ -141,7 +141,7 @@ impl VerificationCardSetContext {
 impl ElectionEventContext {
     pub fn find_verification_card_set_context<'a>(
         &'a self,
-        vcs_id: &String,
+        vcs_id: &str,
     ) -> Option<&'a VerificationCardSetContext> {
         self.verification_card_set_contexts
             .iter()
@@ -153,6 +153,11 @@ impl ElectionEventContext {
             .iter()
             .map(|c| c.verification_card_set_id.as_str())
             .collect()
+    }
+
+    pub fn get_ballot_box_id<'a>(&'a self, vcs_id: &str) -> Option<&'a str> {
+        self.find_verification_card_set_context(vcs_id)
+            .map(|c| c.ballot_box_id.as_str())
     }
 }
 
