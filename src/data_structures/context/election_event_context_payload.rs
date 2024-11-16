@@ -139,15 +139,19 @@ impl VerificationCardSetContext {
 }
 
 impl ElectionEventContext {
+    /// Find the verification card set context with the id
+    ///
+    /// Return None if not found
     pub fn find_verification_card_set_context<'a>(
         &'a self,
         vcs_id: &str,
     ) -> Option<&'a VerificationCardSetContext> {
         self.verification_card_set_contexts
             .iter()
-            .find(|c| &c.verification_card_set_id == vcs_id)
+            .find(|c| c.verification_card_set_id == vcs_id)
     }
 
+    /// Get the list of all verification card set ids
     pub fn vcs_ids(&self) -> Vec<&str> {
         self.verification_card_set_contexts
             .iter()
@@ -155,7 +159,18 @@ impl ElectionEventContext {
             .collect()
     }
 
-    pub fn get_ballot_box_id<'a>(&'a self, vcs_id: &str) -> Option<&'a str> {
+    /// Get the list of all ballot box ids
+    pub fn bb_ids(&self) -> Vec<&str> {
+        self.verification_card_set_contexts
+            .iter()
+            .map(|c| c.ballot_box_id.as_str())
+            .collect()
+    }
+
+    /// Find the id of the ballot box using the id of the verification card set
+    ///
+    /// Return None if not found
+    pub fn find_ballot_box_id<'a>(&'a self, vcs_id: &str) -> Option<&'a str> {
         self.find_verification_card_set_context(vcs_id)
             .map(|c| c.ballot_box_id.as_str())
     }

@@ -45,7 +45,7 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
             .iter()
             .map(|s| s.as_str())
             .collect::<HashSet<_>>();
-        let bb_id = match ee_context.get_ballot_box_id(vcs_id.as_str()) {
+        let bb_id = match ee_context.find_ballot_box_id(vcs_id.as_str()) {
             Some(id) => id,
             None => {
                 result.push(VerificationEvent::new_error(&format!(
