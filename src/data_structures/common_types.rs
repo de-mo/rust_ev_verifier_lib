@@ -53,10 +53,10 @@ impl Signature {
 #[derive(Deserialize, Debug, Clone)]
 pub struct SchnorrProof {
     #[serde(deserialize_with = "deserialize_string_base64_to_integer")]
-    #[serde(alias = "_e", alias = "_e")]
+    #[serde(alias = "_e")]
     pub e: Integer,
     #[serde(deserialize_with = "deserialize_string_base64_to_integer")]
-    #[serde(alias = "_z", alias = "_z")]
+    #[serde(alias = "_z")]
     pub z: Integer,
 }
 
@@ -72,7 +72,7 @@ impl SchnorrProof {
     }
 }
 
-/// A decryption proof (e,z) where the keys are _e and _z in json
+/// A decryption proof (e,z) where the keys are e and z (array) in json
 #[derive(Deserialize, Debug, Clone)]
 pub struct DecryptionProof {
     #[serde(deserialize_with = "deserialize_string_base64_to_integer")]
