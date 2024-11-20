@@ -97,12 +97,6 @@ pub struct CiphertextDef {
     pub phis: Vec<Integer>,
 }
 
-impl CiphertextDef {
-    pub fn number_of_ciphertext_elements(&self) -> usize {
-        self.phis.len()
-    }
-}
-
 impl<'a> From<&'a CiphertextDef> for HashableMessage<'a> {
     fn from(value: &'a CiphertextDef) -> Self {
         let mut elts = vec![];

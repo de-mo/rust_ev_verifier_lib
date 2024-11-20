@@ -450,35 +450,6 @@ where
 
     let v = Vec::deserialize(deserializer)?;
     Ok(v.into_iter().map(|Wrapper(a)| a).collect())
-    //let res_local: Vec<CiphertextDef> =
-    //    Deserialize::deserialize(serde::de::value::MapAccessDeserializer::new(deserializer))?;
-    //Ok(res_local.iter().cloned().map(Ciphertext::from).collect())
-
-    /*
-    struct Visitor;
-
-    impl<'de> ::serde::de::Visitor<'de> for Visitor {
-        type Value = Vec<Ciphertext>;
-
-        fn expecting(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
-            write!(f, "a sequence of ciphertexts")
-        }
-
-        fn visit_seq<A>(self, mut seq: A) -> Result<Self::Value, A::Error>
-        where
-            A: serde::de::SeqAccess<'de>,
-        {
-            let mut vec = <Self::Value>::new();
-
-            while let Some(v) = (seq.next_element())? {
-                let local: CiphertextDef = Deserialize::deserialize(v)?;
-                //let local: CiphertextDef = Deserialize::deserialize(deserializer)?;
-                vec.push(Ciphertext::from(local));
-            }
-            Ok(vec)
-        }
-    }
-    deserializer.deserialize_seq(Visitor) */
 }
 
 #[allow(dead_code)]
