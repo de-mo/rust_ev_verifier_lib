@@ -1,10 +1,10 @@
 use super::super::{
-    common_types::{EncryptionParametersDef, ExponentiatedEncryptedElement, Signature},
+    common_types::{CiphertextDef, EncryptionParametersDef, Signature},
     deserialize_seq_string_base64_to_seq_integer, implement_trait_verifier_data_json_decode,
     DataStructureError, VerifierDataDecode,
 };
 use crate::direct_trust::{CertificateAuthority, VerifiySignatureTrait, VerifySignatureError};
-use rust_ev_crypto_primitives::Integer;
+use rust_ev_crypto_primitives::{elgamal::Ciphertext, Integer};
 use rust_ev_crypto_primitives::{
     elgamal::EncryptionParameters, ByteArray, HashableMessage, VerifyDomainTrait,
 };
@@ -49,8 +49,10 @@ pub struct SetupComponentVerificationDataInner {
     pub verification_card_id: String,
     #[serde(deserialize_with = "deserialize_seq_string_base64_to_seq_integer")]
     pub verification_card_public_key: Vec<Integer>,
-    pub encrypted_hashed_squared_partial_choice_return_codes: ExponentiatedEncryptedElement,
-    pub encrypted_hashed_squared_confirmation_key: ExponentiatedEncryptedElement,
+    #[serde(with = "CiphertextDef")]
+    pub encrypted_hashed_squared_partial_choice_return_codes: Ciphertext,
+    #[serde(with = "CiphertextDef")]
+    pub encrypted_hashed_squared_confirmation_key: Ciphertext,
 }
 
 #[derive(Deserialize, Debug, Clone)]

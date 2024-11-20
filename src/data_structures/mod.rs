@@ -35,11 +35,15 @@ pub use self::{
 };
 use crate::config::Config as VerifierConfig;
 use chrono::NaiveDateTime;
+use common_types::CiphertextDef;
 use quick_xml::{DeError as QuickXmDeError, Error as QuickXmlError};
 use roxmltree::{Document, Error as RoXmlTreeError};
-use rust_ev_crypto_primitives::Integer;
+use rust_ev_crypto_primitives::{elgamal::Ciphertext, Integer};
 use rust_ev_crypto_primitives::{ByteArray, DecodeTrait, Hexa};
-use serde::de::{Deserialize, Deserializer, Error as SerdeError};
+use serde::{
+    de::{Deserialize as DeDeserialize, Deserializer, Error as SerdeError},
+    Deserialize,
+};
 use std::path::Path;
 use thiserror::Error;
 pub use xml::XMLError;
@@ -435,6 +439,46 @@ where
         }
     }
     deserializer.deserialize_seq(Visitor)
+}
+
+fn deserialize_seq_ciphertext<'de, D>(deserializer: D) -> Result<Vec<Ciphertext>, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    #[derive(Deserialize)]
+    struct Wrapper(#[serde(with = "CiphertextDef")] Ciphertext);
+
+    let v = Vec::deserialize(deserializer)?;
+    Ok(v.into_iter().map(|Wrapper(a)| a).collect())
+    //let res_local: Vec<CiphertextDef> =
+    //    Deserialize::deserialize(serde::de::value::MapAccessDeserializer::new(deserializer))?;
+    //Ok(res_local.iter().cloned().map(Ciphertext::from).collect())
+
+    /*
+    struct Visitor;
+
+    impl<'de> ::serde::de::Visitor<'de> for Visitor {
+        type Value = Vec<Ciphertext>;
+
+        fn expecting(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
+            write!(f, "a sequence of ciphertexts")
+        }
+
+        fn visit_seq<A>(self, mut seq: A) -> Result<Self::Value, A::Error>
+        where
+            A: serde::de::SeqAccess<'de>,
+        {
+            let mut vec = <Self::Value>::new();
+
+            while let Some(v) = (seq.next_element())? {
+                let local: CiphertextDef = Deserialize::deserialize(v)?;
+                //let local: CiphertextDef = Deserialize::deserialize(deserializer)?;
+                vec.push(Ciphertext::from(local));
+            }
+            Ok(vec)
+        }
+    }
+    deserializer.deserialize_seq(Visitor) */
 }
 
 #[allow(dead_code)]

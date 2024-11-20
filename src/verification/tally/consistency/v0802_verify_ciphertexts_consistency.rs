@@ -2,14 +2,15 @@ use super::super::super::result::{VerificationEvent, VerificationResult};
 use crate::{
     config::Config,
     data_structures::{
-        common_types::ExponentiatedEncryptedElement, ControlComponentBallotBoxPayload,
-        ControlComponentShufflePayload, TallyComponentShufflePayload,
+        ControlComponentBallotBoxPayload, ControlComponentShufflePayload,
+        TallyComponentShufflePayload,
     },
     file_structure::{
         tally_directory::BBDirectoryTrait, ContextDirectoryTrait, TallyDirectoryTrait,
         VerificationDirectoryTrait,
     },
 };
+use rust_ev_crypto_primitives::elgamal::Ciphertext;
 use rust_ev_system_library::preliminaries::PTableTrait;
 
 pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
@@ -149,15 +150,12 @@ fn verify_tally_shuffle_payload(
     )
 }
 
-fn verify_vec_ciphertexts(
-    data: &[&ExponentiatedEncryptedElement],
-    delta: usize,
-) -> VerificationResult {
+fn verify_vec_ciphertexts(data: &[&Ciphertext], delta: usize) -> VerificationResult {
     VerificationResult::from(data
         .iter()
         .enumerate()
         .filter_map(|(i, v)| {
-            if v.number_of_ciphertext_elements() == delta {
+            if v.phis.len() == delta {
                 None
             } else {
                 Some(VerificationEvent::new_failure(&format!("At pos {}: number of ciphertext elements doesn't equal the number allowed write-ins plus one", i)))

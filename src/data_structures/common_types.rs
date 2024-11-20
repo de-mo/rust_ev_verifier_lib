@@ -1,6 +1,7 @@
 //! Type that are used in many structures
 
 use super::{deserialize_seq_string_base64_to_seq_integer, deserialize_string_base64_to_integer};
+use rust_ev_crypto_primitives::elgamal::Ciphertext;
 use rust_ev_crypto_primitives::Integer;
 use rust_ev_crypto_primitives::{
     elgamal::EncryptionParameters, ByteArray, DecodeTrait, HashableMessage,
@@ -88,26 +89,36 @@ impl<'a> From<&'a DecryptionProof> for HashableMessage<'a> {
 
 /// A exponentieted encrypted element (gamman, phi)
 #[derive(Deserialize, Debug, Clone)]
-pub struct ExponentiatedEncryptedElement {
+#[serde(remote = "Ciphertext")]
+pub struct CiphertextDef {
     #[serde(deserialize_with = "deserialize_string_base64_to_integer")]
     pub gamma: Integer,
     #[serde(deserialize_with = "deserialize_seq_string_base64_to_seq_integer")]
     pub phis: Vec<Integer>,
 }
 
-impl ExponentiatedEncryptedElement {
+impl CiphertextDef {
     pub fn number_of_ciphertext_elements(&self) -> usize {
         self.phis.len()
     }
 }
 
-impl<'a> From<&'a ExponentiatedEncryptedElement> for HashableMessage<'a> {
-    fn from(value: &'a ExponentiatedEncryptedElement) -> Self {
+impl<'a> From<&'a CiphertextDef> for HashableMessage<'a> {
+    fn from(value: &'a CiphertextDef) -> Self {
         let mut elts = vec![];
         elts.push(Self::from(&(value.gamma)));
         for p in value.phis.iter() {
             elts.push(Self::from(p));
         }
         Self::from(elts)
+    }
+}
+
+impl From<CiphertextDef> for Ciphertext {
+    fn from(value: CiphertextDef) -> Self {
+        Ciphertext {
+            gamma: value.gamma,
+            phis: value.phis,
+        }
     }
 }

@@ -1,5 +1,5 @@
 use super::super::{
-    common_types::{EncryptionParametersDef, ExponentiatedEncryptedElement, Signature},
+    common_types::{CiphertextDef, EncryptionParametersDef, Signature},
     implement_trait_verifier_data_json_decode, DataStructureError, VerifierDataDecode,
 };
 use crate::{
@@ -8,7 +8,8 @@ use crate::{
 };
 
 use rust_ev_crypto_primitives::{
-    elgamal::EncryptionParameters, ByteArray, HashableMessage, VerifyDomainTrait,
+    elgamal::{Ciphertext, EncryptionParameters},
+    ByteArray, HashableMessage, VerifyDomainTrait,
 };
 use serde::Deserialize;
 
@@ -29,9 +30,12 @@ implement_trait_verifier_data_json_decode!(ControlComponentBallotBoxPayload);
 #[serde(rename_all = "camelCase")]
 pub struct ConfirmedEncryptedVote {
     pub context_ids: ContextIds,
-    pub encrypted_vote: ExponentiatedEncryptedElement,
-    pub exponentiated_encrypted_vote: ExponentiatedEncryptedElement,
-    pub encrypted_partial_choice_return_codes: ExponentiatedEncryptedElement,
+    #[serde(with = "CiphertextDef")]
+    pub encrypted_vote: Ciphertext,
+    #[serde(with = "CiphertextDef")]
+    pub exponentiated_encrypted_vote: Ciphertext,
+    #[serde(with = "CiphertextDef")]
+    pub encrypted_partial_choice_return_codes: Ciphertext,
     pub exponentiation_proof: SchnorrProof,
     pub plaintext_equality_proof: DecryptionProof,
 }

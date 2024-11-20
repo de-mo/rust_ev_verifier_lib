@@ -1,6 +1,7 @@
 use super::super::{
-    common_types::{EncryptionParametersDef, ExponentiatedEncryptedElement, Signature},
-    implement_trait_verifier_data_json_decode, DataStructureError, VerifierDataDecode,
+    common_types::{EncryptionParametersDef, Signature},
+    deserialize_seq_ciphertext, implement_trait_verifier_data_json_decode, DataStructureError,
+    VerifierDataDecode,
 };
 use super::tally_component_shuffle_payload::VerifiableShuffle;
 use crate::{
@@ -9,7 +10,8 @@ use crate::{
 };
 
 use rust_ev_crypto_primitives::{
-    elgamal::EncryptionParameters, ByteArray, HashableMessage, VerifyDomainTrait,
+    elgamal::{Ciphertext, EncryptionParameters},
+    ByteArray, HashableMessage, VerifyDomainTrait,
 };
 use serde::Deserialize;
 
@@ -30,7 +32,8 @@ implement_trait_verifier_data_json_decode!(ControlComponentShufflePayload);
 #[derive(Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct VerifiableDecryptions {
-    pub ciphertexts: Vec<ExponentiatedEncryptedElement>,
+    #[serde(deserialize_with = "deserialize_seq_ciphertext")]
+    pub ciphertexts: Vec<Ciphertext>,
     pub decryption_proofs: Vec<DecryptionProof>,
 }
 

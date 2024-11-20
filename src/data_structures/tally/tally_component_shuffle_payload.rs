@@ -1,13 +1,14 @@
 use super::super::{
-    common_types::{EncryptionParametersDef, ExponentiatedEncryptedElement, Signature},
-    deserialize_seq_string_base64_to_seq_integer, deserialize_string_base64_to_integer,
-    implement_trait_verifier_data_json_decode, DataStructureError, VerifierDataDecode,
+    common_types::{EncryptionParametersDef, Signature},
+    deserialize_seq_ciphertext, deserialize_seq_string_base64_to_seq_integer,
+    deserialize_string_base64_to_integer, implement_trait_verifier_data_json_decode,
+    DataStructureError, VerifierDataDecode,
 };
 use crate::{
     data_structures::common_types::DecryptionProof,
     direct_trust::{CertificateAuthority, VerifiySignatureTrait, VerifySignatureError},
 };
-use rust_ev_crypto_primitives::Integer;
+use rust_ev_crypto_primitives::{elgamal::Ciphertext, Integer};
 use rust_ev_crypto_primitives::{
     elgamal::EncryptionParameters, ByteArray, HashableMessage, VerifyDomainTrait,
 };
@@ -29,7 +30,8 @@ implement_trait_verifier_data_json_decode!(TallyComponentShufflePayload);
 #[derive(Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct VerifiableShuffle {
-    pub shuffled_ciphertexts: Vec<ExponentiatedEncryptedElement>,
+    #[serde(deserialize_with = "deserialize_seq_ciphertext")]
+    pub shuffled_ciphertexts: Vec<Ciphertext>,
     pub shuffle_argument: ShuffleArgument,
 }
 
@@ -89,7 +91,8 @@ pub struct MultiExponentiationArgument {
     #[serde(rename = "c_B")]
     pub c_b: Vec<Integer>,
     #[serde(rename = "E")]
-    pub e: Vec<ExponentiatedEncryptedElement>,
+    #[serde(deserialize_with = "deserialize_seq_ciphertext")]
+    pub e: Vec<Ciphertext>,
     #[serde(deserialize_with = "deserialize_seq_string_base64_to_seq_integer")]
     pub a: Vec<Integer>,
     #[serde(deserialize_with = "deserialize_string_base64_to_integer")]

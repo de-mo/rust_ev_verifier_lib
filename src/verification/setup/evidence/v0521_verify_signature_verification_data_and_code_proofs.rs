@@ -2,7 +2,7 @@ use super::super::super::result::{VerificationEvent, VerificationResult};
 use crate::{
     config::Config,
     data_structures::{
-        common_types::{ExponentiatedEncryptedElement, SchnorrProof},
+        common_types::SchnorrProof,
         setup::{
             control_component_code_shares_payload::ControlComponentCodeSharesPayloadInner,
             setup_component_verification_data_payload::{
@@ -20,7 +20,7 @@ use crate::{
 };
 
 use rayon::prelude::*;
-use rust_ev_crypto_primitives::Integer;
+use rust_ev_crypto_primitives::{elgamal::Ciphertext, Integer};
 use rust_ev_crypto_primitives::{
     elgamal::EncryptionParameters, zero_knowledge_proofs::verify_exponentiation,
 };
@@ -219,9 +219,9 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
 /// Supporting algorithm
 fn algorithm_0303_verify_encrypted_pcc_exponentiation_proofs_verification_card_set(
     context: &ContextAlgorithm33,
-    encrypted_hashed_squared_partial_choice_return_codes: Vec<&ExponentiatedEncryptedElement>,
+    encrypted_hashed_squared_partial_choice_return_codes: Vec<&Ciphertext>,
     voter_choice_return_code_generation_public_key: Vec<&Integer>,
-    exponentiated_encrypted_partial_choice_return_codes: Vec<&ExponentiatedEncryptedElement>,
+    exponentiated_encrypted_partial_choice_return_codes: Vec<&Ciphertext>,
     encrypted_partial_choice_return_code_exponentiation_proof: Vec<&SchnorrProof>,
 ) -> VerificationResult {
     let mut result = VerificationResult::new();
@@ -270,9 +270,9 @@ fn algorithm_0303_verify_encrypted_pcc_exponentiation_proofs_verification_card_s
 fn algorithm_0303_verify_encrypted_pcc_exponentiation_proofs_verification_card_set_for_one_vc(
     context: &ContextAlgorithm33,
     vc_id: &str,
-    encrypted_hashed_squared_partial_choice_return_codes: &ExponentiatedEncryptedElement,
+    encrypted_hashed_squared_partial_choice_return_codes: &Ciphertext,
     voter_choice_return_code_generation_public_key: &Integer,
-    exponentiated_encrypted_partial_choice_return_codes: &ExponentiatedEncryptedElement,
+    exponentiated_encrypted_partial_choice_return_codes: &Ciphertext,
     encrypted_partial_choice_return_code_exponentiation_proof: &SchnorrProof,
 ) -> VerificationResult {
     let mut result = VerificationResult::new();
@@ -339,9 +339,9 @@ fn algorithm_0303_verify_encrypted_pcc_exponentiation_proofs_verification_card_s
 /// Supporting algorithm
 fn algorithm_0304_verify_encrypted_ckexponentiation_proofs_verification_card_set(
     context: &ContextAlgorithm34,
-    encrypted_hashed_squared_confirmation_key: Vec<&ExponentiatedEncryptedElement>,
+    encrypted_hashed_squared_confirmation_key: Vec<&Ciphertext>,
     voter_vote_cast_return_code_generation_public_key: Vec<&Integer>,
-    exponentiated_encrypted_confirmation_key: Vec<&ExponentiatedEncryptedElement>,
+    exponentiated_encrypted_confirmation_key: Vec<&Ciphertext>,
     encrypted_confirmation_key_exponentiation_proof: Vec<&SchnorrProof>,
 ) -> VerificationResult {
     let mut result = VerificationResult::new();
@@ -390,9 +390,9 @@ fn algorithm_0304_verify_encrypted_ckexponentiation_proofs_verification_card_set
 fn algorithm_0304_verify_encrypted_ckexponentiation_proofs_verification_card_set_for_one_vc(
     context: &ContextAlgorithm34,
     vc_id: &str,
-    encrypted_hashed_squared_confirmation_key: &ExponentiatedEncryptedElement,
+    encrypted_hashed_squared_confirmation_key: &Ciphertext,
     voter_vote_cast_return_code_generation_public_key: &Integer,
-    exponentiated_encrypted_confirmation_key: &ExponentiatedEncryptedElement,
+    exponentiated_encrypted_confirmation_key: &Ciphertext,
     encrypted_confirmation_key_exponentiation_proof: &SchnorrProof,
 ) -> VerificationResult {
     let mut result = VerificationResult::new();

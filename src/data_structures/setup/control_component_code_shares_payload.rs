@@ -1,14 +1,12 @@
 use super::super::{
-    common_types::{
-        EncryptionParametersDef, ExponentiatedEncryptedElement, SchnorrProof, Signature,
-    },
+    common_types::{CiphertextDef, EncryptionParametersDef, SchnorrProof, Signature},
     deserialize_seq_string_base64_to_seq_integer, implement_trait_verifier_data_json_decode,
     DataStructureError, VerifierDataDecode,
 };
 use crate::direct_trust::{
     CertificateAuthority, Keystore, VerifiySignatureTrait, VerifySignatureError,
 };
-use rust_ev_crypto_primitives::Integer;
+use rust_ev_crypto_primitives::{elgamal::Ciphertext, Integer};
 use rust_ev_crypto_primitives::{
     elgamal::EncryptionParameters, ByteArray, HashableMessage, VerifyDomainTrait,
 };
@@ -40,8 +38,10 @@ pub struct ControlComponentCodeShare {
     pub voter_choice_return_code_generation_public_key: Vec<Integer>,
     #[serde(deserialize_with = "deserialize_seq_string_base64_to_seq_integer")]
     pub voter_vote_cast_return_code_generation_public_key: Vec<Integer>,
-    pub exponentiated_encrypted_partial_choice_return_codes: ExponentiatedEncryptedElement,
-    pub exponentiated_encrypted_confirmation_key: ExponentiatedEncryptedElement,
+    #[serde(with = "CiphertextDef")]
+    pub exponentiated_encrypted_partial_choice_return_codes: Ciphertext,
+    #[serde(with = "CiphertextDef")]
+    pub exponentiated_encrypted_confirmation_key: Ciphertext,
     pub encrypted_partial_choice_return_code_exponentiation_proof: SchnorrProof,
     pub encrypted_confirmation_key_exponentiation_proof: SchnorrProof,
 }
