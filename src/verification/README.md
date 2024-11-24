@@ -58,5 +58,5 @@ The following table gives the situation of the development of the verifications 
 | Tally | 08.10        | Implemented     | Done (without negative) |
 | Tally | 08.11        | Implemented     | Done (without negative) |
 | Tally | 09.01        | Implemented     | Done (without negative) |
-| Tally | 10.01        | Partially implemented (no tally) | Done (without negative) |
-| Tally | 10.02        | Not implemented
+| Tally | 10.01        | Not implemented
+| Tally | 10.02        | Partially implemented (no tally) | Done (without negative) |
