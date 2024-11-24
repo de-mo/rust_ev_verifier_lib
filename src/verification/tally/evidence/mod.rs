@@ -1,3 +1,5 @@
+mod v1002_verify_tally_control_component;
+
 use super::super::{suite::VerificationList, verifications::Verification};
 use crate::{
     config::Config,
@@ -21,7 +23,7 @@ pub fn get_verifications<'a>(
         Verification::new(
             "10.02",
             "VerifyTallyControlComponent",
-            verification_unimplemented,
+            v1002_verify_tally_control_component::fn_verification,
             metadata_list,
             config,
         )?,
