@@ -64,7 +64,7 @@ impl<'a> From<&'a TallyComponentShufflePayload> for HashableMessage<'a> {
                     .verifiable_plaintext_decryption
                     .decrypted_votes
                     .iter()
-                    .map(HashableMessage::from)
+                    .map(|v| HashableMessage::from(&v.message))
                     .collect::<Vec<Self>>(),
             ),
             Self::from(
@@ -76,12 +76,6 @@ impl<'a> From<&'a TallyComponentShufflePayload> for HashableMessage<'a> {
                     .collect::<Vec<Self>>(),
             ),
         ])
-    }
-}
-
-impl<'a> From<&'a DecryptedVote> for HashableMessage<'a> {
-    fn from(value: &'a DecryptedVote) -> Self {
-        Self::from(vec![Self::from(&value.message)])
     }
 }
 
