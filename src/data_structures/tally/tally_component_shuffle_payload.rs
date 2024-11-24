@@ -1,7 +1,8 @@
 use super::{
     super::{
         common_types::{EncryptionParametersDef, Signature},
-        implement_trait_verifier_data_json_decode, DataStructureError, VerifierDataDecode,
+        deserialize_seq_string_base64_to_seq_integer, implement_trait_verifier_data_json_decode,
+        DataStructureError, VerifierDataDecode,
     },
     verifiable_shuffle::{verifiy_domain_for_verifiable_shuffle, VerifiableShuffle},
 };
@@ -10,7 +11,7 @@ use crate::{
     direct_trust::{CertificateAuthority, VerifiySignatureTrait, VerifySignatureError},
 };
 use rust_ev_crypto_primitives::{
-    elgamal::EncryptionParameters, ByteArray, HashableMessage, VerifyDomainTrait,
+    elgamal::EncryptionParameters, ByteArray, HashableMessage, Integer, VerifyDomainTrait,
 };
 use serde::Deserialize;
 
@@ -37,7 +38,8 @@ pub struct VerifiablePlaintextDecryption {
 #[derive(Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct DecryptedVote {
-    pub message: Vec<String>,
+    #[serde(deserialize_with = "deserialize_seq_string_base64_to_seq_integer")]
+    pub message: Vec<Integer>,
 }
 
 impl VerifyDomainTrait<String> for TallyComponentShufflePayload {
