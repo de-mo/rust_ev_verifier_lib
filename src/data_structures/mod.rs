@@ -336,6 +336,22 @@ where
         .map(|e| e.into_mp_integer())
 }
 
+fn deserialize_option_string_base64_to_option_integer<'de, D>(
+    deserializer: D,
+) -> Result<Option<Integer>, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    let buf = Option::<String>::deserialize(deserializer)?;
+
+    match buf {
+        Some(buf) => ByteArray::base64_decode(&buf)
+            .map_err(|e| SerdeError::custom(e.to_string()))
+            .map(|e| Some(e.into_mp_integer())),
+        None => Ok(None),
+    }
+}
+
 fn deserialize_string_string_to_datetime<'de, D>(deserializer: D) -> Result<NaiveDateTime, D::Error>
 where
     D: Deserializer<'de>,
@@ -569,6 +585,28 @@ pub(super) mod test {
             test_data_structure_verify_signature!();
             test_data_structure_verify_domain!();
         };
+        ($suffix: ident, $t:ident, $f: literal, $fn_path: ident, $ignored: literal) => {
+            paste! {
+                fn [<get_data_res_ $suffix>]() -> Result<$t, DataStructureError> {
+                    let json = fs::read_to_string($fn_path().join($f)).unwrap();
+                    $t::decode_json(&json)
+                }
+                test_data_structure_read_data_set!($suffix);
+                test_data_structure_verify_signature!($suffix, $ignored);
+                test_data_structure_verify_domain!($suffix);
+            }
+        };
+        ($suffix: ident, $t:ident, $f: literal, $fn_path: ident) => {
+            paste! {
+                fn [<get_data_res_ $suffix>]() -> Result<$t, DataStructureError> {
+                    let json = fs::read_to_string($fn_path().join($f)).unwrap();
+                    $t::decode_json(&json)
+                }
+                test_data_structure_read_data_set!($suffix);
+                test_data_structure_verify_signature!($suffix);
+                test_data_structure_verify_domain!($suffix);
+            }
+        };
     }
     pub(super) use test_data_structure;
 
@@ -581,6 +619,18 @@ pub(super) mod test {
                     println!("{:?}", data_res.as_ref().unwrap_err());
                 }
                 assert!(data_res.is_ok())
+            }
+        };
+        ($suffix: ident) => {
+            paste! {
+                #[test]
+                fn [<read_data_set_ $suffix>]() {
+                    let data_res = [<get_data_res_ $suffix>]();
+                    if data_res.is_err() {
+                        println!("{:?}", data_res.as_ref().unwrap_err());
+                    }
+                    assert!(data_res.is_ok())
+                }
             }
         };
     }
@@ -599,8 +649,35 @@ pub(super) mod test {
                 let ks = CONFIG_TEST.keystore().unwrap();
                 let sign_validate_res = data.verify_signatures(&ks);
                 for r in sign_validate_res {
+                    if !r.is_ok() {
+                        println!("error validating signature: {:?}", r.as_ref().unwrap_err())
+                    }
                     assert!(r.is_ok());
                     assert!(r.unwrap())
+                }
+            }
+        };
+        ($suffix: ident, $ignored: literal) => {
+            paste! {
+                #[test]
+                #[ignore = $ignored]
+                fn [<verify_signature_ $suffix>]() {}
+            }
+        };
+        ($suffix: ident) => {
+            paste! {
+                #[test]
+                fn [<verify_signature_ $suffix>]() {
+                    let data = [<get_data_res_ $suffix>]().unwrap();
+                    let ks = CONFIG_TEST.keystore().unwrap();
+                    let sign_validate_res = data.verify_signatures(&ks);
+                    for r in sign_validate_res {
+                        if !r.is_ok() {
+                            println!("error validating signature: {:?}", r.as_ref().unwrap_err())
+                        }
+                        assert!(r.is_ok());
+                        assert!(r.unwrap())
+                    }
                 }
             }
         };
@@ -614,6 +691,16 @@ pub(super) mod test {
                 let data = get_data_res().unwrap();
                 let verifiy_domain_res = data.verifiy_domain();
                 assert!(verifiy_domain_res.is_empty())
+            }
+        };
+        ($suffix: ident) => {
+            paste! {
+                #[test]
+                fn [<verify_domain_ $suffix>]() {
+                    let data = [<get_data_res_ $suffix>]().unwrap();
+                    let verifiy_domain_res = data.verifiy_domain();
+                    assert!(verifiy_domain_res.is_empty())
+                }
             }
         };
     }

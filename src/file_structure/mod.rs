@@ -357,8 +357,8 @@ impl From<VerifierDataType> for FileType {
 mod test {
     use super::*;
     use crate::config::test::{
-        test_ballot_box_path, test_context_verification_card_set_path, test_datasets_context_path,
-        test_setup_verification_card_set_path,
+        test_ballot_box_one_vote_path, test_context_verification_card_set_path,
+        test_datasets_context_path, test_setup_verification_card_set_path,
     };
 
     #[test]
@@ -387,7 +387,7 @@ mod test {
 
     #[test]
     fn test_tally_files_exist() {
-        let path2 = test_ballot_box_path();
+        let path2 = test_ballot_box_one_vote_path();
         assert!(path2
             .join(
                 VerifierDataType::Tally(VerifierTallyDataType::TallyComponentVotesPayload)

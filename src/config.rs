@@ -240,14 +240,22 @@ pub(crate) mod test {
         test_all_paths_of_subdir(&test_datasets_setup_path, "verificationCardSets")
     }
 
-    pub(crate) fn test_ballot_box_path() -> PathBuf {
-        test_all_paths_of_subdir(&test_datasets_tally_path, "ballotBoxes")[0].clone()
+    pub(crate) fn test_ballot_box_one_vote_path() -> PathBuf {
+        test_datasets_tally_path()
+            .join("ballotBoxes")
+            .join("8F9FDF4E52352595896A8E723F827183")
     }
 
-    pub(crate) fn test_ballot_box_empty_path() -> PathBuf {
+    pub(crate) fn test_ballot_box_zero_vote_path() -> PathBuf {
         test_datasets_tally_path()
             .join("ballotBoxes")
             .join("49E21ADEFC8BE89CED94F4104BFFB219")
+    }
+
+    pub(crate) fn test_ballot_box_many_votes_path() -> PathBuf {
+        test_datasets_tally_path()
+            .join("ballotBoxes")
+            .join("38BCF9D79EE43F082D4B94909F6BB792")
     }
 
     pub(crate) fn test_context_verification_card_set_path() -> PathBuf {

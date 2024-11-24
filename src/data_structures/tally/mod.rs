@@ -5,6 +5,7 @@ pub mod ech_0110;
 pub mod ech_0222;
 pub mod tally_component_shuffle_payload;
 pub mod tally_component_votes_payload;
+mod verifiable_shuffle;
 
 use self::{
     control_component_ballot_box_payload::ControlComponentBallotBoxPayload,

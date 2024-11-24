@@ -1,14 +1,16 @@
-use super::super::{
-    common_types::{EncryptionParametersDef, Signature},
-    deserialize_seq_ciphertext, implement_trait_verifier_data_json_decode, DataStructureError,
-    VerifierDataDecode,
+use super::verifiable_shuffle::VerifiableShuffle;
+use super::{
+    super::{
+        common_types::{EncryptionParametersDef, Signature},
+        deserialize_seq_ciphertext, implement_trait_verifier_data_json_decode, DataStructureError,
+        VerifierDataDecode,
+    },
+    verifiable_shuffle::verifiy_domain_for_verifiable_shuffle,
 };
-use super::tally_component_shuffle_payload::VerifiableShuffle;
 use crate::{
     data_structures::common_types::DecryptionProof,
     direct_trust::{CertificateAuthority, VerifiySignatureTrait, VerifySignatureError},
 };
-
 use rust_ev_crypto_primitives::{
     elgamal::{Ciphertext, EncryptionParameters},
     ByteArray, HashableMessage, VerifyDomainTrait,
@@ -37,7 +39,15 @@ pub struct VerifiableDecryptions {
     pub decryption_proofs: Vec<DecryptionProof>,
 }
 
-impl VerifyDomainTrait<String> for ControlComponentShufflePayload {}
+impl VerifyDomainTrait<String> for ControlComponentShufflePayload {
+    fn new_domain_verifications() -> rust_ev_crypto_primitives::DomainVerifications<Self, String> {
+        let mut res = rust_ev_crypto_primitives::DomainVerifications::default();
+        res.add_verification(|v: &Self| {
+            verifiy_domain_for_verifiable_shuffle(&v.verifiable_shuffle)
+        });
+        res
+    }
+}
 
 impl<'a> From<&'a ControlComponentShufflePayload> for HashableMessage<'a> {
     fn from(value: &'a ControlComponentShufflePayload) -> Self {
@@ -105,12 +115,31 @@ mod test {
         },
         *,
     };
-    use crate::config::test::{test_ballot_box_path, CONFIG_TEST};
+    use crate::config::test::{
+        test_ballot_box_many_votes_path, test_ballot_box_one_vote_path,
+        test_ballot_box_zero_vote_path, CONFIG_TEST,
+    };
+    use paste::paste;
     use std::fs;
 
     test_data_structure!(
+        one_vote,
         ControlComponentShufflePayload,
         "controlComponentShufflePayload_1.json",
-        test_ballot_box_path
+        test_ballot_box_one_vote_path
+    );
+
+    test_data_structure!(
+        many_votes,
+        ControlComponentShufflePayload,
+        "controlComponentShufflePayload_1.json",
+        test_ballot_box_many_votes_path
+    );
+
+    test_data_structure!(
+        no_vote,
+        ControlComponentShufflePayload,
+        "controlComponentShufflePayload_1.json",
+        test_ballot_box_zero_vote_path
     );
 }

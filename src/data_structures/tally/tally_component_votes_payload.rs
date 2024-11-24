@@ -80,19 +80,21 @@ mod test {
         },
         *,
     };
-    use crate::config::test::{test_ballot_box_empty_path, test_ballot_box_path, CONFIG_TEST};
+    use crate::config::test::{
+        test_ballot_box_one_vote_path, test_ballot_box_zero_vote_path, CONFIG_TEST,
+    };
     use std::fs;
 
     test_data_structure!(
         TallyComponentVotesPayload,
         "tallyComponentVotesPayload.json",
-        test_ballot_box_path
+        test_ballot_box_one_vote_path
     );
 
     #[test]
     fn test_signature_empty_votes() {
         let json = fs::read_to_string(
-            test_ballot_box_empty_path().join("tallyComponentVotesPayload.json"),
+            test_ballot_box_zero_vote_path().join("tallyComponentVotesPayload.json"),
         )
         .unwrap();
         let data = TallyComponentVotesPayload::decode_json(&json).unwrap();
