@@ -322,7 +322,13 @@ fn algorithm_0303_verify_encrypted_pcc_exponentiation_proofs_verification_card_s
             context.node_id.to_string(),
         ];
         let pi_exp_pcc_j = encrypted_partial_choice_return_code_exponentiation_proof.clone();
-        match verify_exponentiation(context.eg, &gs, &ys, pi_exp_pcc_j.as_tuple(), &i_aux) {
+        match verify_exponentiation(
+            context.eg,
+            gs.iter().collect::<Vec<_>>().as_slice(),
+            ys.iter().collect::<Vec<_>>().as_slice(),
+            pi_exp_pcc_j.as_tuple(),
+            &i_aux,
+        ) {
             Err(e) => result.push(VerificationEvent::new_failure(&e)),
             Ok(b) => {
                 if !b {
@@ -424,7 +430,13 @@ fn algorithm_0304_verify_encrypted_ckexponentiation_proofs_verification_card_set
             context.node_id.to_string(),
         ];
         let pi_exp_pcc_j = encrypted_confirmation_key_exponentiation_proof.clone();
-        match verify_exponentiation(context.eg, &gs, &ys, pi_exp_pcc_j.as_tuple(), &i_aux) {
+        match verify_exponentiation(
+            context.eg,
+            gs.iter().collect::<Vec<_>>().as_slice(),
+            ys.iter().collect::<Vec<_>>().as_slice(),
+            pi_exp_pcc_j.as_tuple(),
+            &i_aux,
+        ) {
             Err(e) => result.push(VerificationEvent::new_failure(&e)),
             Ok(b) => {
                 if !b {
