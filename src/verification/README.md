@@ -41,7 +41,7 @@ The following table gives the situation of the development of the verifications 
 | Tally | 06.01        | Implemented     | Done (without negative) |
 | Tally | 07.01        | Implemented     | Done (without negative) |
 | Tally | 07.02        | Implemented     | Done (without negative) |
-| Tally | 07.03        | Implemented     | Done (without negative) |
+| Tally | 07.03        | Implemented     | Error (without negative) |
 | Tally | 07.04        | Implemented     | Done (without negative) |
 | Tally | 07.05        | Implemented     | Done (Errors with XML)  |
 | Tally | 07.06        | Implemented     | Done (Errors with XML)  |
@@ -58,5 +58,5 @@ The following table gives the situation of the development of the verifications 
 | Tally | 08.10        | Implemented     | Done (without negative) |
 | Tally | 08.11        | Implemented     | Done (without negative) |
 | Tally | 09.01        | Implemented     | Done (without negative) |
-| Tally | 10.01        | Not implemented
+| Tally | 10.01        | Implemented     | Done (without negative) |
 | Tally | 10.02        | Partially implemented (no tally) | Done (without negative) |

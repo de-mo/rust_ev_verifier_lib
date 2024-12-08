@@ -1,3 +1,4 @@
+mod v1001_verify_online_control_components;
 mod v1002_verify_tally_control_component;
 
 use super::super::{suite::VerificationList, verifications::Verification};
@@ -16,7 +17,7 @@ pub fn get_verifications<'a>(
         Verification::new(
             "10.01",
             "VerifyOnlineControlComponents",
-            verification_unimplemented,
+            v1001_verify_online_control_components::fn_verification,
             metadata_list,
             config,
         )?,
