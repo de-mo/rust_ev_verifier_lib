@@ -87,6 +87,12 @@ impl<'a> From<&'a DecryptionProof> for HashableMessage<'a> {
     }
 }
 
+impl DecryptionProof {
+    pub fn as_tuple(&self) -> (&Integer, &[Integer]) {
+        (&self.e, self.z.as_slice())
+    }
+}
+
 /// A exponentieted encrypted element (gamman, phi)
 #[derive(Deserialize, Debug, Clone)]
 #[serde(remote = "Ciphertext")]
