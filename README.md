@@ -12,11 +12,11 @@ It is based on the specifications of Swiss Post, according to the following docu
 
 The verifier is implemented for the version 1.4.3 of the E-Voting system of Swiss Post.
 
-This crate is used as based for a GUI application.
+This crate is used as basis for a GUI application.
 
 Following application are implemented:
-- A console application [rust_ev_verifier_con8sole](https://github.com/de-mo/rust_ev_verifier_console)
-- A GUI application based on tauri ([backend](https://github.com/de-mo/rust_ev_verifier_gui_backend) / fronted will be published)
+- A console application [rust_ev_verifier_console](https://github.com/de-mo/rust_ev_verifier_console)
+- A GUI application based on tauri ([backend](https://github.com/de-mo/rust_ev_verifier_gui_backend) / [frontend](https://github.com/de-mo/rust_ev_verifier_gui))
 
 ## Information about the project
 
@@ -43,15 +43,17 @@ A major difference with the Swiss Post Verifier is that the verifications does n
 
 The Verifier is not ready for production.
 
-- Not all the verifications are implemented
+- The verification of the signature of XML files is missing
+- The verification of the data in the file eCH-0222 is missing
 - For most of the verifications, the negative unit tests are not implemented. A mechanisms of mocks is implemented
 - The manual verifications are not fully implemented
 - The report of the verifications is not generated
-- XML Files: Read, decode and control of signature must be implemented
 
 ## Development guide
 
 Copy the directoy `/datasets/direct-trust` to the root.
+
+The build on Windows must be done with MSYS2 (see [Crypto Primitives](https://github.com/de-mo/rust_ev_crypto_primitives) for details)
 
 ## Licence
 
