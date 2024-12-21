@@ -135,7 +135,6 @@ impl VerificationResult {
     }
 
     /// Get the errors and the failures (all events)
-
     pub fn errors_and_failures(&self) -> Vec<&VerificationEvent> {
         self.results.iter().collect()
     }
@@ -171,7 +170,6 @@ impl VerificationResult {
     }
 
     /// Push a new error or failure to the VerificationResult add the given context
-
     pub fn push_with_context<C>(&mut self, e: VerificationEvent, context: C)
     where
         C: Clone + Display + Send + Sync + 'static,
@@ -195,13 +193,12 @@ impl VerificationResult {
     }
 
     /// Append the results of ohter to self, emptying the vectors of other
-
     pub fn append_vec(&mut self, other: &mut Vec<VerificationEvent>) {
         self.results.append(other);
     }
 
     /// Append strings to self as errors
-    pub fn append_errors_from_string(&mut self, errors: &[String]) {
+    pub fn append_errors_from_string_slice(&mut self, errors: &[String]) {
         let events: Vec<VerificationEvent> = errors
             .iter()
             .map(|e| VerificationEvent::new(VerificationEventKind::Error, &e.as_str()))
@@ -212,7 +209,7 @@ impl VerificationResult {
     }
 
     /// Append strings to self as failures
-    pub fn append_failures_from_string(&mut self, failures: &[String]) {
+    pub fn append_failures_from_string_slice(&mut self, failures: &[String]) {
         let events: Vec<VerificationEvent> = failures
             .iter()
             .map(|e| VerificationEvent::new(VerificationEventKind::Failure, &e.as_str()))
@@ -220,6 +217,20 @@ impl VerificationResult {
         for e in events {
             self.push(e)
         }
+    }
+
+    /// Create new [Self] with errors from strings
+    pub fn new_errors_from_string_slice(errors: &[String]) -> Self {
+        let mut res = Self::new();
+        res.append_errors_from_string_slice(errors);
+        res
+    }
+
+    /// Create new [Self] with failures from strings
+    pub fn new_failures_from_string_slice(errors: &[String]) -> Self {
+        let mut res = Self::new();
+        res.append_failures_from_string_slice(errors);
+        res
     }
 
     /// Join a &[<Self>] with context
