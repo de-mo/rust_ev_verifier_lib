@@ -6,7 +6,7 @@ The following table gives the situation of the development of the verifications 
 | Phase | Verification | State           | Unit test               |
 |-------|--------------|-----------------|-------------------------|
 | Setup | 01.01        | Implemented     | Done (without negative) |
-| Setup | 02.01        | Implemented     | Done (Errors with XML)  |
+| Setup | 02.01        | Implemented     | Error (Errors with XML)  |
 | Setup | 02.02        | Implemented     | Done (without negative) |
 | Setup | 02.03        | Implemented     | Done (without negative) |
 | Setup | 02.04        | Implemented     | Done (without negative) |
@@ -41,11 +41,11 @@ The following table gives the situation of the development of the verifications 
 | Tally | 06.01        | Implemented     | Done (without negative) |
 | Tally | 07.01        | Implemented     | Done (without negative) |
 | Tally | 07.02        | Implemented     | Done (without negative) |
-| Tally | 07.03        | Implemented     | Error (without negative) |
+| Tally | 07.03        | Implemented     | Done (without negative) |
 | Tally | 07.04        | Implemented     | Done (without negative) |
-| Tally | 07.05        | Implemented     | Done (Errors with XML)  |
-| Tally | 07.06        | Implemented     | Done (Errors with XML)  |
-| Tally | 07.07        | Implemented     | Done (Errors with XML)  |
+| Tally | 07.05        | Implemented     | Error (Errors with XML)  |
+| Tally | 07.06        | Implemented     | Error (Errors with XML)  |
+| Tally | 07.07        | Implemented     | Error (Errors with XML)  |
 | Tally | 08.01        | Implemented     | Done (without negative) |
 | Tally | 08.02        | Implemented     | Done (without negative) |
 | Tally | 08.03        | Implemented     | Done (without negative) |
