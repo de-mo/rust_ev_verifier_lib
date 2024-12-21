@@ -59,8 +59,8 @@ pub struct ConfigHeader {
 
 #[derive(Clone, Debug)]
 pub struct Contest {
-    file_path: PathBuf,
-    position_in_buffer: usize,
+    _file_path: PathBuf,
+    _position_in_buffer: usize,
     pub votes: TagManyWithIterator<VoteInformation>,
     pub election_groups: TagManyWithIterator<ElectionGroupBallot>,
 }
@@ -243,8 +243,8 @@ impl ConfigHeader {
 impl Contest {
     pub fn new(path: &Path, position_in_buffer: usize) -> Self {
         Self {
-            file_path: path.to_path_buf(),
-            position_in_buffer,
+            _file_path: path.to_path_buf(),
+            _position_in_buffer: position_in_buffer,
             votes: TagManyWithIterator::<VoteInformation>::new(
                 path,
                 position_in_buffer,
@@ -316,7 +316,7 @@ impl ElectionGroupBallot {
     }
 }
 
-impl<'a> VerifiySignatureTrait<'a> for ElectionEventConfiguration {
+impl VerifiySignatureTrait<'_> for ElectionEventConfiguration {
     fn get_hashable(&self) -> Result<HashableMessage, Box<VerifySignatureError>> {
         let hashable = XMLFileHashable::new(&self.path, &SchemaKind::Config, "signature");
         let hash = hashable

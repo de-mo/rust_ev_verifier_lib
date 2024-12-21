@@ -84,7 +84,6 @@ impl<'a> Verification<'a, VerificationDirectory> {
     }
 
     /// Get the meta data of the verification
-
     pub fn meta_data(&'a self) -> &'a VerificationMetaData {
         self.meta_data
     }

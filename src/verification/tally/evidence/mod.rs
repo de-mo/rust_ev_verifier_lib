@@ -4,9 +4,7 @@ mod v1002_verify_tally_control_component;
 use super::super::{suite::VerificationList, verifications::Verification};
 use crate::{
     config::Config,
-    verification::{
-        meta_data::VerificationMetaDataList, verification_unimplemented, VerificationError,
-    },
+    verification::{meta_data::VerificationMetaDataList, VerificationError},
 };
 
 pub fn get_verifications<'a>(

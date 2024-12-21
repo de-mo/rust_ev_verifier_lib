@@ -202,7 +202,6 @@ mod test {
     }
 
     #[test]
-    #[ignore = "Signature for tally_component_shuffle_payload not working"]
     fn test_0703() {
         let dir = get_verifier_dir();
         let mut result = VerificationResult::new();

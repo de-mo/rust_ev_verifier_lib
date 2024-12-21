@@ -145,7 +145,6 @@ where
     }
 
     /// Reset the verifications
-
     pub fn reset(
         &'a mut self,
         metadata_list: &'a VerificationMetaDataList,

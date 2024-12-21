@@ -18,10 +18,10 @@ mod context_directory_data;
 mod setup_directory_data;
 mod tally_directory_data;
 
-pub(crate) use context_directory_data::{MockContextDirectory, MockContextVCSDirectory};
-pub(crate) use setup_directory_data::{MockSetupDirectory, MockSetupVCSDirectory};
+pub(crate) use context_directory_data::MockContextDirectory;
+pub(crate) use setup_directory_data::MockSetupDirectory;
 use std::{collections::HashMap, path::Path};
-pub(crate) use tally_directory_data::{MockBBDirectory, MockTallyDirectory};
+pub(crate) use tally_directory_data::MockTallyDirectory;
 
 /// Mock for [VerificationDirectory]
 pub(crate) struct MockVerificationDirectory {
@@ -78,6 +78,7 @@ impl MockVerificationDirectory {
     }
 
     /// Unwrap [MockSetupDirectory] as mutable
+    #[allow(dead_code)]
     pub fn unwrap_setup_mut(&mut self) -> &mut MockSetupDirectory {
         match &mut self.setup {
             Some(t) => t,
@@ -86,6 +87,7 @@ impl MockVerificationDirectory {
     }
 
     /// Unwrap [TallyDirectory] as mutable
+    #[allow(dead_code)]
     pub fn unwrap_tally_mut(&mut self) -> &mut MockTallyDirectory {
         match &mut self.tally {
             Some(t) => t,
@@ -98,7 +100,7 @@ impl MockVerificationDirectory {
 ///
 /// The following methods will be generated (example with `setup_component_public_keys_payload`
 /// and `SetupComponentPublicKeysPayload`):
-/// ```
+/// ```ignore
 /// pub fn mock_setup_component_public_keys_payload(
 ///     &mut self,
 ///     mut closure: impl FnMut(&mut SetupComponentPublicKeysPayload),
@@ -117,6 +119,7 @@ impl MockVerificationDirectory {
 macro_rules! impl_mock_methods_for_mocked_data {
     ($data_name: ident, $data_type: ident) => {
         paste! {
+            #[allow(dead_code)]
             #[doc = "Mock `$data_name`"]
             pub fn [<mock_ $data_name>](
                 &mut self,
@@ -133,6 +136,7 @@ macro_rules! impl_mock_methods_for_mocked_data {
                 );
             }
             #[doc = "Mock `$data_name` with error"]
+            #[allow(dead_code)]
             pub fn [<mock_ $data_name _error>](
                 &mut self,
                 error: FileStructureError,
@@ -140,10 +144,12 @@ macro_rules! impl_mock_methods_for_mocked_data {
                 self.[<mocked_ $data_name _error>] = Some(error)
             }
             #[doc = "Remove the error for `$data_name`"]
+            #[allow(dead_code)]
             pub fn  [<mock_ $data_name _remove_error>](&mut self) {
                 self.[<mocked_ $data_name _error>] = None
             }
             #[doc = "Reset the original data for `$data_name`"]
+            #[allow(dead_code)]
             pub fn  [<mock_ $data_name _reset>](&mut self) {
                 self.[<mocked_ $data_name _error>] = None;
                 self.[<mocked_ $data_name>] = None;
@@ -157,7 +163,7 @@ use impl_mock_methods_for_mocked_data;
 ///
 /// The following methods will be generated (example with `setup_component_public_keys_payload`
 /// and `SetupComponentPublicKeysPayload`):
-/// ```
+/// ```ignore
 /// pub fn setup_component_public_keys_payload(
 ///     &mut self,
 /// ) Result<Box<SetupComponentPublicKeysPayload>, FileStructureError>
@@ -244,7 +250,7 @@ use impl_itertor_for_mocked_group_type;
 ///
 /// The following methods will be generated (example with `setup_component_public_keys_payload`
 /// and `SetupComponentPublicKeysPayload`):
-/// ```
+/// ```ignore
 /// pub fn mock_[<$data_type>](
 ///     &mut self,
 ///     pos: usize,
@@ -272,6 +278,7 @@ use impl_itertor_for_mocked_group_type;
 macro_rules! impl_mock_methods_for_mocked_group {
     ($data_name: ident, $data_type: ident) => {
         paste! {
+            #[allow(dead_code)]
             pub fn [<mock_ $data_name>](
                 &mut self,
                 pos: usize,
@@ -294,11 +301,13 @@ macro_rules! impl_mock_methods_for_mocked_group {
                 );
             }
 
+            #[allow(dead_code)]
             pub fn [<mock_ $data_name _as_deleted>](&mut self, i: usize) {
                 self.[<mocked_ $data_name _deleted>]
                     .push(i);
             }
 
+            #[allow(dead_code)]
             pub fn [<mock_ $data_name _remove_deleted>](&mut self, i: usize) {
                 if let Some(pos) = self
                     .[<mocked_ $data_name _deleted>]
@@ -310,6 +319,7 @@ macro_rules! impl_mock_methods_for_mocked_group {
                 }
             }
 
+            #[allow(dead_code)]
             pub fn [<mock_ $data_name _error>](
                 &mut self,
                 i: usize,
@@ -319,12 +329,14 @@ macro_rules! impl_mock_methods_for_mocked_group {
                     .insert(i, error.to_string());
             }
 
+            #[allow(dead_code)]
             pub fn [<mock_ $data_name _remove_error>](&mut self, i: usize) {
                 self.[<mocked_ $data_name _errors>]
                     .remove(&i);
             }
 
-            pub fn [<mock_ $data_name _reset>](&mut self, i: usize) {
+            #[allow(dead_code)]
+            pub fn [<mock_ $data_name _reset>](&mut self, _i: usize) {
                 self.[<mocked_ $data_name _errors>] = HashMap::new();
                 self.[<mocked_ $data_name _deleted>] = vec![];
                 self.[<mocked_ $data_name>] = HashMap::new();
@@ -338,7 +350,7 @@ use impl_mock_methods_for_mocked_group;
 ///
 /// The following methods will be generated (example with `setup_component_public_keys_payload`
 /// and `SetupComponentPublicKeysPayload`):
-/// ```
+/// ```ignore
 /// fn control_component_public_keys_payload_iter(
 ///     &self,
 /// ) -> Self::ControlComponentPublicKeysPayloadAsResultIterType {todo!()}
@@ -409,6 +421,7 @@ impl<T: Clone, I: FileGroupIterTrait<Result<Box<T>, FileStructureError>>> MockFi
         &mut self.orig
     }
 
+    #[allow(dead_code)]
     pub fn current_pos(&self) -> &usize {
         self.orig.current_pos()
     }
@@ -417,6 +430,7 @@ impl<T: Clone, I: FileGroupIterTrait<Result<Box<T>, FileStructureError>>> MockFi
         self.orig.current_index()
     }
 
+    #[allow(dead_code)]
     pub fn is_over(&self) -> bool {
         self.orig.is_over()
     }

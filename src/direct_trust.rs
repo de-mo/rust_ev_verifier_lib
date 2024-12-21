@@ -202,7 +202,7 @@ where
     fn get_signature(&self) -> ByteArray;
 
     /// Get the context data of the object according to the context data
-    fn get_context_hashable(&'a self) -> HashableMessage {
+    fn get_context_hashable(&'a self) -> HashableMessage<'a> {
         if self.get_context_data().len() == 1 {
             return self.get_context_data()[0].clone();
         }

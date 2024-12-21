@@ -84,7 +84,7 @@ trait GetFileNameTrait {
     /// The name replacing `{}` with the given value (if is some).
     ///
     /// # Example
-    /// ```rust
+    /// ```ignore
     /// use rust_verifier::file_structure::GetFileNameTrait;
     /// struct Test;
     /// impl GetFileNameTrait for Test {
@@ -165,19 +165,16 @@ impl VerificationDirectory {
     }
 
     /// Is setup
-
     pub fn is_setup(&self) -> bool {
         self.setup.is_some()
     }
 
     /// Is tally
-
     pub fn is_tally(&self) -> bool {
         self.tally.is_some()
     }
 
     /// Are the entries valid
-
     pub fn is_valid(&self) -> bool {
         self.is_setup() != self.is_tally()
     }

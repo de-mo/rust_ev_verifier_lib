@@ -61,13 +61,11 @@ impl Config {
     }
 
     /// Maximum supported number of write-in options according to the specification
-
     pub fn maximum_supported_number_of_write_in_options() -> usize {
         consts::MAXIMUM_SUPPORTED_NUMBER_OF_WRITE_IN_OPTIONS
     }
 
     /// Maximum supported number of write-in options + 1 to the specification
-
     pub fn delta_sup() -> usize {
         consts::MAXIMUM_SUPPORTED_NUMBER_OF_WRITE_IN_OPTIONS + 1
     }

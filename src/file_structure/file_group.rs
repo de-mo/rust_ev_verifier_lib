@@ -188,7 +188,6 @@ impl FileGroup {
     }
 
     /// Get the location
-
     pub fn get_location(&self) -> &Path {
         self.location.as_path()
     }
@@ -199,7 +198,6 @@ impl FileGroup {
     }
 
     /// Get the data type
-
     pub fn get_data_type(&self) -> &VerifierDataType {
         &self.data_type
     }
@@ -215,7 +213,6 @@ impl FileGroup {
     }
 
     /// Get the paths of the files
-
     pub fn get_paths(&self) -> Vec<PathBuf> {
         self.iter().map(|(_, f)| f.path()).collect()
     }

@@ -287,6 +287,7 @@ impl<'a> From<&'a HadamardArgument> for HashableMessage<'a> {
 impl<'a> From<&'a ZeroArgument> for HashableMessage<'a> {
     fn from(value: &'a ZeroArgument) -> Self {
         Self::from(vec![
+            Self::from(&value.c_upper_a_0),
             Self::from(&value.c_upper_b_m),
             Self::from(&value.cs_d),
             Self::from(&value.as_prime),

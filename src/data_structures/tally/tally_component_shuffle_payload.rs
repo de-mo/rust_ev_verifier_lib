@@ -138,4 +138,47 @@ mod test_one {
         "tallyComponentShufflePayload.json",
         test_ballot_box_many_votes_path
     );
+
+    #[test]
+    fn test_argument_correct() {
+        let data = get_data_res_many_votes().unwrap();
+        assert!(data
+            .verifiable_shuffle
+            .shuffle_argument
+            .product_argument
+            .c_b
+            .is_some());
+        assert!(data
+            .verifiable_shuffle
+            .shuffle_argument
+            .product_argument
+            .hadamard_argument
+            .is_some());
+        let data = get_data_res_one_vote().unwrap();
+        assert!(data
+            .verifiable_shuffle
+            .shuffle_argument
+            .product_argument
+            .c_b
+            .is_none());
+        assert!(data
+            .verifiable_shuffle
+            .shuffle_argument
+            .product_argument
+            .hadamard_argument
+            .is_none());
+        let data = get_data_res_zero_vote().unwrap();
+        assert!(data
+            .verifiable_shuffle
+            .shuffle_argument
+            .product_argument
+            .c_b
+            .is_none());
+        assert!(data
+            .verifiable_shuffle
+            .shuffle_argument
+            .product_argument
+            .hadamard_argument
+            .is_none());
+    }
 }
