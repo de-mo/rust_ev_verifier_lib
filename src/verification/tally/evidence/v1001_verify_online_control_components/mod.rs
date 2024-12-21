@@ -52,7 +52,7 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
     .election_public_key
     .as_slice();*/
 
-    tally_dir
+    result.append(&mut tally_dir
         .bb_directories()
         .iter()
         .map(|bb_dir| {
@@ -94,7 +94,7 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
             let mut res = acc.clone();
             res.append_with_context(&result, format!("Ballot box {}", name));
             res
-        });
+        }));
 }
 
 fn verify_for_ballotbox<B: BBDirectoryTrait, S: ContextVCSDirectoryTrait>(
@@ -117,45 +117,37 @@ fn verify_for_ballotbox<B: BBDirectoryTrait, S: ContextVCSDirectoryTrait>(
         }
     };
 
-    let ccm_pk = setup_pk
+    let mut ccm_el_pk_with_node = setup_pk
         .combined_control_component_public_keys
         .iter()
-        .map(|cc| cc.ccmj_election_public_key.as_slice())
+        .map(|cc| (cc.node_id, cc.ccmj_election_public_key.as_slice()))
         .collect::<Vec<_>>();
-
-    let eb_pk = setup_pk
-        .choice_return_codes_encryption_public_key
-        .as_slice();
-
-    let pk_ccr = setup_pk
-        .choice_return_codes_encryption_public_key
-        .as_slice();
-
-    let context_41 = ContextAlgorithm41 {
-        eg: &ee_context_payload.encryption_group,
-        ee_id: &ee_context_payload.election_event_context.election_event_id,
-        vcs_id: &vcs_context.verification_card_set_id,
-        bb_id: &bb_id,
-        _upper_n_upper_e: vcs_context.number_of_voters(),
-        p_table: &vcs_context.primes_mapping_table.p_table,
-        el_pk: &setup_pk.election_public_key,
-        ccm_pk: &ccm_pk,
-        eb_pk,
-        pk_ccr,
-    };
+    ccm_el_pk_with_node.sort_by(|(i, _), (j, _)| i.cmp(j));
+    let ccm_el_pk = ccm_el_pk_with_node
+        .iter()
+        .map(|(_, el_pk)| *el_pk)
+        .collect::<Vec<_>>();
 
     let cc_bb_payload_1 = match bb_dir
         .control_component_ballot_box_payload_iter()
-        .next()
-        .unwrap()
-        .1
+        .find(|(i, _)| *i == 1)
     {
-        Ok(p) => p,
-        Err(e) => {
-            return VerificationResult::from(
-                &VerificationEvent::new_error(&e)
-                    .add_context("control_component_ballot_box_payload_1 cannot be read"),
-            );
+        Some((_, p)) => match p {
+            Ok(p) => p,
+            Err(e) => {
+                return VerificationResult::from(&VerificationEvent::new_error(&e).add_context(
+                    format!(
+                        "{}/control_component_ballot_box_payload_iter_1 cannot be read",
+                        bb_id
+                    ),
+                ));
+            }
+        },
+        None => {
+            return VerificationResult::from(&VerificationEvent::new_error(&format!(
+                "{}/control_component_ballot_box_payload_iter_1 not found",
+                bb_id
+            )));
         }
     };
 
@@ -200,19 +192,10 @@ fn verify_for_ballotbox<B: BBDirectoryTrait, S: ContextVCSDirectoryTrait>(
         .map(|ev| &ev.plaintext_equality_proof)
         .collect::<Vec<_>>();
 
-    let shuffle_data = match bb_dir
+    let mut control_component_shuffle_payloads = match bb_dir
         .control_component_shuffle_payload_iter()
         .map(|(j, payload)| match payload {
-            Ok(payload) => Ok((
-                (
-                    payload.verifiable_shuffle.shuffled_ciphertexts,
-                    payload.verifiable_shuffle.shuffle_argument,
-                ),
-                (
-                    payload.verifiable_decryptions.ciphertexts,
-                    payload.verifiable_decryptions.decryption_proofs,
-                ),
-            )),
+            Ok(p) => Ok((p.node_id, p)),
             Err(e) => Err(VerificationEvent::new_error(&e).add_context(format!(
                 "control_component_shuffle_payload_{} cannot be read",
                 j
@@ -223,14 +206,16 @@ fn verify_for_ballotbox<B: BBDirectoryTrait, S: ContextVCSDirectoryTrait>(
         Ok(data) => data,
         Err(e) => return VerificationResult::from(&e),
     };
+    control_component_shuffle_payloads.sort_by(|(i, _), (j, _)| i.cmp(j));
 
-    let cs_mix = shuffle_data
+    let cs_mix = control_component_shuffle_payloads
         .iter()
-        .map(|d| d.0 .0.as_slice())
+        .map(|(_, d)| d.verifiable_shuffle.shuffled_ciphertexts.as_slice())
         .collect::<Vec<_>>();
-    let pi_mix = match shuffle_data
+
+    let pi_mix = match control_component_shuffle_payloads
         .iter()
-        .map(|d| CryptoShuffleArgument::try_from(&d.0 .1))
+        .map(|(_, d)| CryptoShuffleArgument::try_from(&d.verifiable_shuffle.shuffle_argument))
         .collect::<Result<Vec<_>, _>>()
     {
         Ok(v) => v,
@@ -240,13 +225,13 @@ fn verify_for_ballotbox<B: BBDirectoryTrait, S: ContextVCSDirectoryTrait>(
             )
         }
     };
-    let cs_dec = shuffle_data
+    let cs_dec = control_component_shuffle_payloads
         .iter()
-        .map(|d| d.1 .0.as_slice())
+        .map(|(_, d)| d.verifiable_decryptions.ciphertexts.as_slice())
         .collect::<Vec<_>>();
-    let pi_dec = shuffle_data
+    let pi_dec = control_component_shuffle_payloads
         .iter()
-        .map(|d| d.1 .1.as_slice())
+        .map(|(_, d)| d.verifiable_decryptions.decryption_proofs.as_slice())
         .collect::<Vec<_>>();
 
     let setup_tally_data_payload = match vcs_dir.setup_component_tally_data_payload() {
@@ -270,22 +255,35 @@ fn verify_for_ballotbox<B: BBDirectoryTrait, S: ContextVCSDirectoryTrait>(
         .map(|v| &v[0])
         .collect::<Vec<_>>();
 
-    let input_41 = InputsAlgorithm41 {
-        vc_1: vc_1.as_slice(),
-        upper_e1_1: &upper_e1_1,
-        upper_e1_1_tilde: &upper_e1_1_tilde,
-        upper_e2_1: &upper_e2_1,
-        pi_exp_1: &pi_exp_1,
-        pi_eq_enc_1: &pi_eq_enc_1,
-        cs_mix: &cs_mix,
-        pi_mix: pi_mix.as_slice(),
-        cs_dec: &cs_dec,
-        pi_dec: &pi_dec,
-        vcs: &vcs,
-        upper_k: &upper_k,
-    };
-
-    verify_online_control_components_ballot_box(&context_41, &input_41).clone_add_context(format!(
+    verify_online_control_components_ballot_box(
+        &ContextAlgorithm41 {
+            eg: &ee_context_payload.encryption_group,
+            ee_id: &ee_context_payload.election_event_context.election_event_id,
+            vcs_id: &vcs_context.verification_card_set_id,
+            bb_id: &bb_id,
+            upper_n_upper_e: vcs_context.number_of_voters(),
+            p_table: &vcs_context.primes_mapping_table.p_table,
+            el_pk: &setup_pk.election_public_key,
+            ccm_el_pk: &ccm_el_pk,
+            eb_pk: &setup_pk.electoral_board_public_key,
+            pk_ccr: &setup_pk.choice_return_codes_encryption_public_key,
+        },
+        &InputsAlgorithm41 {
+            vc_1: vc_1.as_slice(),
+            upper_e1_1: &upper_e1_1,
+            upper_e1_1_tilde: &upper_e1_1_tilde,
+            upper_e2_1: &upper_e2_1,
+            pi_exp_1: &pi_exp_1,
+            pi_eq_enc_1: &pi_eq_enc_1,
+            cs_mix: &cs_mix,
+            pi_mix: pi_mix.as_slice(),
+            cs_dec: &cs_dec,
+            pi_dec: &pi_dec,
+            vcs: &vcs,
+            upper_k: &upper_k,
+        },
+    )
+    .clone_add_context(format!(
         "VerifyOnlineControlComponentsBallotBox for bb_id {}",
         bb_dir.name()
     ))

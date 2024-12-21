@@ -29,10 +29,10 @@ pub struct ContextAlgorithm41<'a> {
     pub ee_id: &'a str,
     pub vcs_id: &'a str,
     pub bb_id: &'a str,
-    pub _upper_n_upper_e: usize,
+    pub upper_n_upper_e: usize,
     pub p_table: &'a PTable,
     pub el_pk: &'a [Integer],
-    pub ccm_pk: &'a [&'a [Integer]],
+    pub ccm_el_pk: &'a [&'a [Integer]],
     pub eb_pk: &'a [Integer],
     pub pk_ccr: &'a [Integer],
 }
@@ -58,15 +58,16 @@ pub fn verify_online_control_components_ballot_box(
     input: &InputsAlgorithm41,
 ) -> VerificationResult {
     let mut result = VerificationResult::new();
+
     if !input.vc_1.is_empty() {
         let k_map = input
-            .vc_1
+            .vcs
             .iter()
             .cloned()
             .zip(input.upper_k.iter().cloned())
             .collect::<Vec<_>>();
-        let el_pk = context.el_pk.iter().map(|pk| pk).collect::<Vec<_>>();
-        let pk_ccr = context.pk_ccr.iter().map(|pk| pk).collect::<Vec<_>>();
+        let el_pk = context.el_pk.iter().collect::<Vec<_>>();
+        let pk_ccr = context.pk_ccr.iter().collect::<Vec<_>>();
         let pi_exp_1 = input
             .pi_exp_1
             .iter()
@@ -83,7 +84,7 @@ pub fn verify_online_control_components_ballot_box(
                 ee: context.ee_id,
                 vcs: context.vcs_id,
                 p_table: context.p_table,
-                upper_n_upper_e: context._upper_n_upper_e,
+                upper_n_upper_e: context.upper_n_upper_e,
                 el_pk: el_pk.as_slice(),
                 pk_ccr: pk_ccr.as_slice(),
             },
@@ -97,15 +98,22 @@ pub fn verify_online_control_components_ballot_box(
                 k_map: &k_map,
             },
         );
-        result.append_errors_from_string(
-            &vc_proofs_verif
-                .errors()
-                .iter()
-                .map(|e| e.to_string())
-                .collect::<Vec<_>>(),
+        result.append_with_context(
+            &VerificationResult::new_errors_from_string_slice(
+                &vc_proofs_verif
+                    .errors()
+                    .iter()
+                    .map(|e| e.to_string())
+                    .collect::<Vec<_>>(),
+            ),
+            "VerifyVotingClientProofs",
         );
-        result.append_failures_from_string(&vc_proofs_verif.failures());
+        result.append_with_context(
+            &VerificationResult::new_failures_from_string_slice(&vc_proofs_verif.failures()),
+            "VerifyVotingClientProofs",
+        );
     }
+
     let vc_map_1 = input
         .vc_1
         .iter()
@@ -115,7 +123,7 @@ pub fn verify_online_control_components_ballot_box(
     let c_init_1 = match GetMixnetInitialCiphertextsOuput::get_mixnet_initial_ciphertexts(
         &GetMixnetInitialCiphertextsContext {
             eg: context.eg,
-            _upper_n_upper_e: context._upper_n_upper_e,
+            _upper_n_upper_e: context.upper_n_upper_e,
             delta: context.p_table.get_delta(),
             el_pk: context.el_pk,
         },
@@ -137,14 +145,14 @@ pub fn verify_online_control_components_ballot_box(
         .iter()
         .map(|&pis| pis.iter().map(|pi| pi.as_tuple()).collect::<Vec<_>>())
         .collect::<Vec<_>>();
-    let shuffle_proofs_verif = VerifyMixDecOfflineOutput::verify_voting_client_proofs(
+    let shuffle_proofs_verif = VerifyMixDecOfflineOutput::verify_mix_dec_offline(
         &VerifyMixDecOfflineContext {
             encryption_parameters: context.eg,
             ee: context.ee_id,
             bb: context.bb_id,
             delta: context.p_table.get_delta(),
             el_pk: context.el_pk,
-            ccm_pk: context.ccm_pk,
+            ccm_el_pk: context.ccm_el_pk,
             eb_pk: context.eb_pk,
         },
         &VerifyMixDecOfflineInput {
@@ -155,13 +163,19 @@ pub fn verify_online_control_components_ballot_box(
             pi_dec: pi_dec.as_slice(),
         },
     );
-    result.append_errors_from_string(
-        &shuffle_proofs_verif
-            .errors()
-            .iter()
-            .map(|e| e.to_string())
-            .collect::<Vec<_>>(),
+    result.append_with_context(
+        &VerificationResult::new_errors_from_string_slice(
+            &shuffle_proofs_verif
+                .errors()
+                .iter()
+                .map(|e| e.to_string())
+                .collect::<Vec<_>>(),
+        ),
+        "VerifyMixDecOffline",
     );
-    result.append_failures_from_string(&shuffle_proofs_verif.failures());
+    result.append_with_context(
+        &VerificationResult::new_failures_from_string_slice(&shuffle_proofs_verif.failures()),
+        "VerifyMixDecOffline",
+    );
     result
 }
