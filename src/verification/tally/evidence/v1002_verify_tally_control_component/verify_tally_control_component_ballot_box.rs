@@ -87,13 +87,15 @@ pub fn verify_tally_control_component_ballot_box<'a>(
                 (&pi_dec_5_i.e, pi_dec_5_i.z.as_slice()),
             ) {
                 Ok(r) => {
-                    res.push_with_context(
-                        VerificationEvent::new_failure(&r.to_string()),
-                        format!(
-                            "VerifyDecrpyption at position {} for bb {}",
-                            i, context.bb_id
-                        ),
-                    );
+                    if !r {
+                        res.push_with_context(
+                            VerificationEvent::new_failure(&r.to_string()),
+                            format!(
+                                "VerifyDecrpyption at position {} for bb {}",
+                                i, context.bb_id
+                            ),
+                        );
+                    }
                 }
                 Err(e) => res.push(VerificationEvent::new_error(&e).add_context(format!(
                     "Error with VerifyDecrpyption at position {} for bb {}",

@@ -44,25 +44,27 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
             return;
         }
     };
-    let eb_pk = setup_pk_payload
+    let eb_pk = &setup_pk_payload
         .setup_component_public_keys
-        .election_public_key
+        .electoral_board_public_key
         .as_slice();
 
-    tally_dir
-        .bb_directories()
-        .iter()
-        .map(|dir| {
-            (
-                dir.name(),
-                verify_for_ballotbox(&ee_context_payload, eb_pk, dir),
-            )
-        })
-        .fold(VerificationResult::new(), |acc, (name, result)| {
-            let mut res = acc.clone();
-            res.append_with_context(&result, format!("Ballot box {}", name));
-            res
-        });
+    result.append(
+        &mut tally_dir
+            .bb_directories()
+            .iter()
+            .map(|dir| {
+                (
+                    dir.name(),
+                    verify_for_ballotbox(&ee_context_payload, eb_pk, dir),
+                )
+            })
+            .fold(VerificationResult::new(), |acc, (name, result)| {
+                let mut res = acc.clone();
+                res.append_with_context(&result, format!("Ballot box {}", name));
+                res
+            }),
+    );
 }
 
 fn verify_for_ballotbox<B: BBDirectoryTrait>(

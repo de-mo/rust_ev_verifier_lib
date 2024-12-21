@@ -37,17 +37,17 @@ pub fn verify_process_plaintexts(
     let process_output = process_output_res.unwrap();
     let mut res = VerificationResult::new();
     if input.upper_l_votes != process_output.l_votes {
-        res.push(VerificationEvent::new_error(
+        res.push(VerificationEvent::new_failure(
             "Selected encoded voting options not the same",
         ));
     }
     if input.upper_l_decoded_votes != process_output.l_decoded_votes {
-        res.push(VerificationEvent::new_error(
+        res.push(VerificationEvent::new_failure(
             "Selected decoded voting options not the same",
         ));
     }
     if input.upper_l_write_ins != process_output.l_write_ins {
-        res.push(VerificationEvent::new_error(
+        res.push(VerificationEvent::new_failure(
             "Selected decoded write_ins not the same",
         ));
     }
