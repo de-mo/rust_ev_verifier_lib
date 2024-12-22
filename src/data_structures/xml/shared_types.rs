@@ -9,6 +9,10 @@ use std::{
 };
 
 #[derive(Clone, Debug)]
+/// Structure to iterate over tags
+///
+/// `tag_name` is the tag to iter over
+/// `external_tag_name` is the tag containung the tag_name (to avoid collision)
 pub struct TagManyWithIterator<T>
 where
     T: Clone + Debug,
@@ -16,6 +20,7 @@ where
     file_path: PathBuf,
     position_in_buffer: usize,
     tag_name: String,
+    external_tag_name: String,
     phantom_t: PhantomData<T>,
 }
 
@@ -25,6 +30,7 @@ where
 {
     reader: Reader<BufReader<File>>,
     tag_name: String,
+    external_tag_name: String,
     phantom: PhantomData<T>,
 }
 
@@ -32,11 +38,17 @@ impl<T> TagManyWithIterator<T>
 where
     T: Clone + Debug,
 {
-    pub fn new(path: &Path, position_in_buffer: usize, tag_name: &str) -> Self {
+    pub fn new(
+        path: &Path,
+        position_in_buffer: usize,
+        tag_name: &str,
+        external_tag_name: &str,
+    ) -> Self {
         Self {
             file_path: path.to_path_buf(),
             position_in_buffer,
             tag_name: tag_name.to_string(),
+            external_tag_name: external_tag_name.to_string(),
             phantom_t: PhantomData,
         }
     }
@@ -58,6 +70,7 @@ where
         Ok(TagManyIter {
             reader: self.reader()?,
             tag_name: self.tag_name.clone(),
+            external_tag_name: self.external_tag_name.clone(),
             phantom: PhantomData,
         })
     }
@@ -74,6 +87,10 @@ where
     pub fn tag_name(&self) -> &str {
         &self.tag_name
     }
+
+    pub fn external_tag_name(&self) -> &str {
+        &self.external_tag_name
+    }
 }
 
 macro_rules! impl_iterator_for_tag_many_iter {
@@ -84,11 +101,17 @@ macro_rules! impl_iterator_for_tag_many_iter {
             fn next(&mut self) -> Option<Self::Item> {
                 let mut buf = Vec::new();
                 let tag_name = self.tag_name().to_string();
+                let external_tag_name = self.external_tag_name().to_string();
                 let mut reader = self.reader();
                 loop {
                     match reader.read_event_into(&mut buf) {
                         Err(_) => return None,
                         Ok(Event::Eof) => return None,
+                        Ok(Event::End(e)) => {
+                            if e == BytesEnd::new(&external_tag_name) {
+                                return None;
+                            }
+                        }
                         Ok(Event::Start(e)) => {
                             if e == BytesStart::new(&tag_name) {
                                 let mut buffer = vec![];
@@ -102,15 +125,25 @@ macro_rules! impl_iterator_for_tag_many_iter {
                                         match quick_xml::de::from_str::<$type>(&s) {
                                             Ok(v) => Some(v),
                                             Err(e) => {
-                                                error!("Error reading vote {:#?}", e);
-                                                println!("Error reading vote {:#?}", e);
+                                                println!("{:?}", &s);
+                                                error!("Error deserialize {} {:#?}", &tag_name, e);
+                                                println!(
+                                                    "Error deserialize {} {:#?}",
+                                                    &tag_name, e
+                                                );
                                                 None
                                             }
                                         }
                                     }
                                     Err(e) => {
-                                        error!("Error reading vote {:#?}", e);
-                                        println!("Error reading vote {:#?}", e);
+                                        error!(
+                                            "Error xml_read_to_end_into_buffer for {}: {:#?}",
+                                            &tag_name, e
+                                        );
+                                        println!(
+                                            "Error xml_read_to_end_into_buffer for {}: {:#?}",
+                                            &tag_name, e
+                                        );
                                         None
                                     }
                                 };
