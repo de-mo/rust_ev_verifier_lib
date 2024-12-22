@@ -31,7 +31,7 @@ pub struct MockContextVCSDirectory {
 
 /// Mock for [ContextDirectory]
 pub struct MockContextDirectory {
-    dir: ContextDirectory,
+    pub dir: ContextDirectory,
     mocked_setup_component_public_keys_payload: Option<Box<SetupComponentPublicKeysPayload>>,
     mocked_setup_component_public_keys_payload_error: Option<FileStructureError>,
     mocked_election_event_context_payload: Option<Box<ElectionEventContextPayload>>,

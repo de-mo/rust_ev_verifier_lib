@@ -140,6 +140,11 @@ pub trait VerificationDirectoryTrait {
     ///
     /// panic if other type
     fn unwrap_tally(&self) -> &Self::TallyDirType;
+
+    fn path(&self) -> &Path;
+    fn path_to_string(&self) -> String {
+        self.path().to_str().unwrap().to_string()
+    }
 }
 
 pub trait CompletnessTestTrait {
@@ -207,6 +212,10 @@ impl VerificationDirectoryTrait for VerificationDirectory {
             Some(t) => t,
             None => panic!("called `unwrap_tally()` on a `Setup` value"),
         }
+    }
+
+    fn path(&self) -> &Path {
+        self.context.location().parent().unwrap()
     }
 }
 

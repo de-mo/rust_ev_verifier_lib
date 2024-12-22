@@ -52,6 +52,10 @@ impl VerificationDirectoryTrait for MockVerificationDirectory {
     fn context(&self) -> &Self::ContextDirType {
         &self.context
     }
+
+    fn path(&self) -> &Path {
+        self.context().dir.location().parent().unwrap()
+    }
 }
 
 impl MockVerificationDirectory {
@@ -379,7 +383,10 @@ use impl_trait_get_method_for_mocked_group;
 
 use crate::verification::VerificationPeriod;
 
-use super::{file_group::FileGroupIterTrait, FileStructureError, VerificationDirectoryTrait};
+use super::{
+    file_group::FileGroupIterTrait, ContextDirectoryTrait, FileStructureError,
+    VerificationDirectoryTrait,
+};
 
 #[derive(Debug)]
 
