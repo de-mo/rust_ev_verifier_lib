@@ -47,7 +47,7 @@ pub struct BBDirectory {
 ///
 /// The trait is used as parameter of the verification functions to allow mock of
 /// test (negative tests)
-pub trait TallyDirectoryTrait: CompletnessTestTrait {
+pub trait TallyDirectoryTrait: CompletnessTestTrait + Send + Sync {
     type BBDirType: BBDirectoryTrait;
 
     fn e_voting_decrypt_file(&self) -> &File;
@@ -68,7 +68,7 @@ pub trait TallyDirectoryTrait: CompletnessTestTrait {
 ///
 /// The trait is used as parameter of the verification functions to allow mock of
 /// test (negative tests)
-pub trait BBDirectoryTrait: CompletnessTestTrait {
+pub trait BBDirectoryTrait: CompletnessTestTrait + Send + Sync {
     add_type_for_file_group_iter_trait!(
         ControlComponentBallotBoxPayloadAsResultIterType,
         ControlComponentBallotBoxPayloadAsResult

@@ -44,7 +44,7 @@ pub struct SetupVCSDirectory {
 ///
 /// The trait is used as parameter of the verification functions to allow mock of
 /// test (negative tests)
-pub trait SetupDirectoryTrait: CompletnessTestTrait {
+pub trait SetupDirectoryTrait: CompletnessTestTrait + Send + Sync {
     type VCSDirType: SetupVCSDirectoryTrait;
     fn vcs_directories(&self) -> &[Self::VCSDirType];
 
@@ -61,7 +61,7 @@ pub trait SetupDirectoryTrait: CompletnessTestTrait {
 ///
 /// The trait is used as parameter of the verification functions to allow mock of
 /// test (negative tests)
-pub trait SetupVCSDirectoryTrait: CompletnessTestTrait {
+pub trait SetupVCSDirectoryTrait: CompletnessTestTrait + Send + Sync {
     add_type_for_file_group_iter_trait!(
         SetupComponentVerificationDataPayloadAsResultIterType,
         SetupComponentVerificationDataPayloadAsResult

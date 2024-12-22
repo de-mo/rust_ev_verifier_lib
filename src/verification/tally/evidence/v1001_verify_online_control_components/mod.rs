@@ -12,6 +12,7 @@ use crate::{
     verification::{VerificationEvent, VerificationResult},
     Config,
 };
+use rayon::prelude::*;
 use rust_ev_crypto_primitives::mix_net::ShuffleArgument as CryptoShuffleArgument;
 use verify_online_control_components_ballot_box::{
     verify_online_control_components_ballot_box, ContextAlgorithm41, InputsAlgorithm41,
@@ -47,14 +48,9 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
         }
     };
 
-    /*let eb_pk = setup_pk_payload
-    .setup_component_public_keys
-    .election_public_key
-    .as_slice();*/
-
     result.append(&mut tally_dir
         .bb_directories()
-        .iter()
+        .par_iter()
         .map(|bb_dir| {
             (
                 bb_dir.name(),
@@ -90,9 +86,11 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
                 },
             )
         })
+        .collect::<Vec<_>>()
+        .iter()
         .fold(VerificationResult::new(), |acc, (name, result)| {
             let mut res = acc.clone();
-            res.append_with_context(&result, format!("Ballot box {}", name));
+            res.append_with_context(result, format!("Ballot box {}", name));
             res
         }));
 }
