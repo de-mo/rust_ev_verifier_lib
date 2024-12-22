@@ -12,6 +12,7 @@ use crate::{
     },
     direct_trust::{CertificateAuthority, VerifiySignatureTrait, VerifySignatureError},
 };
+use chrono::NaiveDate;
 pub use election::{Candidate, Election, ElectionInformation, List, WriteInCandidate};
 use quick_xml::{
     de::from_str as xml_de_from_str,
@@ -39,6 +40,8 @@ const REGISTER_TAG: &str = "register";
 const VOTER_TAG: &str = "voter";
 const VOTE_INFORMATION_TAG: &str = "voteInformation";
 const ELECTION_GROUP_BALLOT_TAG: &str = "electionGroupBallot";
+const CONTEST_IDENTIFICATION_TAG: &str = "contestIdentification";
+const CONTEST_DATE_TAG: &str = "contestDate";
 
 #[derive(Clone, Debug)]
 pub struct ElectionEventConfiguration {
@@ -59,8 +62,8 @@ pub struct ConfigHeader {
 
 #[derive(Clone, Debug)]
 pub struct Contest {
-    _file_path: PathBuf,
-    _position_in_buffer: usize,
+    file_path: PathBuf,
+    position_in_buffer: usize,
     pub votes: TagManyWithIterator<VoteInformation>,
     pub election_groups: TagManyWithIterator<ElectionGroupBallot>,
 }
@@ -69,6 +72,7 @@ pub struct Contest {
 #[serde(rename_all = "camelCase")]
 pub struct Voter {
     pub voter_identification: String,
+    pub authorization: String,
 }
 
 #[derive(Deserialize, Debug, Clone)]
@@ -76,6 +80,7 @@ pub struct Voter {
 pub struct Authorization {
     pub authorization_identification: String,
     pub authorization_alias: String,
+    pub authorization_test: bool,
     pub authorization_object: Vec<AuthorizationObject>,
 }
 
@@ -110,6 +115,17 @@ impl_iterator_for_tag_many_iter!(Authorization);
 impl_iterator_for_tag_many_iter!(Voter);
 impl_iterator_for_tag_many_iter!(VoteInformation);
 impl_iterator_for_tag_many_iter!(ElectionGroupBallot);
+
+impl ElectionEventConfiguration {
+    fn list_of_test_ballot_boxes(&self) -> Result<Vec<String>, DataStructureError> {
+        Ok(self
+            .authorizations
+            .iter()?
+            .filter(|auth| auth.authorization_test)
+            .map(|auth| auth.authorization_identification)
+            .collect())
+    }
+}
 
 impl VerifyDomainTrait<String> for ElectionEventConfiguration {}
 
@@ -161,6 +177,7 @@ impl VerifierDataDecode for ElectionEventConfiguration {
                             p,
                             reader.buffer_position() as usize,
                             AUTHORIZATION_TAG,
+                            AUTHORIZATIONS_TAG,
                         ));
                         let mut buffer = vec![];
                         xml_read_to_end_into_buffer(&mut reader, AUTHORIZATIONS_TAG, &mut buffer)
@@ -174,6 +191,7 @@ impl VerifierDataDecode for ElectionEventConfiguration {
                             p,
                             reader.buffer_position() as usize,
                             VOTER_TAG,
+                            REGISTER_TAG,
                         ));
                         let mut buffer = vec![];
                         xml_read_to_end_into_buffer(&mut reader, REGISTER_TAG, &mut buffer)
@@ -243,19 +261,121 @@ impl ConfigHeader {
 impl Contest {
     pub fn new(path: &Path, position_in_buffer: usize) -> Self {
         Self {
-            _file_path: path.to_path_buf(),
-            _position_in_buffer: position_in_buffer,
+            file_path: path.to_path_buf(),
+            position_in_buffer,
             votes: TagManyWithIterator::<VoteInformation>::new(
                 path,
                 position_in_buffer,
                 VOTE_INFORMATION_TAG,
+                CONTEST_TAG,
             ),
             election_groups: TagManyWithIterator::<ElectionGroupBallot>::new(
                 path,
                 position_in_buffer,
                 ELECTION_GROUP_BALLOT_TAG,
+                CONTEST_TAG,
             ),
         }
+    }
+
+    fn reader(&self) -> Result<Reader<BufReader<File>>, DataStructureError> {
+        let mut reader =
+            Reader::from_file(&self.file_path).map_err(|e| DataStructureError::ParseQuickXML {
+                msg: format!(
+                    "Error creating xml reader for file {}",
+                    self.file_path.to_str().unwrap()
+                ),
+                source: e,
+            })?;
+        reader.stream().consume(self.position_in_buffer);
+        Ok(reader)
+    }
+
+    fn read_tag(&self, tag_name: &str) -> Result<String, DataStructureError> {
+        let mut buf = Vec::new();
+        let mut reader = self.reader()?;
+        loop {
+            match reader.read_event_into(&mut buf) {
+                Err(e) => {
+                    return Err(DataStructureError::ParseQuickXML {
+                        msg: format!("Error reading the tag {}", tag_name),
+                        source: e,
+                    })
+                }
+                Ok(Event::Eof) => {
+                    return Err(DataStructureError::DataError(format!(
+                        "Tag {} not found",
+                        tag_name
+                    )))
+                }
+                Ok(Event::Start(e)) => {
+                    if e == BytesStart::new(tag_name) {
+                        let mut buffer = vec![];
+                        match xml_read_to_end_into_buffer(&mut reader, tag_name, &mut buffer) {
+                            Ok(_) => {
+                                return String::from_utf8(buffer)
+                                    .map(|s| {
+                                        s.strip_prefix(&format!("<{}>", tag_name))
+                                            .unwrap()
+                                            .strip_suffix(&format!("</{}>", tag_name))
+                                            .unwrap()
+                                            .to_string()
+                                    })
+                                    .map_err(|e| {
+                                        DataStructureError::DataError(format!(
+                                            "Error reading the content of the tag {}: {}",
+                                            &tag_name, e
+                                        ))
+                                    });
+                            }
+                            Err(e) => {
+                                return Err(DataStructureError::ParseQuickXML {
+                                    msg: format!("Error finding the end of the tag {}", &tag_name),
+                                    source: e,
+                                })
+                            }
+                        };
+                    }
+                }
+                // There are several other `Event`s we do not consider here
+                _ => (),
+            }
+            // if we don't keep a borrow elsewhere, we can clear the buffer to keep memory usage low
+            buf.clear();
+        }
+    }
+
+    pub fn contest_identification(&self) -> Result<String, DataStructureError> {
+        let res = self.read_tag(CONTEST_IDENTIFICATION_TAG)?;
+        Ok(res)
+    }
+
+    pub fn contest_date(&self) -> Result<NaiveDate, DataStructureError> {
+        let date_str = self.read_tag(CONTEST_DATE_TAG)?;
+        NaiveDate::parse_from_str(&date_str, "%Y-%m-%d").map_err(|e| {
+            DataStructureError::DataError(format!(
+                "Contest date {} cannot be converted: {}",
+                &date_str, e
+            ))
+        })
+    }
+
+    pub fn number_of_elections(&self) -> Result<usize, DataStructureError> {
+        Ok(self
+            .election_groups
+            .iter()?
+            .map(|el| el.number_of_elections())
+            .sum())
+    }
+
+    pub fn number_of_votes_and_ballots(&self) -> Result<(usize, usize), DataStructureError> {
+        let mut number_of_votes = 0;
+        let mut number_of_ballots = 0;
+        self.votes.iter()?.for_each(|vote| {
+            number_of_votes += 1;
+            number_of_ballots += vote.vote.ballot.len();
+        });
+        Ok((number_of_votes, number_of_ballots))
     }
 }
 
@@ -314,6 +434,19 @@ impl ElectionGroupBallot {
             self.domain_of_influence == a.domain_of_influence.domain_of_influence_identification
         })
     }
+
+    pub fn number_of_elections(&self) -> usize {
+        self.election_information.len()
+    }
+}
+
+impl Voter {
+    pub fn is_test_voter(
+        &self,
+        test_authorization_ids: &[String],
+    ) -> Result<bool, DataStructureError> {
+        Ok(test_authorization_ids.contains(&self.authorization))
+    }
 }
 
 impl VerifiySignatureTrait<'_> for ElectionEventConfiguration {
@@ -338,6 +471,61 @@ impl VerifiySignatureTrait<'_> for ElectionEventConfiguration {
 
     fn get_signature(&self) -> ByteArray {
         self.signature.get_signature()
+    }
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub(crate) struct ManuelVerificationInputFromConfiguration {
+    pub contest_identification: String,
+    pub contest_date: NaiveDate,
+    pub number_of_votes: usize,
+    pub number_of_ballots: usize,
+    pub number_of_elections: usize,
+    pub number_of_productive_voters: usize,
+    pub number_of_test_voters: usize,
+    pub number_of_productive_ballot_boxes: usize,
+    pub number_of_test_ballot_boxes: usize,
+}
+
+impl TryFrom<&ElectionEventConfiguration> for ManuelVerificationInputFromConfiguration {
+    type Error = DataStructureError;
+    fn try_from(value: &ElectionEventConfiguration) -> Result<Self, Self::Error> {
+        let (number_of_votes, number_of_ballots) = value.contest.number_of_votes_and_ballots()?;
+        let number_of_productive_ballot_boxes = value
+            .authorizations
+            .iter()?
+            .filter(|auth| !auth.authorization_test)
+            .count();
+
+        let mut number_of_productive_voters = 0;
+        let mut number_of_test_voters = 0;
+        let test_authorization_ids = value.list_of_test_ballot_boxes()?;
+        value
+            .register
+            .iter()?
+            .map(|voter| match voter.is_test_voter(&test_authorization_ids) {
+                Ok(b) => {
+                    match b {
+                        true => number_of_test_voters += 1,
+                        false => number_of_productive_voters += 1,
+                    };
+                    Ok(())
+                }
+                Err(e) => Err(e),
+            })
+            .collect::<Result<Vec<_>, _>>()?;
+        Ok(Self {
+            contest_identification: value.contest.contest_identification()?,
+            contest_date: value.contest.contest_date()?,
+            number_of_votes,
+            number_of_ballots,
+            number_of_elections: value.contest.number_of_elections()?,
+            number_of_productive_voters,
+            number_of_test_voters,
+            number_of_productive_ballot_boxes,
+            number_of_test_ballot_boxes: value.authorizations.iter()?.count()
+                - number_of_productive_ballot_boxes,
+        })
     }
 }
 
@@ -412,5 +600,25 @@ mod test {
             it.next().unwrap().election_group_identification,
             "majorz_test"
         );
+    }
+
+    #[test]
+    fn test_manual_data() {
+        let data = get_data_res().unwrap();
+        let manual_data = ManuelVerificationInputFromConfiguration::try_from(&data).unwrap();
+        assert_eq!(
+            manual_data,
+            ManuelVerificationInputFromConfiguration {
+                contest_identification: "Post_E2E_DEV".to_string(),
+                contest_date: NaiveDate::from_ymd_opt(2027, 11, 25).unwrap(),
+                number_of_votes: 1,
+                number_of_ballots: 2,
+                number_of_elections: 2,
+                number_of_productive_voters: 0,
+                number_of_test_voters: 43,
+                number_of_productive_ballot_boxes: 0,
+                number_of_test_ballot_boxes: 4
+            }
+        )
     }
 }
