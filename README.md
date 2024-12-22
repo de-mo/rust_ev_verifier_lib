@@ -46,7 +46,6 @@ The Verifier is not ready for production.
 - The verification of the signature of XML files is missing
 - The verification of the data in the file eCH-0222 is missing
 - For most of the verifications, the negative unit tests are not implemented. A mechanisms of mocks is implemented
-- The manual verifications are not fully implemented
 - The report of the verifications is not generated
 
 ## Development guide
