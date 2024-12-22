@@ -17,8 +17,9 @@ pub use self::{
 
 use crate::{
     config::Config,
+    data_structures::DataStructureError,
     direct_trust::{DirectTrustError, VerifiySignatureTrait},
-    file_structure::VerificationDirectoryTrait,
+    file_structure::{FileStructureError, VerificationDirectoryTrait},
 };
 use thiserror::Error;
 
@@ -57,8 +58,15 @@ pub enum VerificationError {
     },
     #[error(transparent)]
     DirectTrust(DirectTrustError),
+    #[error(transparent)]
+    DataStructure(DataStructureError),
     #[error("metadata for verification id {0} not found")]
     MetadataNotFound(String),
+    #[error("{msg} -> caused by: {source}")]
+    FileStructureError {
+        msg: String,
+        source: Box<FileStructureError>,
+    },
     #[error("{0}")]
     Generic(String),
 }
