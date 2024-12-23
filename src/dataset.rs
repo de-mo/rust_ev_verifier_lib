@@ -320,10 +320,12 @@ impl EncryptedZipReader {
 
 #[cfg(test)]
 mod test {
-    use std::ffi::OsString;
-
     use super::*;
-    use crate::config::test::{test_datasets_path, test_temp_dir_path, CONFIG_TEST};
+    use crate::config::test::{
+        test_datasets_context_zip_path, test_datasets_path, test_decrypt_zip_password,
+        test_temp_dir_path, CONFIG_TEST,
+    };
+    use std::ffi::OsString;
 
     #[test]
     fn test_temp_zip_path() {
@@ -335,10 +337,10 @@ mod test {
 
     #[test]
     fn test_decrypt_zip() {
-        let path = test_datasets_path().join("Dataset-context-NE_20231124_TT05-20240802_1158.zip");
+        let path = test_datasets_context_zip_path();
         let mut zip_reader = EncryptedZipReader::new(
             &path,
-            "LongPassword_Encryption1",
+            test_decrypt_zip_password(),
             &test_datasets_path(),
             &CONFIG_TEST.zip_temp_dir_path(),
         )
@@ -357,14 +359,14 @@ mod test {
 
     #[test]
     fn test_unzip() {
-        let path = test_datasets_path().join("Dataset-context-NE_20231124_TT05-20240802_1158.zip");
+        let path = test_datasets_context_zip_path();
         let subdir_time =
             test_temp_dir_path().join(Local::now().format("%Y%m%d-%H%M%S").to_string());
         let _ = std::fs::create_dir(&subdir_time);
         let target_dir = subdir_time.join("context");
         let mut zip_reader = EncryptedZipReader::new(
             &path,
-            "LongPassword_Encryption1",
+            test_decrypt_zip_password(),
             &target_dir,
             &CONFIG_TEST.zip_temp_dir_path(),
         )
