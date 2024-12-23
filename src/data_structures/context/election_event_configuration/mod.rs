@@ -546,7 +546,7 @@ mod test {
         assert!(data_res.is_ok());
         let data = data_res.unwrap();
         assert_eq!(data.header.voter_total, 43);
-        assert_eq!(data.signature.signature_contents, "ctgAK+cygZ89QJ/4XGccw4fl4Yc1MCdsywfJuR5AIs/+SnozxB8USh7UJvl64fxuZ6ks+86tRGazABP+Az/0hEmSxihadlYpGe5b2goqo/TSQzC+Z683sHV1O4B8RGjFYt93xIVpsvs4mYiyktz7ma8IanZk0nNhihhgF0Da07Tv4PmhUqAuzd7IQEYTaTz7RXebOHkH4pG4fA2HbSHeUMlBw0Ni51zx5LOO0riX/bHf4ffnmaqibbOdt88VZegQoNp1gy/R29L6mNrSi01WQnDZ3xxzeFJCG1eSb0MoLoDwNSizC63pqKmQbjhsQbqxDpmkhvSqW5EnvY4VH4rYIaONyjZeivJwUwnLEPbE9k/PnZTAlESCFFR3bHnawEKsRCtwynH0u6IRuTW2iMuupl+UE3tfx8WOsqbWBWNCL9/0WSrvdiJLTcScRmU3ZqW+1La0FG/BhZiI0egBA4KIOYAb9McWlIE7QS8hWJjpQP5xYa+s4SHP63YNr0LvQ1dh");
+        assert_eq!(data.signature.signature_contents, "bWRtb1c9AJnnY5KDYI4wkmzhDKd5qGwhgzixyJ0c6dHpHANgpWUEmqHl8ky30gUEF4j6/vEsG17zP2e+KOM7fztPqCbZam7rNgQeK+ytK95WVaqyYXzLhoBdKseGXWZbwEK77PjEXDpc7Yoqre34vOj6TKLM697RFVOJS7eZy4yNyWGMqNrKQwkvCMse/iwq5aK0FYea3/BUa5UosMWaGhwub4ZUdrqODLnrYRrhGG0o565azm5TSv9Vp9buM1kwRPjbwUuiccY8e0WCWUFLaTnuiUrsZczrY3MiQ1JtPDrcXP3T461TExsSKMcSstnExNYcdWahwiHyB4USInkkeW5peUoOojO4TRvzlSu9ca1kIIVocOFxUCcJBS5A4HpkpD/QtlQKK2yBFfAcRtB1Y8OS06JclV8up2aeih5kKecWRSMhmLdgNnGrrX0OFRSN+IclHR+DlJKEZEfj1qbDF1NxjeoCxM/XHEYs1LJM9q0DuTA0suE1jIy+7BaAPha1");
     }
 
     #[test]
