@@ -178,20 +178,20 @@ pub(crate) mod test {
     use lazy_static::lazy_static;
     use rust_ev_crypto_primitives::direct_trust::Keystore as BasisKeystore;
 
-    const CANTON_KEYSTORE_FILE_NAME: &str = "local_direct_trust_keystore_canton.p12";
-    const CANTON_KEYSTORE_PASSWORD_FILE_NAME: &str = "local_direct_trust_pw_canton.txt";
-    const CC1_KEYSTORE_FILE_NAME: &str = "local_direct_trust_keystore_control_component_1.p12";
-    const CC1_KEYSTORE_PASSWORD_FILE_NAME: &str = "local_direct_trust_pw_control_component_1.txt";
-    const CC2_KEYSTORE_FILE_NAME: &str = "local_direct_trust_keystore_control_component_2.p12";
-    const CC2_KEYSTORE_PASSWORD_FILE_NAME: &str = "local_direct_trust_pw_control_component_2.txt";
-    const CC3_KEYSTORE_FILE_NAME: &str = "local_direct_trust_keystore_control_component_3.p12";
-    const CC3_KEYSTORE_PASSWORD_FILE_NAME: &str = "local_direct_trust_pw_control_component_3.txt";
-    const CC4_KEYSTORE_FILE_NAME: &str = "local_direct_trust_keystore_control_component_4.p12";
-    const CC4_KEYSTORE_PASSWORD_FILE_NAME: &str = "local_direct_trust_pw_control_component_4.txt";
-    const CONFIG_KEYSTORE_FILE_NAME: &str = "local_direct_trust_keystore_sdm_config.p12";
-    const CONFIG_KEYSTORE_PASSWORD_FILE_NAME: &str = "local_direct_trust_pw_sdm_config.txt";
-    const TALLY_KEYSTORE_FILE_NAME: &str = "local_direct_trust_keystore_sdm_tally.p12";
-    const TALLY_KEYSTORE_PASSWORD_FILE_NAME: &str = "local_direct_trust_pw_sdm_tally.txt";
+    const CANTON_KEYSTORE_FILE_NAME: &str = "signing_keystore_canton.p12";
+    const CANTON_KEYSTORE_PASSWORD_FILE_NAME: &str = "signing_pw_canton.txt";
+    const CC1_KEYSTORE_FILE_NAME: &str = "signing_keystore_control_component_1.p12";
+    const CC1_KEYSTORE_PASSWORD_FILE_NAME: &str = "signing_pw_control_component_1.txt";
+    const CC2_KEYSTORE_FILE_NAME: &str = "signing_keystore_control_component_2.p12";
+    const CC2_KEYSTORE_PASSWORD_FILE_NAME: &str = "signing_pw_control_component_2.txt";
+    const CC3_KEYSTORE_FILE_NAME: &str = "signing_keystore_control_component_3.p12";
+    const CC3_KEYSTORE_PASSWORD_FILE_NAME: &str = "signing_pw_control_component_3.txt";
+    const CC4_KEYSTORE_FILE_NAME: &str = "signing_keystore_control_component_3.p12";
+    const CC4_KEYSTORE_PASSWORD_FILE_NAME: &str = "signing_pw_control_component_4.txt";
+    const SETUP_KEYSTORE_FILE_NAME: &str = "signing_keystore_sdm_config.p12";
+    const SETUP_KEYSTORE_PASSWORD_FILE_NAME: &str = "signing_pw_sdm_config.txt";
+    const TALLY_KEYSTORE_FILE_NAME: &str = "signing_keystore_sdm_tally.p12";
+    const TALLY_KEYSTORE_PASSWORD_FILE_NAME: &str = "signing_pw_sdm_tally.txt";
 
     const TEST_TEMP_DIR_NAME: &str = "test_temp_dir";
     const BB_ID_ONE_VOTE: &str = "A6733AB3D38BC47B964FB2DF09404877";
@@ -309,8 +309,8 @@ pub(crate) mod test {
         MockVerificationDirectory::new(&VerificationPeriod::Setup, &test_datasets_path())
     }
 
-    pub(crate) fn get_mock_direct_trust_path() -> PathBuf {
-        test_datasets_path().join("direct-trust").join("mock")
+    pub(crate) fn get_test_signing_direct_trust_path() -> PathBuf {
+        test_resources_path().join("signing_keystore")
     }
 
     /// Get the signing keystore
@@ -322,10 +322,9 @@ pub(crate) mod test {
                 CANTON_KEYSTORE_FILE_NAME,
                 CANTON_KEYSTORE_PASSWORD_FILE_NAME,
             ),
-            CertificateAuthority::SdmConfig => (
-                CONFIG_KEYSTORE_FILE_NAME,
-                CONFIG_KEYSTORE_PASSWORD_FILE_NAME,
-            ),
+            CertificateAuthority::SdmConfig => {
+                (SETUP_KEYSTORE_FILE_NAME, SETUP_KEYSTORE_PASSWORD_FILE_NAME)
+            }
             CertificateAuthority::SdmTally => {
                 (TALLY_KEYSTORE_FILE_NAME, TALLY_KEYSTORE_PASSWORD_FILE_NAME)
             }
@@ -343,11 +342,11 @@ pub(crate) mod test {
             }
         };
         BasisKeystore::from_pkcs12(
-            &get_mock_direct_trust_path().join(ks_name),
-            &get_mock_direct_trust_path().join(pwd_name),
+            &get_test_signing_direct_trust_path().join(ks_name),
+            &get_test_signing_direct_trust_path().join(pwd_name),
         )
         .map_err(|e| DirectTrustError::Keystore {
-            msg: "Problem reading the keystore for mocking".to_string(),
+            msg: "Problem reading the keystore for test signing".to_string(),
             source: e,
         })
     }
