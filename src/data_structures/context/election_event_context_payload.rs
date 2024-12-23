@@ -372,7 +372,7 @@ impl<'a> From<&'a ElectionEventContext> for GetHashElectionEventContextContext<'
             t_s_ee: &value.start_time,
             t_f_ee: &value.finish_time,
             n_max: value.maximum_number_of_voting_options,
-            phi_max: value.maximum_number_of_selections,
+            psi_max: value.maximum_number_of_selections,
             delta_max: value.maximum_number_of_write_ins_plus_one,
         }
     }
