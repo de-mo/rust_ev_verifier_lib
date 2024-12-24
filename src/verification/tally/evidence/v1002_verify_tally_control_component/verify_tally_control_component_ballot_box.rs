@@ -49,6 +49,7 @@ pub fn verify_tally_control_component_ballot_box<'a>(
         .take(context.p_table.get_delta())
         .cloned()
         .collect::<Vec<_>>();
+
     match verify_shuffle(
         context.eg,
         input.c_dec_4,

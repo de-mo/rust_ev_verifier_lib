@@ -138,7 +138,6 @@ fn verify_for_ballotbox<B: BBDirectoryTrait>(
             ));
         }
     };
-
     let pi_mix_5 =
         match ShuffleArgument::try_from(&tally_shuffle_payload.verifiable_shuffle.shuffle_argument)
         {
