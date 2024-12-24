@@ -50,7 +50,7 @@ pub struct ContextVCSDirectory {
 ///
 /// The trait is used as parameter of the verification functions to allow mock of
 /// test (negative tests)
-pub trait ContextDirectoryTrait: CompletnessTestTrait {
+pub trait ContextDirectoryTrait: CompletnessTestTrait + Send + Sync {
     type VCSDirType: ContextVCSDirectoryTrait;
     add_type_for_file_group_iter_trait!(
         ControlComponentPublicKeysPayloadAsResultIterType,
@@ -90,7 +90,7 @@ pub trait ContextDirectoryTrait: CompletnessTestTrait {
 ///
 /// The trait is used as parameter of the verification functions to allow mock of
 /// test (negative tests)
-pub trait ContextVCSDirectoryTrait: CompletnessTestTrait {
+pub trait ContextVCSDirectoryTrait: CompletnessTestTrait + Send + Sync {
     fn setup_component_tally_data_payload_file(&self) -> &File;
     fn setup_component_tally_data_payload(
         &self,

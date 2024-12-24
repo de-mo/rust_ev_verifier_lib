@@ -10,6 +10,7 @@ use crate::{
     verification::{VerificationEvent, VerificationResult},
     Config,
 };
+use rayon::prelude::*;
 use rust_ev_crypto_primitives::{mix_net::ShuffleArgument, Integer};
 use verify_tally_control_component_ballot_box::{
     verify_tally_control_component_ballot_box, ContextAlgorithm42, InputsAlgorithm42,
@@ -52,16 +53,18 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
     result.append(
         &mut tally_dir
             .bb_directories()
-            .iter()
+            .par_iter()
             .map(|dir| {
                 (
                     dir.name(),
                     verify_for_ballotbox(&ee_context_payload, eb_pk, dir),
                 )
             })
+            .collect::<Vec<_>>()
+            .iter()
             .fold(VerificationResult::new(), |acc, (name, result)| {
                 let mut res = acc.clone();
-                res.append_with_context(&result, format!("Ballot box {}", name));
+                res.append_with_context(result, format!("Ballot box {}", name));
                 res
             }),
     );
@@ -135,7 +138,6 @@ fn verify_for_ballotbox<B: BBDirectoryTrait>(
             ));
         }
     };
-
     let pi_mix_5 =
         match ShuffleArgument::try_from(&tally_shuffle_payload.verifiable_shuffle.shuffle_argument)
         {

@@ -167,6 +167,7 @@ impl Config {
 }
 
 #[cfg(test)]
+#[allow(dead_code)]
 pub(crate) mod test {
     use super::*;
     use crate::{
@@ -177,22 +178,29 @@ pub(crate) mod test {
     use lazy_static::lazy_static;
     use rust_ev_crypto_primitives::direct_trust::Keystore as BasisKeystore;
 
-    const CANTON_KEYSTORE_FILE_NAME: &str = "local_direct_trust_keystore_canton.p12";
-    const CANTON_KEYSTORE_PASSWORD_FILE_NAME: &str = "local_direct_trust_pw_canton.txt";
-    const CC1_KEYSTORE_FILE_NAME: &str = "local_direct_trust_keystore_control_component_1.p12";
-    const CC1_KEYSTORE_PASSWORD_FILE_NAME: &str = "local_direct_trust_pw_control_component_1.txt";
-    const CC2_KEYSTORE_FILE_NAME: &str = "local_direct_trust_keystore_control_component_2.p12";
-    const CC2_KEYSTORE_PASSWORD_FILE_NAME: &str = "local_direct_trust_pw_control_component_2.txt";
-    const CC3_KEYSTORE_FILE_NAME: &str = "local_direct_trust_keystore_control_component_3.p12";
-    const CC3_KEYSTORE_PASSWORD_FILE_NAME: &str = "local_direct_trust_pw_control_component_3.txt";
-    const CC4_KEYSTORE_FILE_NAME: &str = "local_direct_trust_keystore_control_component_4.p12";
-    const CC4_KEYSTORE_PASSWORD_FILE_NAME: &str = "local_direct_trust_pw_control_component_4.txt";
-    const CONFIG_KEYSTORE_FILE_NAME: &str = "local_direct_trust_keystore_sdm_config.p12";
-    const CONFIG_KEYSTORE_PASSWORD_FILE_NAME: &str = "local_direct_trust_pw_sdm_config.txt";
-    const TALLY_KEYSTORE_FILE_NAME: &str = "local_direct_trust_keystore_sdm_tally.p12";
-    const TALLY_KEYSTORE_PASSWORD_FILE_NAME: &str = "local_direct_trust_pw_sdm_tally.txt";
+    const CANTON_KEYSTORE_FILE_NAME: &str = "signing_keystore_canton.p12";
+    const CANTON_KEYSTORE_PASSWORD_FILE_NAME: &str = "signing_pw_canton.txt";
+    const CC1_KEYSTORE_FILE_NAME: &str = "signing_keystore_control_component_1.p12";
+    const CC1_KEYSTORE_PASSWORD_FILE_NAME: &str = "signing_pw_control_component_1.txt";
+    const CC2_KEYSTORE_FILE_NAME: &str = "signing_keystore_control_component_2.p12";
+    const CC2_KEYSTORE_PASSWORD_FILE_NAME: &str = "signing_pw_control_component_2.txt";
+    const CC3_KEYSTORE_FILE_NAME: &str = "signing_keystore_control_component_3.p12";
+    const CC3_KEYSTORE_PASSWORD_FILE_NAME: &str = "signing_pw_control_component_3.txt";
+    const CC4_KEYSTORE_FILE_NAME: &str = "signing_keystore_control_component_3.p12";
+    const CC4_KEYSTORE_PASSWORD_FILE_NAME: &str = "signing_pw_control_component_4.txt";
+    const SETUP_KEYSTORE_FILE_NAME: &str = "signing_keystore_sdm_config.p12";
+    const SETUP_KEYSTORE_PASSWORD_FILE_NAME: &str = "signing_pw_sdm_config.txt";
+    const TALLY_KEYSTORE_FILE_NAME: &str = "signing_keystore_sdm_tally.p12";
+    const TALLY_KEYSTORE_PASSWORD_FILE_NAME: &str = "signing_pw_sdm_tally.txt";
 
     const TEST_TEMP_DIR_NAME: &str = "test_temp_dir";
+    const BB_ID_ONE_VOTE: &str = "A6733AB3D38BC47B964FB2DF09404877";
+    const BB_ID_ZERO_VOTE: &str = "80DEAF0E396ACC1183EFD4E8A0BCD172";
+    const BB_ID_MANY_VOTES: &str = "2705DAB8C622B8DD4EE6A0D490A914B4";
+    const CONTEXT_ZIP_FILENAME: &str = "Dataset-context-NE_20231124_TT05-20241016_1513.zip";
+    const SETUP_ZIP_FILENAME: &str = "Dataset-setup-NE_20231124_TT05-20241016_1513.zip";
+    const TALLY_ZIP_FILENAME: &str = "Dataset-tally-NE_20231124_TT05-20241016_1707.zip";
+    const TEST_DECRYPT_ZIP_PASSWORD: &str = "LongPassword_Encryption1";
 
     lazy_static! {
         pub(crate) static ref CONFIG_TEST: Config = Config::new(".");
@@ -218,6 +226,22 @@ pub(crate) mod test {
         CONFIG_TEST.root_dir_path().join(TEST_TEMP_DIR_NAME)
     }
 
+    pub(crate) fn test_datasets_context_zip_path() -> PathBuf {
+        test_datasets_path().join(CONTEXT_ZIP_FILENAME)
+    }
+
+    pub(crate) fn test_datasets_setup_zip_path() -> PathBuf {
+        test_datasets_path().join(SETUP_ZIP_FILENAME)
+    }
+
+    pub(crate) fn test_datasets_tally_zip_path() -> PathBuf {
+        test_datasets_path().join(TALLY_ZIP_FILENAME)
+    }
+
+    pub(crate) fn test_decrypt_zip_password() -> &'static str {
+        TEST_DECRYPT_ZIP_PASSWORD
+    }
+
     pub(crate) fn test_all_paths_of_subdir(
         fn_path: &dyn Fn() -> PathBuf,
         subdir: &str,
@@ -241,19 +265,19 @@ pub(crate) mod test {
     pub(crate) fn test_ballot_box_one_vote_path() -> PathBuf {
         test_datasets_tally_path()
             .join("ballotBoxes")
-            .join("8F9FDF4E52352595896A8E723F827183")
+            .join(BB_ID_ONE_VOTE)
     }
 
     pub(crate) fn test_ballot_box_zero_vote_path() -> PathBuf {
         test_datasets_tally_path()
             .join("ballotBoxes")
-            .join("49E21ADEFC8BE89CED94F4104BFFB219")
+            .join(BB_ID_ZERO_VOTE)
     }
 
     pub(crate) fn test_ballot_box_many_votes_path() -> PathBuf {
         test_datasets_tally_path()
             .join("ballotBoxes")
-            .join("38BCF9D79EE43F082D4B94909F6BB792")
+            .join(BB_ID_MANY_VOTES)
     }
 
     pub(crate) fn test_context_verification_card_set_path() -> PathBuf {
@@ -285,8 +309,8 @@ pub(crate) mod test {
         MockVerificationDirectory::new(&VerificationPeriod::Setup, &test_datasets_path())
     }
 
-    pub(crate) fn get_mock_direct_trust_path() -> PathBuf {
-        test_datasets_path().join("direct-trust").join("mock")
+    pub(crate) fn get_test_signing_direct_trust_path() -> PathBuf {
+        test_resources_path().join("signing_keystore")
     }
 
     /// Get the signing keystore
@@ -298,10 +322,9 @@ pub(crate) mod test {
                 CANTON_KEYSTORE_FILE_NAME,
                 CANTON_KEYSTORE_PASSWORD_FILE_NAME,
             ),
-            CertificateAuthority::SdmConfig => (
-                CONFIG_KEYSTORE_FILE_NAME,
-                CONFIG_KEYSTORE_PASSWORD_FILE_NAME,
-            ),
+            CertificateAuthority::SdmConfig => {
+                (SETUP_KEYSTORE_FILE_NAME, SETUP_KEYSTORE_PASSWORD_FILE_NAME)
+            }
             CertificateAuthority::SdmTally => {
                 (TALLY_KEYSTORE_FILE_NAME, TALLY_KEYSTORE_PASSWORD_FILE_NAME)
             }
@@ -319,11 +342,11 @@ pub(crate) mod test {
             }
         };
         BasisKeystore::from_pkcs12(
-            &get_mock_direct_trust_path().join(ks_name),
-            &get_mock_direct_trust_path().join(pwd_name),
+            &get_test_signing_direct_trust_path().join(ks_name),
+            &get_test_signing_direct_trust_path().join(pwd_name),
         )
         .map_err(|e| DirectTrustError::Keystore {
-            msg: "Problem reading the keystore for mocking".to_string(),
+            msg: "Problem reading the keystore for test signing".to_string(),
             source: e,
         })
     }
