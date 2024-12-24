@@ -13,10 +13,10 @@ keywords = ["math", "e-voting", "crypto"]
 exclude = ["/specs", "/datasets", "/data", "/log", "/test_temp_dir", "/temp"]
 
 [dependencies]
-# rust_ev_crypto_primitives = "0.6"
-rust_ev_crypto_primitives = { path = "../rust_ev_crypto_primitives" }
-# rust_ev_system_library = "0.2"
-rust_ev_system_library = { path = "../rust_ev_system_library" }
+rust_ev_crypto_primitives = "0.6"
+#rust_ev_crypto_primitives = { path = "../rust_ev_crypto_primitives" }
+rust_ev_system_library = "0.2.1"
+#rust_ev_system_library = { path = "../rust_ev_system_library" }
 thiserror = "2"
 enum-kinds = "0.5"
 tracing = "0.1"
