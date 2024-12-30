@@ -3,7 +3,9 @@ use super::super::{
     DataStructureError, VerifierDataDecode,
 };
 use crate::direct_trust::{CertificateAuthority, VerifiySignatureTrait, VerifySignatureError};
-use rust_ev_crypto_primitives::{ByteArray, HashableMessage, RecursiveHashTrait};
+use rust_ev_system_library::rust_ev_crypto_primitives::prelude::{
+    ByteArray, HashableMessage, RecursiveHashTrait,
+};
 use std::path::{Path, PathBuf};
 
 #[derive(Debug, Clone)]

@@ -1,9 +1,9 @@
 //! Type that are used in many structures
 
 use super::{deserialize_seq_string_base64_to_seq_integer, deserialize_string_base64_to_integer};
-use rust_ev_crypto_primitives::elgamal::Ciphertext;
-use rust_ev_crypto_primitives::Integer;
-use rust_ev_crypto_primitives::{
+use rust_ev_system_library::rust_ev_crypto_primitives::prelude::elgamal::Ciphertext;
+use rust_ev_system_library::rust_ev_crypto_primitives::prelude::Integer;
+use rust_ev_system_library::rust_ev_crypto_primitives::prelude::{
     elgamal::EncryptionParameters, ByteArray, DecodeTrait, HashableMessage,
 };
 use serde::Deserialize;
@@ -83,7 +83,7 @@ pub struct DecryptionProof {
 
 impl<'a> From<&'a DecryptionProof> for HashableMessage<'a> {
     fn from(value: &'a DecryptionProof) -> Self {
-        Self::from(vec![Self::from(&(value.e)), Self::from(&(value.z))])
+        Self::from(vec![Self::from(&(value.e)), Self::from(value.z.as_slice())])
     }
 }
 

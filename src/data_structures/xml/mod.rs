@@ -10,7 +10,7 @@ use quick_xml::{
     Error as QuickXmlError, Writer,
 };
 use roxmltree::Error as RoXmlTreeError;
-use rust_ev_crypto_primitives::{ByteArrayError, HashError, HashableMessage};
+use rust_ev_system_library::rust_ev_crypto_primitives::prelude::{ByteArrayError, HashError, HashableMessage};
 pub use schema::SchemaKind;
 pub(super) use shared_types::{impl_iterator_for_tag_many_iter, TagManyIter, TagManyWithIterator};
 use std::{io::BufRead, num::ParseIntError, str::Utf8Error};

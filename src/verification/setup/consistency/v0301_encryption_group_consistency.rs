@@ -7,7 +7,7 @@ use crate::{
         VerificationDirectoryTrait,
     },
 };
-use rust_ev_crypto_primitives::elgamal::EncryptionParameters;
+use rust_ev_system_library::rust_ev_crypto_primitives::prelude::elgamal::EncryptionParameters;
 
 fn verify_encryption_group(
     eg: &EncryptionParameters,
@@ -141,7 +141,7 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
 
 #[cfg(test)]
 mod test {
-    use rust_ev_crypto_primitives::Integer;
+    use rust_ev_system_library::rust_ev_crypto_primitives::prelude::Integer;
 
     use super::*;
     use crate::config::test::{

@@ -1,5 +1,5 @@
 use crate::verification::{VerificationEvent, VerificationResult};
-use rust_ev_crypto_primitives::{elgamal::EncryptionParameters, Integer};
+use rust_ev_system_library::rust_ev_crypto_primitives::prelude::{elgamal::EncryptionParameters, Integer};
 use rust_ev_system_library::{
     preliminaries::{EPPTableAsContext, PTable},
     tally_phase::mix_offline::ProcessPlaintextsOutput,

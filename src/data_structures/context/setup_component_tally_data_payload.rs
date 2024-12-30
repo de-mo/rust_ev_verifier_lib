@@ -4,8 +4,8 @@ use super::super::{
     implement_trait_verifier_data_json_decode, DataStructureError, VerifierDataDecode,
 };
 use crate::direct_trust::{CertificateAuthority, VerifiySignatureTrait, VerifySignatureError};
-use rust_ev_crypto_primitives::Integer;
-use rust_ev_crypto_primitives::{
+use rust_ev_system_library::rust_ev_crypto_primitives::prelude::Integer;
+use rust_ev_system_library::rust_ev_crypto_primitives::prelude::{
     elgamal::EncryptionParameters, ByteArray, HashableMessage, VerifyDomainTrait,
 };
 use serde::Deserialize;
@@ -35,16 +35,9 @@ impl<'a> From<&'a SetupComponentTallyDataPayload> for HashableMessage<'a> {
             Self::from(&value.verification_card_set_id),
             Self::from(&value.ballot_box_default_title),
             Self::from(&value.encryption_group),
-            Self::from(&value.verification_card_ids),
-            Self::from(&value.verification_card_public_keys),
+            Self::from(value.verification_card_ids.as_slice()),
+            Self::from(value.verification_card_public_keys.as_slice()),
         ];
-        /*
-        let l: Vec<Self> = value
-            .verification_card_public_keys
-            .iter()
-            .map(Self::from)
-            .collect();
-        elts.push(Self::from(l)); */
         Self::from(elts)
     }
 }

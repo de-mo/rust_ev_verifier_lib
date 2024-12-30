@@ -3,7 +3,7 @@ use crate::{
     config::Config,
     file_structure::{context_directory::ContextDirectoryTrait, VerificationDirectoryTrait},
 };
-use rust_ev_crypto_primitives::{ConstantsTrait, Integer};
+use rust_ev_system_library::rust_ev_crypto_primitives::prelude::{ConstantsTrait, Integer};
 
 pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
     dir: &D,

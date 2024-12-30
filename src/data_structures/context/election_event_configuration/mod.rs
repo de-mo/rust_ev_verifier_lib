@@ -19,7 +19,7 @@ use quick_xml::{
     events::{BytesEnd, BytesStart, Event},
     Reader,
 };
-use rust_ev_crypto_primitives::{
+use rust_ev_system_library::rust_ev_crypto_primitives::prelude::{
     ByteArray, HashableMessage, RecursiveHashTrait, VerifyDomainTrait,
 };
 use serde::Deserialize;
