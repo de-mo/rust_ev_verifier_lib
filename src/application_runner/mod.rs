@@ -2,10 +2,12 @@
 
 mod checks;
 mod extract;
+mod report;
 mod runner;
 
 pub use checks::*;
 pub use extract::*;
+pub use report::*;
 pub use runner::{no_action_after_fn, no_action_before_fn, RunParallel, Runner};
 
 use thiserror::Error;
