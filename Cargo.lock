@@ -804,6 +804,21 @@ dependencies = [
 [[package]]
 name = "rust_ev_crypto_primitives"
 version = "0.6.4"
+dependencies = [
+ "argon2",
+ "data-encoding",
+ "lazy_static",
+ "num-traits",
+ "openssl",
+ "rug",
+ "rug-miller-rabin",
+ "thiserror 2.0.9",
+ "tracing",
+]
+
+[[package]]
+name = "rust_ev_crypto_primitives"
+version = "0.6.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ff198673e7a5bed311a37b5773a9b3e97b26e6a805226c47a605f0e5b3d38656"
 dependencies = [
@@ -820,12 +835,10 @@ dependencies = [
 [[package]]
 name = "rust_ev_system_library"
 version = "0.2.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "14c719ccc0c72bfecbd6a6b0461b98becdc75ea585b4c5d1070ff5bd20632b5a"
 dependencies = [
  "chrono",
  "rayon",
- "rust_ev_crypto_primitives",
+ "rust_ev_crypto_primitives 0.6.4 (registry+https://github.com/rust-lang/crates.io-index)",
  "thiserror 2.0.9",
  "tracing",
 ]
@@ -844,7 +857,7 @@ dependencies = [
  "rayon",
  "regex",
  "roxmltree",
- "rust_ev_crypto_primitives",
+ "rust_ev_crypto_primitives 0.6.4",
  "rust_ev_system_library",
  "serde",
  "serde_json",
