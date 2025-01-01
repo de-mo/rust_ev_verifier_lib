@@ -38,8 +38,8 @@ use chrono::NaiveDateTime;
 use common_types::CiphertextDef;
 use quick_xml::{DeError as QuickXmDeError, Error as QuickXmlError};
 use roxmltree::{Document, Error as RoXmlTreeError};
-use rust_ev_crypto_primitives::{elgamal::Ciphertext, Integer};
-use rust_ev_crypto_primitives::{ByteArray, DecodeTrait, Hexa};
+use rust_ev_system_library::rust_ev_crypto_primitives::prelude::{elgamal::Ciphertext, Integer};
+use rust_ev_system_library::rust_ev_crypto_primitives::prelude::{ByteArray, DecodeTrait, Hexa};
 use serde::{
     de::{Deserialize as DeDeserialize, Deserializer, Error as SerdeError},
     Deserialize,
@@ -333,7 +333,7 @@ where
 
     ByteArray::base64_decode(&buf)
         .map_err(|e| SerdeError::custom(e.to_string()))
-        .map(|e| e.into_mp_integer())
+        .map(|e| e.into_integer())
 }
 
 fn deserialize_option_string_base64_to_option_integer<'de, D>(
@@ -347,7 +347,7 @@ where
     match buf {
         Some(buf) => ByteArray::base64_decode(&buf)
             .map_err(|e| SerdeError::custom(e.to_string()))
-            .map(|e| Some(e.into_mp_integer())),
+            .map(|e| Some(e.into_integer())),
         None => Ok(None),
     }
 }
@@ -449,7 +449,7 @@ where
 
             while let Some(v) = (seq.next_element())? {
                 let r_b = ByteArray::base64_decode(v).map_err(A::Error::custom)?;
-                vec.push(r_b.into_mp_integer());
+                vec.push(r_b.into_integer());
             }
             Ok(vec)
         }
@@ -529,7 +529,7 @@ where
                 let mut inner_vec = Vec::new();
                 for x in v {
                     let r_b = ByteArray::base64_decode(&x).map_err(A::Error::custom)?;
-                    inner_vec.push(r_b.into_mp_integer());
+                    inner_vec.push(r_b.into_integer());
                 }
                 vec.push(inner_vec.to_owned());
             }

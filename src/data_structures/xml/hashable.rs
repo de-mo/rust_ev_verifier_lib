@@ -9,8 +9,10 @@ use quick_xml::{
     name::{Namespace, QName, ResolveResult::*},
     reader::NsReader,
 };
-use rust_ev_crypto_primitives::Integer;
-use rust_ev_crypto_primitives::{ByteArray, DecodeTrait, HashableMessage, RecursiveHashTrait};
+use rust_ev_system_library::rust_ev_crypto_primitives::prelude::Integer;
+use rust_ev_system_library::rust_ev_crypto_primitives::prelude::{
+    ByteArray, DecodeTrait, HashableMessage, RecursiveHashTrait,
+};
 use std::{
     collections::HashMap,
     fs::File,

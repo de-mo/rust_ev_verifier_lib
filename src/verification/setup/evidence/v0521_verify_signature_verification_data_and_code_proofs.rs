@@ -20,8 +20,8 @@ use crate::{
 };
 
 use rayon::prelude::*;
-use rust_ev_crypto_primitives::{elgamal::Ciphertext, Integer};
-use rust_ev_crypto_primitives::{
+use rust_ev_system_library::rust_ev_crypto_primitives::prelude::{elgamal::Ciphertext, Integer};
+use rust_ev_system_library::rust_ev_crypto_primitives::prelude::{
     elgamal::EncryptionParameters, zero_knowledge_proofs::verify_exponentiation,
 };
 use std::iter::zip;

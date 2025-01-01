@@ -13,7 +13,7 @@ use crate::{
     Config,
 };
 use rayon::prelude::*;
-use rust_ev_crypto_primitives::mix_net::ShuffleArgument as CryptoShuffleArgument;
+use rust_ev_system_library::rust_ev_crypto_primitives::prelude::mix_net::ShuffleArgument as CryptoShuffleArgument;
 use verify_online_control_components_ballot_box::{
     verify_online_control_components_ballot_box, ContextAlgorithm41, InputsAlgorithm41,
 };

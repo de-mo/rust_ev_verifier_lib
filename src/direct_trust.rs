@@ -1,4 +1,4 @@
-use rust_ev_crypto_primitives::{
+use rust_ev_system_library::rust_ev_crypto_primitives::prelude::{
     basic_crypto_functions::BasisCryptoError,
     direct_trust::{DirectTrustError as BasisDirectTrustError, Keystore as BasisKeystore},
     signature::{sign, verify_signature, SignatureError},

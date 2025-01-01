@@ -4,8 +4,8 @@ use super::super::{
     DataStructureError, VerifierDataDecode,
 };
 use crate::direct_trust::{CertificateAuthority, VerifiySignatureTrait, VerifySignatureError};
-use rust_ev_crypto_primitives::{elgamal::Ciphertext, Integer};
-use rust_ev_crypto_primitives::{
+use rust_ev_system_library::rust_ev_crypto_primitives::prelude::{elgamal::Ciphertext, Integer};
+use rust_ev_system_library::rust_ev_crypto_primitives::prelude::{
     elgamal::EncryptionParameters, ByteArray, HashableMessage, VerifyDomainTrait,
 };
 use serde::Deserialize;
@@ -117,7 +117,7 @@ impl<'a> From<&'a SetupComponentVerificationDataPayload> for HashableMessage<'a>
         let mut elts = vec![
             Self::from(&value.election_event_id),
             Self::from(&value.verification_card_set_id),
-            Self::from(&value.partial_choice_return_codes_allow_list),
+            Self::from(value.partial_choice_return_codes_allow_list.as_slice()),
             Self::from(&value.chunk_id),
             Self::from(&value.encryption_group),
         ];
@@ -135,7 +135,7 @@ impl<'a> From<&'a SetupComponentVerificationDataInner> for HashableMessage<'a> {
     fn from(value: &'a SetupComponentVerificationDataInner) -> Self {
         Self::from(vec![
             Self::from(&value.verification_card_id),
-            Self::from(&value.verification_card_public_key),
+            Self::from(value.verification_card_public_key.as_slice()),
             Self::from(&value.encrypted_hashed_squared_partial_choice_return_codes),
             Self::from(&value.encrypted_hashed_squared_confirmation_key),
         ])
@@ -159,7 +159,7 @@ impl<'a> From<&'a CorrectnessInformationElt> for HashableMessage<'a> {
             Self::from(&value.correctness_id),
             Self::from(&value.number_of_selections),
             Self::from(&value.number_of_voting_options),
-            Self::from(&value.list_of_write_in_options),
+            Self::from(value.list_of_write_in_options.as_slice()),
         ])
     }
 }

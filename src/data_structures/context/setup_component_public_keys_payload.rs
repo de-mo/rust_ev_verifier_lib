@@ -7,8 +7,8 @@ use super::{
     control_component_public_keys_payload::ControlComponentPublicKeys,
 };
 use crate::direct_trust::{CertificateAuthority, VerifiySignatureTrait, VerifySignatureError};
-use rust_ev_crypto_primitives::Integer;
-use rust_ev_crypto_primitives::{
+use rust_ev_system_library::rust_ev_crypto_primitives::prelude::Integer;
+use rust_ev_system_library::rust_ev_crypto_primitives::prelude::{
     elgamal::EncryptionParameters, ByteArray, HashableMessage, VerifyDomainTrait,
 };
 use serde::Deserialize;
@@ -81,22 +81,24 @@ impl<'a> From<&'a SetupComponentPublicKeys> for HashableMessage<'a> {
             .map(Self::from)
             .collect();
         elts.push(Self::from(cc));
-        elts.push(Self::from(&value.electoral_board_public_key));
+        elts.push(Self::from(value.electoral_board_public_key.as_slice()));
         let el_sp: Vec<HashableMessage> = value
             .electoral_board_schnorr_proofs
             .iter()
             .map(Self::from)
             .collect();
         elts.push(Self::from(el_sp));
-        elts.push(Self::from(&value.election_public_key));
-        elts.push(Self::from(&value.choice_return_codes_encryption_public_key));
+        elts.push(Self::from(value.election_public_key.as_slice()));
+        elts.push(Self::from(
+            value.choice_return_codes_encryption_public_key.as_slice(),
+        ));
         Self::from(elts)
     }
 }
 
 #[cfg(test)]
 mod test {
-    use rust_ev_crypto_primitives::EncodeTrait;
+    use rust_ev_system_library::rust_ev_crypto_primitives::prelude::EncodeTrait;
 
     use super::{
         super::super::test::{

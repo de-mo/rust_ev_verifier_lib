@@ -4,7 +4,7 @@ use super::super::{
     DataStructureError, VerifierDataDecode,
 };
 use crate::direct_trust::{CertificateAuthority, VerifiySignatureTrait, VerifySignatureError};
-use rust_ev_crypto_primitives::{
+use rust_ev_system_library::rust_ev_crypto_primitives::prelude::{
     elgamal::EncryptionParameters, ByteArray, HashableMessage, Integer, VerifyDomainTrait,
 };
 use serde::Deserialize;
@@ -71,11 +71,15 @@ impl<'a> From<&'a ControlComponentPublicKeys> for HashableMessage<'a> {
     fn from(value: &'a ControlComponentPublicKeys) -> Self {
         let mut elts = vec![
             Self::from(&value.node_id),
-            Self::from(&value.ccrj_choice_return_codes_encryption_public_key),
+            Self::from(
+                value
+                    .ccrj_choice_return_codes_encryption_public_key
+                    .as_slice(),
+            ),
         ];
         let ccrj: Vec<HashableMessage> = value.ccrj_schnorr_proofs.iter().map(Self::from).collect();
         elts.push(Self::from(ccrj));
-        elts.push(Self::from(&value.ccmj_election_public_key));
+        elts.push(Self::from(value.ccmj_election_public_key.as_slice()));
         let ccmj: Vec<HashableMessage> = value.ccmj_schnorr_proofs.iter().map(Self::from).collect();
         elts.push(Self::from(ccmj));
         Self::from(elts)

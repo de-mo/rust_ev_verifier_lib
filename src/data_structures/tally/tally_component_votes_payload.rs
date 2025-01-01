@@ -5,7 +5,7 @@ use super::super::{
     implement_trait_verifier_data_json_decode, DataStructureError, VerifierDataDecode,
 };
 
-use rust_ev_crypto_primitives::{
+use rust_ev_system_library::rust_ev_crypto_primitives::prelude::{
     elgamal::EncryptionParameters, ByteArray, HashableMessage, VerifyDomainTrait,
 };
 use serde::Deserialize;
@@ -37,13 +37,13 @@ impl<'a> From<&'a TallyComponentVotesPayload> for HashableMessage<'a> {
             Self::from(&value.encryption_group),
         ];
         if !value.votes.is_empty() {
-            res.push(Self::from(&value.votes))
+            res.push(Self::from(value.votes.as_slice()))
         };
         if !value.actual_selected_voting_options.is_empty() {
-            res.push(Self::from(&value.actual_selected_voting_options))
+            res.push(Self::from(value.actual_selected_voting_options.as_slice()))
         }
         if !value.decoded_write_in_votes.is_empty() {
-            res.push(Self::from(&value.decoded_write_in_votes))
+            res.push(Self::from(value.decoded_write_in_votes.as_slice()))
         }
         Self::from(res)
     }

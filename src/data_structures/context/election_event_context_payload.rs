@@ -8,7 +8,7 @@ use crate::{config::Config as VerifierConfig, data_structures::verifiy_domain_le
 use chrono::NaiveDate;
 use chrono::NaiveDateTime;
 use regex::Regex;
-use rust_ev_crypto_primitives::{
+use rust_ev_system_library::rust_ev_crypto_primitives::prelude::{
     elgamal::EncryptionParameters, ByteArray, DomainVerifications, HashableMessage,
     RecursiveHashTrait, VerifyDomainTrait,
 };
@@ -406,7 +406,7 @@ impl<'a> From<&'a VerificationCardSetContext> for VerificationCardSetContextInSy
 
 #[cfg(test)]
 mod test {
-    use rust_ev_crypto_primitives::{EncodeTrait, RecursiveHashTrait};
+    use rust_ev_system_library::rust_ev_crypto_primitives::prelude::{EncodeTrait, RecursiveHashTrait};
 
     use super::{
         super::super::test::{

@@ -2,7 +2,7 @@ use super::super::{
     deserialize_option_string_base64_to_option_integer, deserialize_seq_ciphertext,
     deserialize_seq_string_base64_to_seq_integer, deserialize_string_base64_to_integer,
 };
-use rust_ev_crypto_primitives::{
+use rust_ev_system_library::rust_ev_crypto_primitives::prelude::{
     elgamal::Ciphertext,
     mix_net::{
         arguments::{
@@ -253,8 +253,8 @@ impl<'a> From<&'a VerifiableShuffle> for HashableMessage<'a> {
 impl<'a> From<&'a ShuffleArgument> for HashableMessage<'a> {
     fn from(value: &'a ShuffleArgument) -> Self {
         Self::from(vec![
-            Self::from(&value.c_a),
-            Self::from(&value.c_b),
+            Self::from(value.c_a.as_slice()),
+            Self::from(value.c_b.as_slice()),
             Self::from(&value.product_argument),
             Self::from(&value.multi_exponentiation_argument),
         ])
@@ -278,7 +278,7 @@ impl<'a> From<&'a ProductArgument> for HashableMessage<'a> {
 impl<'a> From<&'a HadamardArgument> for HashableMessage<'a> {
     fn from(value: &'a HadamardArgument) -> Self {
         Self::from(vec![
-            Self::from(&value.c_b),
+            Self::from(value.c_b.as_slice()),
             Self::from(&value.zero_argument),
         ])
     }
@@ -289,9 +289,9 @@ impl<'a> From<&'a ZeroArgument> for HashableMessage<'a> {
         Self::from(vec![
             Self::from(&value.c_upper_a_0),
             Self::from(&value.c_upper_b_m),
-            Self::from(&value.cs_d),
-            Self::from(&value.as_prime),
-            Self::from(&value.bs_prime),
+            Self::from(value.cs_d.as_slice()),
+            Self::from(value.as_prime.as_slice()),
+            Self::from(value.bs_prime.as_slice()),
             Self::from(&value.r_prime),
             Self::from(&value.s_prime),
             Self::from(&value.t_prime),
@@ -305,8 +305,8 @@ impl<'a> From<&'a SingleValueProductArgument> for HashableMessage<'a> {
             Self::from(&value.c_d),
             Self::from(&value.c_delta),
             Self::from(&value.c_upper_delta),
-            Self::from(&value.a_tilde),
-            Self::from(&value.b_tilde),
+            Self::from(value.a_tilde.as_slice()),
+            Self::from(value.b_tilde.as_slice()),
             Self::from(&value.r_tilde),
             Self::from(&value.s_tilde),
         ])
@@ -317,7 +317,7 @@ impl<'a> From<&'a MultiExponentiationArgument> for HashableMessage<'a> {
     fn from(value: &'a MultiExponentiationArgument) -> Self {
         Self::from(vec![
             Self::from(&value.c_a_0),
-            Self::from(&value.c_b),
+            Self::from(value.c_b.as_slice()),
             Self::from(
                 value
                     .e
@@ -325,7 +325,7 @@ impl<'a> From<&'a MultiExponentiationArgument> for HashableMessage<'a> {
                     .map(HashableMessage::from)
                     .collect::<Vec<Self>>(),
             ),
-            Self::from(&value.a),
+            Self::from(value.a.as_slice()),
             Self::from(&value.r),
             Self::from(&value.b),
             Self::from(&value.s),
