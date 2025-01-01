@@ -35,5 +35,5 @@ strum = { version = "0.26", features = ["derive"] }
 paste = "1"
 
 [features]
-default = ["gmpmee"]
+default = []
 gmpmee = ["rust_ev_system_library/gmpmee"]
