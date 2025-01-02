@@ -5,7 +5,7 @@ authors = ["Denis Morel"]
 edition = "2021"
 rust-version = "1.83"
 repository = "https://github.com/de-mo/rust_ev_verifier_lib"
-version = "0.2.1"
+version = "0.2.2"
 license = "Apache-2.0"
 readme = "README.md"
 categories = ["cryptography", "mathematics"]
@@ -13,8 +13,8 @@ keywords = ["math", "e-voting", "crypto"]
 exclude = ["/specs", "/datasets", "/data", "/log", "/test_temp_dir", "/temp"]
 
 [dependencies]
-#rust_ev_system_library = "0.2.1"
-rust_ev_system_library = { path = "../rust_ev_system_library" }
+rust_ev_system_library = "0.2.2"
+#rust_ev_system_library = { path = "../rust_ev_system_library" }
 thiserror = "2"
 enum-kinds = "0.5"
 tracing = "0.1"

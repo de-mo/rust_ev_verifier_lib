@@ -875,7 +875,9 @@ dependencies = [
 
 [[package]]
 name = "rust_ev_crypto_primitives"
-version = "0.6.4"
+version = "0.7.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5fe1f7e67026c52820389460230b97b5ba69335887087cbe170c1a46b1679f41"
 dependencies = [
  "argon2",
  "data-encoding",
@@ -891,7 +893,9 @@ dependencies = [
 
 [[package]]
 name = "rust_ev_system_library"
-version = "0.2.1"
+version = "0.2.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d7cb9ce0adceecf355ff1846fb4dd38661e3d5cc6c48b78a069d6a892fd0d272"
 dependencies = [
  "chrono",
  "rayon",
@@ -902,7 +906,7 @@ dependencies = [
 
 [[package]]
 name = "rust_ev_verifier_lib"
-version = "0.2.1"
+version = "0.2.2"
 dependencies = [
  "chrono",
  "data-encoding",
