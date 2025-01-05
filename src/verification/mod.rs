@@ -8,6 +8,8 @@ mod suite;
 mod tally;
 mod verifications;
 
+use std::fmt::Display;
+
 pub use self::{
     manual::*,
     meta_data::*,
@@ -46,6 +48,19 @@ pub enum VerificationStatus {
 pub enum VerificationPeriod {
     Setup,
     Tally,
+}
+
+impl Display for VerificationPeriod {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{}",
+            match self {
+                VerificationPeriod::Setup => "Setup",
+                VerificationPeriod::Tally => "Tally",
+            }
+        )
+    }
 }
 
 // Enum representing the verification errors
