@@ -7,7 +7,7 @@ use crate::{
     direct_trust::{CertificateAuthority, VerifiySignatureTrait, VerifySignatureError},
 };
 
-use rust_ev_crypto_primitives::{
+use rust_ev_system_library::rust_ev_crypto_primitives::prelude::{
     elgamal::{Ciphertext, EncryptionParameters},
     ByteArray, HashableMessage, VerifyDomainTrait,
 };

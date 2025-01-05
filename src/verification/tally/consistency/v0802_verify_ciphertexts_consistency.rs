@@ -10,8 +10,8 @@ use crate::{
         VerificationDirectoryTrait,
     },
 };
-use rust_ev_crypto_primitives::elgamal::Ciphertext;
 use rust_ev_system_library::preliminaries::PTableTrait;
+use rust_ev_system_library::rust_ev_crypto_primitives::prelude::elgamal::Ciphertext;
 
 pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
     dir: &D,

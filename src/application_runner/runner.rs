@@ -7,7 +7,7 @@ use crate::{
 };
 use tracing::{info, warn};
 //use std::future::Future;
-use super::{checks::start_check, RunnerError};
+use super::{checks::start_check, prepare_fixed_based_optimization, RunnerError};
 use rayon::prelude::*;
 use std::{iter::zip, sync::Mutex};
 use std::{
@@ -93,12 +93,11 @@ impl<'a> RunStrategy<'a> for RunParallel {
 /// The runner can run only once. The runner has to be reseted to restart.
 pub struct Runner<'a, T: RunStrategy<'a>> {
     path: PathBuf,
-    verification_directory: VerificationDirectory,
+    verification_directory: Box<VerificationDirectory>,
     verifications: Box<VerificationSuite<'a>>,
     start_time: Option<SystemTime>,
     duration: Option<Duration>,
     run_strategy: T,
-
     config: &'static VerifierConfig,
     action_before: Box<dyn Fn(&str) + Send + Sync>,
     #[allow(clippy::type_complexity)]
@@ -128,9 +127,10 @@ where
         check_verification_dir(period, path).map_err(RunnerError::CheckError)?;
         let directory = VerificationDirectory::new(period, path);
         check_complete(period, &directory).map_err(RunnerError::CheckError)?;
+        prepare_fixed_based_optimization(&directory)?;
         Ok(Runner {
             path: path.to_path_buf(),
-            verification_directory: directory,
+            verification_directory: Box::new(directory),
             verifications: Box::new(
                 VerificationSuite::new(period, metadata, exclusion, config)
                     .map_err(RunnerError::Verification)?,

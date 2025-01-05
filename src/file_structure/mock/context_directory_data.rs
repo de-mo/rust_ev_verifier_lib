@@ -176,7 +176,7 @@ impl MockContextVCSDirectory {
 
 #[cfg(test)]
 mod test {
-    use rust_ev_crypto_primitives::Integer;
+    use rust_ev_system_library::rust_ev_crypto_primitives::prelude::Integer;
 
     use super::*;
     use crate::config::test::test_datasets_context_path;

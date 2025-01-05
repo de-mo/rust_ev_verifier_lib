@@ -8,7 +8,7 @@ use crate::{
     },
 };
 use chrono::NaiveDate;
-use rust_ev_crypto_primitives::EncodeTrait;
+use rust_ev_system_library::rust_ev_crypto_primitives::prelude::EncodeTrait;
 use std::collections::HashMap;
 
 /// Trait to show the information of the manual verifications

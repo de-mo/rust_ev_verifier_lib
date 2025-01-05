@@ -176,7 +176,7 @@ pub(crate) mod test {
         verification::VerificationPeriod,
     };
     use lazy_static::lazy_static;
-    use rust_ev_crypto_primitives::direct_trust::Keystore as BasisKeystore;
+    use rust_ev_system_library::rust_ev_crypto_primitives::prelude::direct_trust::Keystore as BasisKeystore;
 
     const CANTON_KEYSTORE_FILE_NAME: &str = "signing_keystore_canton.p12";
     const CANTON_KEYSTORE_PASSWORD_FILE_NAME: &str = "signing_pw_canton.txt";

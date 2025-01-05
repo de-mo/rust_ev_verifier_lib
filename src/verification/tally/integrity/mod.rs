@@ -11,7 +11,7 @@ use crate::{
     },
     verification::{meta_data::VerificationMetaDataList, VerificationError},
 };
-use rust_ev_crypto_primitives::VerifyDomainTrait;
+use rust_ev_system_library::rust_ev_crypto_primitives::prelude::VerifyDomainTrait;
 
 pub fn get_verifications<'a>(
     metadata_list: &'a VerificationMetaDataList,

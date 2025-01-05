@@ -1,5 +1,5 @@
 use chrono::Local;
-use rust_ev_crypto_primitives::{
+use rust_ev_system_library::rust_ev_crypto_primitives::prelude::{
     argon2::Argon2id,
     basic_crypto_functions::{sha256_stream, BasisCryptoError, Decrypter},
     ByteArray, EncodeTrait,
@@ -276,7 +276,7 @@ impl EncryptedZipReader {
                     source: e,
                 })?;
             target
-                .write_all(&plaintext.to_bytes())
+                .write_all(plaintext.to_bytes())
                 .map_err(|e| DatasetError::IO {
                     msg: "Writing temp zip".to_string(),
                     source: e,

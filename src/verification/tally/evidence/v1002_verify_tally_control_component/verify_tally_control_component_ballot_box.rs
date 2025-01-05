@@ -5,7 +5,7 @@ use crate::{
     data_structures::common_types::DecryptionProof,
     verification::{VerificationEvent, VerificationResult},
 };
-use rust_ev_crypto_primitives::{
+use rust_ev_system_library::rust_ev_crypto_primitives::prelude::{
     elgamal::{Ciphertext, EncryptionParameters},
     mix_net::{verify_shuffle, MixNetResultTrait, ShuffleArgument},
     zero_knowledge_proofs::verify_decryption,

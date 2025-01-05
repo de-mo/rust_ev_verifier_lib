@@ -11,7 +11,7 @@ use crate::{
     Config,
 };
 use rayon::prelude::*;
-use rust_ev_crypto_primitives::{mix_net::ShuffleArgument, Integer};
+use rust_ev_system_library::rust_ev_crypto_primitives::prelude::{mix_net::ShuffleArgument, Integer};
 use verify_tally_control_component_ballot_box::{
     verify_tally_control_component_ballot_box, ContextAlgorithm42, InputsAlgorithm42,
 };

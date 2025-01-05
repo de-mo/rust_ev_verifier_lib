@@ -4,7 +4,7 @@ use crate::{
     file_structure::{context_directory::ContextDirectoryTrait, VerificationDirectoryTrait},
 };
 
-use rust_ev_crypto_primitives::elgamal::EncryptionParameters;
+use rust_ev_system_library::rust_ev_crypto_primitives::prelude::elgamal::EncryptionParameters;
 
 pub(super) fn fn_0501_verify_encryption_parameters<D: VerificationDirectoryTrait>(
     dir: &D,

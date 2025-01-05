@@ -6,8 +6,8 @@ use super::super::{
 use crate::direct_trust::{
     CertificateAuthority, Keystore, VerifiySignatureTrait, VerifySignatureError,
 };
-use rust_ev_crypto_primitives::{elgamal::Ciphertext, Integer};
-use rust_ev_crypto_primitives::{
+use rust_ev_system_library::rust_ev_crypto_primitives::prelude::{elgamal::Ciphertext, Integer};
+use rust_ev_system_library::rust_ev_crypto_primitives::prelude::{
     elgamal::EncryptionParameters, ByteArray, HashableMessage, VerifyDomainTrait,
 };
 use serde::Deserialize;
@@ -113,8 +113,16 @@ impl<'a> From<&'a ControlComponentCodeShare> for HashableMessage<'a> {
     fn from(value: &'a ControlComponentCodeShare) -> Self {
         Self::from(vec![
             Self::from(&value.verification_card_id),
-            Self::from(&value.voter_choice_return_code_generation_public_key),
-            Self::from(&value.voter_vote_cast_return_code_generation_public_key),
+            Self::from(
+                value
+                    .voter_choice_return_code_generation_public_key
+                    .as_slice(),
+            ),
+            Self::from(
+                value
+                    .voter_vote_cast_return_code_generation_public_key
+                    .as_slice(),
+            ),
             Self::from(&value.exponentiated_encrypted_partial_choice_return_codes),
             Self::from(&value.exponentiated_encrypted_confirmation_key),
             Self::from(&value.encrypted_partial_choice_return_code_exponentiation_proof),

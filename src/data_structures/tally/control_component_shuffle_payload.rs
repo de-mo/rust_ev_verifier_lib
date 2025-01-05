@@ -11,7 +11,8 @@ use crate::{
     data_structures::common_types::DecryptionProof,
     direct_trust::{CertificateAuthority, VerifiySignatureTrait, VerifySignatureError},
 };
-use rust_ev_crypto_primitives::{
+use rust_ev_system_library::rust_ev_crypto_primitives::prelude::DomainVerifications;
+use rust_ev_system_library::rust_ev_crypto_primitives::prelude::{
     elgamal::{Ciphertext, EncryptionParameters},
     ByteArray, HashableMessage, VerifyDomainTrait,
 };
@@ -40,8 +41,8 @@ pub struct VerifiableDecryptions {
 }
 
 impl VerifyDomainTrait<String> for ControlComponentShufflePayload {
-    fn new_domain_verifications() -> rust_ev_crypto_primitives::DomainVerifications<Self, String> {
-        let mut res = rust_ev_crypto_primitives::DomainVerifications::default();
+    fn new_domain_verifications() -> DomainVerifications<Self, String> {
+        let mut res = DomainVerifications::default();
         res.add_verification(|v: &Self| {
             verifiy_domain_for_verifiable_shuffle(&v.verifiable_shuffle)
         });

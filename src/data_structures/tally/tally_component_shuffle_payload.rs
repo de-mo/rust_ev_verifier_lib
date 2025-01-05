@@ -10,8 +10,9 @@ use crate::{
     data_structures::common_types::DecryptionProof,
     direct_trust::{CertificateAuthority, VerifiySignatureTrait, VerifySignatureError},
 };
-use rust_ev_crypto_primitives::{
-    elgamal::EncryptionParameters, ByteArray, HashableMessage, Integer, VerifyDomainTrait,
+use rust_ev_system_library::rust_ev_crypto_primitives::prelude::{
+    elgamal::EncryptionParameters, ByteArray, DomainVerifications, HashableMessage, Integer,
+    VerifyDomainTrait,
 };
 use serde::Deserialize;
 
@@ -43,8 +44,8 @@ pub struct DecryptedVote {
 }
 
 impl VerifyDomainTrait<String> for TallyComponentShufflePayload {
-    fn new_domain_verifications() -> rust_ev_crypto_primitives::DomainVerifications<Self, String> {
-        let mut res = rust_ev_crypto_primitives::DomainVerifications::default();
+    fn new_domain_verifications() -> DomainVerifications<Self, String> {
+        let mut res = DomainVerifications::default();
         res.add_verification(|v: &Self| {
             verifiy_domain_for_verifiable_shuffle(&v.verifiable_shuffle)
         });
@@ -64,7 +65,7 @@ impl<'a> From<&'a TallyComponentShufflePayload> for HashableMessage<'a> {
                     .verifiable_plaintext_decryption
                     .decrypted_votes
                     .iter()
-                    .map(|v| HashableMessage::from(&v.message))
+                    .map(|v| HashableMessage::from(v.message.as_slice()))
                     .collect::<Vec<Self>>(),
             ),
             Self::from(
