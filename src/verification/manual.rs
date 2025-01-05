@@ -1,4 +1,6 @@
-use super::{meta_data::VerificationMetaDataList, VerificationError, VerificationPeriod};
+use super::{
+    meta_data::VerificationMetaDataList, VerificationError, VerificationPeriod, VerificationSuite,
+};
 use crate::{
     config::Config,
     data_structures::context::election_event_configuration::ManuelVerificationInputFromConfiguration,
@@ -13,40 +15,9 @@ use std::collections::HashMap;
 
 /// Trait to show the information of the manual verifications
 pub trait ManualVerificationInformationTrait {
-    fn fingerprints(&self) -> Vec<(String, String)>;
+    fn fingerprints_to_key_value(&self) -> Vec<(String, String)>;
     fn verification_directory_path(&self) -> String;
-    fn to_title_value(&self) -> Vec<(String, String)>;
-    fn to_string(&self) -> String {
-        let mut data = vec![
-            (String::new(), String::new()),
-            (
-                "Verification Directory:".to_string(),
-                self.verification_directory_path(),
-            ),
-            (String::new(), String::new()),
-            ("Fingerprints".to_string(), String::new()),
-        ];
-        data.append(&mut self.fingerprints());
-        data.append(&mut vec![
-            (String::new(), String::new()),
-            ("Information".to_string(), String::new()),
-        ]);
-        data.append(&mut self.to_title_value());
-        let max_title_len = data.iter().map(|(t, _)| t.len()).max().unwrap();
-        let res = data
-            .iter()
-            .map(|(t, v)| match t.is_empty() {
-                true => String::new(),
-                false => {
-                    let mut value = " ".repeat(max_title_len - t.len());
-                    value.push_str(v.as_str());
-                    format!("{t}: {value}")
-                }
-            })
-            .collect::<Vec<_>>()
-            .join("\n");
-        res
-    }
+    fn information_to_key_value(&self) -> Vec<(String, String)>;
 }
 
 /// Data for the manual verifications, containing all the data that
@@ -65,18 +36,26 @@ pub struct ManualVerificationsAllPeriod<'a, D: VerificationDirectoryTrait> {
     number_of_test_ballot_boxes: usize,
 }
 
+/// Data for the results of the verifications
+pub struct VerificationsResult {
+    metadata: VerificationMetaDataList,
+    number_of_verifications: u8,
+    verifications_not_finished: Vec<String>,
+    verifications_with_errors_and_failures: HashMap<String, (u8, u8)>,
+    excluded_verifications: Vec<String>,
+}
+
 /// Data for the manual verifications on the setup
 pub struct ManualVerificationsSetup<'a, D: VerificationDirectoryTrait> {
     manual_verifications_all_periods: ManualVerificationsAllPeriod<'a, D>,
-    number_of_tests: u8,
+    verifications_result: VerificationsResult,
 }
-
 /// Data for the manual verifications on the tally
 pub struct ManualVerificationsTally<'a, D: VerificationDirectoryTrait> {
     manual_verifications_all_periods: ManualVerificationsAllPeriod<'a, D>,
     number_of_test_used_voting_cards: usize,
     number_of_productive_used_voting_cards: usize,
-    number_of_tests: u8,
+    verifications_result: VerificationsResult,
 }
 
 /// Data for the manual verifications
@@ -126,16 +105,7 @@ impl<'a, D: VerificationDirectoryTrait> ManualVerificationsAllPeriod<'a, D> {
 impl<D: VerificationDirectoryTrait> ManualVerificationInformationTrait
     for ManualVerificationsAllPeriod<'_, D>
 {
-    fn fingerprints(&self) -> Vec<(String, String)> {
-        /*vec![
-            ("canton".to_string(), self.certificate_fingerprints.get("canton").unwrap()),
-            ("sdm_config".to_string(), self.certificate_fingerprints.get("sdm_config").unwrap()),
-            ("sdm_tally".to_string(), self.certificate_fingerprints.get("sdm_tally").unwrap()),
-            ("canton".to_string(), self.certificate_fingerprints.get("canton").unwrap()),
-            ("canton".to_string(), self.certificate_fingerprints.get("canton").unwrap()),
-            ("canton".to_string(), self.certificate_fingerprints.get("canton").unwrap()),
-            ("canton".to_string(), self.certificate_fingerprints.get("canton").unwrap()),
-        ]*/
+    fn fingerprints_to_key_value(&self) -> Vec<(String, String)> {
         let mut res = self
             .certificate_fingerprints
             .iter()
@@ -145,7 +115,7 @@ impl<D: VerificationDirectoryTrait> ManualVerificationInformationTrait
         res
     }
 
-    fn to_title_value(&self) -> Vec<(String, String)> {
+    fn information_to_key_value(&self) -> Vec<(String, String)> {
         vec![
             (
                 "Contest Identification".to_string(),
@@ -188,15 +158,101 @@ impl<D: VerificationDirectoryTrait> ManualVerificationInformationTrait
     }
 }
 
+impl VerificationsResult {
+    pub fn new(metadata: VerificationMetaDataList, verification_suite: &VerificationSuite) -> Self {
+        let number_of_verifications = metadata.len() as u8;
+        let verifications_not_finished = verification_suite
+            .verifications()
+            .0
+            .iter()
+            .filter(|v| !v.is_result_final())
+            .map(|v| v.id().to_string())
+            .collect::<Vec<_>>();
+        let verifications_with_errors_and_failures = verification_suite
+            .verifications()
+            .0
+            .iter()
+            .filter(|v| v.is_ok().unwrap_or(true))
+            .map(|v| {
+                let res = v.verification_result();
+                (
+                    v.id().to_string(),
+                    (res.errors().len() as u8, res.failures().len() as u8),
+                )
+            })
+            .collect::<HashMap<_, _>>();
+        Self {
+            metadata,
+            number_of_verifications,
+            verifications_not_finished,
+            verifications_with_errors_and_failures,
+            excluded_verifications: verification_suite.exclusion().to_vec(),
+        }
+    }
+
+    pub fn name_for_verification_id(&self, id: &str) -> String {
+        match self.metadata.get(id) {
+            Some(v) => v.name().to_string(),
+            None => String::default(),
+        }
+    }
+
+    fn to_key_value(&self) -> Vec<(String, String)> {
+        let mut res = vec![];
+        res.push((
+            "Number of verifications".to_string(),
+            self.number_of_verifications.to_string(),
+        ));
+        res.push((
+            "Excluded verifications".to_string(),
+            match self.excluded_verifications.is_empty() {
+                true => "None".to_string(),
+                false => self
+                    .excluded_verifications
+                    .iter()
+                    .map(|id| format!("{}-{}", id, self.name_for_verification_id(id)))
+                    .collect::<Vec<_>>()
+                    .join(", "),
+            },
+        ));
+        res.push((
+            "Number of running verifications".to_string(),
+            self.verifications_not_finished.len().to_string(),
+        ));
+        res.push((
+            "Verifications with errors or failures".to_string(),
+            match self.verifications_with_errors_and_failures.is_empty() {
+                true => "None".to_string(),
+                false => self
+                    .verifications_with_errors_and_failures
+                    .iter()
+                    .map(|(id, (errors, failures))| {
+                        format!(
+                            "{}-{} ({} errors / {} failures)",
+                            id,
+                            self.name_for_verification_id(id),
+                            errors,
+                            failures
+                        )
+                    })
+                    .collect::<Vec<_>>()
+                    .join(", "),
+            },
+        ));
+        res
+    }
+}
+
 impl<'a, D: VerificationDirectoryTrait> ManualVerificationsSetup<'a, D> {
     pub fn new(
         directory: &'a D,
         config: &'static Config,
-        metadata: &VerificationMetaDataList,
+        metadata: VerificationMetaDataList,
+        verification_suite: &VerificationSuite,
     ) -> Result<Self, VerificationError> {
         Ok(Self {
             manual_verifications_all_periods: ManualVerificationsAllPeriod::new(directory, config)?,
-            number_of_tests: metadata.len() as u8,
+            verifications_result: VerificationsResult::new(metadata, verification_suite),
         })
     }
 }
@@ -204,8 +260,9 @@ impl<'a, D: VerificationDirectoryTrait> ManualVerificationsSetup<'a, D> {
 impl<D: VerificationDirectoryTrait> ManualVerificationInformationTrait
     for ManualVerificationsSetup<'_, D>
 {
-    fn fingerprints(&self) -> Vec<(String, String)> {
-        self.manual_verifications_all_periods.fingerprints()
+    fn fingerprints_to_key_value(&self) -> Vec<(String, String)> {
+        self.manual_verifications_all_periods
+            .fingerprints_to_key_value()
     }
 
     fn verification_directory_path(&self) -> String {
@@ -213,12 +270,11 @@ impl<D: VerificationDirectoryTrait> ManualVerificationInformationTrait
             .verification_directory_path()
     }
 
-    fn to_title_value(&self) -> Vec<(String, String)> {
-        let mut res = self.manual_verifications_all_periods.to_title_value();
-        res.push((
-            "Number of Tests".to_string(),
-            self.number_of_tests.to_string(),
-        ));
+    fn information_to_key_value(&self) -> Vec<(String, String)> {
+        let mut res = self
+            .manual_verifications_all_periods
+            .information_to_key_value();
+        res.append(&mut self.verifications_result.to_key_value());
         res
     }
 }
@@ -227,7 +283,8 @@ impl<'a, D: VerificationDirectoryTrait> ManualVerificationsTally<'a, D> {
     fn new(
         directory: &'a D,
         config: &'static Config,
-        metadata: &VerificationMetaDataList,
+        metadata: VerificationMetaDataList,
+        verification_suite: &VerificationSuite,
     ) -> Result<Self, VerificationError> {
         let tally_dir = directory.unwrap_tally();
         let config_dir = directory.context();
@@ -271,7 +328,7 @@ impl<'a, D: VerificationDirectoryTrait> ManualVerificationsTally<'a, D> {
             manual_verifications_all_periods: ManualVerificationsAllPeriod::new(directory, config)?,
             number_of_productive_used_voting_cards,
             number_of_test_used_voting_cards,
-            number_of_tests: metadata.len() as u8,
+            verifications_result: VerificationsResult::new(metadata, verification_suite),
         })
     }
 }
@@ -279,8 +336,9 @@ impl<'a, D: VerificationDirectoryTrait> ManualVerificationsTally<'a, D> {
 impl<D: VerificationDirectoryTrait> ManualVerificationInformationTrait
     for ManualVerificationsTally<'_, D>
 {
-    fn fingerprints(&self) -> Vec<(String, String)> {
-        self.manual_verifications_all_periods.fingerprints()
+    fn fingerprints_to_key_value(&self) -> Vec<(String, String)> {
+        self.manual_verifications_all_periods
+            .fingerprints_to_key_value()
     }
 
     fn verification_directory_path(&self) -> String {
@@ -288,8 +346,10 @@ impl<D: VerificationDirectoryTrait> ManualVerificationInformationTrait
             .verification_directory_path()
     }
 
-    fn to_title_value(&self) -> Vec<(String, String)> {
-        let mut res = self.manual_verifications_all_periods.to_title_value();
+    fn information_to_key_value(&self) -> Vec<(String, String)> {
+        let mut res = self
+            .manual_verifications_all_periods
+            .information_to_key_value();
         res.push((
             "Number of productive voting cards used".to_string(),
             self.number_of_productive_used_voting_cards.to_string(),
@@ -298,10 +358,7 @@ impl<D: VerificationDirectoryTrait> ManualVerificationInformationTrait
             "Number of test voting cards used".to_string(),
             self.number_of_test_used_voting_cards.to_string(),
         ));
-        res.push((
-            "Number of Tests".to_string(),
-            self.number_of_tests.to_string(),
-        ));
+        res.append(&mut self.verifications_result.to_key_value());
         res
     }
 }
@@ -311,15 +368,16 @@ impl<'a, D: VerificationDirectoryTrait> ManualVerifications<'a, D> {
         period: VerificationPeriod,
         directory: &'a D,
         config: &'static Config,
+        verification_suite: &VerificationSuite,
     ) -> Result<Self, VerificationError> {
         let meta_data =
             VerificationMetaDataList::load_period(config.get_verification_list_str(), &period)?;
         match period {
             VerificationPeriod::Setup => Ok(ManualVerifications::Setup(
-                ManualVerificationsSetup::new(directory, config, &meta_data)?,
+                ManualVerificationsSetup::new(directory, config, meta_data, verification_suite)?,
             )),
             VerificationPeriod::Tally => Ok(ManualVerifications::Tally(
-                ManualVerificationsTally::new(directory, config, &meta_data)?,
+                ManualVerificationsTally::new(directory, config, meta_data, verification_suite)?,
             )),
         }
     }
@@ -328,10 +386,10 @@ impl<'a, D: VerificationDirectoryTrait> ManualVerifications<'a, D> {
 impl<D: VerificationDirectoryTrait> ManualVerificationInformationTrait
     for ManualVerifications<'_, D>
 {
-    fn fingerprints(&self) -> Vec<(String, String)> {
+    fn fingerprints_to_key_value(&self) -> Vec<(String, String)> {
         match self {
-            ManualVerifications::Setup(s) => s.fingerprints(),
-            ManualVerifications::Tally(t) => t.fingerprints(),
+            ManualVerifications::Setup(s) => s.fingerprints_to_key_value(),
+            ManualVerifications::Tally(t) => t.fingerprints_to_key_value(),
         }
     }
 
@@ -342,24 +400,10 @@ impl<D: VerificationDirectoryTrait> ManualVerificationInformationTrait
         }
     }
 
-    fn to_title_value(&self) -> Vec<(String, String)> {
+    fn information_to_key_value(&self) -> Vec<(String, String)> {
         match self {
-            ManualVerifications::Setup(s) => s.to_title_value(),
-            ManualVerifications::Tally(t) => t.to_title_value(),
+            ManualVerifications::Setup(s) => s.information_to_key_value(),
+            ManualVerifications::Tally(t) => t.information_to_key_value(),
         }
-    }
-}
-
-#[cfg(test)]
-mod test {
-    use super::*;
-    use crate::config::test::{get_test_verifier_setup_dir as get_verifier_dir, CONFIG_TEST};
-
-    #[test]
-    fn test_ok() {
-        let dir = get_verifier_dir();
-        let period = VerificationPeriod::Setup;
-        let data = ManualVerifications::new(period, &dir, &CONFIG_TEST).unwrap();
-        println!("{}", data.to_string());
     }
 }
