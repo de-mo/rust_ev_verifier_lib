@@ -2,7 +2,7 @@
 use crate::{
     application_runner::checks::{check_complete, check_verification_dir},
     config::Config as VerifierConfig,
-    file_structure::VerificationDirectory,
+    file_structure::{VerificationDirectory, VerificationDirectoryTrait},
     verification::{VerificationMetaDataList, VerificationPeriod, VerificationSuite},
 };
 use tracing::{info, warn};
@@ -117,7 +117,7 @@ where
         path: &Path,
         period: &VerificationPeriod,
         metadata: &'a VerificationMetaDataList,
-        exclusion: &[&str],
+        exclusion: &[String],
         run_strategy: T,
         config: &'static VerifierConfig,
         action_before: impl Fn(&str) + Send + Sync + 'static,
@@ -155,7 +155,7 @@ where
             VerificationSuite::new(
                 self.period(),
                 metadata_list,
-                self.verifications.exclusion().as_slice(),
+                self.verifications.exclusion(),
                 self.config,
             )
             .map_err(RunnerError::Verification)?,
@@ -205,6 +205,10 @@ where
         Ok(())
     }
 
+    pub fn verifications(&'a self) -> &'a VerificationSuite<'a> {
+        &self.verifications
+    }
+
     pub fn verifications_mut(&'a mut self) -> &'a mut VerificationSuite<'a> {
         &mut self.verifications
     }
@@ -227,5 +231,24 @@ where
 
     pub fn path(&self) -> &Path {
         &self.path
+    }
+
+    pub fn verification_directory_path(&self) -> &Path {
+        self.verification_directory.path()
+    }
+
+    pub fn start_time(&self) -> Option<SystemTime> {
+        self.start_time
+    }
+
+    pub fn duration(&self) -> Option<Duration> {
+        self.duration
+    }
+
+    pub fn stop_time(&self) -> Option<SystemTime> {
+        if self.start_time.is_some() && self.duration.is_some() {
+            return Some(self.start_time.unwrap() + self.duration.unwrap());
+        }
+        None
     }
 }
