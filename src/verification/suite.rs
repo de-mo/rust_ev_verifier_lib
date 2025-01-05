@@ -25,7 +25,7 @@ impl<'a> VerificationSuite<'a> {
     pub fn new(
         period: &VerificationPeriod,
         metadata_list: &'a VerificationMetaDataList,
-        exclusion: &[&str],
+        exclusion: &[String],
         config: &'static Config,
     ) -> Result<VerificationSuite<'a>, VerificationError> {
         let all_verifs = match period {
@@ -37,7 +37,7 @@ impl<'a> VerificationSuite<'a> {
         let verifs = all_verifs
             .0
             .into_iter()
-            .filter(|v| !exclusion.contains(&v.id()))
+            .filter(|v| !exclusion.contains(&v.id().to_string()))
             .collect::<Vec<_>>();
         let mut excl: Vec<String> = exclusion.iter().map(|s| s.to_string()).collect();
         excl.retain(|s| all_ids.contains(s));
@@ -79,11 +79,8 @@ impl<'a> VerificationSuite<'a> {
     }
 
     /// List of excluded verifications
-    pub fn exclusion(&self) -> Vec<&str> {
-        self.exclusion
-            .iter()
-            .map(|x| x.as_ref())
-            .collect::<Vec<_>>()
+    pub fn exclusion(&self) -> &[String] {
+        &self.exclusion
     }
 
     /// Length of excluded verifications
