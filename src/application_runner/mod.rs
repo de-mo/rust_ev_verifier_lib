@@ -2,15 +2,16 @@
 
 mod checks;
 mod extract;
-mod report;
+pub mod report;
 mod runner;
 
 pub use checks::*;
 pub use extract::*;
-pub use report::*;
-pub use runner::{no_action_after_fn, no_action_before_fn, RunParallel, Runner};
-
-use thiserror::Error;
+//pub use report::*;
+pub use runner::{
+    no_action_after_fn, no_action_after_runner_fn, no_action_before_fn, RunParallel, Runner,
+    RunnerInformation,
+};
 
 use crate::{
     dataset::DatasetError,
@@ -20,6 +21,7 @@ use crate::{
     },
     verification::VerificationError,
 };
+use thiserror::Error;
 
 // Enum representing the datza structure errors
 #[derive(Error, Debug)]
@@ -54,7 +56,7 @@ fn prepare_fixed_based_optimization(dir: &VerificationDirectory) -> Result<(), R
                 msg: "election_event_context_payload".to_string(),
                 source: Box::new(e),
             })?;
-    rust_ev_system_library::rust_ev_crypto_primitives::prelude::prepare_fixed_based_optimization(
+    let _ = rust_ev_system_library::rust_ev_crypto_primitives::prelude::prepare_fixed_based_optimization(
         context.encryption_group.g(),
         context.encryption_group.p(),
     );
