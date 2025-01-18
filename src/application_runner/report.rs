@@ -120,6 +120,10 @@ impl<D: VerificationDirectoryTrait> ReportInformationTrait for ManualVerificatio
                 self.dt_fingerprints_to_key_value(),
             ),
             ("Information".to_string(), self.information_to_key_value()),
+            (
+                "Verification Results".to_string(),
+                self.verification_stati_to_key_value(),
+            ),
         ]
     }
 }

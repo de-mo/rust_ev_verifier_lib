@@ -31,6 +31,17 @@ pub trait ManualVerificationInformationTrait {
     /// - The first element of the tuple is the the name of the information
     /// - The second element of the tuple is the information
     fn information_to_key_value(&self) -> Vec<(String, String)>;
+
+    /// Get the stati of the verification
+    ///
+    /// Return a [Vec] of a tuples:
+    /// - The first element of the tuple is the the id/name of the verification
+    /// - The second element of the tuple is the status
+    ///
+    /// Return empty if it is not relevant
+    fn verification_stati_to_key_value(&self) -> Vec<(String, String)> {
+        vec![]
+    }
 }
 
 /// Data for the manual verifications, containing all the data that
@@ -54,12 +65,12 @@ struct ManualVerificationsForAllPeriod<'a, D: VerificationDirectoryTrait> {
 /// It contains the following information
 /// - The metadalist of the verifications to collect some information, like the name
 /// - The list of unfinished verifications
-/// - The list of verifications with errors or failures (with the number of errors and failures)
+/// - The list of verifications with errors or failures (with the the errors and failures as list of strings)
 /// - The list of excluded verifications
 pub struct VerificationsResult {
     metadata: VerificationMetaDataList,
     verifications_not_finished: Vec<String>,
-    verifications_with_errors_and_failures: HashMap<String, (u8, u8)>,
+    verifications_with_errors_and_failures: HashMap<String, (Vec<String>, Vec<String>)>,
     excluded_verifications: Vec<String>,
 }
 
@@ -184,8 +195,8 @@ impl VerificationsResult {
     /// - `metadata`: The metadalist of the verifications to collect some information, like the name
     /// - `verifications_not_finished`: The list of unfinished verifications. The vector contains the id of the verifications
     /// - `verifications_with_errors_and_failures`: The list of verifications with errors or failures (with the number of errors and failures).
-    ///     It is in form of a [HashMap] where the key is the id of the verification and the value is a tuple of [u8] (first element is the number of errors
-    ///     and the second element is the number of failures)
+    ///     It is in form of a [HashMap] where the key is the id of the verification and the value is a tuple of [Vec<String>] (first element is the list of errors
+    ///     as [Vec<String>] and the second element is the list of failures as [Vec<String>])
     /// - `excluded_verifications`: The list of excluded verifications. The vector contains the id of the verifications
     ///
     /// It is recommended to deliver in `verifications_with_errors_and_failures` on the verifications having errors or failures. The verification with success should
@@ -193,7 +204,7 @@ impl VerificationsResult {
     pub fn new(
         metadata: VerificationMetaDataList,
         verifications_not_finished: Vec<String>,
-        verifications_with_errors_and_failures: HashMap<String, (u8, u8)>,
+        verifications_with_errors_and_failures: HashMap<String, (Vec<String>, Vec<String>)>,
         excluded_verifications: Vec<String>,
     ) -> Self {
         Self {
@@ -214,7 +225,7 @@ impl VerificationsResult {
         }
     }
 
-    fn to_key_value(&self) -> Vec<(String, String)> {
+    fn informatiion_to_key_value(&self) -> Vec<(String, String)> {
         let mut res = vec![];
         res.push((
             "Number of verifications".to_string(),
@@ -247,34 +258,66 @@ impl VerificationsResult {
             ));
         }
         res.push((
-            "Verifications with errors or failures".to_string(),
-            match self.verifications_with_errors_and_failures.is_empty() {
-                true => "None".to_string(),
-                false => self
-                    .verifications_with_errors_and_failures
-                    .iter()
-                    .map(|(id, (errors, failures))| {
-                        format!(
-                            "{}-{} ({} {} / {} {})",
-                            id,
-                            self.name_for_verification_id(id),
-                            errors,
-                            match errors {
-                                0 | 1 => "error",
-                                _ => "errors",
-                            },
-                            failures,
-                            match failures {
-                                0 | 1 => "failure",
-                                _ => "failures",
-                            }
-                        )
-                    })
-                    .collect::<Vec<_>>()
-                    .join(", "),
-            },
+            "Number of verifications with errors".to_string(),
+            format!(
+                "{}",
+                self.verifications_with_errors_and_failures
+                    .values()
+                    .filter(|(errors, _)| !errors.is_empty())
+                    .count()
+            ),
+        ));
+        res.push((
+            "Number of verifications with failures".to_string(),
+            format!(
+                "{}",
+                self.verifications_with_errors_and_failures
+                    .values()
+                    .filter(|(_, failures)| !failures.is_empty())
+                    .count()
+            ),
         ));
         res
+    }
+
+    fn verification_stati_to_key_value(&self) -> Vec<(String, String)> {
+        let mut ids = self.metadata.id_list();
+        ids.sort();
+        ids.iter()
+            .map(|id| {
+                let id_string = id.to_string();
+                let key = format!("{} ({})", &id_string, self.metadata.get(id).unwrap().name());
+                if self.excluded_verifications.contains(&id_string) {
+                    return (key, "Excluded".to_string());
+                }
+                if self.verifications_not_finished.contains(&id_string) {
+                    return (key, "Running".to_string());
+                }
+                (
+                    key,
+                    match self.verifications_with_errors_and_failures.get(&id_string) {
+                        Some((errors, failures)) => {
+                            let nb_errors = errors.len();
+                            let nb_failures = failures.len();
+                            format!(
+                                "{} {} / {} {}",
+                                nb_errors,
+                                match nb_errors {
+                                    0 | 1 => "error",
+                                    _ => "errors",
+                                },
+                                nb_failures,
+                                match nb_failures {
+                                    0 | 1 => "failure",
+                                    _ => "failures",
+                                }
+                            )
+                        }
+                        None => "Successfull".to_string(),
+                    },
+                )
+            })
+            .collect::<Vec<_>>()
     }
 }
 
@@ -287,8 +330,8 @@ impl<'a, D: VerificationDirectoryTrait> ManualVerificationsSetup<'a, D> {
     /// - `metadata`: The metadalist of the verifications to collect some information, like the name
     /// - `verifications_not_finished`: The list of unfinished verifications. The vector contains the id of the verifications
     /// - `verifications_with_errors_and_failures`: The list of verifications with errors or failures (with the number of errors and failures).
-    ///     It is in form of a [HashMap] where the key is the id of the verification and the value is a tuple of [u8] (first element is the number of errors
-    ///     and the second element is the number of failures)
+    ///     It is in form of a [HashMap] where the key is the id of the verification and the value is a tuple of [Vec<String>] (first element is the list of errors
+    ///     as [Vec<String>] and the second element is the list of failures as [Vec<String>])
     /// - `excluded_verifications`: The list of excluded verifications. The vector contains the id of the verifications
     ///
     /// It is recommended to deliver in `verifications_with_errors_and_failures` on the verifications having errors or failures. The verification with success should
@@ -298,7 +341,7 @@ impl<'a, D: VerificationDirectoryTrait> ManualVerificationsSetup<'a, D> {
         config: &'static Config,
         metadata: VerificationMetaDataList,
         verifications_not_finished: Vec<String>,
-        verifications_with_errors_and_failures: HashMap<String, (u8, u8)>,
+        verifications_with_errors_and_failures: HashMap<String, (Vec<String>, Vec<String>)>,
         excluded_verifications: Vec<String>,
     ) -> Result<Self, VerificationError> {
         Ok(Self {
@@ -332,8 +375,12 @@ impl<D: VerificationDirectoryTrait> ManualVerificationInformationTrait
         let mut res = self
             .manual_verifications_all_periods
             .information_to_key_value();
-        res.append(&mut self.verifications_result.to_key_value());
+        res.append(&mut self.verifications_result.informatiion_to_key_value());
         res
+    }
+
+    fn verification_stati_to_key_value(&self) -> Vec<(String, String)> {
+        self.verifications_result.verification_stati_to_key_value()
     }
 }
 
@@ -346,8 +393,8 @@ impl<'a, D: VerificationDirectoryTrait> ManualVerificationsTally<'a, D> {
     /// - `metadata`: The metadalist of the verifications to collect some information, like the name
     /// - `verifications_not_finished`: The list of unfinished verifications. The vector contains the id of the verifications
     /// - `verifications_with_errors_and_failures`: The list of verifications with errors or failures (with the number of errors and failures).
-    ///     It is in form of a [HashMap] where the key is the id of the verification and the value is a tuple of [u8] (first element is the number of errors
-    ///     and the second element is the number of failures)
+    ///     It is in form of a [HashMap] where the key is the id of the verification and the value is a tuple of [Vec<String>] (first element is the list of errors
+    ///     as [Vec<String>] and the second element is the list of failures as [Vec<String>])
     /// - `excluded_verifications`: The list of excluded verifications. The vector contains the id of the verifications
     ///
     /// It is recommended to deliver in `verifications_with_errors_and_failures` on the verifications having errors or failures. The verification with success should
@@ -357,7 +404,7 @@ impl<'a, D: VerificationDirectoryTrait> ManualVerificationsTally<'a, D> {
         config: &'static Config,
         metadata: VerificationMetaDataList,
         verifications_not_finished: Vec<String>,
-        verifications_with_errors_and_failures: HashMap<String, (u8, u8)>,
+        verifications_with_errors_and_failures: HashMap<String, (Vec<String>, Vec<String>)>,
         excluded_verifications: Vec<String>,
     ) -> Result<Self, VerificationError> {
         let tally_dir = directory.unwrap_tally();
@@ -439,8 +486,12 @@ impl<D: VerificationDirectoryTrait> ManualVerificationInformationTrait
             "Number of test voting cards used".to_string(),
             self.number_of_test_used_voting_cards.to_string(),
         ));
-        res.append(&mut self.verifications_result.to_key_value());
+        res.append(&mut self.verifications_result.informatiion_to_key_value());
         res
+    }
+
+    fn verification_stati_to_key_value(&self) -> Vec<(String, String)> {
+        self.verifications_result.verification_stati_to_key_value()
     }
 }
 
@@ -453,8 +504,8 @@ impl<'a, D: VerificationDirectoryTrait> ManualVerifications<'a, D> {
     /// - `config`: Verifier configuration
     /// - `verifications_not_finished`: The list of unfinished verifications. The vector contains the id of the verifications
     /// - `verifications_with_errors_and_failures`: The list of verifications with errors or failures (with the number of errors and failures).
-    ///     It is in form of a [HashMap] where the key is the id of the verification and the value is a tuple of [u8] (first element is the number of errors
-    ///     and the second element is the number of failures)
+    ///     It is in form of a [HashMap] where the key is the id of the verification and the value is a tuple of [Vec<String>] (first element is the list of errors
+    ///     as [Vec<String>] and the second element is the list of failures as [Vec<String>])
     /// - `excluded_verifications`: The list of excluded verifications. The vector contains the id of the verifications
     ///
     /// It is recommended to deliver in `verifications_with_errors_and_failures` on the verifications having errors or failures. The verification with success should
@@ -464,7 +515,7 @@ impl<'a, D: VerificationDirectoryTrait> ManualVerifications<'a, D> {
         directory: &'a D,
         config: &'static Config,
         verifications_not_finished: Vec<String>,
-        verifications_with_errors_and_failures: HashMap<String, (u8, u8)>,
+        verifications_with_errors_and_failures: HashMap<String, (Vec<String>, Vec<String>)>,
         excluded_verifications: Vec<String>,
     ) -> Result<Self, VerificationError> {
         let meta_data =
@@ -515,6 +566,13 @@ impl<D: VerificationDirectoryTrait> ManualVerificationInformationTrait
         match self {
             ManualVerifications::Setup(s) => s.information_to_key_value(),
             ManualVerifications::Tally(t) => t.information_to_key_value(),
+        }
+    }
+
+    fn verification_stati_to_key_value(&self) -> Vec<(String, String)> {
+        match self {
+            ManualVerifications::Setup(s) => s.verification_stati_to_key_value(),
+            ManualVerifications::Tally(t) => t.verification_stati_to_key_value(),
         }
     }
 }

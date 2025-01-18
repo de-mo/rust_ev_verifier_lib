@@ -39,16 +39,22 @@ pub enum VerificationCategory {
 ///  Status of a verification
 pub enum VerificationStatus {
     /// Verification not started
+    #[strum(serialize = "Not started")]
     NotStarted,
     /// Verification is running
+    #[strum(serialize = "Running")]
     Running,
     /// Verification finished without error or failure
+    #[strum(serialize = "Successful")]
     FinishedSuccessfully,
     /// Verification finished only with failures
+    #[strum(serialize = "Failures")]
     FinishedWithFailures,
     /// Verification finished only with errors
+    #[strum(serialize = "Errors")]
     FinishedWithErrors,
     /// Verification finished only with errors and failures
+    #[strum(serialize = "Failures and Errors")]
     FinishedWithFailuresAndErrors,
 }
 
