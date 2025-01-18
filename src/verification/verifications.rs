@@ -70,7 +70,7 @@ impl<'a> Verification<'a, VerificationDirectory> {
         }
         Ok(Verification {
             meta_data,
-            status: VerificationStatus::Stopped,
+            status: VerificationStatus::NotStarted,
             verification_fn: Box::new(verification_fn),
             duration: None,
             result: Box::new(VerificationResult::new()),
@@ -88,6 +88,11 @@ impl<'a> Verification<'a, VerificationDirectory> {
         self.meta_data
     }
 
+    /// Get status
+    pub fn status(&self) -> VerificationStatus {
+        self.status
+    }
+
     /// Get the result of the verification
     pub fn verification_result(&self) -> &VerificationResult {
         &self.result
@@ -95,11 +100,10 @@ impl<'a> Verification<'a, VerificationDirectory> {
 
     /// `true` if the verification finished
     pub fn is_result_final(&self) -> bool {
-        match self.status {
-            VerificationStatus::Stopped => false,
-            VerificationStatus::Running => false,
-            VerificationStatus::Finished => true,
-        }
+        !matches!(
+            self.status,
+            VerificationStatus::NotStarted | VerificationStatus::Running
+        )
     }
 
     /// Has the result errors
@@ -143,7 +147,10 @@ impl<'a> Verification<'a, VerificationDirectory> {
         );
         (self.verification_fn)(directory, self.config, self.result.as_mut());
         self.duration = Some(start_time.elapsed().unwrap());
-        self.status = VerificationStatus::Finished;
+        self.status = VerificationStatus::calculate_finished(
+            self.result.has_errors(),
+            self.result.has_failures(),
+        );
         if self.is_ok().unwrap() {
             info!(
                 "Verification {} ({}) finished successfully. Duration: {}s",
@@ -219,7 +226,7 @@ mod test {
             &CONFIG_TEST,
         )
         .unwrap();
-        assert_eq!(verif.status, VerificationStatus::Stopped);
+        assert_eq!(verif.status, VerificationStatus::NotStarted);
         assert!(!verif.is_result_final());
         assert!(verif.is_ok().is_none());
         assert!(verif.has_errors().is_none());
@@ -228,7 +235,7 @@ mod test {
             &VerificationPeriod::Setup,
             Path::new("."),
         ));
-        assert_eq!(verif.status, VerificationStatus::Finished);
+        assert_eq!(verif.status, VerificationStatus::FinishedSuccessfully);
         assert!(verif.is_result_final());
         assert!(verif.is_ok().unwrap());
         assert!(!verif.has_errors().unwrap());
@@ -252,7 +259,7 @@ mod test {
             &CONFIG_TEST,
         )
         .unwrap();
-        assert_eq!(verif.status, VerificationStatus::Stopped);
+        assert_eq!(verif.status, VerificationStatus::NotStarted);
         assert!(!verif.is_result_final());
         assert!(verif.is_ok().is_none());
         assert!(verif.has_errors().is_none());
@@ -261,7 +268,10 @@ mod test {
             &VerificationPeriod::Setup,
             Path::new("."),
         ));
-        assert_eq!(verif.status, VerificationStatus::Finished);
+        assert_eq!(
+            verif.status,
+            VerificationStatus::FinishedWithFailuresAndErrors
+        );
         assert!(verif.is_result_final());
         assert!(!verif.is_ok().unwrap());
         assert!(verif.has_errors().unwrap());
@@ -286,7 +296,7 @@ mod test {
             &CONFIG_TEST,
         )
         .unwrap();
-        assert_eq!(verif.status, VerificationStatus::Stopped);
+        assert_eq!(verif.status, VerificationStatus::NotStarted);
         assert!(!verif.is_result_final());
         assert!(verif.is_ok().is_none());
         assert!(verif.has_errors().is_none());
@@ -295,7 +305,7 @@ mod test {
             &VerificationPeriod::Setup,
             Path::new("."),
         ));
-        assert_eq!(verif.status, VerificationStatus::Finished);
+        assert_eq!(verif.status, VerificationStatus::FinishedWithFailures);
         assert!(verif.is_result_final());
         assert!(!verif.is_ok().unwrap());
         assert!(!verif.has_errors().unwrap());

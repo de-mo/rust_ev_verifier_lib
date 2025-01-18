@@ -16,7 +16,6 @@ pub use self::{
     result::{VerificationEvent, VerificationResult},
     suite::VerificationSuite,
 };
-
 use crate::{
     config::Config,
     data_structures::DataStructureError,
@@ -37,10 +36,37 @@ pub enum VerificationCategory {
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq, strum::EnumString, strum::AsRefStr)]
 #[strum(serialize_all = "lowercase")]
+///  Status of a verification
 pub enum VerificationStatus {
-    Stopped,
+    /// Verification not started
+    NotStarted,
+    /// Verification is running
     Running,
-    Finished,
+    /// Verification finished without error or failure
+    FinishedSuccessfully,
+    /// Verification finished only with failures
+    FinishedWithFailures,
+    /// Verification finished only with errors
+    FinishedWithErrors,
+    /// Verification finished only with errors and failures
+    FinishedWithFailuresAndErrors,
+}
+
+impl VerificationStatus {
+    /// For the finished verification, calculate the finished status
+    /// according to the fact that the verification has errors and/or has failures
+    pub fn calculate_finished(has_errors: bool, has_failures: bool) -> Self {
+        match has_errors {
+            true => match has_failures {
+                true => Self::FinishedWithFailuresAndErrors,
+                false => Self::FinishedWithErrors,
+            },
+            false => match has_failures {
+                true => Self::FinishedWithFailures,
+                false => Self::FinishedSuccessfully,
+            },
+        }
+    }
 }
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq, Hash, strum::EnumString, strum::AsRefStr)]
@@ -87,10 +113,12 @@ pub enum VerificationError {
 }
 
 impl VerificationPeriod {
+    /// Is the period Setup
     pub fn is_setup(&self) -> bool {
         self == &VerificationPeriod::Setup
     }
 
+    /// Is the period Tally
     pub fn is_tally(&self) -> bool {
         self == &VerificationPeriod::Tally
     }
@@ -135,4 +163,29 @@ where
         }
     }
     result
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn test_calculate_finished() {
+        assert_eq!(
+            VerificationStatus::calculate_finished(false, false),
+            VerificationStatus::FinishedSuccessfully
+        );
+        assert_eq!(
+            VerificationStatus::calculate_finished(true, false),
+            VerificationStatus::FinishedWithErrors
+        );
+        assert_eq!(
+            VerificationStatus::calculate_finished(false, true),
+            VerificationStatus::FinishedWithFailures
+        );
+        assert_eq!(
+            VerificationStatus::calculate_finished(true, true),
+            VerificationStatus::FinishedWithFailuresAndErrors
+        );
+    }
 }
