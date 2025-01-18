@@ -7,7 +7,10 @@ use crate::{
 };
 use tracing::{info, warn};
 //use std::future::Future;
-use super::{checks::start_check, prepare_fixed_based_optimization, RunnerError};
+use super::{
+    checks::start_check, prepare_fixed_based_optimization, report::VerificationRunInformation,
+    RunnerError,
+};
 use rayon::prelude::*;
 use std::{iter::zip, sync::Mutex};
 use std::{
@@ -16,17 +19,43 @@ use std::{
 };
 
 pub fn no_action_before_fn(_: &str) {}
-pub fn no_action_after_fn(_: &str, _: Vec<String>, _: Vec<String>) {}
+pub fn no_action_after_fn(_: VerificationRunInformation) {}
+pub fn no_action_after_runner_fn(_: RunnerInformation) {}
+
+/// Information of the runner, that can be used to know some information about the runner.
+#[derive(Debug, Clone, Default)]
+pub struct RunnerInformation {
+    pub start_time: Option<SystemTime>,
+    pub duration: Option<Duration>,
+}
+
+impl RunnerInformation {
+    pub fn is_finished(&self) -> bool {
+        self.duration.is_some()
+    }
+
+    pub fn is_running(&self) -> bool {
+        self.start_time.is_some() && self.duration.is_none()
+    }
+}
 
 /// Strategy to run the tests
 pub trait RunStrategy<'a> {
     /// Run function
+    ///
+    /// - `verifications`: The suite of verifications, which will be modified during the run
+    /// - `directory`: Verification directoy containing the datasets extracted
+    /// - `action_before_verification`:
+    ///     Function that will be call before the run of each verification. As parameter take the id of the verification
+    /// - `action_after_verification`:
+    ///     Function that will be call before the run of each verification.
+    ///     As parameter take the information regarding the run of the verification
     fn run(
         &self,
         verifications: &'a mut VerificationSuite<'a>,
         directory: &VerificationDirectory,
-        action_before: impl Fn(&str) + Send + Sync,
-        action_after: impl Fn(&str, Vec<String>, Vec<String>) + Send + Sync,
+        action_before_verification: impl Fn(&str) + Send + Sync,
+        action_after_verification: impl Fn(VerificationRunInformation) + Send + Sync,
     );
 }
 
@@ -41,18 +70,19 @@ impl<'a> RunStrategy<'a> for RunSequential {
         &self,
         verifications: &'a mut VerificationSuite<'a>,
         directory: &VerificationDirectory,
-        action_before: impl Fn(&str) + Send + Sync,
-        action_after: impl Fn(&str, Vec<String>, Vec<String>) + Send + Sync,
+        action_before_verification: impl Fn(&str) + Send + Sync,
+        action_after_verification: impl Fn(VerificationRunInformation) + Send + Sync,
     ) {
         let it = verifications.verifications_mut().0.iter_mut();
         for v in it {
-            action_before(v.id());
+            action_before_verification(v.id());
             v.run(directory);
-            action_after(
-                v.id(),
-                v.verification_result().errors_to_string(),
-                v.verification_result().failures_to_string(),
-            );
+            action_after_verification(VerificationRunInformation {
+                id: v.id().to_string(),
+                status: v.status(),
+                failures: v.verification_result().errors_to_string(),
+                errors: v.verification_result().failures_to_string(),
+            });
         }
     }
 }
@@ -62,8 +92,8 @@ impl<'a> RunStrategy<'a> for RunParallel {
         &self,
         verifications: &'a mut VerificationSuite<'a>,
         directory: &VerificationDirectory,
-        action_before: impl Fn(&str) + Send + Sync,
-        action_after: impl Fn(&str, Vec<String>, Vec<String>) + Send + Sync,
+        action_before_verification: impl Fn(&str) + Send + Sync,
+        action_after_verification: impl Fn(VerificationRunInformation) + Send + Sync,
     ) {
         let dirs = vec![directory; verifications.len()];
         zip(
@@ -77,13 +107,14 @@ impl<'a> RunStrategy<'a> for RunParallel {
         .par_bridge()
         .for_each(|(vm, d)| {
             let mut v = vm.lock().unwrap();
-            action_before(v.id());
+            action_before_verification(v.id());
             v.run(d);
-            action_after(
-                v.id(),
-                v.verification_result().errors_to_string(),
-                v.verification_result().failures_to_string(),
-            );
+            action_after_verification(VerificationRunInformation {
+                id: v.id().to_string(),
+                status: v.status(),
+                failures: v.verification_result().errors_to_string(),
+                errors: v.verification_result().failures_to_string(),
+            });
         });
     }
 }
@@ -99,9 +130,10 @@ pub struct Runner<'a, T: RunStrategy<'a>> {
     duration: Option<Duration>,
     run_strategy: T,
     config: &'static VerifierConfig,
-    action_before: Box<dyn Fn(&str) + Send + Sync>,
+    action_before_verification: Box<dyn Fn(&str) + Send + Sync>,
     #[allow(clippy::type_complexity)]
-    action_after: Box<dyn Fn(&str, Vec<String>, Vec<String>) + Send + Sync>,
+    action_after_verification: Box<dyn Fn(VerificationRunInformation) + Send + Sync>,
+    action_after_runner: Box<dyn Fn(RunnerInformation) + Send + Sync>,
 }
 
 impl<'a, T> Runner<'a, T>
@@ -110,8 +142,68 @@ where
 {
     /// Create a new runner.
     ///
-    /// path represents the location where the directory setup and tally are stored
-    /// period ist the verification period
+    /// - `path` represents the location where the directory setup and tally are stored
+    /// - `period` is the verification period
+    /// - `metadata`: The list of the metadata of the verifications
+    /// - `exclusion`: The list of verifications excluded (list of ids)
+    /// - `run_strategy`: The choosen run strategy
+    /// - `config`: The configuration of the verifier
+    /// - `action_before_verification`:
+    ///     Function that will be call before the run of each verification. As parameter take the id of the verification
+    /// - `action_after_verification`:
+    ///     Function that will be call before the run of each verification.
+    ///     As parameter take the information regarding the run of the verification
+    ///
+    /// It is recommended to keep the data in the calling function and to update them in the closure as follow:
+    /// ```ignored
+    /// let verifications_not_finished = Arc::new(RwLock::new(vec![]));
+    /// let verifications_not_finished_cloned = verifications_not_finished.clone();
+    /// let verifications_with_errors_and_failures = Arc::new(RwLock::new(HashMap::new()));
+    /// let runner_information = Arc::new(RwLock::new(RunnerInformation::default()));
+    /// let mut runner = Runner::new(
+    ///     extracted.location(),
+    ///     period,
+    ///     &metadata,
+    ///     exclusion.as_slice(),
+    ///     RunParallel,
+    ///     config,
+    ///     move |id| {
+    ///         let mut verif_not_finished_mut = verifications_not_finished.write().unwrap();
+    ///         verif_not_finished_mut.push(id.to_string());
+    ///     },
+    ///     move |verif_information| {
+    ///         let mut verif_not_finished_mut = verifications_not_finished_cloned.write().unwrap();
+    ///         match verif_not_finished_mut
+    ///             .iter()
+    ///             .position(|id| id == &verif_information.id)
+    ///         {
+    ///             Some(pos) => {
+    ///                 let _ = verif_not_finished_mut.remove(pos);
+    ///             }
+    ///             None => {}
+    ///         }
+    ///         if verif_information.status != VerificationStatus::FinishedSuccessfully {
+    ///             let mut verifs_res_mut = verifications_with_errors_and_failures.write().unwrap();
+    ///             verifs_res_mut.insert(
+    ///                 verif_information.id.clone(),
+    ///                 (
+    ///                     verif_information.errors.len() as u8,
+    ///                     verif_information.failures.len() as u8,
+    ///                 ),
+    ///             );
+    ///         }
+    ///     },
+    ///     move |run_info| {
+    ///         let mut r_info_mut = runner_information.write().unwrap();
+    ///         r_info_mut.start_time = run_info.start_time.clone();
+    ///         r_info_mut.duration = run_info.duration;
+    ///     },
+    /// )
+    /// ```
+    ///
+    /// Comments to the above example:
+    /// - The data used [Arc] and [RwLock] in order to ensure the thread safety and clone
+    /// - The clone of verifications_not_finished is the avoid an error having the lock of the value in both methods, then in the same thread (see `write` of [RwLock])
     #[allow(clippy::too_many_arguments)]
     pub fn new(
         path: &Path,
@@ -120,8 +212,9 @@ where
         exclusion: &[String],
         run_strategy: T,
         config: &'static VerifierConfig,
-        action_before: impl Fn(&str) + Send + Sync + 'static,
-        action_after: impl Fn(&str, Vec<String>, Vec<String>) + Send + Sync + 'static,
+        action_before_verification: impl Fn(&str) + Send + Sync + 'static,
+        action_after_verification: impl Fn(VerificationRunInformation) + Send + Sync + 'static,
+        action_after_runner: impl Fn(RunnerInformation) + Send + Sync + 'static,
     ) -> Result<Runner<'a, T>, RunnerError> {
         start_check(config).map_err(RunnerError::CheckError)?;
         check_verification_dir(period, path).map_err(RunnerError::CheckError)?;
@@ -139,8 +232,9 @@ where
             duration: None,
             run_strategy,
             config,
-            action_before: Box::new(action_before),
-            action_after: Box::new(action_after),
+            action_before_verification: Box::new(action_before_verification),
+            action_after_verification: Box::new(action_after_verification),
+            action_after_runner: Box::new(action_after_runner),
         })
     }
 
@@ -192,11 +286,15 @@ where
             self.run_strategy.run(
                 &mut self.verifications,
                 &self.verification_directory,
-                &self.action_before,
-                &self.action_after,
+                &self.action_before_verification,
+                &self.action_after_verification,
             );
         }
         self.duration = Some(self.start_time.unwrap().elapsed().unwrap());
+        (self.action_after_runner)(RunnerInformation {
+            start_time: self.start_time,
+            duration: self.duration,
+        });
         info!(
             "{} verifications run (duration: {}s)",
             &len,
@@ -235,6 +333,10 @@ where
 
     pub fn verification_directory_path(&self) -> &Path {
         self.verification_directory.path()
+    }
+
+    pub fn verification_directory(&self) -> &VerificationDirectory {
+        &self.verification_directory
     }
 
     pub fn start_time(&self) -> Option<SystemTime> {

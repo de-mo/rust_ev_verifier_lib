@@ -1,93 +1,132 @@
-use super::{runner::RunStrategy, ExtractDataSetResults, Runner};
+use super::{runner::RunnerInformation, ExtractDataSetResults};
 use crate::{
     data_structures::dataset::DatasetTypeKind,
     file_structure::VerificationDirectoryTrait,
     verification::{
-        ManualVerificationInformationTrait, ManualVerificationsAllPeriod, VerificationPeriod,
+        ManualVerificationInformationTrait, ManualVerifications, VerificationPeriod,
+        VerificationStatus,
     },
 };
 use chrono::{DateTime, Local};
-use std::fmt::Display;
 use std::iter::once;
+use std::{fmt::Display, path::Path};
 
+/// Size of the tabs for the report
 const TAB_SIZE: u8 = 2;
 
+/// Trait to collect the report information
 pub trait ReportInformationTrait {
+    /// Transform the report information to a readable structure containing a
+    /// grouping of information.
+    ///
+    /// The strucutre is a [Vec] of tuple:
+    /// - The first element is the name of the group
+    /// - The second element is the information in the group in for of a [Vec] of tuples
+    ///     - The first element of the nested tuple is the name of the information
+    ///     - The second element of the nested tuple is the information as [String]
     fn to_title_key_value(&self) -> Vec<(String, Vec<(String, String)>)>;
-}
 
-struct ReportData<'a, D, T>
-where
-    D: VerificationDirectoryTrait,
-    T: RunStrategy<'a>,
-{
-    period: &'a VerificationPeriod,
-    runner: &'a Runner<'a, T>,
-    manual_verifications: &'a ManualVerificationsAllPeriod<'a, D>,
-    extraction_information: &'a ExtractDataSetResults,
-}
-
-impl Display for &dyn ReportInformationTrait {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "{}",
-            self.to_title_key_value()
-                .iter()
-                .map(|(title, list)| {
-                    let max_key_length = list.iter().map(|(k, _)| k.len()).max().unwrap();
-                    once(title.clone())
-                        .chain(list.iter().map(|(k, s)| {
-                            format!(
-                                "{}{}:{} {}",
-                                " ".repeat(TAB_SIZE as usize),
-                                k,
-                                " ".repeat(max_key_length - k.len()),
-                                s,
-                            )
-                        }))
-                        .collect::<Vec<_>>()
-                        .join("\n")
-                })
-                .collect::<Vec<_>>()
-                .join("\n\n")
-        )
+    /// Transform the information to a multiline string.
+    fn info_to_string(&self) -> String {
+        self.to_title_key_value()
+            .iter()
+            .map(|(title, list)| {
+                let max_key_length = list.iter().map(|(k, _)| k.len()).max().unwrap();
+                once(title.clone())
+                    .chain(list.iter().map(|(k, s)| {
+                        format!(
+                            "{}{}:{} {}",
+                            " ".repeat(TAB_SIZE as usize),
+                            k,
+                            " ".repeat(max_key_length - k.len()),
+                            s,
+                        )
+                    }))
+                    .collect::<Vec<_>>()
+                    .join("\n")
+            })
+            .collect::<Vec<_>>()
+            .join("\n\n")
     }
 }
 
-impl<'a, D, T> ReportData<'a, D, T>
+/// Srtucture to store the information of the run of a verification
+pub struct VerificationRunInformation {
+    /// id of the verification
+    pub id: String,
+    /// status of the verification
+    pub status: VerificationStatus,
+    /// List of failures as [String]
+    pub failures: Vec<String>,
+    /// List of errors as [String]
+    pub errors: Vec<String>,
+}
+
+/// Structure containing the data of the report
+pub struct ReportData<'a, D>
 where
     D: VerificationDirectoryTrait,
-    T: RunStrategy<'a>,
 {
+    path: &'a Path,
+    period: &'a VerificationPeriod,
+    manual_verifications: &'a ManualVerifications<'a, D>,
+    extraction_information: &'a ExtractDataSetResults,
+    runner_information: &'a RunnerInformation,
+}
+
+impl<D> Display for ReportData<'_, D>
+where
+    D: VerificationDirectoryTrait,
+{
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.info_to_string())
+    }
+}
+
+impl<'a, D> ReportData<'a, D>
+where
+    D: VerificationDirectoryTrait,
+{
+    /// Create new [ReportData]
+    ///
+    /// Inputs:
+    /// - `path`: Path of the verification directory
+    /// - `period`: Path of the verification directory
+    /// - `manual_verifications`: The manuel verifications [ManualVerifications]
+    /// - `extraction_information`: The result of the extraction of the datasets [ExtractDataSetResults]
+    /// - `runner_information`: Information to the runner [RunnerInformation]
     pub fn new(
+        path: &'a Path,
         period: &'a VerificationPeriod,
-        runner: &'a Runner<'a, T>,
-        manual_verifications: &'a ManualVerificationsAllPeriod<'a, D>,
+        manual_verifications: &'a ManualVerifications<'a, D>,
         extraction_information: &'a ExtractDataSetResults,
+        runner_information: &'a RunnerInformation,
     ) -> Self {
         Self {
+            path,
             period,
-            runner,
             manual_verifications,
             extraction_information,
+            runner_information,
         }
     }
 }
 
-impl<D: VerificationDirectoryTrait> ReportInformationTrait for ManualVerificationsAllPeriod<'_, D> {
+impl<D: VerificationDirectoryTrait> ReportInformationTrait for ManualVerifications<'_, D> {
     fn to_title_key_value(&self) -> Vec<(String, Vec<(String, String)>)> {
         vec![
-            ("Fingerprints".to_string(), self.fingerprints_to_key_value()),
+            (
+                "Fingerprints".to_string(),
+                self.dt_fingerprints_to_key_value(),
+            ),
             ("Information".to_string(), self.information_to_key_value()),
         ]
     }
 }
 
-impl<'a, D, T> ReportInformationTrait for ReportData<'a, D, T>
+impl<D> ReportInformationTrait for ReportData<'_, D>
 where
     D: VerificationDirectoryTrait,
-    T: RunStrategy<'a>,
 {
     fn to_title_key_value(&self) -> Vec<(String, Vec<(String, String)>)> {
         let context_dataset_info = self
@@ -103,6 +142,16 @@ where
                 .extraction_information
                 .dataset_metadata(&DatasetTypeKind::Tally)
                 .unwrap(),
+        };
+        let stop_time_str = match self.runner_information.start_time.is_some()
+            && self.runner_information.duration.is_some()
+        {
+            true => std::convert::Into::<DateTime<Local>>::into(
+                self.runner_information.start_time.unwrap()
+                    + self.runner_information.duration.unwrap(),
+            )
+            .to_string(),
+            false => "Not finished".to_string(),
         };
         let general_information = vec![
             ("Period".to_string(), self.period.to_string()),
@@ -132,32 +181,22 @@ where
             ),
             (
                 "Verification directory".to_string(),
-                self.runner
-                    .verification_directory_path()
-                    .to_str()
-                    .unwrap()
-                    .to_string(),
+                self.path.to_str().unwrap().to_string(),
             ),
             (
                 "Start Time".to_string(),
-                match self.runner.start_time() {
+                match self.runner_information.start_time {
                     Some(t) => std::convert::Into::<DateTime<Local>>::into(t).to_string(),
                     None => "Not started".to_string(),
                 },
             ),
-            (
-                "Stop Time".to_string(),
-                match self.runner.stop_time() {
-                    Some(t) => std::convert::Into::<DateTime<Local>>::into(t).to_string(),
-                    None => "Not finished".to_string(),
-                },
-            ),
+            ("Stop Time".to_string(), stop_time_str),
             (
                 "Duration".to_string(),
-                match self.runner.duration() {
+                match self.runner_information.duration {
                     Some(d) => {
                         let mut s = d.as_secs();
-                        let mut res = String::new();
+                        let res;
                         if s < 60 {
                             res = format!("{s}s");
                         } else {
