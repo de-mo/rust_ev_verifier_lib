@@ -1,6 +1,4 @@
-use super::{
-    meta_data::VerificationMetaDataList, VerificationError, VerificationPeriod, VerificationSuite,
-};
+use super::{meta_data::VerificationMetaDataList, VerificationError, VerificationPeriod};
 use crate::{
     config::Config,
     data_structures::context::election_event_configuration::ManuelVerificationInputFromConfiguration,
@@ -13,18 +11,33 @@ use chrono::NaiveDate;
 use rust_ev_system_library::rust_ev_crypto_primitives::prelude::EncodeTrait;
 use std::collections::HashMap;
 
-/// Trait to show the information of the manual verifications
+/// Trait to get the information of the manual verifications in form of string
+///
+/// The trait can be used to print the information of the manual verifications
 pub trait ManualVerificationInformationTrait {
-    fn fingerprints_to_key_value(&self) -> Vec<(String, String)>;
+    /// Get the fingerprints of the direct trust certificates
+    ///
+    /// Return a [Vec] of a tuples:
+    /// - The first element of the tuple is the authority of the certificate
+    /// - The second element of the tuple is the fingerprint
+    fn dt_fingerprints_to_key_value(&self) -> Vec<(String, String)>;
+
+    /// Get the verification directory path as string
     fn verification_directory_path(&self) -> String;
+
+    /// Get the various information related to the manuel verifications
+    ///
+    /// Return a [Vec] of a tuples:
+    /// - The first element of the tuple is the the name of the information
+    /// - The second element of the tuple is the information
     fn information_to_key_value(&self) -> Vec<(String, String)>;
 }
 
 /// Data for the manual verifications, containing all the data that
 /// are necessary for Setup and for Tally
-pub struct ManualVerificationsAllPeriod<'a, D: VerificationDirectoryTrait> {
+struct ManualVerificationsForAllPeriod<'a, D: VerificationDirectoryTrait> {
     verification_directory: &'a D,
-    certificate_fingerprints: HashMap<String, String>,
+    direct_trust_certificate_fingerprints: HashMap<String, String>,
     contest_identification: String,
     contest_date: NaiveDate,
     number_of_votes: usize,
@@ -37,9 +50,14 @@ pub struct ManualVerificationsAllPeriod<'a, D: VerificationDirectoryTrait> {
 }
 
 /// Data for the results of the verifications
+///
+/// It contains the following information
+/// - The metadalist of the verifications to collect some information, like the name
+/// - The list of unfinished verifications
+/// - The list of verifications with errors or failures (with the number of errors and failures)
+/// - The list of excluded verifications
 pub struct VerificationsResult {
     metadata: VerificationMetaDataList,
-    number_of_verifications: u8,
     verifications_not_finished: Vec<String>,
     verifications_with_errors_and_failures: HashMap<String, (u8, u8)>,
     excluded_verifications: Vec<String>,
@@ -47,24 +65,29 @@ pub struct VerificationsResult {
 
 /// Data for the manual verifications on the setup
 pub struct ManualVerificationsSetup<'a, D: VerificationDirectoryTrait> {
-    manual_verifications_all_periods: ManualVerificationsAllPeriod<'a, D>,
+    manual_verifications_all_periods: ManualVerificationsForAllPeriod<'a, D>,
     verifications_result: VerificationsResult,
 }
 /// Data for the manual verifications on the tally
 pub struct ManualVerificationsTally<'a, D: VerificationDirectoryTrait> {
-    manual_verifications_all_periods: ManualVerificationsAllPeriod<'a, D>,
+    manual_verifications_all_periods: ManualVerificationsForAllPeriod<'a, D>,
     number_of_test_used_voting_cards: usize,
     number_of_productive_used_voting_cards: usize,
     verifications_result: VerificationsResult,
 }
 
-/// Data for the manual verifications
+/// Enum for the manual verifications (for setup oder tally)
 pub enum ManualVerifications<'a, D: VerificationDirectoryTrait> {
     Setup(ManualVerificationsSetup<'a, D>),
     Tally(ManualVerificationsTally<'a, D>),
 }
 
-impl<'a, D: VerificationDirectoryTrait> ManualVerificationsAllPeriod<'a, D> {
+impl<'a, D: VerificationDirectoryTrait> ManualVerificationsForAllPeriod<'a, D> {
+    /// Create a new [ManualVerificationsForAllPeriod]
+    ///
+    /// Inputs
+    /// - `directory`: The Verification directory
+    /// - `config`: The configuration of the verifier
     pub fn new(directory: &'a D, config: &'static Config) -> Result<Self, VerificationError> {
         let keystore = config.keystore().map_err(VerificationError::DirectTrust)?;
         let fingerprints = keystore
@@ -84,7 +107,7 @@ impl<'a, D: VerificationDirectoryTrait> ManualVerificationsAllPeriod<'a, D> {
             .map_err(VerificationError::DataStructure)?;
         Ok(Self {
             verification_directory: directory,
-            certificate_fingerprints: fingerprints,
+            direct_trust_certificate_fingerprints: fingerprints,
             contest_identification: manual_inputs.contest_identification,
             contest_date: manual_inputs.contest_date,
             number_of_votes: manual_inputs.number_of_votes,
@@ -96,18 +119,14 @@ impl<'a, D: VerificationDirectoryTrait> ManualVerificationsAllPeriod<'a, D> {
             number_of_test_ballot_boxes: manual_inputs.number_of_test_ballot_boxes,
         })
     }
-
-    pub fn verification_directory(&self) -> &D {
-        self.verification_directory
-    }
 }
 
 impl<D: VerificationDirectoryTrait> ManualVerificationInformationTrait
-    for ManualVerificationsAllPeriod<'_, D>
+    for ManualVerificationsForAllPeriod<'_, D>
 {
-    fn fingerprints_to_key_value(&self) -> Vec<(String, String)> {
+    fn dt_fingerprints_to_key_value(&self) -> Vec<(String, String)> {
         let mut res = self
-            .certificate_fingerprints
+            .direct_trust_certificate_fingerprints
             .iter()
             .map(|(k, v)| (k.clone(), v.clone()))
             .collect::<Vec<_>>();
@@ -159,37 +178,35 @@ impl<D: VerificationDirectoryTrait> ManualVerificationInformationTrait
 }
 
 impl VerificationsResult {
-    pub fn new(metadata: VerificationMetaDataList, verification_suite: &VerificationSuite) -> Self {
-        let number_of_verifications = metadata.len() as u8;
-        let verifications_not_finished = verification_suite
-            .verifications()
-            .0
-            .iter()
-            .filter(|v| !v.is_result_final())
-            .map(|v| v.id().to_string())
-            .collect::<Vec<_>>();
-        let verifications_with_errors_and_failures = verification_suite
-            .verifications()
-            .0
-            .iter()
-            .filter(|v| v.is_ok().unwrap_or(true))
-            .map(|v| {
-                let res = v.verification_result();
-                (
-                    v.id().to_string(),
-                    (res.errors().len() as u8, res.failures().len() as u8),
-                )
-            })
-            .collect::<HashMap<_, _>>();
+    /// Create new [VerificationsResult]
+    ///
+    /// Inputs:
+    /// - `metadata`: The metadalist of the verifications to collect some information, like the name
+    /// - `verifications_not_finished`: The list of unfinished verifications. The vector contains the id of the verifications
+    /// - `verifications_with_errors_and_failures`: The list of verifications with errors or failures (with the number of errors and failures).
+    ///     It is in form of a [HashMap] where the key is the id of the verification and the value is a tuple of [u8] (first element is the number of errors
+    ///     and the second element is the number of failures)
+    /// - `excluded_verifications`: The list of excluded verifications. The vector contains the id of the verifications
+    ///
+    /// It is recommended to deliver in `verifications_with_errors_and_failures` on the verifications having errors or failures. The verification with success should
+    /// not be delivered
+    pub fn new(
+        metadata: VerificationMetaDataList,
+        verifications_not_finished: Vec<String>,
+        verifications_with_errors_and_failures: HashMap<String, (u8, u8)>,
+        excluded_verifications: Vec<String>,
+    ) -> Self {
         Self {
             metadata,
-            number_of_verifications,
             verifications_not_finished,
             verifications_with_errors_and_failures,
-            excluded_verifications: verification_suite.exclusion().to_vec(),
+            excluded_verifications,
         }
     }
 
+    /// Get the name of the verification id
+    ///
+    /// Return empty if the id is not known
     pub fn name_for_verification_id(&self, id: &str) -> String {
         match self.metadata.get(id) {
             Some(v) => v.name().to_string(),
@@ -201,7 +218,7 @@ impl VerificationsResult {
         let mut res = vec![];
         res.push((
             "Number of verifications".to_string(),
-            self.number_of_verifications.to_string(),
+            self.metadata.len().to_string(),
         ));
         res.push((
             "Excluded verifications".to_string(),
@@ -215,10 +232,20 @@ impl VerificationsResult {
                     .join(", "),
             },
         ));
+        let is_running = !self.verifications_not_finished.is_empty();
         res.push((
-            "Number of running verifications".to_string(),
-            self.verifications_not_finished.len().to_string(),
+            "Run status".to_string(),
+            match is_running {
+                false => "Finished".to_string(),
+                true => "Running".to_string(),
+            },
         ));
+        if is_running {
+            res.push((
+                "Number of running verifications".to_string(),
+                self.verifications_not_finished.len().to_string(),
+            ));
+        }
         res.push((
             "Verifications with errors or failures".to_string(),
             match self.verifications_with_errors_and_failures.is_empty() {
@@ -228,11 +255,19 @@ impl VerificationsResult {
                     .iter()
                     .map(|(id, (errors, failures))| {
                         format!(
-                            "{}-{} ({} errors / {} failures)",
+                            "{}-{} ({} {} / {} {})",
                             id,
                             self.name_for_verification_id(id),
                             errors,
-                            failures
+                            match errors {
+                                0 | 1 => "error",
+                                _ => "errors",
+                            },
+                            failures,
+                            match failures {
+                                0 | 1 => "failure",
+                                _ => "failures",
+                            }
                         )
                     })
                     .collect::<Vec<_>>()
@@ -244,15 +279,38 @@ impl VerificationsResult {
 }
 
 impl<'a, D: VerificationDirectoryTrait> ManualVerificationsSetup<'a, D> {
+    /// Create new [ManualVerificationsSetup]
+    ///
+    /// Inputs:
+    /// - `directory`: Verification directory
+    /// - `config`: Verifier configuration
+    /// - `metadata`: The metadalist of the verifications to collect some information, like the name
+    /// - `verifications_not_finished`: The list of unfinished verifications. The vector contains the id of the verifications
+    /// - `verifications_with_errors_and_failures`: The list of verifications with errors or failures (with the number of errors and failures).
+    ///     It is in form of a [HashMap] where the key is the id of the verification and the value is a tuple of [u8] (first element is the number of errors
+    ///     and the second element is the number of failures)
+    /// - `excluded_verifications`: The list of excluded verifications. The vector contains the id of the verifications
+    ///
+    /// It is recommended to deliver in `verifications_with_errors_and_failures` on the verifications having errors or failures. The verification with success should
+    /// not be delivered
     pub fn new(
         directory: &'a D,
         config: &'static Config,
         metadata: VerificationMetaDataList,
-        verification_suite: &VerificationSuite,
+        verifications_not_finished: Vec<String>,
+        verifications_with_errors_and_failures: HashMap<String, (u8, u8)>,
+        excluded_verifications: Vec<String>,
     ) -> Result<Self, VerificationError> {
         Ok(Self {
-            manual_verifications_all_periods: ManualVerificationsAllPeriod::new(directory, config)?,
-            verifications_result: VerificationsResult::new(metadata, verification_suite),
+            manual_verifications_all_periods: ManualVerificationsForAllPeriod::new(
+                directory, config,
+            )?,
+            verifications_result: VerificationsResult::new(
+                metadata,
+                verifications_not_finished,
+                verifications_with_errors_and_failures,
+                excluded_verifications,
+            ),
         })
     }
 }
@@ -260,9 +318,9 @@ impl<'a, D: VerificationDirectoryTrait> ManualVerificationsSetup<'a, D> {
 impl<D: VerificationDirectoryTrait> ManualVerificationInformationTrait
     for ManualVerificationsSetup<'_, D>
 {
-    fn fingerprints_to_key_value(&self) -> Vec<(String, String)> {
+    fn dt_fingerprints_to_key_value(&self) -> Vec<(String, String)> {
         self.manual_verifications_all_periods
-            .fingerprints_to_key_value()
+            .dt_fingerprints_to_key_value()
     }
 
     fn verification_directory_path(&self) -> String {
@@ -280,11 +338,27 @@ impl<D: VerificationDirectoryTrait> ManualVerificationInformationTrait
 }
 
 impl<'a, D: VerificationDirectoryTrait> ManualVerificationsTally<'a, D> {
+    /// Create new [ManualVerificationsTally]
+    ///
+    /// Inputs:
+    /// - `directory`: Verification directory
+    /// - `config`: Verifier configuration
+    /// - `metadata`: The metadalist of the verifications to collect some information, like the name
+    /// - `verifications_not_finished`: The list of unfinished verifications. The vector contains the id of the verifications
+    /// - `verifications_with_errors_and_failures`: The list of verifications with errors or failures (with the number of errors and failures).
+    ///     It is in form of a [HashMap] where the key is the id of the verification and the value is a tuple of [u8] (first element is the number of errors
+    ///     and the second element is the number of failures)
+    /// - `excluded_verifications`: The list of excluded verifications. The vector contains the id of the verifications
+    ///
+    /// It is recommended to deliver in `verifications_with_errors_and_failures` on the verifications having errors or failures. The verification with success should
+    /// not be delivered
     fn new(
         directory: &'a D,
         config: &'static Config,
         metadata: VerificationMetaDataList,
-        verification_suite: &VerificationSuite,
+        verifications_not_finished: Vec<String>,
+        verifications_with_errors_and_failures: HashMap<String, (u8, u8)>,
+        excluded_verifications: Vec<String>,
     ) -> Result<Self, VerificationError> {
         let tally_dir = directory.unwrap_tally();
         let config_dir = directory.context();
@@ -325,10 +399,17 @@ impl<'a, D: VerificationDirectoryTrait> ManualVerificationsTally<'a, D> {
             }
         }
         Ok(Self {
-            manual_verifications_all_periods: ManualVerificationsAllPeriod::new(directory, config)?,
+            manual_verifications_all_periods: ManualVerificationsForAllPeriod::new(
+                directory, config,
+            )?,
             number_of_productive_used_voting_cards,
             number_of_test_used_voting_cards,
-            verifications_result: VerificationsResult::new(metadata, verification_suite),
+            verifications_result: VerificationsResult::new(
+                metadata,
+                verifications_not_finished,
+                verifications_with_errors_and_failures,
+                excluded_verifications,
+            ),
         })
     }
 }
@@ -336,9 +417,9 @@ impl<'a, D: VerificationDirectoryTrait> ManualVerificationsTally<'a, D> {
 impl<D: VerificationDirectoryTrait> ManualVerificationInformationTrait
     for ManualVerificationsTally<'_, D>
 {
-    fn fingerprints_to_key_value(&self) -> Vec<(String, String)> {
+    fn dt_fingerprints_to_key_value(&self) -> Vec<(String, String)> {
         self.manual_verifications_all_periods
-            .fingerprints_to_key_value()
+            .dt_fingerprints_to_key_value()
     }
 
     fn verification_directory_path(&self) -> String {
@@ -364,21 +445,51 @@ impl<D: VerificationDirectoryTrait> ManualVerificationInformationTrait
 }
 
 impl<'a, D: VerificationDirectoryTrait> ManualVerifications<'a, D> {
+    /// Create new [ManualVerifications]
+    ///
+    /// Inputs:
+    /// - `period`: Verification period
+    /// - `directory`: Verification directory
+    /// - `config`: Verifier configuration
+    /// - `verifications_not_finished`: The list of unfinished verifications. The vector contains the id of the verifications
+    /// - `verifications_with_errors_and_failures`: The list of verifications with errors or failures (with the number of errors and failures).
+    ///     It is in form of a [HashMap] where the key is the id of the verification and the value is a tuple of [u8] (first element is the number of errors
+    ///     and the second element is the number of failures)
+    /// - `excluded_verifications`: The list of excluded verifications. The vector contains the id of the verifications
+    ///
+    /// It is recommended to deliver in `verifications_with_errors_and_failures` on the verifications having errors or failures. The verification with success should
+    /// not be delivered
     pub fn new(
         period: VerificationPeriod,
         directory: &'a D,
         config: &'static Config,
-        verification_suite: &VerificationSuite,
+        verifications_not_finished: Vec<String>,
+        verifications_with_errors_and_failures: HashMap<String, (u8, u8)>,
+        excluded_verifications: Vec<String>,
     ) -> Result<Self, VerificationError> {
         let meta_data =
             VerificationMetaDataList::load_period(config.get_verification_list_str(), &period)?;
         match period {
-            VerificationPeriod::Setup => Ok(ManualVerifications::Setup(
-                ManualVerificationsSetup::new(directory, config, meta_data, verification_suite)?,
-            )),
-            VerificationPeriod::Tally => Ok(ManualVerifications::Tally(
-                ManualVerificationsTally::new(directory, config, meta_data, verification_suite)?,
-            )),
+            VerificationPeriod::Setup => {
+                Ok(ManualVerifications::Setup(ManualVerificationsSetup::new(
+                    directory,
+                    config,
+                    meta_data,
+                    verifications_not_finished,
+                    verifications_with_errors_and_failures,
+                    excluded_verifications,
+                )?))
+            }
+            VerificationPeriod::Tally => {
+                Ok(ManualVerifications::Tally(ManualVerificationsTally::new(
+                    directory,
+                    config,
+                    meta_data,
+                    verifications_not_finished,
+                    verifications_with_errors_and_failures,
+                    excluded_verifications,
+                )?))
+            }
         }
     }
 }
@@ -386,10 +497,10 @@ impl<'a, D: VerificationDirectoryTrait> ManualVerifications<'a, D> {
 impl<D: VerificationDirectoryTrait> ManualVerificationInformationTrait
     for ManualVerifications<'_, D>
 {
-    fn fingerprints_to_key_value(&self) -> Vec<(String, String)> {
+    fn dt_fingerprints_to_key_value(&self) -> Vec<(String, String)> {
         match self {
-            ManualVerifications::Setup(s) => s.fingerprints_to_key_value(),
-            ManualVerifications::Tally(t) => t.fingerprints_to_key_value(),
+            ManualVerifications::Setup(s) => s.dt_fingerprints_to_key_value(),
+            ManualVerifications::Tally(t) => t.dt_fingerprints_to_key_value(),
         }
     }
 
