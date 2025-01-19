@@ -4,7 +4,7 @@
 pub(crate) mod context_directory;
 pub(crate) mod file;
 pub(crate) mod file_group;
-#[cfg(any(test, doc))]
+#[cfg(test)]
 pub(crate) mod mock;
 pub(crate) mod setup_directory;
 pub(crate) mod tally_directory;
