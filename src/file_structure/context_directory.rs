@@ -9,7 +9,7 @@ use super::{
     CompletnessTestTrait, FileStructureError,
 };
 use crate::{
-    config::Config,
+    config::VerifierConfig,
     data_structures::{
         context::{
             control_component_public_keys_payload::ControlComponentPublicKeysPayload,
@@ -110,7 +110,7 @@ impl ContextDirectory {
     /// New [ContextDirectory]
     #[allow(clippy::redundant_clone)]
     pub fn new(data_location: &Path) -> Self {
-        let location = data_location.join(Config::context_dir_name());
+        let location = data_location.join(VerifierConfig::context_dir_name());
         let mut res = Self {
             location: location.to_path_buf(),
             setup_component_public_keys_payload_file: create_file!(
@@ -134,7 +134,7 @@ impl ContextDirectory {
             ),
             vcs_directories: vec![],
         };
-        let vcs_path = location.join(Config::vcs_dir_name());
+        let vcs_path = location.join(VerifierConfig::vcs_dir_name());
         if vcs_path.is_dir() {
             for re in fs::read_dir(&vcs_path).unwrap() {
                 let e = re.unwrap().path();

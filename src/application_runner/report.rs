@@ -6,13 +6,11 @@ use crate::{
         ManualVerificationInformationTrait, ManualVerifications, VerificationPeriod,
         VerificationStatus,
     },
+    VerifierConfig,
 };
 use chrono::{DateTime, Local};
 use std::iter::once;
 use std::{fmt::Display, path::Path};
-
-/// Size of the tabs for the report
-const TAB_SIZE: u8 = 2;
 
 /// Trait to collect the report information
 pub trait ReportInformationTrait {
@@ -27,7 +25,9 @@ pub trait ReportInformationTrait {
     fn to_title_key_value(&self) -> Vec<(String, Vec<(String, String)>)>;
 
     /// Transform the information to a multiline string.
-    fn info_to_string(&self) -> String {
+    ///
+    /// Take the verifier configuration as input for the tab size
+    fn info_to_string(&self, config: &'static VerifierConfig) -> String {
         self.to_title_key_value()
             .iter()
             .map(|(title, list)| {
@@ -36,7 +36,7 @@ pub trait ReportInformationTrait {
                     .chain(list.iter().map(|(k, s)| {
                         format!(
                             "{}{}:{} {}",
-                            " ".repeat(TAB_SIZE as usize),
+                            " ".repeat(config.txt_report_tab_size() as usize),
                             k,
                             " ".repeat(max_key_length - k.len()),
                             s,
@@ -68,6 +68,7 @@ where
     D: VerificationDirectoryTrait,
 {
     path: &'a Path,
+    config: &'static VerifierConfig,
     period: &'a VerificationPeriod,
     manual_verifications: &'a ManualVerifications<'a, D>,
     extraction_information: &'a ExtractDataSetResults,
@@ -79,7 +80,7 @@ where
     D: VerificationDirectoryTrait,
 {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.info_to_string())
+        write!(f, "{}", self.info_to_string(self.config))
     }
 }
 
@@ -97,6 +98,7 @@ where
     /// - `runner_information`: Information to the runner [RunnerInformation]
     pub fn new(
         path: &'a Path,
+        config: &'static VerifierConfig,
         period: &'a VerificationPeriod,
         manual_verifications: &'a ManualVerifications<'a, D>,
         extraction_information: &'a ExtractDataSetResults,
@@ -104,6 +106,7 @@ where
     ) -> Self {
         Self {
             path,
+            config,
             period,
             manual_verifications,
             extraction_information,

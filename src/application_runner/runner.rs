@@ -1,7 +1,7 @@
 //use futures::{stream::FuturesUnordered, StreamExt};
 use crate::{
     application_runner::checks::{check_complete, check_verification_dir},
-    config::Config as VerifierConfig,
+    config::VerifierConfig as VerifierConfig,
     file_structure::{VerificationDirectory, VerificationDirectoryTrait},
     verification::{VerificationMetaDataList, VerificationPeriod, VerificationSuite},
 };

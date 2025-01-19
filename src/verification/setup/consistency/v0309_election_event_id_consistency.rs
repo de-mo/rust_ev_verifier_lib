@@ -1,6 +1,6 @@
 use super::super::super::result::{VerificationEvent, VerificationResult};
 use crate::{
-    config::Config,
+    config::VerifierConfig,
     file_structure::{
         context_directory::{ContextDirectoryTrait, ContextVCSDirectoryTrait},
         setup_directory::{SetupDirectoryTrait, SetupVCSDirectoryTrait},
@@ -84,7 +84,7 @@ fn test_ee_id_for_setup_vcs_dir<V: SetupVCSDirectoryTrait>(
 
 pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
     dir: &D,
-    _config: &'static Config,
+    _config: &'static VerifierConfig,
     result: &mut VerificationResult,
 ) {
     let context_dir = dir.context();

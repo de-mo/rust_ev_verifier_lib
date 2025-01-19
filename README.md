@@ -54,6 +54,19 @@ Copy the directoy `/datasets/direct-trust` to the root.
 
 The build on Windows must be done with MSYS2 (see [Crypto Primitives](https://github.com/de-mo/rust_ev_crypto_primitives) for details)
 
+## Integration Guide
+
+### Environment Variables
+The configuration used some environment variables, the can/must be integrated using the crate [dotenvy](https://crates.io/crates/dotenvy)
+| Variable                  | Description                                            | Required | default |
+| ------------------------- | ------------------------------------------------------ | :------: | ------- |
+| VERIFIER_DATASET_PASSWORD | The password of the encrypted zip files                | X        | n/a |
+| TXT_REPORT_TAB_SIZE       | The tab size for the text reports                      |          | 2 |
+| DIRECT_TRUST_DIR_PATH     | The path to the direct trust keystore for the verifier |          | The path `./direct-trust` where `.` is the installation directory |
+
+The environment variables are retrieved using the static instance of `VerifierConfig`
+
+
 ## Licence
 
 Open source License Apache 2.0

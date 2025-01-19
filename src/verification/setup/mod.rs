@@ -6,12 +6,12 @@ mod evidence;
 mod integrity;
 
 use super::{meta_data::VerificationMetaDataList, suite::VerificationList, VerificationError};
-use crate::config::Config;
+use crate::config::VerifierConfig;
 
 /// Collect the verifications of the submodules
 pub fn get_verifications<'a>(
     metadata_list: &'a VerificationMetaDataList,
-    config: &'static Config,
+    config: &'static VerifierConfig,
 ) -> Result<VerificationList<'a>, VerificationError> {
     let mut res = VerificationList(vec![]);
     res.0

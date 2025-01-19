@@ -2,7 +2,7 @@ use super::super::{
     result::VerificationEvent, suite::VerificationList, verifications::Verification,
 };
 use crate::{
-    config::Config,
+    config::VerifierConfig,
     file_structure::{
         tally_directory::{BBDirectoryTrait, TallyDirectoryTrait},
         VerificationDirectoryTrait,
@@ -15,7 +15,7 @@ use crate::{
 
 pub fn get_verifications<'a>(
     metadata_list: &'a VerificationMetaDataList,
-    config: &'static Config,
+    config: &'static VerifierConfig,
 ) -> Result<VerificationList<'a>, VerificationError> {
     Ok(VerificationList(vec![
         Verification::new(
@@ -72,7 +72,7 @@ pub fn get_verifications<'a>(
 
 fn fn_0701_verify_signature_control_component_ballot_box<D: VerificationDirectoryTrait>(
     dir: &D,
-    config: &'static Config,
+    config: &'static VerifierConfig,
     result: &mut VerificationResult,
 ) {
     let tally_dir = dir.unwrap_tally();
@@ -99,7 +99,7 @@ fn fn_0701_verify_signature_control_component_ballot_box<D: VerificationDirector
 
 fn fn_0702_verify_verify_signature_control_component_shuffle<D: VerificationDirectoryTrait>(
     dir: &D,
-    config: &'static Config,
+    config: &'static VerifierConfig,
     result: &mut VerificationResult,
 ) {
     let tally_dir = dir.unwrap_tally();
@@ -126,7 +126,7 @@ fn fn_0702_verify_verify_signature_control_component_shuffle<D: VerificationDire
 
 fn fn_0703_verify_signature_tally_component_shuffle<D: VerificationDirectoryTrait>(
     dir: &D,
-    config: &'static Config,
+    config: &'static VerifierConfig,
     result: &mut VerificationResult,
 ) {
     let tally_dir = dir.unwrap_tally();
@@ -146,7 +146,7 @@ fn fn_0703_verify_signature_tally_component_shuffle<D: VerificationDirectoryTrai
 
 fn fn_0704_verify_signature_tally_component_votes<D: VerificationDirectoryTrait>(
     dir: &D,
-    config: &'static Config,
+    config: &'static VerifierConfig,
     result: &mut VerificationResult,
 ) {
     let tally_dir = dir.unwrap_tally();

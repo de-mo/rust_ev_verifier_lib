@@ -1,6 +1,6 @@
 use super::super::super::result::{VerificationEvent, VerificationResult};
 use crate::{
-    config::Config,
+    config::VerifierConfig,
     file_structure::{
         file_group::FileGroup,
         setup_directory::{SetupDirectoryTrait, SetupVCSDirectoryTrait},
@@ -26,7 +26,7 @@ fn verify_uninterrupted_monotonic_sequence(
 
 pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
     dir: &D,
-    _config: &'static Config,
+    _config: &'static VerifierConfig,
     result: &mut VerificationResult,
 ) {
     let setup_dir = dir.unwrap_setup();

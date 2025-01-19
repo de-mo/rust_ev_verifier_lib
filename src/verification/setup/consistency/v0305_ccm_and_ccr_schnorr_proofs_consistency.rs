@@ -1,6 +1,6 @@
 use super::super::super::result::{VerificationEvent, VerificationResult};
 use crate::{
-    config::Config,
+    config::VerifierConfig,
     data_structures::{
         context::control_component_public_keys_payload::ControlComponentPublicKeys,
         VerifierContextDataTrait,
@@ -71,7 +71,7 @@ fn validate_ccm_and_ccr_schorr_proofs<S: ContextDirectoryTrait>(
 
 pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
     dir: &D,
-    _config: &'static Config,
+    _config: &'static VerifierConfig,
     result: &mut VerificationResult,
 ) {
     let context_dir = dir.context();

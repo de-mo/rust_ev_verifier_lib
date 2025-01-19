@@ -4,13 +4,13 @@ mod consistency;
 mod evidence;
 mod integrity;
 
-use crate::config::Config;
+use crate::config::VerifierConfig;
 
 use super::{meta_data::VerificationMetaDataList, suite::VerificationList, VerificationError};
 
 pub fn get_verifications<'a>(
     metadata_list: &'a VerificationMetaDataList,
-    config: &'static Config,
+    config: &'static VerifierConfig,
 ) -> Result<VerificationList<'a>, VerificationError> {
     let mut res = VerificationList(vec![]);
     res.0

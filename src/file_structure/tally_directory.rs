@@ -7,7 +7,7 @@ use super::{
     CompletnessTestTrait, FileStructureError,
 };
 use crate::{
-    config::Config,
+    config::VerifierConfig,
     data_structures::{
         create_verifier_tally_data_type,
         tally::{
@@ -275,7 +275,7 @@ impl_completness_test_trait_for_tally_bb!(BBDirectory);
 impl TallyDirectory {
     #[allow(clippy::redundant_clone)]
     pub fn new(data_location: &Path) -> TallyDirectory {
-        let location = data_location.join(Config::tally_dir_name());
+        let location = data_location.join(VerifierConfig::tally_dir_name());
         let mut res = TallyDirectory {
             location: location.to_path_buf(),
             e_voting_decrypt_file: create_file!(
@@ -287,7 +287,7 @@ impl TallyDirectory {
             ech_0222_file: create_file!(location, Tally, VerifierTallyDataType::ECH0222),
             bb_directories: vec![],
         };
-        let bb_path = location.join(Config::bb_dir_name());
+        let bb_path = location.join(VerifierConfig::bb_dir_name());
         if bb_path.is_dir() {
             for re in fs::read_dir(&bb_path).unwrap() {
                 let e = re.unwrap().path();

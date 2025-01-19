@@ -1,7 +1,7 @@
 use std::path::Path;
 
 use crate::{
-    config::Config as VerifierConfig,
+    config::VerifierConfig as VerifierConfig,
     file_structure::{CompletnessTestTrait, VerificationDirectory, VerificationDirectoryTrait},
     verification::{VerificationMetaDataList, VerificationPeriod},
 };

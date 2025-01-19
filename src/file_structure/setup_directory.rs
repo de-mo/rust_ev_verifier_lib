@@ -8,7 +8,7 @@ use super::{
     CompletnessTestTrait, FileStructureError,
 };
 use crate::{
-    config::Config,
+    config::VerifierConfig,
     data_structures::{
         create_verifier_setup_data_type,
         setup::{
@@ -104,12 +104,12 @@ impl SetupDirectory {
     /// New [SetupDirectory]
     #[allow(clippy::redundant_clone)]
     pub fn new(data_location: &Path) -> Self {
-        let location = data_location.join(Config::setup_dir_name());
+        let location = data_location.join(VerifierConfig::setup_dir_name());
         let mut res = Self {
             location: location.to_path_buf(),
             vcs_directories: vec![],
         };
-        let vcs_path = location.join(Config::vcs_dir_name());
+        let vcs_path = location.join(VerifierConfig::vcs_dir_name());
         if vcs_path.is_dir() {
             for re in fs::read_dir(&vcs_path).unwrap() {
                 let e = re.unwrap().path();

@@ -1,7 +1,7 @@
 use super::RunnerError;
 use crate::{
     data_structures::dataset::DatasetTypeKind, dataset::DatasetMetadata,
-    verification::VerificationPeriod, Config,
+    verification::VerificationPeriod, VerifierConfig,
 };
 use std::{
     collections::HashMap,
@@ -30,7 +30,7 @@ impl ExtractDataSetResults {
         setup_zip_file: Option<&Path>,
         tally_zip_file: Option<&Path>,
         password: &str,
-        config: &'static Config,
+        config: &'static VerifierConfig,
     ) -> Result<Self, RunnerError> {
         let dataset_root_path = config.create_dataset_dir_path();
         let mut hm = HashMap::new();

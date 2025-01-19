@@ -17,7 +17,7 @@ pub use self::{
     suite::VerificationSuite,
 };
 use crate::{
-    config::Config,
+    config::{VerifierConfig, VerifierConfigError},
     data_structures::DataStructureError,
     direct_trust::{DirectTrustError, VerifiySignatureTrait},
     file_structure::{FileStructureError, VerificationDirectoryTrait},
@@ -106,6 +106,8 @@ pub enum VerificationError {
     #[error(transparent)]
     DirectTrust(DirectTrustError),
     #[error(transparent)]
+    ConfigError(VerifierConfigError),
+    #[error(transparent)]
     DataStructure(DataStructureError),
     #[error("metadata for verification id {0} not found")]
     MetadataNotFound(String),
@@ -132,7 +134,7 @@ impl VerificationPeriod {
 
 pub(super) fn verification_unimplemented<D: VerificationDirectoryTrait>(
     _dir: &D,
-    _config: &'static Config,
+    _config: &'static VerifierConfig,
     result: &mut VerificationResult,
 ) {
     result.push(VerificationEvent::new_error(
@@ -141,7 +143,10 @@ pub(super) fn verification_unimplemented<D: VerificationDirectoryTrait>(
 }
 
 /// Verify the signatue for a given object implementing [VerifiySignatureTrait]
-fn verify_signature_for_object<'a, T>(obj: &'a T, config: &'static Config) -> VerificationResult
+fn verify_signature_for_object<'a, T>(
+    obj: &'a T,
+    config: &'static VerifierConfig,
+) -> VerificationResult
 where
     T: VerifiySignatureTrait<'a>,
 {

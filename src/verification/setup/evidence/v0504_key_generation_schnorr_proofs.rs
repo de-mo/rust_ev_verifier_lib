@@ -1,6 +1,6 @@
 use super::super::super::result::{VerificationEvent, VerificationResult};
 use crate::{
-    config::Config,
+    config::VerifierConfig,
     file_structure::{context_directory::ContextDirectoryTrait, VerificationDirectoryTrait},
 };
 use rust_ev_system_library::preliminaries::{
@@ -10,7 +10,7 @@ use rust_ev_system_library::preliminaries::{
 
 pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
     dir: &D,
-    _config: &'static Config,
+    _config: &'static VerifierConfig,
     result: &mut VerificationResult,
 ) {
     let context_dir = dir.context();

@@ -33,7 +33,7 @@ pub use self::{
         VerifierTallyDataType,
     },
 };
-use crate::config::Config as VerifierConfig;
+use crate::config::VerifierConfig as VerifierConfig;
 use chrono::NaiveDateTime;
 use common_types::CiphertextDef;
 use quick_xml::{DeError as QuickXmDeError, Error as QuickXmlError};

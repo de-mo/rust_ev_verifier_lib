@@ -1,5 +1,5 @@
 use crate::{
-    config::Config,
+    config::VerifierConfig,
     file_structure::{CompletnessTestTrait, VerificationDirectoryTrait},
     verification::VerificationError,
 };
@@ -12,7 +12,7 @@ use super::super::{
 };
 pub fn get_verifications<'a>(
     metadata_list: &'a VerificationMetaDataList,
-    config: &'static Config,
+    config: &'static VerifierConfig,
 ) -> Result<VerificationList<'a>, VerificationError> {
     Ok(VerificationList(vec![Verification::new(
         "06.01",
@@ -25,7 +25,7 @@ pub fn get_verifications<'a>(
 
 fn fn_0601_verify_tally_completeness<D: VerificationDirectoryTrait>(
     dir: &D,
-    _config: &'static Config,
+    _config: &'static VerifierConfig,
     result: &mut VerificationResult,
 ) {
     let context_dir = dir.context();

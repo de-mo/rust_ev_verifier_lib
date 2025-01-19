@@ -1,6 +1,6 @@
 use super::{meta_data::VerificationMetaDataList, VerificationError, VerificationPeriod};
 use crate::{
-    config::Config,
+    config::VerifierConfig,
     data_structures::context::election_event_configuration::ManuelVerificationInputFromConfiguration,
     file_structure::{
         tally_directory::BBDirectoryTrait, ContextDirectoryTrait, TallyDirectoryTrait,
@@ -99,8 +99,11 @@ impl<'a, D: VerificationDirectoryTrait> ManualVerificationsForAllPeriod<'a, D> {
     /// Inputs
     /// - `directory`: The Verification directory
     /// - `config`: The configuration of the verifier
-    pub fn new(directory: &'a D, config: &'static Config) -> Result<Self, VerificationError> {
-        let keystore = config.keystore().map_err(VerificationError::DirectTrust)?;
+    pub fn new(
+        directory: &'a D,
+        config: &'static VerifierConfig,
+    ) -> Result<Self, VerificationError> {
+        let keystore = config.keystore().map_err(VerificationError::ConfigError)?;
         let fingerprints = keystore
             .fingerprints()
             .map_err(VerificationError::DirectTrust)?
@@ -338,7 +341,7 @@ impl<'a, D: VerificationDirectoryTrait> ManualVerificationsSetup<'a, D> {
     /// not be delivered
     pub fn new(
         directory: &'a D,
-        config: &'static Config,
+        config: &'static VerifierConfig,
         metadata: VerificationMetaDataList,
         verifications_not_finished: Vec<String>,
         verifications_with_errors_and_failures: HashMap<String, (Vec<String>, Vec<String>)>,
@@ -401,7 +404,7 @@ impl<'a, D: VerificationDirectoryTrait> ManualVerificationsTally<'a, D> {
     /// not be delivered
     fn new(
         directory: &'a D,
-        config: &'static Config,
+        config: &'static VerifierConfig,
         metadata: VerificationMetaDataList,
         verifications_not_finished: Vec<String>,
         verifications_with_errors_and_failures: HashMap<String, (Vec<String>, Vec<String>)>,
@@ -513,7 +516,7 @@ impl<'a, D: VerificationDirectoryTrait> ManualVerifications<'a, D> {
     pub fn new(
         period: VerificationPeriod,
         directory: &'a D,
-        config: &'static Config,
+        config: &'static VerifierConfig,
         verifications_not_finished: Vec<String>,
         verifications_with_errors_and_failures: HashMap<String, (Vec<String>, Vec<String>)>,
         excluded_verifications: Vec<String>,

@@ -1,6 +1,6 @@
 use super::super::super::result::{VerificationEvent, VerificationResult};
 use crate::{
-    config::Config,
+    config::VerifierConfig,
     data_structures::{
         common_types::SchnorrProof,
         setup::{
@@ -47,21 +47,21 @@ struct ContextAlgorithm34<'a, 'b, 'c, 'd, 'e> {
 
 fn algorithm_0301_verify_signature_setup_component_verification_data(
     verification_data_payload: &SetupComponentVerificationDataPayload,
-    config: &'static Config,
+    config: &'static VerifierConfig,
 ) -> VerificationResult {
     verify_signature_for_object(verification_data_payload, config)
 }
 
 fn algorithm_0302_verify_signature_control_component_code_shares(
     control_component_code_shares: &ControlComponentCodeSharesPayloadInner,
-    config: &'static Config,
+    config: &'static VerifierConfig,
 ) -> VerificationResult {
     verify_signature_for_object(control_component_code_shares, config)
 }
 
 pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
     dir: &D,
-    config: &'static Config,
+    config: &'static VerifierConfig,
     result: &mut VerificationResult,
 ) {
     let context_dir = dir.context();

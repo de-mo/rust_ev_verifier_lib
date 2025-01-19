@@ -2,7 +2,7 @@ use std::collections::HashSet;
 
 use super::super::super::result::{VerificationEvent, VerificationResult};
 use crate::{
-    config::Config,
+    config::VerifierConfig,
     file_structure::{
         tally_directory::BBDirectoryTrait, TallyDirectoryTrait, VerificationDirectoryTrait,
     },
@@ -12,7 +12,7 @@ const LIST_CC_NUMBER: &[usize] = &[1, 2, 3, 4];
 
 pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
     dir: &D,
-    _config: &'static Config,
+    _config: &'static VerifierConfig,
     result: &mut VerificationResult,
 ) {
     let tally_dir = dir.unwrap_tally();

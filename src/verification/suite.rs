@@ -5,7 +5,7 @@ use super::{
     tally::get_verifications as get_verifications_tally, verifications::Verification,
     VerificationCategory, VerificationError, VerificationPeriod,
 };
-use crate::{config::Config, file_structure::VerificationDirectory};
+use crate::{config::VerifierConfig, file_structure::VerificationDirectory};
 
 /// Enum for the suite of verifications
 pub struct VerificationSuite<'a> {
@@ -26,7 +26,7 @@ impl<'a> VerificationSuite<'a> {
         period: &VerificationPeriod,
         metadata_list: &'a VerificationMetaDataList,
         exclusion: &[String],
-        config: &'static Config,
+        config: &'static VerifierConfig,
     ) -> Result<VerificationSuite<'a>, VerificationError> {
         let all_verifs = match period {
             VerificationPeriod::Setup => get_verifications_setup(metadata_list, config)?,

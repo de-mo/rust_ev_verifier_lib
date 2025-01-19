@@ -5,7 +5,7 @@ use super::{
     VerificationError, VerificationStatus,
 };
 use crate::{
-    config::Config,
+    config::VerifierConfig,
     file_structure::{VerificationDirectory, VerificationDirectoryTrait},
 };
 use std::time::{Duration, SystemTime};
@@ -19,10 +19,10 @@ pub struct Verification<'a, D: VerificationDirectoryTrait> {
     /// The meta data is a reference to the metadata list loaded from json
     meta_data: &'a VerificationMetaData,
     status: VerificationStatus,
-    verification_fn: Box<dyn Fn(&D, &'static Config, &mut VerificationResult) + Send + Sync>,
+    verification_fn: Box<dyn Fn(&D, &'static VerifierConfig, &mut VerificationResult) + Send + Sync>,
     duration: Option<Duration>,
     result: Box<VerificationResult>,
-    config: &'static Config,
+    config: &'static VerifierConfig,
 }
 
 impl<'a> Verification<'a, VerificationDirectory> {
@@ -49,12 +49,12 @@ impl<'a> Verification<'a, VerificationDirectory> {
     pub fn new(
         id: &str,
         name: &str,
-        verification_fn: impl Fn(&VerificationDirectory, &'static Config, &mut VerificationResult)
+        verification_fn: impl Fn(&VerificationDirectory, &'static VerifierConfig, &mut VerificationResult)
             + Send
             + Sync
             + 'static,
         metadata_list: &'a VerificationMetaDataList,
-        config: &'static Config,
+        config: &'static VerifierConfig,
     ) -> Result<Self, VerificationError> {
         let meta_data = match metadata_list.meta_data_from_id(id) {
             Some(m) => m,
@@ -191,7 +191,7 @@ mod test {
 
     #[test]
     fn test_creation() {
-        fn ok(_: &VerificationDirectory, _: &'static Config, _: &mut VerificationResult) {}
+        fn ok(_: &VerificationDirectory, _: &'static VerifierConfig, _: &mut VerificationResult) {}
         let md_list =
             VerificationMetaDataList::load(CONFIG_TEST.get_verification_list_str()).unwrap();
         assert!(Verification::new(
@@ -215,7 +215,7 @@ mod test {
 
     #[test]
     fn run_ok() {
-        fn ok(_: &VerificationDirectory, _: &'static Config, _: &mut VerificationResult) {}
+        fn ok(_: &VerificationDirectory, _: &'static VerifierConfig, _: &mut VerificationResult) {}
         let md_list =
             VerificationMetaDataList::load(CONFIG_TEST.get_verification_list_str()).unwrap();
         let mut verif = Verification::new(
@@ -244,7 +244,7 @@ mod test {
 
     #[test]
     fn run_error() {
-        fn error(_: &VerificationDirectory, _: &'static Config, result: &mut VerificationResult) {
+        fn error(_: &VerificationDirectory, _: &'static VerifierConfig, result: &mut VerificationResult) {
             result.push(VerificationEvent::new_error("toto"));
             result.push(VerificationEvent::new_error("toto2"));
             result.push(VerificationEvent::new_failure("toto3"));
@@ -282,7 +282,7 @@ mod test {
 
     #[test]
     fn run_failure() {
-        fn failure(_: &VerificationDirectory, _: &'static Config, result: &mut VerificationResult) {
+        fn failure(_: &VerificationDirectory, _: &'static VerifierConfig, result: &mut VerificationResult) {
             result.push(VerificationEvent::new_failure("toto"));
             result.push(VerificationEvent::new_failure("toto2"));
         }

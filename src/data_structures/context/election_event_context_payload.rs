@@ -4,7 +4,7 @@ use super::super::{
     DataStructureError, VerifierDataDecode,
 };
 use crate::direct_trust::{CertificateAuthority, VerifiySignatureTrait, VerifySignatureError};
-use crate::{config::Config as VerifierConfig, data_structures::verifiy_domain_length_unique_id};
+use crate::{config::VerifierConfig as VerifierConfig, data_structures::verifiy_domain_length_unique_id};
 use chrono::NaiveDate;
 use chrono::NaiveDateTime;
 use regex::Regex;

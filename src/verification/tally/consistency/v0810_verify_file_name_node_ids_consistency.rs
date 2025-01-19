@@ -1,6 +1,6 @@
 use super::super::super::result::{VerificationEvent, VerificationResult};
 use crate::{
-    config::Config,
+    config::VerifierConfig,
     file_structure::{
         tally_directory::{BBDirectoryTrait, TallyDirectoryTrait},
         VerificationDirectoryTrait,
@@ -47,7 +47,7 @@ fn verify_nod_ir_for_tally_bb_dir<B: BBDirectoryTrait>(dir: &B, result: &mut Ver
 
 pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
     dir: &D,
-    _config: &'static Config,
+    _config: &'static VerifierConfig,
     result: &mut VerificationResult,
 ) {
     let tally_dir = dir.unwrap_tally();
