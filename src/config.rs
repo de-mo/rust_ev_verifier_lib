@@ -2,9 +2,6 @@
 
 use thiserror::Error;
 
-use crate::consts::ENV_DIRECT_TRUST_DIR_PATH;
-use crate::{ENV_TXT_REPORT_TAB_SIZE, ENV_VERIFIER_DATASET_PASSWORD};
-
 use super::consts;
 use super::direct_trust::{DirectTrustError, Keystore};
 use super::resources::VERIFICATION_LIST;
@@ -171,7 +168,7 @@ impl VerifierConfig {
     ///
     /// If the env variable is not used, then use the `./DIRECT_TRUST_DIR_NAME`
     pub fn direct_trust_dir_path(&self) -> PathBuf {
-        match dotenvy::var(ENV_DIRECT_TRUST_DIR_PATH) {
+        match dotenvy::var(consts::ENV_DIRECT_TRUST_DIR_PATH) {
             Ok(v) => PathBuf::from(v),
             Err(_) => self.root_dir_path().join(DIRECT_TRUST_DIR_NAME),
         }
@@ -191,7 +188,7 @@ impl VerifierConfig {
     ///
     /// If the env variable not found, use the default value
     pub fn txt_report_tab_size(&self) -> u8 {
-        match dotenvy::var(ENV_TXT_REPORT_TAB_SIZE) {
+        match dotenvy::var(consts::ENV_TXT_REPORT_TAB_SIZE) {
             Ok(v) => match v.parse::<u8>() {
                 Ok(v) => v,
                 Err(_) => DEFAULT_TXT_REPORT_TAB_SIZE,
@@ -202,8 +199,9 @@ impl VerifierConfig {
 
     /// Get the password to decrypt the zip files
     pub fn decrypt_password(&self) -> Result<String, VerifierConfigError> {
-        dotenvy::var(ENV_VERIFIER_DATASET_PASSWORD)
-            .map_err(|_| VerifierConfigError::Env(ENV_VERIFIER_DATASET_PASSWORD.to_string()))
+        dotenvy::var(consts::ENV_VERIFIER_DATASET_PASSWORD).map_err(|_| {
+            VerifierConfigError::Env(consts::ENV_VERIFIER_DATASET_PASSWORD.to_string())
+        })
     }
 }
 
