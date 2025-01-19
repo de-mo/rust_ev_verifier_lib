@@ -30,6 +30,7 @@ quick-xml = { version = "0.37", features = ["serialize"] }
 regex = "1.11"
 zip-extract = "0.2"
 strum = { version = "0.26", features = ["derive"] }
+dotenvy = "0.15"
 
 [dev-dependencies]
 paste = "1"
