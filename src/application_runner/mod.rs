@@ -3,14 +3,15 @@
 mod checks;
 mod extract;
 pub mod report;
+pub mod run_information;
 mod runner;
 
 pub use checks::*;
 pub use extract::*;
 //pub use report::*;
 pub use runner::{
-    no_action_after_fn, no_action_after_runner_fn, no_action_before_fn, RunParallel, Runner,
-    RunnerInformation,
+    no_action_after_fn, no_action_after_runner_fn, no_action_before_fn, no_action_before_runner_fn,
+    RunParallel, Runner, RunnerInformation,
 };
 
 use crate::{
@@ -45,6 +46,8 @@ pub enum RunnerError {
         msg: String,
         source: Box<FileStructureError>,
     },
+    #[error("Error for RunInformation: {0}")]
+    RunInformationError(String),
 }
 
 fn prepare_fixed_based_optimization(dir: &VerificationDirectory) -> Result<(), RunnerError> {

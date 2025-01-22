@@ -1,7 +1,7 @@
 //use futures::{stream::FuturesUnordered, StreamExt};
 use crate::{
     application_runner::checks::{check_complete, check_verification_dir},
-    config::VerifierConfig as VerifierConfig,
+    config::VerifierConfig,
     file_structure::{VerificationDirectory, VerificationDirectoryTrait},
     verification::{VerificationMetaDataList, VerificationPeriod, VerificationSuite},
 };
@@ -18,6 +18,7 @@ use std::{
     time::{Duration, SystemTime},
 };
 
+pub fn no_action_before_runner_fn(_: SystemTime) {}
 pub fn no_action_before_fn(_: &str) {}
 pub fn no_action_after_fn(_: VerificationRunInformation) {}
 pub fn no_action_after_runner_fn(_: RunnerInformation) {}
@@ -130,6 +131,7 @@ pub struct Runner<'a, T: RunStrategy<'a>> {
     duration: Option<Duration>,
     run_strategy: T,
     config: &'static VerifierConfig,
+    action_before_runner: Box<dyn Fn(SystemTime) + Send + Sync>,
     action_before_verification: Box<dyn Fn(&str) + Send + Sync>,
     #[allow(clippy::type_complexity)]
     action_after_verification: Box<dyn Fn(VerificationRunInformation) + Send + Sync>,
@@ -212,6 +214,7 @@ where
         exclusion: &[String],
         run_strategy: T,
         config: &'static VerifierConfig,
+        action_before_runner: impl Fn(SystemTime) + Send + Sync + 'static,
         action_before_verification: impl Fn(&str) + Send + Sync + 'static,
         action_after_verification: impl Fn(VerificationRunInformation) + Send + Sync + 'static,
         action_after_runner: impl Fn(RunnerInformation) + Send + Sync + 'static,
@@ -232,6 +235,7 @@ where
             duration: None,
             run_strategy,
             config,
+            action_before_runner: Box::new(action_before_runner),
             action_before_verification: Box::new(action_before_verification),
             action_after_verification: Box::new(action_after_verification),
             action_after_runner: Box::new(action_after_runner),
@@ -282,6 +286,7 @@ where
             );
         }
         let len = self.verifications.len();
+        (self.action_before_runner)(self.start_time.unwrap());
         {
             self.run_strategy.run(
                 &mut self.verifications,

@@ -9,6 +9,7 @@ use std::{
 };
 use tracing::{info, instrument};
 
+#[derive(Debug, Clone)]
 pub struct ExtractDataSetResults {
     metadata_hm: HashMap<DatasetTypeKind, DatasetMetadata>,
     location: PathBuf,
