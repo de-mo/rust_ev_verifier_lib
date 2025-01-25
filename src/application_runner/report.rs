@@ -2,10 +2,7 @@ use super::{runner::RunnerInformation, ExtractDataSetResults};
 use crate::{
     data_structures::dataset::DatasetTypeKind,
     file_structure::VerificationDirectoryTrait,
-    verification::{
-        ManualVerificationInformationTrait, ManualVerifications, VerificationPeriod,
-        VerificationStatus,
-    },
+    verification::{ManualVerificationInformationTrait, ManualVerifications, VerificationPeriod},
     VerifierConfig,
 };
 use chrono::{DateTime, Local};
@@ -50,34 +47,22 @@ pub trait ReportInformationTrait {
     }
 }
 
-/// Srtucture to store the information of the run of a verification
-pub struct VerificationRunInformation {
-    /// id of the verification
-    pub id: String,
-    /// status of the verification
-    pub status: VerificationStatus,
-    /// List of failures as [String]
-    pub failures: Vec<String>,
-    /// List of errors as [String]
-    pub errors: Vec<String>,
-}
-
 /// Structure containing the data of the report
 pub struct ReportData<'a, D>
 where
-    D: VerificationDirectoryTrait,
+    D: VerificationDirectoryTrait + Clone,
 {
     path: &'a Path,
     config: &'static VerifierConfig,
     period: &'a VerificationPeriod,
-    manual_verifications: &'a ManualVerifications<'a, D>,
+    manual_verifications: &'a ManualVerifications<D>,
     extraction_information: &'a ExtractDataSetResults,
     runner_information: &'a RunnerInformation,
 }
 
 impl<D> Display for ReportData<'_, D>
 where
-    D: VerificationDirectoryTrait,
+    D: VerificationDirectoryTrait + Clone,
 {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.info_to_string(self.config))
@@ -86,7 +71,7 @@ where
 
 impl<'a, D> ReportData<'a, D>
 where
-    D: VerificationDirectoryTrait,
+    D: VerificationDirectoryTrait + Clone,
 {
     /// Create new [ReportData]
     ///
@@ -100,7 +85,7 @@ where
         path: &'a Path,
         config: &'static VerifierConfig,
         period: &'a VerificationPeriod,
-        manual_verifications: &'a ManualVerifications<'a, D>,
+        manual_verifications: &'a ManualVerifications<D>,
         extraction_information: &'a ExtractDataSetResults,
         runner_information: &'a RunnerInformation,
     ) -> Self {
@@ -115,7 +100,7 @@ where
     }
 }
 
-impl<D: VerificationDirectoryTrait> ReportInformationTrait for ManualVerifications<'_, D> {
+impl<D: VerificationDirectoryTrait + Clone> ReportInformationTrait for ManualVerifications<D> {
     fn to_title_key_value(&self) -> Vec<(String, Vec<(String, String)>)> {
         vec![
             (
@@ -133,7 +118,7 @@ impl<D: VerificationDirectoryTrait> ReportInformationTrait for ManualVerificatio
 
 impl<D> ReportInformationTrait for ReportData<'_, D>
 where
-    D: VerificationDirectoryTrait,
+    D: VerificationDirectoryTrait + Clone,
 {
     fn to_title_key_value(&self) -> Vec<(String, Vec<(String, String)>)> {
         let context_dataset_info = self

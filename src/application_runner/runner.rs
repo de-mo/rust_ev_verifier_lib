@@ -3,14 +3,13 @@ use crate::{
     application_runner::checks::{check_complete, check_verification_dir},
     config::VerifierConfig,
     file_structure::{VerificationDirectory, VerificationDirectoryTrait},
-    verification::{VerificationMetaDataList, VerificationPeriod, VerificationSuite},
+    verification::{
+        VerificationMetaDataList, VerificationPeriod, VerificationStatus, VerificationSuite,
+    },
 };
 use tracing::{info, warn};
 //use std::future::Future;
-use super::{
-    checks::start_check, prepare_fixed_based_optimization, report::VerificationRunInformation,
-    RunnerError,
-};
+use super::{checks::start_check, prepare_fixed_based_optimization, RunnerError};
 use rayon::prelude::*;
 use std::{iter::zip, sync::Mutex};
 use std::{
@@ -22,6 +21,18 @@ pub fn no_action_before_runner_fn(_: SystemTime) {}
 pub fn no_action_before_fn(_: &str) {}
 pub fn no_action_after_fn(_: VerificationRunInformation) {}
 pub fn no_action_after_runner_fn(_: RunnerInformation) {}
+
+/// Srtucture to collect the information of the run of a verification
+pub struct VerificationRunInformation {
+    /// id of the verification
+    pub id: String,
+    /// status of the verification
+    pub status: VerificationStatus,
+    /// List of failures as [String]
+    pub failures: Vec<String>,
+    /// List of errors as [String]
+    pub errors: Vec<String>,
+}
 
 /// Information of the runner, that can be used to know some information about the runner.
 #[derive(Debug, Clone, Default)]

@@ -1,6 +1,6 @@
 //! Module implementing the errors of the verifications
 //!
-use std::fmt::Display;
+use std::{collections::HashMap, fmt::Display};
 use strum::AsRefStr;
 
 /// Kind of the event during a verification
@@ -24,6 +24,8 @@ pub struct VerificationEvent {
 pub struct VerificationResult {
     results: Vec<VerificationEvent>,
 }
+
+pub type VerficationsWithErrorAndFailures = HashMap<String, (Vec<String>, Vec<String>)>;
 
 impl VerificationEventKind {
     pub fn is_error(&self) -> bool {

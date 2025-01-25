@@ -1,12 +1,13 @@
-use std::{collections::HashMap, time::SystemTime};
+use std::{collections::HashMap, path::Path, time::SystemTime};
 
 use super::{
-    report::VerificationRunInformation, ExtractDataSetResults, RunnerError, RunnerInformation,
+    runner::VerificationRunInformation, ExtractDataSetResults, RunnerError, RunnerInformation,
 };
 use crate::{
+    file_structure::VerificationDirectory,
     verification::{
-        get_verifications_setup, get_verifications_tally, VerificationMetaDataList,
-        VerificationPeriod, VerificationStatus,
+        get_verifications_setup, get_verifications_tally, ManualVerifications,
+        VerificationMetaDataList, VerificationPeriod, VerificationStatus,
     },
     VerifierConfig,
 };
@@ -189,5 +190,40 @@ impl RunInformation {
     /// Information about the runner
     pub fn runner_information(&self) -> &RunnerInformation {
         &self.runner_information
+    }
+
+    /// The directory where the datasets (decrypted and unzipped) are stored
+    pub fn run_directory(&self) -> &Path {
+        self.extracted_dataset_result.as_ref().unwrap().location()
+    }
+}
+
+impl TryFrom<&RunInformation> for ManualVerifications<VerificationDirectory> {
+    type Error = RunnerError;
+
+    fn try_from(value: &RunInformation) -> Result<Self, Self::Error> {
+        if !value.is_prepared() {
+            return Err(RunnerError::RunInformationError(
+                "The run information must be prepared".to_string(),
+            ));
+        }
+        let dir = VerificationDirectory::new(
+            value.verification_period.as_ref().unwrap(),
+            value.run_directory(),
+        );
+        Self::try_new(
+            value.verification_period.unwrap(),
+            &dir,
+            value.config,
+            &value.verifications_status,
+            value.verifications_with_errors_and_failures(),
+            &value.excluded_verifications,
+        )
+        .map_err(|e| {
+            RunnerError::RunInformationError(format!(
+                "Error creating the manual verifications: {}",
+                e
+            ))
+        })
     }
 }
