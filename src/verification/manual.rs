@@ -1,5 +1,5 @@
 use super::{
-    meta_data::VerificationMetaDataList, VerficationsWithErrorAndFailures, VerificationError,
+    meta_data::VerificationMetaDataList, VerficationsWithErrorAndFailuresType, VerificationError,
     VerificationPeriod, VerificationStatus,
 };
 use crate::{
@@ -73,7 +73,7 @@ struct ManualVerificationsForAllPeriod<D: VerificationDirectoryTrait + Clone> {
 pub struct VerificationsResult {
     metadata: VerificationMetaDataList,
     verifications_status: HashMap<String, VerificationStatus>,
-    verifications_with_errors_and_failures: VerficationsWithErrorAndFailures,
+    verifications_with_errors_and_failures: VerficationsWithErrorAndFailuresType,
     excluded_verifications: Vec<String>,
 }
 
@@ -208,7 +208,7 @@ impl VerificationsResult {
     pub fn new(
         metadata: &VerificationMetaDataList,
         verifications_status: &HashMap<String, VerificationStatus>,
-        verifications_with_errors_and_failures: &VerficationsWithErrorAndFailures,
+        verifications_with_errors_and_failures: &VerficationsWithErrorAndFailuresType,
         excluded_verifications: &[String],
     ) -> Self {
         Self {
@@ -331,7 +331,7 @@ impl<D: VerificationDirectoryTrait + Clone> ManualVerificationsSetup<D> {
         config: &'static VerifierConfig,
         metadata: &VerificationMetaDataList,
         verifications_status: &HashMap<String, VerificationStatus>,
-        verifications_with_errors_and_failures: &VerficationsWithErrorAndFailures,
+        verifications_with_errors_and_failures: &VerficationsWithErrorAndFailuresType,
         excluded_verifications: &[String],
     ) -> Result<Self, VerificationError> {
         Ok(Self {
@@ -392,7 +392,7 @@ impl<D: VerificationDirectoryTrait + Clone> ManualVerificationsTally<D> {
         config: &'static VerifierConfig,
         metadata: &VerificationMetaDataList,
         verifications_status: &HashMap<String, VerificationStatus>,
-        verifications_with_errors_and_failures: &VerficationsWithErrorAndFailures,
+        verifications_with_errors_and_failures: &VerficationsWithErrorAndFailuresType,
         excluded_verifications: &[String],
     ) -> Result<Self, VerificationError> {
         let tally_dir = directory.unwrap_tally();
@@ -501,7 +501,7 @@ impl<D: VerificationDirectoryTrait + Clone> ManualVerifications<D> {
         directory: &D,
         config: &'static VerifierConfig,
         verifications_status: &HashMap<String, VerificationStatus>,
-        verifications_with_errors_and_failures: &VerficationsWithErrorAndFailures,
+        verifications_with_errors_and_failures: &VerficationsWithErrorAndFailuresType,
         excluded_verifications: &[String],
     ) -> Result<Self, VerificationError> {
         let meta_data =

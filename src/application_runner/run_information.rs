@@ -128,6 +128,16 @@ impl RunInformation {
         self.runner_information().is_finished()
     }
 
+    /// Are the information in running or finished status
+    pub fn is_running_or_finished(&self) -> bool {
+        self.is_running() || self.is_finished()
+    }
+
+    /// Configuration of the verifier
+    pub fn config(&self) -> &'static VerifierConfig {
+        self.config
+    }
+
     /// Verification period
     pub fn verification_period(&self) -> Option<VerificationPeriod> {
         self.verification_period

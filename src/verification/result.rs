@@ -25,7 +25,7 @@ pub struct VerificationResult {
     results: Vec<VerificationEvent>,
 }
 
-pub type VerficationsWithErrorAndFailures = HashMap<String, (Vec<String>, Vec<String>)>;
+pub type VerficationsWithErrorAndFailuresType = HashMap<String, (Vec<String>, Vec<String>)>;
 
 impl VerificationEventKind {
     pub fn is_error(&self) -> bool {
