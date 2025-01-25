@@ -23,44 +23,168 @@ pub enum ReportError {
     RunnerError(#[from] RunnerError),
 }
 
-type VecTitleKeyValueStringType = Vec<(String, Vec<(String, String)>)>;
+/// Trait to transform the outputs to string
+pub trait OutputToString {
+    /// Transform the output to a multiline string.
+    ///
+    /// Take the verifier configuration as input for the tab size
+    fn output_to_string(&self, config: &'static VerifierConfig) -> Result<String, ReportError>;
+}
+
+/// Structure to store an output entry
+#[derive(Debug, Clone)]
+pub enum ReportOutputEntry {
+    /// A tuple key, value
+    KeyValue((String, String)),
+    /// Only a value
+    OnlyValue(String),
+}
+
+/// Structure to store a block for output
+#[derive(Debug, Clone)]
+pub struct ReportOutputBlock {
+    /// Title of the block
+    title: String,
+    /// Entries of the block
+    entries: Vec<ReportOutputEntry>,
+}
+
+impl OutputToString for ReportOutputBlock {
+    fn output_to_string(&self, config: &'static VerifierConfig) -> Result<String, ReportError> {
+        let max_key_length = self.max_key_length();
+        Ok(once(self.title.clone())
+            .chain(self.entries.iter().map(|e| match e {
+                ReportOutputEntry::KeyValue((k, v)) => format!(
+                    "{}{}:{} {}",
+                    " ".repeat(config.txt_report_tab_size() as usize),
+                    k,
+                    " ".repeat(max_key_length - k.len()),
+                    v,
+                ),
+                ReportOutputEntry::OnlyValue(v) => v.clone(),
+            }))
+            .collect::<Vec<_>>()
+            .join("\n"))
+    }
+}
+
+impl From<&str> for ReportOutputEntry {
+    fn from(value: &str) -> Self {
+        Self::OnlyValue(value.to_string())
+    }
+}
+
+impl From<(&str, &str)> for ReportOutputEntry {
+    fn from(value: (&str, &str)) -> Self {
+        Self::KeyValue((value.0.to_string(), value.1.to_string()))
+    }
+}
+
+impl ReportOutputBlock {
+    /// New empty block
+    pub fn new(title: &str) -> Self {
+        Self {
+            title: title.to_string(),
+            entries: vec![],
+        }
+    }
+
+    /// New block with entries
+    pub fn new_with_entries(title: &str, entries: Vec<ReportOutputEntry>) -> Self {
+        Self {
+            title: title.to_string(),
+            entries,
+        }
+    }
+
+    /// New block with tuples
+    pub fn new_with_tuples(title: &str, entries: &[(String, String)]) -> Self {
+        Self::new_with_entries(
+            title,
+            entries
+                .iter()
+                .map(|(k, v)| ReportOutputEntry::from((k.as_str(), v.as_str())))
+                .collect(),
+        )
+    }
+
+    /// Push an entry
+    pub fn push(&mut self, entry: ReportOutputEntry) {
+        self.entries.push(entry);
+    }
+
+    /// Calculate the max length of the keys of the entries
+    ///
+    /// Return 0 if no entry has key, or with there is no entry
+    pub fn max_key_length(&self) -> usize {
+        self.entries
+            .iter()
+            .filter_map(|e| match e {
+                ReportOutputEntry::KeyValue((k, _)) => Some(k.len()),
+                ReportOutputEntry::OnlyValue(_) => None,
+            })
+            .max()
+            .unwrap_or(0usize)
+    }
+}
+
+/// Store whole Report output
+#[derive(Debug, Clone)]
+pub struct ReportOutput {
+    blocks: Vec<ReportOutputBlock>,
+}
+
+impl Default for ReportOutput {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl ReportOutput {
+    /// New empty report output
+    pub fn new() -> Self {
+        Self { blocks: vec![] }
+    }
+
+    /// Report output from vec of blocks
+    pub fn from_vec(blocks: Vec<ReportOutputBlock>) -> Self {
+        Self { blocks }
+    }
+
+    /// Push a block
+    pub fn push(&mut self, element: ReportOutputBlock) {
+        self.blocks.push(element);
+    }
+
+    /// Append an other [ReportOutput].
+    ///
+    /// `other` is emptied
+    pub fn append(&mut self, other: &mut Self) {
+        self.blocks.append(&mut other.blocks);
+    }
+}
+
+impl OutputToString for ReportOutput {
+    fn output_to_string(&self, config: &'static VerifierConfig) -> Result<String, ReportError> {
+        Ok(self
+            .blocks
+            .iter()
+            .map(|b| b.output_to_string(config))
+            .collect::<Result<Vec<_>, _>>()?
+            .join("\n\n"))
+    }
+}
 
 /// Trait to collect the report information
 pub trait ReportInformationTrait {
-    /// Transform the report information to a readable structure containing a
-    /// grouping of information.
-    ///
-    /// The strucutre is a [Vec] of tuple:
-    /// - The first element is the name of the group
-    /// - The second element is the information in the group in for of a [Vec] of tuples
-    ///     - The first element of the nested tuple is the name of the information
-    ///     - The second element of the nested tuple is the information as [String]
-    fn to_title_key_value(&self) -> Result<VecTitleKeyValueStringType, ReportError>;
+    /// Transform the report information to a [ReportOutput].
+    fn to_report_output(&self) -> Result<ReportOutput, ReportError>;
 
     /// Transform the information to a multiline string.
     ///
     /// Take the verifier configuration as input for the tab size
     fn info_to_string(&self, config: &'static VerifierConfig) -> Result<String, ReportError> {
-        Ok(self
-            .to_title_key_value()?
-            .iter()
-            .map(|(title, list)| {
-                let max_key_length = list.iter().map(|(k, _)| k.len()).max().unwrap();
-                once(title.clone())
-                    .chain(list.iter().map(|(k, s)| {
-                        format!(
-                            "{}{}:{} {}",
-                            " ".repeat(config.txt_report_tab_size() as usize),
-                            k,
-                            " ".repeat(max_key_length - k.len()),
-                            s,
-                        )
-                    }))
-                    .collect::<Vec<_>>()
-                    .join("\n")
-            })
-            .collect::<Vec<_>>()
-            .join("\n\n"))
+        self.to_report_output()?.output_to_string(config)
     }
 }
 
@@ -80,36 +204,29 @@ impl Display for ReportData<'_> {
 
 impl<'a> ReportData<'a> {
     /// Create new [ReportData]
-    ///
-    /// Inputs:
-    /// - `path`: Path of the verification directory
-    /// - `period`: Path of the verification directory
-    /// - `manual_verifications`: The manuel verifications [ManualVerifications]
-    /// - `extraction_information`: The result of the extraction of the datasets [ExtractDataSetResults]
-    /// - `runner_information`: Information to the runner [RunnerInformation]
     pub fn new(run_information: &'a RunInformation) -> Self {
         Self { run_information }
     }
 }
 
 impl<D: VerificationDirectoryTrait + Clone> ReportInformationTrait for ManualVerifications<D> {
-    fn to_title_key_value(&self) -> Result<VecTitleKeyValueStringType, ReportError> {
-        Ok(vec![
-            (
-                "Fingerprints".to_string(),
-                self.dt_fingerprints_to_key_value(),
+    fn to_report_output(&self) -> Result<ReportOutput, ReportError> {
+        Ok(ReportOutput::from_vec(vec![
+            ReportOutputBlock::new_with_tuples(
+                "Fingerprints",
+                &self.dt_fingerprints_to_key_value(),
             ),
-            ("Information".to_string(), self.information_to_key_value()),
-            (
-                "Verification Results".to_string(),
-                self.verification_stati_to_key_value(),
+            ReportOutputBlock::new_with_tuples("Information", &self.information_to_key_value()),
+            ReportOutputBlock::new_with_tuples(
+                "Verification Results",
+                &self.verification_stati_to_key_value(),
             ),
-        ])
+        ]))
     }
 }
 
 impl ReportInformationTrait for ReportData<'_> {
-    fn to_title_key_value(&self) -> Result<VecTitleKeyValueStringType, ReportError> {
+    fn to_report_output(&self) -> Result<ReportOutput, ReportError> {
         if !self.run_information.is_prepared() {
             return Err(ReportError::ToTitleKeyValue(
                 "The run information used is not prepared".to_string(),
@@ -138,79 +255,72 @@ impl ReportInformationTrait for ReportData<'_> {
             .to_string(),
             false => "Not finished".to_string(),
         };
-        let general_information = vec![
-            ("Period".to_string(), period.to_string()),
-            (
-                "Context Dataset".to_string(),
-                context_dataset_info
-                    .source_path()
-                    .to_str()
-                    .unwrap()
-                    .to_string(),
-            ),
-            (
-                "Context Dataset Fingerprint".to_string(),
-                context_dataset_info.fingerprint_str(),
-            ),
-            (
-                format!("{} Dataset", period),
-                dataset_period_info
-                    .source_path()
-                    .to_str()
-                    .unwrap()
-                    .to_string(),
-            ),
-            (
-                format!("{} Dataset Fingerprint", period),
-                dataset_period_info.fingerprint_str(),
-            ),
-            (
-                "Verification directory".to_string(),
-                self.run_information
-                    .run_directory()
-                    .to_str()
-                    .unwrap()
-                    .to_string(),
-            ),
-            (
-                "Start Time".to_string(),
-                match start_time_opt {
-                    Some(t) => std::convert::Into::<DateTime<Local>>::into(t)
-                        .format(FORMAT_DATE_TIME)
-                        .to_string(),
-                    None => "Not started".to_string(),
-                },
-            ),
-            ("Stop Time".to_string(), stop_time_str),
-            (
-                "Duration".to_string(),
-                match duration_opt {
-                    Some(d) => {
-                        let mut s = d.as_secs();
-                        let res;
-                        if s < 60 {
-                            res = format!("{s}s");
-                        } else {
-                            let mut m = s / 60;
-                            s %= 60;
-                            if m < 60 {
-                                res = format!("{m}m {s}s");
-                            } else {
-                                let h = m / 60;
-                                m %= 60;
-                                res = format!("{h}h {m}m {s}s")
-                            }
-                        }
-                        res
+        let mut running_information = ReportOutputBlock::new("Running information");
+        running_information.push(ReportOutputEntry::from(("Period", period.as_ref())));
+        running_information.push(ReportOutputEntry::from((
+            "Context Dataset",
+            context_dataset_info.source_path().to_str().unwrap(),
+        )));
+        running_information.push(ReportOutputEntry::from((
+            "Context Dataset Fingerprint",
+            context_dataset_info.fingerprint_str().as_str(),
+        )));
+        running_information.push(ReportOutputEntry::from((
+            format!("{} Dataset", period).as_str(),
+            dataset_period_info.source_path().to_str().unwrap(),
+        )));
+        running_information.push(ReportOutputEntry::from((
+            format!("{} Dataset Fingerprint", period).as_str(),
+            dataset_period_info.fingerprint_str().as_str(),
+        )));
+        running_information.push(ReportOutputEntry::from((
+            "Verification directory",
+            self.run_information.run_directory().to_str().unwrap(),
+        )));
+        let start_time_string = match start_time_opt {
+            Some(t) => std::convert::Into::<DateTime<Local>>::into(t)
+                .format(FORMAT_DATE_TIME)
+                .to_string(),
+            None => "Not started".to_string(),
+        };
+        running_information.push(ReportOutputEntry::from((
+            "Start Time",
+            start_time_string.as_str(),
+        )));
+        running_information.push(ReportOutputEntry::from((
+            "Stop Time",
+            stop_time_str.as_str(),
+        )));
+        let duration_string = match duration_opt {
+            Some(d) => {
+                let mut s = d.as_secs();
+                let res;
+                if s < 60 {
+                    res = format!("{s}s");
+                } else {
+                    let mut m = s / 60;
+                    s %= 60;
+                    if m < 60 {
+                        res = format!("{m}m {s}s");
+                    } else {
+                        let h = m / 60;
+                        m %= 60;
+                        res = format!("{h}h {m}m {s}s")
                     }
-                    None => "Not finished".to_string(),
-                },
-            ),
-        ];
-        let mut res = vec![("Running information".to_string(), general_information)];
+                }
+                res
+            }
+            None => "Not finished".to_string(),
+        };
+        running_information.push(ReportOutputEntry::from((
+            "Duration",
+            duration_string.as_str(),
+        )));
+        let mut res = ReportOutput::new();
+        res.push(running_information);
         res.append(
             &mut ManualVerifications::<VerificationDirectory>::try_from(self.run_information)?
-                .to_title_key_value()?,
+                .to_report_output()?,
         );
         Ok(res)
     }
