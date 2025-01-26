@@ -1,5 +1,4 @@
 use super::ReportError;
-use rust_ev_verifier_lib::VerifierConfig;
 use std::iter::once;
 
 /// Enum with the title types
@@ -24,7 +23,7 @@ pub trait OutputToString {
     /// Transform the output to a multiline string.
     ///
     /// Take the verifier configuration as input for the tab size
-    fn output_to_string(&self, config: &'static VerifierConfig) -> Result<String, ReportError>;
+    fn output_to_string(&self, tab_size: u8) -> Result<String, ReportError>;
 }
 
 /// Structure to store an output entry
@@ -46,13 +45,13 @@ pub struct ReportOutputBlock {
 }
 
 impl OutputToString for ReportOutputBlock {
-    fn output_to_string(&self, config: &'static VerifierConfig) -> Result<String, ReportError> {
+    fn output_to_string(&self, tab_size: u8) -> Result<String, ReportError> {
         let max_key_length = self.max_key_length();
         Ok(once(self.title.to_string())
             .chain(self.entries.iter().map(|e| match e {
                 ReportOutputEntry::KeyValue((k, v)) => format!(
                     "{}{}:{} {}",
-                    " ".repeat(config.txt_report_tab_size() as usize),
+                    " ".repeat(tab_size as usize),
                     k,
                     " ".repeat(max_key_length - k.len()),
                     v,
@@ -161,11 +160,11 @@ impl ReportOutput {
 }
 
 impl OutputToString for ReportOutput {
-    fn output_to_string(&self, config: &'static VerifierConfig) -> Result<String, ReportError> {
+    fn output_to_string(&self, tab_size: u8) -> Result<String, ReportError> {
         Ok(self
             .blocks
             .iter()
-            .map(|b| b.output_to_string(config))
+            .map(|b| b.output_to_string(tab_size))
             .collect::<Result<Vec<_>, _>>()?
             .join("\n\n"))
     }

@@ -41,6 +41,7 @@
 //! | ------------------------- | ------------------------------------------------------ | :------: | ------- |
 //! | VERIFIER_DATASET_PASSWORD | The password of the encrypted zip files                | X        | n/a |
 //! | TXT_REPORT_TAB_SIZE       | The tab size for the text reports                      |          | 2 |
+//! | REPORT_FORMAT_DATE        | The format of the date in the report                   |          | `%d.%m.%Y %H:%M:%S.%3f` |
 //! | DIRECT_TRUST_DIR_PATH     | The path to the direct trust keystore for the verifier |          | The path `./direct-trust` where `.` is the installation directory |
 //!
 //! The environment variables are retrieved using the static instance of [`VerifierConfig`]

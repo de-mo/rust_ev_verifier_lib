@@ -23,6 +23,7 @@ const ZIP_TEMP_DIR_NAME: &str = "decrypted_zip";
 
 // Other Options
 const DEFAULT_TXT_REPORT_TAB_SIZE: u8 = 2;
+const DEFAULT_REPORT_FORMAT_DATE_TIME: &str = "%d.%m.%Y %H:%M:%S.%3f";
 
 // Enum representing the configuration error
 #[derive(Error, Debug)]
@@ -194,6 +195,16 @@ impl VerifierConfig {
                 Err(_) => DEFAULT_TXT_REPORT_TAB_SIZE,
             },
             Err(_) => DEFAULT_TXT_REPORT_TAB_SIZE,
+        }
+    }
+
+    /// Get tab size for text reports
+    ///
+    /// If the env variable not found, use the default value
+    pub fn report_format_date(&self) -> String {
+        match dotenvy::var(consts::ENV_REPORT_FORMAT_DATE) {
+            Ok(v) => v,
+            Err(_) => DEFAULT_REPORT_FORMAT_DATE_TIME.to_string(),
         }
     }
 

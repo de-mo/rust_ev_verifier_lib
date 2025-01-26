@@ -1,4 +1,7 @@
+mod report_config;
 mod report_output;
+
+pub use report_config::{ReportConfig, ReportConfigBuilder};
 
 use super::{run_information::RunInformation, RunnerError};
 use chrono::{DateTime, Local};
@@ -8,12 +11,11 @@ use report_output::{
 use rust_ev_verifier_lib::{
     file_structure::{VerificationDirectory, VerificationDirectoryTrait},
     verification::{ManualVerificationInformationTrait, ManualVerifications, VerificationPeriod},
-    DatasetTypeKind, VerifierConfig,
+    DatasetTypeKind,
 };
 use std::fmt::Display;
 use thiserror::Error;
-
-const FORMAT_DATE_TIME: &str = "%d.%m.%Y %H:%M:%S.%3f";
+use tracing::{debug, error, info, trace, warn, Level};
 
 // Enum representing the datza structure errors
 #[derive(Error, Debug)]
@@ -34,19 +36,20 @@ pub trait ReportInformationTrait {
     /// Transform the information to a multiline string.
     ///
     /// Take the verifier configuration as input for the tab size
-    fn info_to_string(&self, config: &'static VerifierConfig) -> Result<String, ReportError> {
-        self.to_report_output()?.output_to_string(config)
+    fn info_to_string(&self, tab_size: u8) -> Result<String, ReportError> {
+        self.to_report_output()?.output_to_string(tab_size)
     }
 }
 
 /// Structure containing the data of the report
 pub struct ReportData<'a> {
+    report_configuration: ReportConfig,
     run_information: &'a RunInformation,
 }
 
 impl Display for ReportData<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self.info_to_string(self.run_information.config()) {
+        match self.info_to_string(*self.report_configuration.tab_size()) {
             Ok(s) => write!(f, "{}", s),
             Err(e) => write!(f, "ERROR generating text of report {}", e),
         }
@@ -55,8 +58,27 @@ impl Display for ReportData<'_> {
 
 impl<'a> ReportData<'a> {
     /// Create new [ReportData]
-    pub fn new(run_information: &'a RunInformation) -> Self {
-        Self { run_information }
+    pub fn new(report_configuration: ReportConfig, run_information: &'a RunInformation) -> Self {
+        let res = Self {
+            report_configuration,
+            run_information,
+        };
+        if *res.report_configuration.output_log() {
+            res.trace();
+        }
+        res
+    }
+
+    /// Trace the [ReportData] according to the configuration
+    pub fn trace(&self) {
+        let s = self.to_string();
+        match *self.report_configuration.output_log_level() {
+            Level::TRACE => trace!("Report: \n{}", s),
+            Level::DEBUG => debug!("Report: \n{}", s),
+            Level::INFO => info!("Report: \n{}", s),
+            Level::WARN => warn!("Report: \n{}", s),
+            Level::ERROR => error!("Report: \n{}", s),
+        }
     }
 }
 
@@ -105,7 +127,7 @@ impl ReportInformationTrait for ReportData<'_> {
             true => std::convert::Into::<DateTime<Local>>::into(
                 start_time_opt.unwrap() + duration_opt.unwrap(),
             )
-            .format(FORMAT_DATE_TIME)
+            .format(self.report_configuration.fromat_date())
             .to_string(),
             false => "Not finished".to_string(),
         };
@@ -134,7 +156,7 @@ impl ReportInformationTrait for ReportData<'_> {
         )));
         let start_time_string = match start_time_opt {
             Some(t) => std::convert::Into::<DateTime<Local>>::into(t)
-                .format(FORMAT_DATE_TIME)
+                .format(self.report_configuration.fromat_date())
                 .to_string(),
             None => "Not started".to_string(),
         };
