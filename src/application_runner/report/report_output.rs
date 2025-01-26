@@ -1,7 +1,23 @@
-use crate::VerifierConfig;
 use super::ReportError;
+use crate::VerifierConfig;
 use std::iter::once;
 
+/// Enum with the title types
+#[derive(Debug, Clone, strum::Display)]
+pub enum ReportOutputBlockTitle {
+    #[strum(to_string = "Fingerprints")]
+    Fingerprints,
+    #[strum(to_string = "Information")]
+    Information,
+    #[strum(to_string = "Verification results")]
+    VerificationResults,
+    #[strum(to_string = "Running Infomration")]
+    RunningInformation,
+    #[strum(to_string = "Errors for {0}")]
+    VerificationErrors(String),
+    #[strum(to_string = "Failures for {0}")]
+    VerificationFailures(String),
+}
 
 /// Trait to transform the outputs to string
 pub trait OutputToString {
@@ -24,7 +40,7 @@ pub enum ReportOutputEntry {
 #[derive(Debug, Clone)]
 pub struct ReportOutputBlock {
     /// Title of the block
-    title: String,
+    title: ReportOutputBlockTitle,
     /// Entries of the block
     entries: Vec<ReportOutputEntry>,
 }
@@ -32,7 +48,7 @@ pub struct ReportOutputBlock {
 impl OutputToString for ReportOutputBlock {
     fn output_to_string(&self, config: &'static VerifierConfig) -> Result<String, ReportError> {
         let max_key_length = self.max_key_length();
-        Ok(once(self.title.clone())
+        Ok(once(self.title.to_string())
             .chain(self.entries.iter().map(|e| match e {
                 ReportOutputEntry::KeyValue((k, v)) => format!(
                     "{}{}:{} {}",
@@ -62,23 +78,23 @@ impl From<(&str, &str)> for ReportOutputEntry {
 
 impl ReportOutputBlock {
     /// New empty block
-    pub fn new(title: &str) -> Self {
+    pub fn new(title: ReportOutputBlockTitle) -> Self {
         Self {
-            title: title.to_string(),
+            title,
             entries: vec![],
         }
     }
 
     /// New block with entries
-    pub fn new_with_entries(title: &str, entries: Vec<ReportOutputEntry>) -> Self {
-        Self {
-            title: title.to_string(),
-            entries,
-        }
+    pub fn new_with_entries(
+        title: ReportOutputBlockTitle,
+        entries: Vec<ReportOutputEntry>,
+    ) -> Self {
+        Self { title, entries }
     }
 
     /// New block with tuples
-    pub fn new_with_tuples(title: &str, entries: &[(String, String)]) -> Self {
+    pub fn new_with_tuples(title: ReportOutputBlockTitle, entries: &[(String, String)]) -> Self {
         Self::new_with_entries(
             title,
             entries

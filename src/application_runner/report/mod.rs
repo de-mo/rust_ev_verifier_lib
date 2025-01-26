@@ -8,7 +8,9 @@ use crate::{
     VerifierConfig,
 };
 use chrono::{DateTime, Local};
-use report_output::{OutputToString, ReportOutput, ReportOutputBlock, ReportOutputEntry};
+use report_output::{
+    OutputToString, ReportOutput, ReportOutputBlock, ReportOutputBlockTitle, ReportOutputEntry,
+};
 use std::fmt::Display;
 use thiserror::Error;
 
@@ -63,12 +65,15 @@ impl<D: VerificationDirectoryTrait + Clone> ReportInformationTrait for ManualVer
     fn to_report_output(&self) -> Result<ReportOutput, ReportError> {
         Ok(ReportOutput::from_vec(vec![
             ReportOutputBlock::new_with_tuples(
-                "Fingerprints",
+                ReportOutputBlockTitle::Fingerprints,
                 &self.dt_fingerprints_to_key_value(),
             ),
-            ReportOutputBlock::new_with_tuples("Information", &self.information_to_key_value()),
             ReportOutputBlock::new_with_tuples(
-                "Verification Results",
+                ReportOutputBlockTitle::Information,
+                &self.information_to_key_value(),
+            ),
+            ReportOutputBlock::new_with_tuples(
+                ReportOutputBlockTitle::VerificationResults,
                 &self.verification_stati_to_key_value(),
             ),
         ]))
@@ -105,7 +110,8 @@ impl ReportInformationTrait for ReportData<'_> {
             .to_string(),
             false => "Not finished".to_string(),
         };
-        let mut running_information = ReportOutputBlock::new("Running information");
+        let mut running_information =
+            ReportOutputBlock::new(ReportOutputBlockTitle::RunningInformation);
         running_information.push(ReportOutputEntry::from(("Period", period.as_ref())));
         running_information.push(ReportOutputEntry::from((
             "Context Dataset",
