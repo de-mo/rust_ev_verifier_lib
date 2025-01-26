@@ -47,7 +47,7 @@
 //!
 //!
 
-pub mod application_runner;
+//pub mod application_runner;
 mod config;
 mod consts;
 mod data_structures;
@@ -55,6 +55,8 @@ pub mod dataset;
 pub mod direct_trust;
 pub mod file_structure;
 mod resources;
+pub mod startup_checks;
 pub mod verification;
 
 pub use config::VerifierConfig;
+pub use data_structures::{dataset::DatasetTypeKind, DatasetType};

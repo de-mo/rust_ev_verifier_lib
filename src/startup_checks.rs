@@ -1,12 +1,11 @@
-use std::path::Path;
-
 use crate::{
-    config::VerifierConfig as VerifierConfig,
     file_structure::{CompletnessTestTrait, VerificationDirectory, VerificationDirectoryTrait},
     verification::{VerificationMetaDataList, VerificationPeriod},
+    VerifierConfig,
 };
+use std::path::Path;
 
-/// Check some elements at start of the application.
+/// Check some elements before starting the verifications.
 ///
 /// Must be called by the application at the beginning. If error, then cannot continue
 pub fn start_check(config: &'static VerifierConfig) -> Result<(), String> {

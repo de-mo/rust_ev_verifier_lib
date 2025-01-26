@@ -897,6 +897,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "rust_ev_verifier_application_lib"
+version = "0.2.2"
+dependencies = [
+ "chrono",
+ "rayon",
+ "rust_ev_system_library",
+ "rust_ev_verifier_lib",
+ "serde",
+ "serde_json",
+ "strum",
+ "thiserror 2.0.11",
+ "tracing",
+]
+
+[[package]]
 name = "rust_ev_verifier_lib"
 version = "0.2.2"
 dependencies = [

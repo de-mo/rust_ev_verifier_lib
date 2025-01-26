@@ -1,7 +1,6 @@
 use super::RunnerError;
-use crate::{
-    data_structures::dataset::DatasetTypeKind, dataset::DatasetMetadata,
-    verification::VerificationPeriod, VerifierConfig,
+use rust_ev_verifier_lib::{
+    dataset::DatasetMetadata, verification::VerificationPeriod, DatasetTypeKind, VerifierConfig,
 };
 use std::{
     collections::HashMap,

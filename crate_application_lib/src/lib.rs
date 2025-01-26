@@ -1,20 +1,17 @@
 //! Module implementing common functionalities for all Verifier applications (console and GUI)
 
-mod checks;
 mod extract;
 pub mod report;
 pub mod run_information;
 mod runner;
 
-pub use checks::*;
 pub use extract::*;
 //pub use report::*;
 pub use runner::{
     no_action_after_fn, no_action_after_runner_fn, no_action_before_fn, no_action_before_runner_fn,
     RunParallel, Runner, RunnerInformation,
 };
-
-use crate::{
+use rust_ev_verifier_lib::{
     dataset::DatasetError,
     file_structure::{
         ContextDirectoryTrait, FileStructureError, VerificationDirectory,

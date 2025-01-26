@@ -1,5 +1,5 @@
 use super::ReportError;
-use crate::VerifierConfig;
+use rust_ev_verifier_lib::VerifierConfig;
 use std::iter::once;
 
 /// Enum with the title types

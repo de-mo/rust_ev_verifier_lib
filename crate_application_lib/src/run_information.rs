@@ -1,9 +1,7 @@
-use std::{collections::HashMap, path::Path, time::SystemTime};
-
 use super::{
     runner::VerificationRunInformation, ExtractDataSetResults, RunnerError, RunnerInformation,
 };
-use crate::{
+use rust_ev_verifier_lib::{
     file_structure::VerificationDirectory,
     verification::{
         get_verifications_setup, get_verifications_tally, ManualVerifications,
@@ -11,6 +9,7 @@ use crate::{
     },
     VerifierConfig,
 };
+use std::{collections::HashMap, path::Path, time::SystemTime};
 
 /// This structure contains all the information about the actual run.
 ///

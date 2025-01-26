@@ -1,15 +1,15 @@
 //use futures::{stream::FuturesUnordered, StreamExt};
-use crate::{
-    application_runner::checks::{check_complete, check_verification_dir},
-    config::VerifierConfig,
+use rust_ev_verifier_lib::{
     file_structure::{VerificationDirectory, VerificationDirectoryTrait},
+    startup_checks::{check_complete, check_verification_dir, start_check},
     verification::{
         VerificationMetaDataList, VerificationPeriod, VerificationStatus, VerificationSuite,
     },
+    VerifierConfig,
 };
 use tracing::{info, warn};
 //use std::future::Future;
-use super::{checks::start_check, prepare_fixed_based_optimization, RunnerError};
+use super::{prepare_fixed_based_optimization, RunnerError};
 use rayon::prelude::*;
 use std::{iter::zip, sync::Mutex};
 use std::{

@@ -1,15 +1,14 @@
 mod report_output;
 
 use super::{run_information::RunInformation, RunnerError};
-use crate::{
-    data_structures::dataset::DatasetTypeKind,
-    file_structure::{VerificationDirectory, VerificationDirectoryTrait},
-    verification::{ManualVerificationInformationTrait, ManualVerifications, VerificationPeriod},
-    VerifierConfig,
-};
 use chrono::{DateTime, Local};
 use report_output::{
     OutputToString, ReportOutput, ReportOutputBlock, ReportOutputBlockTitle, ReportOutputEntry,
+};
+use rust_ev_verifier_lib::{
+    file_structure::{VerificationDirectory, VerificationDirectoryTrait},
+    verification::{ManualVerificationInformationTrait, ManualVerifications, VerificationPeriod},
+    DatasetTypeKind, VerifierConfig,
 };
 use std::fmt::Display;
 use thiserror::Error;
