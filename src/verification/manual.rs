@@ -200,7 +200,7 @@ impl VerificationsResult {
     /// Inputs:
     /// - `metadata`: The metadalist of the verifications to collect some information, like the name
     /// - `verifications_status`: The verifications (key is verification id) with the status [VerificationStatus]
-    /// - `verifications_with_errors_and_failures`: see [VerficationsWithErrorAndFailures]
+    /// - `verifications_with_errors_and_failures`: see [VerficationsWithErrorAndFailuresType]
     /// - `excluded_verifications`: The list of excluded verifications. The vector contains the id of the verifications
     ///
     /// It is recommended to deliver in `verifications_with_errors_and_failures` on the verifications having errors or failures. The verification with success should
@@ -321,7 +321,7 @@ impl<D: VerificationDirectoryTrait + Clone> ManualVerificationsSetup<D> {
     /// - `config`: Verifier configuration
     /// - `metadata`: The metadalist of the verifications to collect some information, like the name
     /// - `verifications_status`: The verifications (key is verification id) with the status [VerificationStatus]
-    /// - `verifications_with_errors_and_failures`: see [VerficationsWithErrorAndFailures]
+    /// - `verifications_with_errors_and_failures`: see [VerficationsWithErrorAndFailuresType]
     /// - `excluded_verifications`: The list of excluded verifications. The vector contains the id of the verifications
     ///
     /// It is recommended to deliver in `verifications_with_errors_and_failures` on the verifications having errors or failures. The verification with success should
@@ -491,7 +491,7 @@ impl<D: VerificationDirectoryTrait + Clone> ManualVerifications<D> {
     /// - `directory`: Verification directory
     /// - `config`: Verifier configuration
     /// - `verifications_status`: The verifications (key is verification id) with the status [VerificationStatus]
-    /// - `verifications_with_errors_and_failures`: see [VerficationsWithErrorAndFailures]
+    /// - `verifications_with_errors_and_failures`: see [VerficationsWithErrorAndFailuresType]
     /// - `excluded_verifications`: The list of excluded verifications. The vector contains the id of the verifications
     ///
     /// It is recommended to deliver in `verifications_with_errors_and_failures` on the verifications having errors or failures. The verification with success should

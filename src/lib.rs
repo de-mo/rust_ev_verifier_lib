@@ -18,10 +18,9 @@
 //!
 //! The library contains the following modules:
 //!
-//! - [`data_structures`]: The implementation of structure of the data used for the Verifier. The data are reading from the files using [serde](https://docs.rs/serde/latest/serde/)
+//! - `data_structures`: The implementation of structure of the data used for the Verifier. The data are reading from the files using [serde](https://docs.rs/serde/latest/serde/)
 //! - [`file_structure`]: The necessary functions to implement the files and directories
 //! - [`verification`]: The implementation of each verification.
-//! - [`application_runner`]: The runner that can be used by a gui or an application to run all the verifications. It contains also some helpers and possibilty to generate a report
 //!
 //! The library depends from the following crates
 //! - [rust_ev_crypto_primitives](https://github.com/de-mo/rust_ev_crypto_primitives)

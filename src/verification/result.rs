@@ -66,12 +66,12 @@ impl VerificationEvent {
         self
     }
 
-    /// Is the event an error (of kind [VerificationEventKind::Error])
+    /// Is the event an error)
     pub fn is_error(&self) -> bool {
         self.kind.is_error()
     }
 
-    /// Is the event a failure (of kind [VerificationEventKind::Failure])
+    /// Is the event a failure)
     pub fn is_failure(&self) -> bool {
         self.kind.is_failure()
     }
@@ -235,7 +235,7 @@ impl VerificationResult {
         res
     }
 
-    /// Join a &[<Self>] with context
+    /// Join a &[Self] with context
     pub fn join_with_context<C>(data: &[Self], context: C) -> Self
     where
         C: Clone + Display + Send + Sync + 'static,
@@ -247,7 +247,7 @@ impl VerificationResult {
         res
     }
 
-    /// Join a &[<Self>]
+    /// Join a &[Self]
     pub fn join(data: &[Self]) -> Self {
         let mut res = Self::new();
         for d in data.iter() {

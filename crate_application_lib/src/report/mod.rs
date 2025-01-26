@@ -2,12 +2,11 @@ mod report_config;
 mod report_output;
 
 pub use report_config::{ReportConfig, ReportConfigBuilder};
+pub use report_output::ReportOutput;
 
 use super::{run_information::RunInformation, RunnerError};
 use chrono::{DateTime, Local};
-use report_output::{
-    OutputToString, ReportOutput, ReportOutputBlock, ReportOutputBlockTitle, ReportOutputEntry,
-};
+use report_output::{OutputToString, ReportOutputBlock, ReportOutputBlockTitle, ReportOutputEntry};
 use rust_ev_verifier_lib::{
     file_structure::{VerificationDirectory, VerificationDirectoryTrait},
     verification::{ManualVerificationInformationTrait, ManualVerifications, VerificationPeriod},

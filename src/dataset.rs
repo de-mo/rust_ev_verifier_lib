@@ -100,7 +100,7 @@ impl DatasetMetadata {
 
     /// Extract the data as datatype given with the kind of the dataset type.
     ///
-    /// Return [DatasetType] with the correct metadata or Error if something goes wrong
+    /// Return [DatasetMetadata] with the correct metadata or Error if something goes wrong
     pub fn extract_dataset_kind_with_inputs(
         kind: DatasetTypeKind,
         input: &Path,
@@ -113,7 +113,7 @@ impl DatasetMetadata {
 
     /// Extract the data as datatype give with the name of the dataset type.
     ///
-    /// Return [DatasetType] with the correct metadata or Error if something goes wrong
+    /// Return [DatasetMetadata] with the correct metadata or Error if something goes wrong
     pub fn extract_dataset_str_with_inputs(
         datasettype_str: &str,
         input: &Path,
@@ -148,7 +148,7 @@ impl DatasetMetadata {
     /// - Decrypt the zip defined by `input` to the `zip_temp_dir_path` using the password
     /// - Extract the decrypted zip to `extract_dir`
     ///
-    /// Return [DatasetType] with the correct metadata or Error if something goes wrong
+    /// Return [Self] with the correct metadata or Error if something goes wrong
     #[instrument(skip(password))]
     pub fn process_dataset_operations(
         datasetkind: DatasetTypeKind,

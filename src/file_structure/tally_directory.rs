@@ -42,7 +42,7 @@ pub struct BBDirectory {
     control_component_shuffle_payload_group: FileGroup,
 }
 
-/// Trait to set the necessary functions for the struct [TallyDirectory] that
+/// Trait to set the necessary functions for the struct `Tally Directory` that
 /// are used during the tests
 ///
 /// The trait is used as parameter of the verification functions to allow mock of

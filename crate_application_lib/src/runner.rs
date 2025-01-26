@@ -215,8 +215,8 @@ where
     /// ```
     ///
     /// Comments to the above example:
-    /// - The data used [Arc] and [RwLock] in order to ensure the thread safety and clone
-    /// - The clone of verifications_not_finished is the avoid an error having the lock of the value in both methods, then in the same thread (see `write` of [RwLock])
+    /// - The data used [std::sync::Arc] and [std::sync::RwLock] in order to ensure the thread safety and clone
+    /// - The clone of verifications_not_finished is the avoid an error having the lock of the value in both methods, then in the same thread (see `write` of [std::sync::RwLock])
     #[allow(clippy::too_many_arguments)]
     pub fn new(
         path: &Path,

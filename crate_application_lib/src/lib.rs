@@ -1,4 +1,10 @@
-//! Module implementing common functionalities for all Verifier applications (console and GUI)
+//! Crate implementing common functionalities for all Verifier applications (console and GUI)
+//!
+//! Following functionalities are provided
+//! - [runner::Runner] provides the possibility to run all the verifications
+//! - `extract` provides the functionalities to extract the zip files
+//! - [run_information::RunInformation] stores all the information about the current running
+//! - [report] provides the possibility to report the actual stituation
 
 mod extract;
 pub mod report;

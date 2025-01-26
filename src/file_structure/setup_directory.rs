@@ -39,7 +39,7 @@ pub struct SetupVCSDirectory {
     control_component_code_shares_payload_group: FileGroup,
 }
 
-/// Trait to set the necessary functions for the struct [SetupDirectory] that
+/// Trait to set the necessary functions for the struct `Setup directory` that
 /// are used during the verifications
 ///
 /// The trait is used as parameter of the verification functions to allow mock of
