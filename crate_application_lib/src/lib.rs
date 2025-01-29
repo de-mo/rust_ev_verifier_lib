@@ -8,14 +8,15 @@
 
 mod extract;
 pub mod report;
-pub mod run_information;
+mod run_information;
 mod runner;
 
 pub use extract::*;
 //pub use report::*;
+pub use run_information::RunInformation;
 pub use runner::{
     no_action_after_fn, no_action_after_runner_fn, no_action_before_fn, no_action_before_runner_fn,
-    RunParallel, Runner, RunnerInformation,
+    RunParallel, Runner, RunnerInformation, VerificationRunInformation,
 };
 use rust_ev_verifier_lib::{
     dataset::DatasetError,

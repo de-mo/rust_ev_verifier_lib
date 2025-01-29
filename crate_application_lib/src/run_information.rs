@@ -41,17 +41,15 @@ impl RunInformation {
     }
 
     /// Prepare the data for running, collecting the necesssary information
-    pub fn prepare_data_for_running(
+    pub fn prepare_data_for_start(
         &mut self,
         verification_period: VerificationPeriod,
         verification_metadata: &VerificationMetaDataList,
         excluded_verifications: &[String],
-        extracted_dataset_result: &ExtractDataSetResults,
     ) -> Result<(), RunnerError> {
         self.verification_period = Some(verification_period);
         self.verification_metadata = Some(verification_metadata.clone());
         self.excluded_verifications = excluded_verifications.to_vec();
-        self.extracted_dataset_result = Some(extracted_dataset_result.clone());
         let all_verifs = match verification_period {
             VerificationPeriod::Setup => {
                 get_verifications_setup(verification_metadata, self.config).map_err(|e| {
@@ -78,6 +76,10 @@ impl RunInformation {
             .map(|id| (id, VerificationStatus::NotStarted))
             .collect();
         Ok(())
+    }
+
+    pub fn add_extracted_information(&mut self, extracted_dataset_result: &ExtractDataSetResults) {
+        self.extracted_dataset_result = Some(extracted_dataset_result.clone())
     }
 
     fn update_verif_status(&mut self, id: &str, status: VerificationStatus) {
@@ -115,6 +117,11 @@ impl RunInformation {
     /// Are the information in prepared status
     pub fn is_prepared(&self) -> bool {
         !self.verifications_status.is_empty()
+    }
+
+    /// Are the information ready to run
+    pub fn is_ready_to_run(&self) -> bool {
+        self.is_prepared() && self.extracted_dataset_result().is_some()
     }
 
     /// Are the information in running status
@@ -182,6 +189,10 @@ impl RunInformation {
             .keys()
             .map(|k| k.as_str())
             .collect()
+    }
+
+    pub fn verifications_status(&self) -> &HashMap<String, VerificationStatus> {
+        &self.verifications_status
     }
 
     /// Hashmap of the verifications having errors and failures
