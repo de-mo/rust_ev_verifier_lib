@@ -3,7 +3,7 @@ use crate::{
     config::VerifierConfig,
     data_structures::{
         context::control_component_public_keys_payload::ControlComponentPublicKeys,
-        VerifierContextDataTrait,
+        ControlComponentPublicKeysPayload,
     },
     file_structure::{context_directory::ContextDirectoryTrait, VerificationDirectoryTrait},
 };
@@ -19,8 +19,8 @@ fn validate_ccm_and_ccr_schorr_proofs<S: ContextDirectoryTrait>(
         .control_component_public_keys_payload_group()
         .get_file_with_number(node_id);
     let cc_pk = match f
-        .get_verifier_data()
-        .map(|d| Box::new(d.control_component_public_keys_payload().unwrap().clone()))
+        .decode_verifier_data::<ControlComponentPublicKeysPayload>()
+        .map(Box::new)
     {
         Ok(d) => d.control_component_public_keys,
         Err(e) => {

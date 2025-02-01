@@ -13,24 +13,17 @@ pub use self::{
     context::{
         control_component_public_keys_payload::ControlComponentPublicKeysPayload,
         election_event_configuration::ElectionEventConfiguration,
-        election_event_context_payload::ElectionEventContextPayload,
-        setup_component_public_keys_payload::SetupComponentPublicKeysPayload,
-        setup_component_tally_data_payload::SetupComponentTallyDataPayload, VerifierContextData,
-        VerifierContextDataType,
+        election_event_context_payload::ElectionEventContextPayload, VerifierContextDataType,
     },
     dataset::DatasetType,
     setup::{
         control_component_code_shares_payload::ControlComponentCodeSharesPayload,
-        setup_component_verification_data_payload::SetupComponentVerificationDataPayload,
-        VerifierSetupData, VerifierSetupDataType,
+        VerifierSetupDataType,
     },
     tally::{
         control_component_ballot_box_payload::ControlComponentBallotBoxPayload,
         control_component_shuffle_payload::ControlComponentShufflePayload,
-        e_voting_decrypt::EVotingDecrypt, ech_0110::ECH0110, ech_0222::ECH0222,
-        tally_component_shuffle_payload::TallyComponentShufflePayload,
-        tally_component_votes_payload::TallyComponentVotesPayload, VerifierTallyData,
-        VerifierTallyDataType,
+        tally_component_shuffle_payload::TallyComponentShufflePayload, VerifierTallyDataType,
     },
 };
 use crate::config::VerifierConfig;
@@ -70,10 +63,6 @@ pub enum DataStructureError {
     DataError(String),
 }
 
-/// The type VerifierData implement an option between
-/// [VerifierContextData], [VerifierSetupData] and [VerifierTallyData]
-pub type VerifierData = DatasetType<VerifierContextData, VerifierSetupData, VerifierTallyData>;
-
 /// The type VerifierDataType implement an option between
 /// [VerifierContextDataType], [VerifierSetupDataType] and [VerifierTallyDataType]
 pub type VerifierDataType =
@@ -99,63 +88,6 @@ macro_rules! create_verifier_tally_data_type {
     };
 }
 pub(crate) use create_verifier_tally_data_type;
-
-/// Trait implementing the collection of the specific context data type from the enum object
-pub trait VerifierContextDataTrait: Sized {
-    fn setup_component_public_keys_payload(self) -> Option<SetupComponentPublicKeysPayload> {
-        None
-    }
-    fn election_event_context_payload(self) -> Option<ElectionEventContextPayload> {
-        None
-    }
-    fn setup_component_tally_data_payload(self) -> Option<SetupComponentTallyDataPayload> {
-        None
-    }
-    fn control_component_public_keys_payload(self) -> Option<ControlComponentPublicKeysPayload> {
-        None
-    }
-    fn election_event_configuration(self) -> Option<ElectionEventConfiguration> {
-        None
-    }
-}
-
-/// Trait implementing the collection of the specific setup data type from the enum object
-pub trait VerifierSetupDataTrait: Sized {
-    fn setup_component_verification_data_payload(
-        self,
-    ) -> Option<SetupComponentVerificationDataPayload> {
-        None
-    }
-    fn control_component_code_shares_payload(self) -> Option<ControlComponentCodeSharesPayload> {
-        None
-    }
-}
-
-/// Trait implementing the collection of the specific tally data type from the enum object
-pub trait VerifierTallyDataTrait: Sized {
-    fn e_voting_decrypt(self) -> Option<EVotingDecrypt> {
-        None
-    }
-    fn ech_0110(self) -> Option<ECH0110> {
-        None
-    }
-    fn ech_0222(self) -> Option<ECH0222> {
-        None
-    }
-    fn tally_component_votes_payload(self) -> Option<TallyComponentVotesPayload> {
-        None
-    }
-    fn tally_component_shuffle_payload(self) -> Option<TallyComponentShufflePayload> {
-        None
-    }
-    fn control_component_ballot_box_payload(self) -> Option<ControlComponentBallotBoxPayload> {
-        None
-    }
-
-    fn control_component_shuffle_payload(self) -> Option<ControlComponentShufflePayload> {
-        None
-    }
-}
 
 /// A trait defining the necessary function to decode to the Verifier Data
 pub trait VerifierDataDecode: Sized {
@@ -215,7 +147,7 @@ macro_rules! implement_trait_verifier_data_json_decode {
 }
 use implement_trait_verifier_data_json_decode;
 
-impl VerifierContextDataTrait for VerifierData {
+/*impl VerifierContextDataTrait for VerifierData {
     fn setup_component_public_keys_payload(self) -> Option<SetupComponentPublicKeysPayload> {
         match self {
             VerifierData::Context(d) => d.setup_component_public_keys_payload(),
@@ -250,9 +182,9 @@ impl VerifierContextDataTrait for VerifierData {
             _ => None,
         }
     }
-}
+}*/
 
-impl VerifierSetupDataTrait for VerifierData {
+/*impl VerifierSetupDataTrait for VerifierData {
     fn setup_component_verification_data_payload(
         self,
     ) -> Option<SetupComponentVerificationDataPayload> {
@@ -268,9 +200,9 @@ impl VerifierSetupDataTrait for VerifierData {
             _ => None,
         }
     }
-}
+}*/
 
-impl VerifierTallyDataTrait for VerifierData {
+/*impl VerifierTallyDataTrait for VerifierData {
     fn e_voting_decrypt(self) -> Option<EVotingDecrypt> {
         match self {
             VerifierData::Tally(d) => d.e_voting_decrypt(),
@@ -313,7 +245,7 @@ impl VerifierTallyDataTrait for VerifierData {
             _ => None,
         }
     }
-}
+}*/
 
 #[allow(dead_code)]
 fn deserialize_string_hex_to_integer<'de, D>(deserializer: D) -> Result<Integer, D::Error>

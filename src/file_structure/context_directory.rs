@@ -19,7 +19,7 @@ use crate::{
             setup_component_tally_data_payload::SetupComponentTallyDataPayload,
             VerifierContextDataType,
         },
-        create_verifier_context_data_type, VerifierContextDataTrait, VerifierDataType,
+        create_verifier_context_data_type, VerifierDataType,
     },
 };
 use std::{
@@ -216,24 +216,24 @@ impl ContextDirectoryTrait for ContextDirectory {
         &self,
     ) -> Result<Box<SetupComponentPublicKeysPayload>, FileStructureError> {
         self.setup_component_public_keys_payload_file
-            .get_verifier_data()
-            .map(|d| Box::new(d.setup_component_public_keys_payload().unwrap()))
+            .decode_verifier_data::<SetupComponentPublicKeysPayload>()
+            .map(Box::new)
     }
 
     fn election_event_context_payload(
         &self,
     ) -> Result<Box<ElectionEventContextPayload>, FileStructureError> {
         self.election_event_context_payload_file
-            .get_verifier_data()
-            .map(|d| Box::new(d.election_event_context_payload().unwrap()))
+            .decode_verifier_data::<ElectionEventContextPayload>()
+            .map(Box::new)
     }
 
     fn election_event_configuration(
         &self,
     ) -> Result<Box<ElectionEventConfiguration>, FileStructureError> {
         self.election_event_configuration_file
-            .get_verifier_data()
-            .map(|d| Box::new(d.election_event_configuration().unwrap()))
+            .decode_verifier_data::<ElectionEventConfiguration>()
+            .map(Box::new)
     }
 
     fn control_component_public_keys_payload_iter(
@@ -294,8 +294,8 @@ impl ContextVCSDirectoryTrait for ContextVCSDirectory {
         &self,
     ) -> Result<Box<SetupComponentTallyDataPayload>, FileStructureError> {
         self.setup_component_tally_data_payload_file
-            .get_verifier_data()
-            .map(|d| Box::new(d.setup_component_tally_data_payload().unwrap()))
+            .decode_verifier_data::<SetupComponentTallyDataPayload>()
+            .map(Box::new)
     }
 
     fn name(&self) -> String {

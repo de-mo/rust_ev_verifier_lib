@@ -3,7 +3,10 @@ use super::{
     impl_trait_get_method_for_mocked_group, MockFileGroupIter,
 };
 use crate::{
-    data_structures::{ControlComponentCodeSharesPayload, SetupComponentVerificationDataPayload},
+    data_structures::{
+        setup::setup_component_verification_data_payload::SetupComponentVerificationDataPayload,
+        ControlComponentCodeSharesPayload,
+    },
     file_structure::{
         file_group::FileGroupIterTrait,
         setup_directory::{

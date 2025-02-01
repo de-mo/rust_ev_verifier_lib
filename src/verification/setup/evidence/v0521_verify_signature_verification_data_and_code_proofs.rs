@@ -9,7 +9,7 @@ use crate::{
                 SetupComponentVerificationDataInner, SetupComponentVerificationDataPayload,
             },
         },
-        VerifierSetupDataTrait,
+        ControlComponentCodeSharesPayload,
     },
     file_structure::{
         context_directory::ContextDirectoryTrait,
@@ -154,10 +154,10 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
             match vcs_dir
                 .control_component_code_shares_payload_group()
                 .get_file_with_number(chunk_id)
-                .get_verifier_data()
+                .decode_verifier_data::<ControlComponentCodeSharesPayload>()
             {
-                Ok(s) => {
-                    let cc_shares = s.control_component_code_shares_payload().unwrap();
+                Ok(cc_shares) => {
+                    //let cc_shares = s.control_component_code_shares_payload().unwrap();
                     // For each CC (1 to 4)
                     let mut res_cc: Vec<VerificationResult> = cc_shares.0
                                 .iter()

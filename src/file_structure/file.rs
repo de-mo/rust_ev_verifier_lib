@@ -1,13 +1,5 @@
 use super::{FileReadMode, FileStructureError, FileType, GetFileNameTrait};
-use crate::data_structures::{
-    ControlComponentBallotBoxPayload, ControlComponentCodeSharesPayload,
-    ControlComponentPublicKeysPayload, ControlComponentShufflePayload, DatasetType, EVotingDecrypt,
-    ElectionEventConfiguration, ElectionEventContextPayload, SetupComponentPublicKeysPayload,
-    SetupComponentTallyDataPayload, SetupComponentVerificationDataPayload,
-    TallyComponentShufflePayload, TallyComponentVotesPayload, VerifierContextData,
-    VerifierContextDataType, VerifierData, VerifierDataDecode, VerifierDataType, VerifierSetupData,
-    VerifierSetupDataType, VerifierTallyData, VerifierTallyDataType, ECH0110, ECH0222,
-};
+use crate::data_structures::{VerifierDataDecode, VerifierDataType};
 use glob::glob;
 use roxmltree::Document;
 use std::path::{Path, PathBuf};
@@ -28,15 +20,10 @@ macro_rules! create_file {
 }
 pub(crate) use create_file;
 
-macro_rules! read_data_call {
-    ($s: expr, $t: expr, $p: ident, $e_p: ident, $e_d: ident) => {
-        $s.read_data::<$p>(&FileType::from($t), &FileReadMode::from($t))
-            .map($e_p::$p)
-            .map(VerifierData::$e_d)
-    };
-}
-
 impl File {
+    /// New file of given type in the location.
+    ///
+    /// `file_nb` defines if the file is part of a group, with the given number
     pub fn new(location: &Path, data_type: &VerifierDataType, file_nb: Option<usize>) -> Self {
         let name = data_type.get_file_name(file_nb);
         let mut path = location.join(&name);
@@ -55,129 +42,37 @@ impl File {
         }
     }
 
-    
+    /// Location of the file
     pub fn location(&self) -> PathBuf {
         self.path.parent().unwrap().to_path_buf()
     }
 
+    /// Does the file exist
     pub fn exists(&self) -> bool {
         self.path.exists() && self.path.is_file()
     }
 
+    /// Path of the file
     pub fn path(&self) -> PathBuf {
         self.path.to_path_buf()
     }
 
+    /// Path of the file as string
     pub fn path_to_str(&self) -> &str {
         self.path.to_str().unwrap()
     }
 
-    pub fn get_verifier_data(&self) -> Result<VerifierData, FileStructureError> {
+    /// Decode the verifier data containing the the file
+    ///
+    /// The generic `D` defines the type of the file
+    pub fn decode_verifier_data<D: VerifierDataDecode>(&self) -> Result<D, FileStructureError> {
         if !self.exists() {
             return Err(FileStructureError::PathNotFile(self.path()));
         }
-        match self.data_type {
-            DatasetType::Context(t) => match t {
-                VerifierContextDataType::ElectionEventContextPayload => read_data_call!(
-                    self,
-                    t,
-                    ElectionEventContextPayload,
-                    VerifierContextData,
-                    Context
-                ),
-                VerifierContextDataType::SetupComponentPublicKeysPayload => read_data_call!(
-                    self,
-                    t,
-                    SetupComponentPublicKeysPayload,
-                    VerifierContextData,
-                    Context
-                ),
-                VerifierContextDataType::ControlComponentPublicKeysPayload => read_data_call!(
-                    self,
-                    t,
-                    ControlComponentPublicKeysPayload,
-                    VerifierContextData,
-                    Context
-                ),
-                VerifierContextDataType::SetupComponentTallyDataPayload => read_data_call!(
-                    self,
-                    t,
-                    SetupComponentTallyDataPayload,
-                    VerifierContextData,
-                    Context
-                ),
-                VerifierContextDataType::ElectionEventConfiguration => read_data_call!(
-                    self,
-                    t,
-                    ElectionEventConfiguration,
-                    VerifierContextData,
-                    Context
-                ),
-            },
-            DatasetType::Setup(t) => match t {
-                VerifierSetupDataType::SetupComponentVerificationDataPayload => read_data_call!(
-                    self,
-                    t,
-                    SetupComponentVerificationDataPayload,
-                    VerifierSetupData,
-                    Setup
-                ),
-                VerifierSetupDataType::ControlComponentCodeSharesPayload => read_data_call!(
-                    self,
-                    t,
-                    ControlComponentCodeSharesPayload,
-                    VerifierSetupData,
-                    Setup
-                ),
-            },
-            DatasetType::Tally(t) => match t {
-                VerifierTallyDataType::EVotingDecrypt => {
-                    read_data_call!(self, t, EVotingDecrypt, VerifierTallyData, Tally)
-                }
-                VerifierTallyDataType::ECH0110 => {
-                    read_data_call!(self, t, ECH0110, VerifierTallyData, Tally)
-                }
-                VerifierTallyDataType::ECH0222 => {
-                    read_data_call!(self, t, ECH0222, VerifierTallyData, Tally)
-                }
-                VerifierTallyDataType::TallyComponentVotesPayload => {
-                    read_data_call!(
-                        self,
-                        t,
-                        TallyComponentVotesPayload,
-                        VerifierTallyData,
-                        Tally
-                    )
-                }
-                VerifierTallyDataType::TallyComponentShufflePayload => {
-                    read_data_call!(
-                        self,
-                        t,
-                        TallyComponentShufflePayload,
-                        VerifierTallyData,
-                        Tally
-                    )
-                }
-                VerifierTallyDataType::ControlComponentBallotBoxPayload => {
-                    read_data_call!(
-                        self,
-                        t,
-                        ControlComponentBallotBoxPayload,
-                        VerifierTallyData,
-                        Tally
-                    )
-                }
-                VerifierTallyDataType::ControlComponentShufflePayload => {
-                    read_data_call!(
-                        self,
-                        t,
-                        ControlComponentShufflePayload,
-                        VerifierTallyData,
-                        Tally
-                    )
-                }
-            },
-        }
+        self.read_data(
+            &FileType::from(&self.data_type),
+            &FileReadMode::from(&self.data_type),
+        )
     }
 
     fn read_data<D: VerifierDataDecode>(
@@ -238,9 +133,9 @@ mod test {
     use super::*;
     use crate::config::test::{test_datasets_context_path, test_datasets_tally_path};
     use crate::data_structures::{
-        context::VerifierContextDataType, tally::VerifierTallyDataType, VerifierContextDataTrait,
-        VerifierDataType,
+        context::VerifierContextDataType, tally::VerifierTallyDataType, VerifierDataType,
     };
+    use crate::data_structures::{ControlComponentPublicKeysPayload, ElectionEventContextPayload};
 
     #[test]
     fn test_file() {
@@ -253,10 +148,8 @@ mod test {
         assert!(f.exists());
         assert_eq!(f.location(), location);
         assert_eq!(f.path(), location.join("electionEventContextPayload.json"));
-        let data = f.get_verifier_data().unwrap();
-        assert!(data.is_context());
-        let enc_data = data.election_event_context_payload();
-        assert!(enc_data.is_some())
+        let data = f.decode_verifier_data::<ElectionEventContextPayload>();
+        assert!(data.is_ok())
     }
 
     #[test]
@@ -270,10 +163,8 @@ mod test {
         assert!(f.exists());
         assert_eq!(f.location(), location);
         assert_eq!(f.path(), location.join("electionEventContextPayload.json"));
-        let data = f.get_verifier_data().unwrap();
-        assert!(data.is_context());
-        let enc_data = data.election_event_context_payload();
-        assert!(enc_data.is_some())
+        let data = f.decode_verifier_data::<ElectionEventContextPayload>();
+        assert!(data.is_ok())
     }
 
     #[test]
@@ -287,7 +178,7 @@ mod test {
         assert!(!f.exists());
         assert_eq!(f.location(), location);
         assert_eq!(f.path(), location.join("electionEventContextPayload.json"));
-        let data = f.get_verifier_data();
+        let data = f.decode_verifier_data::<ElectionEventContextPayload>();
         assert!(data.is_err())
     }
 
@@ -305,8 +196,8 @@ mod test {
             f.path(),
             location.join("controlComponentPublicKeysPayload.2.json")
         );
-        let data = f.get_verifier_data().unwrap();
-        assert!(data.is_context());
+        let data = f.decode_verifier_data::<ControlComponentPublicKeysPayload>();
+        assert!(data.is_ok());
     }
 
     #[test]
@@ -339,7 +230,7 @@ mod test {
             f.path(),
             location.join("controlComponentPublicKeysPayload.6.json")
         );
-        let data = f.get_verifier_data();
+        let data = f.decode_verifier_data::<ControlComponentPublicKeysPayload>();
         assert!(data.is_err());
     }
 
@@ -358,7 +249,7 @@ mod test {
             f.path(),
             location.join("controlComponentPublicKeysPayload.2.json")
         );
-        let data = f.get_verifier_data().unwrap();
-        assert!(data.is_context());
+        let data = f.decode_verifier_data::<ControlComponentPublicKeysPayload>();
+        assert!(data.is_ok());
     }
 }

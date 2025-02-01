@@ -129,7 +129,7 @@ macro_rules! impl_iterator_over_data_payload {
         impl FileGroupIterTrait<$pread> for $preaditer {
             fn current_elt(&self) -> Option<$pread> {
                 match self.current_file() {
-                    Some(f) => Some(f.get_verifier_data().map(|d| Box::new(d.$fct().unwrap()))),
+                    Some(f) => Some(f.decode_verifier_data::<$p>().map(|d| Box::new(d))),
                     None => None,
                 }
             }

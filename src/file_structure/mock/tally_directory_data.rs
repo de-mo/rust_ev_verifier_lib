@@ -5,8 +5,9 @@ use super::{
 };
 use crate::{
     data_structures::{
+        tally::tally_component_votes_payload::TallyComponentVotesPayload,
         ControlComponentBallotBoxPayload, ControlComponentShufflePayload,
-        TallyComponentShufflePayload, TallyComponentVotesPayload,
+        TallyComponentShufflePayload,
     },
     file_structure::{
         file::File,

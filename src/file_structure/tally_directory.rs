@@ -16,7 +16,7 @@ use crate::{
             tally_component_shuffle_payload::TallyComponentShufflePayload,
             tally_component_votes_payload::TallyComponentVotesPayload, VerifierTallyDataType,
         },
-        VerifierDataType, VerifierTallyDataTrait,
+        VerifierDataType,
     },
 };
 use std::{
@@ -183,15 +183,15 @@ impl BBDirectoryTrait for BBDirectory {
         &self,
     ) -> Result<Box<TallyComponentVotesPayload>, FileStructureError> {
         self.tally_component_votes_payload_file
-            .get_verifier_data()
-            .map(|d| Box::new(d.tally_component_votes_payload().unwrap()))
+            .decode_verifier_data::<TallyComponentVotesPayload>()
+            .map(Box::new)
     }
     fn tally_component_shuffle_payload(
         &self,
     ) -> Result<Box<TallyComponentShufflePayload>, FileStructureError> {
         self.tally_component_shuffle_payload_file
-            .get_verifier_data()
-            .map(|d| Box::new(d.tally_component_shuffle_payload().unwrap()))
+            .decode_verifier_data::<TallyComponentShufflePayload>()
+            .map(Box::new)
     }
 
     fn control_component_ballot_box_payload_iter(
