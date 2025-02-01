@@ -184,14 +184,14 @@ impl BBDirectoryTrait for BBDirectory {
     ) -> Result<Box<TallyComponentVotesPayload>, FileStructureError> {
         self.tally_component_votes_payload_file
             .get_verifier_data()
-            .map(|d| Box::new(d.tally_component_votes_payload().unwrap().clone()))
+            .map(|d| Box::new(d.tally_component_votes_payload().unwrap()))
     }
     fn tally_component_shuffle_payload(
         &self,
     ) -> Result<Box<TallyComponentShufflePayload>, FileStructureError> {
         self.tally_component_shuffle_payload_file
             .get_verifier_data()
-            .map(|d| Box::new(d.tally_component_shuffle_payload().unwrap().clone()))
+            .map(|d| Box::new(d.tally_component_shuffle_payload().unwrap()))
     }
 
     fn control_component_ballot_box_payload_iter(

@@ -88,35 +88,35 @@ impl VerifierContextDataType {
 } */
 
 impl VerifierContextDataTrait for VerifierContextData {
-    fn setup_component_public_keys_payload(&self) -> Option<&SetupComponentPublicKeysPayload> {
+    fn setup_component_public_keys_payload(self) -> Option<SetupComponentPublicKeysPayload> {
         if let VerifierContextData::SetupComponentPublicKeysPayload(d) = self {
             return Some(d);
         }
         None
     }
 
-    fn election_event_context_payload(&self) -> Option<&ElectionEventContextPayload> {
+    fn election_event_context_payload(self) -> Option<ElectionEventContextPayload> {
         if let VerifierContextData::ElectionEventContextPayload(d) = self {
             return Some(d);
         }
         None
     }
 
-    fn setup_component_tally_data_payload(&self) -> Option<&SetupComponentTallyDataPayload> {
+    fn setup_component_tally_data_payload(self) -> Option<SetupComponentTallyDataPayload> {
         if let VerifierContextData::SetupComponentTallyDataPayload(d) = self {
             return Some(d);
         }
         None
     }
 
-    fn control_component_public_keys_payload(&self) -> Option<&ControlComponentPublicKeysPayload> {
+    fn control_component_public_keys_payload(self) -> Option<ControlComponentPublicKeysPayload> {
         if let VerifierContextData::ControlComponentPublicKeysPayload(d) = self {
             return Some(d);
         }
         None
     }
 
-    fn election_event_configuration(&self) -> Option<&ElectionEventConfiguration> {
+    fn election_event_configuration(self) -> Option<ElectionEventConfiguration> {
         if let VerifierContextData::ElectionEventConfiguration(d) = self {
             return Some(d);
         }

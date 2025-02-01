@@ -217,7 +217,7 @@ impl ContextDirectoryTrait for ContextDirectory {
     ) -> Result<Box<SetupComponentPublicKeysPayload>, FileStructureError> {
         self.setup_component_public_keys_payload_file
             .get_verifier_data()
-            .map(|d| Box::new(d.setup_component_public_keys_payload().unwrap().clone()))
+            .map(|d| Box::new(d.setup_component_public_keys_payload().unwrap()))
     }
 
     fn election_event_context_payload(
@@ -225,7 +225,7 @@ impl ContextDirectoryTrait for ContextDirectory {
     ) -> Result<Box<ElectionEventContextPayload>, FileStructureError> {
         self.election_event_context_payload_file
             .get_verifier_data()
-            .map(|d| Box::new(d.election_event_context_payload().unwrap().clone()))
+            .map(|d| Box::new(d.election_event_context_payload().unwrap()))
     }
 
     fn election_event_configuration(
@@ -233,7 +233,7 @@ impl ContextDirectoryTrait for ContextDirectory {
     ) -> Result<Box<ElectionEventConfiguration>, FileStructureError> {
         self.election_event_configuration_file
             .get_verifier_data()
-            .map(|d| Box::new(d.election_event_configuration().unwrap().clone()))
+            .map(|d| Box::new(d.election_event_configuration().unwrap()))
     }
 
     fn control_component_public_keys_payload_iter(
@@ -295,7 +295,7 @@ impl ContextVCSDirectoryTrait for ContextVCSDirectory {
     ) -> Result<Box<SetupComponentTallyDataPayload>, FileStructureError> {
         self.setup_component_tally_data_payload_file
             .get_verifier_data()
-            .map(|d| Box::new(d.setup_component_tally_data_payload().unwrap().clone()))
+            .map(|d| Box::new(d.setup_component_tally_data_payload().unwrap()))
     }
 
     fn name(&self) -> String {

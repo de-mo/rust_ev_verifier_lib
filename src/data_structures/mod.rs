@@ -33,7 +33,7 @@ pub use self::{
         VerifierTallyDataType,
     },
 };
-use crate::config::VerifierConfig as VerifierConfig;
+use crate::config::VerifierConfig;
 use chrono::NaiveDateTime;
 use common_types::CiphertextDef;
 use quick_xml::{DeError as QuickXmDeError, Error as QuickXmlError};
@@ -101,58 +101,58 @@ macro_rules! create_verifier_tally_data_type {
 pub(crate) use create_verifier_tally_data_type;
 
 /// Trait implementing the collection of the specific context data type from the enum object
-pub trait VerifierContextDataTrait {
-    fn setup_component_public_keys_payload(&self) -> Option<&SetupComponentPublicKeysPayload> {
+pub trait VerifierContextDataTrait: Sized {
+    fn setup_component_public_keys_payload(self) -> Option<SetupComponentPublicKeysPayload> {
         None
     }
-    fn election_event_context_payload(&self) -> Option<&ElectionEventContextPayload> {
+    fn election_event_context_payload(self) -> Option<ElectionEventContextPayload> {
         None
     }
-    fn setup_component_tally_data_payload(&self) -> Option<&SetupComponentTallyDataPayload> {
+    fn setup_component_tally_data_payload(self) -> Option<SetupComponentTallyDataPayload> {
         None
     }
-    fn control_component_public_keys_payload(&self) -> Option<&ControlComponentPublicKeysPayload> {
+    fn control_component_public_keys_payload(self) -> Option<ControlComponentPublicKeysPayload> {
         None
     }
-    fn election_event_configuration(&self) -> Option<&ElectionEventConfiguration> {
+    fn election_event_configuration(self) -> Option<ElectionEventConfiguration> {
         None
     }
 }
 
 /// Trait implementing the collection of the specific setup data type from the enum object
-pub trait VerifierSetupDataTrait {
+pub trait VerifierSetupDataTrait: Sized {
     fn setup_component_verification_data_payload(
-        &self,
-    ) -> Option<&SetupComponentVerificationDataPayload> {
+        self,
+    ) -> Option<SetupComponentVerificationDataPayload> {
         None
     }
-    fn control_component_code_shares_payload(&self) -> Option<&ControlComponentCodeSharesPayload> {
+    fn control_component_code_shares_payload(self) -> Option<ControlComponentCodeSharesPayload> {
         None
     }
 }
 
 /// Trait implementing the collection of the specific tally data type from the enum object
-pub trait VerifierTallyDataTrait {
-    fn e_voting_decrypt(&self) -> Option<&EVotingDecrypt> {
+pub trait VerifierTallyDataTrait: Sized {
+    fn e_voting_decrypt(self) -> Option<EVotingDecrypt> {
         None
     }
-    fn ech_0110(&self) -> Option<&ECH0110> {
+    fn ech_0110(self) -> Option<ECH0110> {
         None
     }
-    fn ech_0222(&self) -> Option<&ECH0222> {
+    fn ech_0222(self) -> Option<ECH0222> {
         None
     }
-    fn tally_component_votes_payload(&self) -> Option<&TallyComponentVotesPayload> {
+    fn tally_component_votes_payload(self) -> Option<TallyComponentVotesPayload> {
         None
     }
-    fn tally_component_shuffle_payload(&self) -> Option<&TallyComponentShufflePayload> {
+    fn tally_component_shuffle_payload(self) -> Option<TallyComponentShufflePayload> {
         None
     }
-    fn control_component_ballot_box_payload(&self) -> Option<&ControlComponentBallotBoxPayload> {
+    fn control_component_ballot_box_payload(self) -> Option<ControlComponentBallotBoxPayload> {
         None
     }
 
-    fn control_component_shuffle_payload(&self) -> Option<&ControlComponentShufflePayload> {
+    fn control_component_shuffle_payload(self) -> Option<ControlComponentShufflePayload> {
         None
     }
 }
@@ -216,35 +216,35 @@ macro_rules! implement_trait_verifier_data_json_decode {
 use implement_trait_verifier_data_json_decode;
 
 impl VerifierContextDataTrait for VerifierData {
-    fn setup_component_public_keys_payload(&self) -> Option<&SetupComponentPublicKeysPayload> {
+    fn setup_component_public_keys_payload(self) -> Option<SetupComponentPublicKeysPayload> {
         match self {
             VerifierData::Context(d) => d.setup_component_public_keys_payload(),
             _ => None,
         }
     }
 
-    fn election_event_context_payload(&self) -> Option<&ElectionEventContextPayload> {
+    fn election_event_context_payload(self) -> Option<ElectionEventContextPayload> {
         match self {
             VerifierData::Context(d) => d.election_event_context_payload(),
             _ => None,
         }
     }
 
-    fn setup_component_tally_data_payload(&self) -> Option<&SetupComponentTallyDataPayload> {
+    fn setup_component_tally_data_payload(self) -> Option<SetupComponentTallyDataPayload> {
         match self {
             VerifierData::Context(d) => d.setup_component_tally_data_payload(),
             _ => None,
         }
     }
 
-    fn control_component_public_keys_payload(&self) -> Option<&ControlComponentPublicKeysPayload> {
+    fn control_component_public_keys_payload(self) -> Option<ControlComponentPublicKeysPayload> {
         match self {
             VerifierData::Context(d) => d.control_component_public_keys_payload(),
             _ => None,
         }
     }
 
-    fn election_event_configuration(&self) -> Option<&ElectionEventConfiguration> {
+    fn election_event_configuration(self) -> Option<ElectionEventConfiguration> {
         match self {
             VerifierData::Context(d) => d.election_event_configuration(),
             _ => None,
@@ -254,15 +254,15 @@ impl VerifierContextDataTrait for VerifierData {
 
 impl VerifierSetupDataTrait for VerifierData {
     fn setup_component_verification_data_payload(
-        &self,
-    ) -> Option<&SetupComponentVerificationDataPayload> {
+        self,
+    ) -> Option<SetupComponentVerificationDataPayload> {
         match self {
             VerifierData::Setup(d) => d.setup_component_verification_data_payload(),
             _ => None,
         }
     }
 
-    fn control_component_code_shares_payload(&self) -> Option<&ControlComponentCodeSharesPayload> {
+    fn control_component_code_shares_payload(self) -> Option<ControlComponentCodeSharesPayload> {
         match self {
             VerifierData::Setup(d) => d.control_component_code_shares_payload(),
             _ => None,
@@ -271,43 +271,43 @@ impl VerifierSetupDataTrait for VerifierData {
 }
 
 impl VerifierTallyDataTrait for VerifierData {
-    fn e_voting_decrypt(&self) -> Option<&EVotingDecrypt> {
+    fn e_voting_decrypt(self) -> Option<EVotingDecrypt> {
         match self {
             VerifierData::Tally(d) => d.e_voting_decrypt(),
             _ => None,
         }
     }
-    fn ech_0110(&self) -> Option<&ECH0110> {
+    fn ech_0110(self) -> Option<ECH0110> {
         match self {
             VerifierData::Tally(d) => d.ech_0110(),
             _ => None,
         }
     }
-    fn ech_0222(&self) -> Option<&ECH0222> {
+    fn ech_0222(self) -> Option<ECH0222> {
         match self {
             VerifierData::Tally(d) => d.ech_0222(),
             _ => None,
         }
     }
-    fn tally_component_votes_payload(&self) -> Option<&TallyComponentVotesPayload> {
+    fn tally_component_votes_payload(self) -> Option<TallyComponentVotesPayload> {
         match self {
             VerifierData::Tally(d) => d.tally_component_votes_payload(),
             _ => None,
         }
     }
-    fn tally_component_shuffle_payload(&self) -> Option<&TallyComponentShufflePayload> {
+    fn tally_component_shuffle_payload(self) -> Option<TallyComponentShufflePayload> {
         match self {
             VerifierData::Tally(d) => d.tally_component_shuffle_payload(),
             _ => None,
         }
     }
-    fn control_component_ballot_box_payload(&self) -> Option<&ControlComponentBallotBoxPayload> {
+    fn control_component_ballot_box_payload(self) -> Option<ControlComponentBallotBoxPayload> {
         match self {
             VerifierData::Tally(d) => d.control_component_ballot_box_payload(),
             _ => None,
         }
     }
-    fn control_component_shuffle_payload(&self) -> Option<&ControlComponentShufflePayload> {
+    fn control_component_shuffle_payload(self) -> Option<ControlComponentShufflePayload> {
         match self {
             VerifierData::Tally(d) => d.control_component_shuffle_payload(),
             _ => None,

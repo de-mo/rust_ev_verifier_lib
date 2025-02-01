@@ -30,45 +30,45 @@ pub enum VerifierTallyData {
 }
 
 impl VerifierTallyDataTrait for VerifierTallyData {
-    fn e_voting_decrypt(&self) -> Option<&EVotingDecrypt> {
+    fn e_voting_decrypt(self) -> Option<EVotingDecrypt> {
         if let VerifierTallyData::EVotingDecrypt(d) = self {
             return Some(d);
         }
         None
     }
 
-    fn ech_0110(&self) -> Option<&ECH0110> {
+    fn ech_0110(self) -> Option<ECH0110> {
         if let VerifierTallyData::ECH0110(d) = self {
             return Some(d);
         }
         None
     }
 
-    fn ech_0222(&self) -> Option<&ECH0222> {
+    fn ech_0222(self) -> Option<ECH0222> {
         if let VerifierTallyData::ECH0222(d) = self {
             return Some(d);
         }
         None
     }
-    fn tally_component_votes_payload(&self) -> Option<&TallyComponentVotesPayload> {
+    fn tally_component_votes_payload(self) -> Option<TallyComponentVotesPayload> {
         if let VerifierTallyData::TallyComponentVotesPayload(d) = self {
             return Some(d);
         }
         None
     }
-    fn tally_component_shuffle_payload(&self) -> Option<&TallyComponentShufflePayload> {
+    fn tally_component_shuffle_payload(self) -> Option<TallyComponentShufflePayload> {
         if let VerifierTallyData::TallyComponentShufflePayload(d) = self {
             return Some(d);
         }
         None
     }
-    fn control_component_ballot_box_payload(&self) -> Option<&ControlComponentBallotBoxPayload> {
+    fn control_component_ballot_box_payload(self) -> Option<ControlComponentBallotBoxPayload> {
         if let VerifierTallyData::ControlComponentBallotBoxPayload(d) = self {
             return Some(d);
         }
         None
     }
-    fn control_component_shuffle_payload(&self) -> Option<&ControlComponentShufflePayload> {
+    fn control_component_shuffle_payload(self) -> Option<ControlComponentShufflePayload> {
         if let VerifierTallyData::ControlComponentShufflePayload(d) = self {
             return Some(d);
         }
