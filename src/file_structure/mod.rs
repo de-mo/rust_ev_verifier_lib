@@ -50,7 +50,7 @@ pub enum FileStructureError {
     PathIsNotDir(PathBuf),
 }
 
-#[derive(Clone)]
+//#[derive(Clone)]
 /// Type represending a VerificationDirectory (subdirectory context and setup or tally)
 pub struct VerificationDirectory {
     context: ContextDirectory,

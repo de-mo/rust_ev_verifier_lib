@@ -9,7 +9,6 @@ use crate::{
                 SetupComponentVerificationDataInner, SetupComponentVerificationDataPayload,
             },
         },
-        ControlComponentCodeSharesPayload,
     },
     file_structure::{
         context_directory::ContextDirectoryTrait,
@@ -154,7 +153,7 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
             match vcs_dir
                 .control_component_code_shares_payload_group()
                 .get_file_with_number(chunk_id)
-                .decode_verifier_data::<ControlComponentCodeSharesPayload>()
+                .decode_verifier_data()
             {
                 Ok(cc_shares) => {
                     //let cc_shares = s.control_component_code_shares_payload().unwrap();

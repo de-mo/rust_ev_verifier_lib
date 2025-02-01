@@ -9,6 +9,7 @@ use crate::{
     data_structures::{
         common_types::Signature,
         xml::{impl_iterator_for_tag_many_iter, TagManyIter, TagManyWithIterator},
+        VerifierDataToTypeTrait, VerifierDataType,
     },
     direct_trust::{CertificateAuthority, VerifiySignatureTrait, VerifySignatureError},
 };
@@ -51,6 +52,12 @@ pub struct ElectionEventConfiguration {
     pub authorizations: TagManyWithIterator<Authorization>,
     pub register: TagManyWithIterator<Voter>,
     pub signature: Signature,
+}
+
+impl VerifierDataToTypeTrait for ElectionEventConfiguration {
+    fn data_type() -> crate::data_structures::VerifierDataType {
+        VerifierDataType::Context(super::VerifierContextDataType::ElectionEventConfiguration)
+    }
 }
 
 #[derive(Deserialize, Debug, Clone)]

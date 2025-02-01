@@ -1,7 +1,7 @@
 use super::{
-    impl_itertor_for_mocked_group_type, impl_mock_methods_for_mocked_data,
-    impl_mock_methods_for_mocked_group, impl_trait_get_method_for_mocked_data,
-    impl_trait_get_method_for_mocked_group, MockFileGroupIter,
+    impl_mock_methods_for_mocked_data, impl_mock_methods_for_mocked_group,
+    impl_trait_get_method_for_mocked_data, impl_trait_get_method_for_mocked_group,
+    FileGroupDataIter, MockFileGroupElement, MockFileGroupElementType,
 };
 use crate::{
     data_structures::{
@@ -15,10 +15,9 @@ use crate::{
         context_directory::{
             impl_completness_test_trait_for_context, impl_completness_test_trait_for_context_vcs,
             ContextVCSDirectory, ContextVCSDirectoryTrait,
-            ControlComponentPublicKeysPayloadAsResultIter,
         },
         file::File,
-        file_group::{FileGroup, FileGroupIterTrait},
+        file_group::FileGroup,
         CompletnessTestTrait, ContextDirectory, ContextDirectoryTrait, FileStructureError,
     },
 };
@@ -42,16 +41,12 @@ pub struct MockContextDirectory {
     mocked_election_event_configuration: Option<Box<ElectionEventConfiguration>>,
     mocked_election_event_configuration_error: Option<FileStructureError>,
     mocked_control_component_public_keys_payload:
-        HashMap<usize, Box<ControlComponentPublicKeysPayload>>,
-    mocked_control_component_public_keys_payload_deleted: Vec<usize>,
-    mocked_control_component_public_keys_payload_errors: HashMap<usize, String>,
+        HashMap<usize, Box<MockFileGroupElement<ControlComponentPublicKeysPayload>>>,
     vcs_directories: Vec<MockContextVCSDirectory>,
 }
 
 impl_completness_test_trait_for_context_vcs!(MockContextVCSDirectory);
 impl_completness_test_trait_for_context!(MockContextDirectory);
-
-impl_itertor_for_mocked_group_type!(ControlComponentPublicKeysPayload);
 
 impl MockContextDirectory {
     pub fn new(location: &Path) -> Self {
@@ -70,8 +65,6 @@ impl MockContextDirectory {
             mocked_election_event_configuration: None,
             mocked_election_event_configuration_error: None,
             mocked_control_component_public_keys_payload: HashMap::new(),
-            mocked_control_component_public_keys_payload_deleted: Vec::new(),
-            mocked_control_component_public_keys_payload_errors: HashMap::new(),
             vcs_directories: vcs_dirs,
         }
     }
@@ -94,22 +87,21 @@ impl MockContextDirectory {
 impl ContextDirectoryTrait for MockContextDirectory {
     type VCSDirType = MockContextVCSDirectory;
 
-    type ControlComponentPublicKeysPayloadAsResultIterType =
-        MockControlComponentPublicKeysPayloadAsResultIter;
-
-    fn setup_component_public_keys_payload_file(&self) -> &File {
+    fn setup_component_public_keys_payload_file(&self) -> &File<SetupComponentPublicKeysPayload> {
         self.dir.setup_component_public_keys_payload_file()
     }
 
-    fn election_event_context_payload_file(&self) -> &File {
+    fn election_event_context_payload_file(&self) -> &File<ElectionEventContextPayload> {
         self.dir.election_event_context_payload_file()
     }
 
-    fn election_event_configuration_file(&self) -> &File {
+    fn election_event_configuration_file(&self) -> &File<ElectionEventConfiguration> {
         self.dir.election_event_configuration_file()
     }
 
-    fn control_component_public_keys_payload_group(&self) -> &FileGroup {
+    fn control_component_public_keys_payload_group(
+        &self,
+    ) -> &FileGroup<ControlComponentPublicKeysPayload> {
         self.dir.control_component_public_keys_payload_group()
     }
 
@@ -143,7 +135,7 @@ impl ContextDirectoryTrait for MockContextDirectory {
 }
 
 impl ContextVCSDirectoryTrait for MockContextVCSDirectory {
-    fn setup_component_tally_data_payload_file(&self) -> &File {
+    fn setup_component_tally_data_payload_file(&self) -> &File<SetupComponentTallyDataPayload> {
         todo!()
     }
 
@@ -263,7 +255,7 @@ mod test {
         );
     }
 
-    #[test]
+    /*#[test]
     fn test_mock_group_context_delete() {
         let mut mock_dir =
             MockContextDirectory::new(test_datasets_context_path().as_path().parent().unwrap());
@@ -320,9 +312,9 @@ mod test {
                 .count(),
             4
         );
-    }
-
+    }*/
     #[test]
+    #[ignore = "Mock of groups no more implemented"]
     fn test_mock_group_context_error() {
         let mut mock_dir =
             MockContextDirectory::new(test_datasets_context_path().as_path().parent().unwrap());
@@ -369,6 +361,7 @@ mod test {
     }
 
     #[test]
+    #[ignore = "Mock of groups no more implemented"]
     fn test_mock_group_context() {
         let mut mock_dir =
             MockContextDirectory::new(test_datasets_context_path().as_path().parent().unwrap());

@@ -1,9 +1,15 @@
-use super::super::{
-    common_types::{CiphertextDef, EncryptionParametersDef, Signature},
-    deserialize_seq_string_base64_to_seq_integer, implement_trait_verifier_data_json_decode,
-    DataStructureError, VerifierDataDecode,
+use super::{
+    super::{
+        common_types::{CiphertextDef, EncryptionParametersDef, Signature},
+        deserialize_seq_string_base64_to_seq_integer, implement_trait_verifier_data_json_decode,
+        DataStructureError, VerifierDataDecode,
+    },
+    VerifierSetupDataType,
 };
-use crate::direct_trust::{CertificateAuthority, VerifiySignatureTrait, VerifySignatureError};
+use crate::{
+    data_structures::{VerifierDataToTypeTrait, VerifierDataType},
+    direct_trust::{CertificateAuthority, VerifiySignatureTrait, VerifySignatureError},
+};
 use rust_ev_system_library::rust_ev_crypto_primitives::prelude::{elgamal::Ciphertext, Integer};
 use rust_ev_system_library::rust_ev_crypto_primitives::prelude::{
     elgamal::EncryptionParameters, ByteArray, HashableMessage, VerifyDomainTrait,
@@ -21,6 +27,12 @@ pub struct SetupComponentVerificationDataPayload {
     pub encryption_group: EncryptionParameters,
     pub setup_component_verification_data: Vec<SetupComponentVerificationDataInner>,
     pub signature: Signature,
+}
+
+impl VerifierDataToTypeTrait for SetupComponentVerificationDataPayload {
+    fn data_type() -> crate::data_structures::VerifierDataType {
+        VerifierDataType::Setup(VerifierSetupDataType::SetupComponentVerificationDataPayload)
+    }
 }
 
 implement_trait_verifier_data_json_decode!(SetupComponentVerificationDataPayload);

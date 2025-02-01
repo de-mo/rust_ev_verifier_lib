@@ -80,7 +80,7 @@ fn fn_0701_verify_signature_control_component_ballot_box<D: VerificationDirector
         for (i, f) in bb_d.control_component_ballot_box_payload_iter() {
             match f {
                 Ok(d) => result.append_with_context(
-                    &verify_signature_for_object(d.as_ref(), config),
+                    &verify_signature_for_object(&d, config),
                     format!(
                         "{}/control_component_ballot_box_payload_{}.json",
                         bb_d.name(),
@@ -107,7 +107,7 @@ fn fn_0702_verify_verify_signature_control_component_shuffle<D: VerificationDire
         for (i, f) in bb_d.control_component_shuffle_payload_iter() {
             match f {
                 Ok(d) => result.append_with_context(
-                    &verify_signature_for_object(d.as_ref(), config),
+                    &verify_signature_for_object(&d, config),
                     format!(
                         "{}/control_component_shuffle_payload_{}.json",
                         bb_d.name(),

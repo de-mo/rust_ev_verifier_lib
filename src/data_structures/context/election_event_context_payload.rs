@@ -3,18 +3,24 @@ use super::super::{
     deserialize_string_string_to_datetime, implement_trait_verifier_data_json_decode,
     DataStructureError, VerifierDataDecode,
 };
-use crate::direct_trust::{CertificateAuthority, VerifiySignatureTrait, VerifySignatureError};
-use crate::{config::VerifierConfig as VerifierConfig, data_structures::verifiy_domain_length_unique_id};
+use crate::{
+    config::VerifierConfig,
+    data_structures::{verifiy_domain_length_unique_id, VerifierDataType},
+};
+use crate::{
+    data_structures::VerifierDataToTypeTrait,
+    direct_trust::{CertificateAuthority, VerifiySignatureTrait, VerifySignatureError},
+};
 use chrono::NaiveDate;
 use chrono::NaiveDateTime;
 use regex::Regex;
-use rust_ev_system_library::rust_ev_crypto_primitives::prelude::{
-    elgamal::EncryptionParameters, ByteArray, DomainVerifications, HashableMessage,
-    RecursiveHashTrait, VerifyDomainTrait,
-};
 use rust_ev_system_library::preliminaries::{
     GetHashElectionEventContextContext, PTableElement,
     VerificationCardSetContext as VerificationCardSetContextInSystemLibrary,
+};
+use rust_ev_system_library::rust_ev_crypto_primitives::prelude::{
+    elgamal::EncryptionParameters, ByteArray, DomainVerifications, HashableMessage,
+    RecursiveHashTrait, VerifyDomainTrait,
 };
 use serde::de::{Deserializer, Error as SerdeError};
 use serde::Deserialize;
@@ -28,6 +34,12 @@ pub struct ElectionEventContextPayload {
     pub small_primes: Vec<usize>,
     pub election_event_context: ElectionEventContext,
     pub signature: Signature,
+}
+
+impl VerifierDataToTypeTrait for ElectionEventContextPayload {
+    fn data_type() -> crate::data_structures::VerifierDataType {
+        VerifierDataType::Context(super::VerifierContextDataType::ElectionEventContextPayload)
+    }
 }
 
 implement_trait_verifier_data_json_decode!(ElectionEventContextPayload);
@@ -406,7 +418,9 @@ impl<'a> From<&'a VerificationCardSetContext> for VerificationCardSetContextInSy
 
 #[cfg(test)]
 mod test {
-    use rust_ev_system_library::rust_ev_crypto_primitives::prelude::{EncodeTrait, RecursiveHashTrait};
+    use rust_ev_system_library::rust_ev_crypto_primitives::prelude::{
+        EncodeTrait, RecursiveHashTrait,
+    };
 
     use super::{
         super::super::test::{

@@ -1,12 +1,16 @@
 use super::super::super::result::{VerificationEvent, VerificationResult};
 use crate::{
     config::VerifierConfig,
+    data_structures::{VerifierDataDecode, VerifierDataToTypeTrait},
     file_structure::{
         context_directory::ContextDirectoryTrait, file::File, VerificationDirectoryTrait,
     },
 };
 
-fn test_file_exists(file: &File, result: &mut VerificationResult) {
+fn test_file_exists<D: VerifierDataDecode + VerifierDataToTypeTrait>(
+    file: &File<D>,
+    result: &mut VerificationResult,
+) {
     if !file.exists() {
         result.push(VerificationEvent::new_failure(&format!(
             "File {} does not exist",
@@ -39,7 +43,7 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
     }
     for (_, f) in context_dir
         .control_component_public_keys_payload_group()
-        .iter()
+        .iter_file()
     {
         test_file_exists(&f, result);
     }

@@ -1,4 +1,5 @@
 use super::verifiable_shuffle::VerifiableShuffle;
+use super::VerifierTallyDataType;
 use super::{
     super::{
         common_types::{EncryptionParametersDef, Signature},
@@ -7,6 +8,7 @@ use super::{
     },
     verifiable_shuffle::verifiy_domain_for_verifiable_shuffle,
 };
+use crate::data_structures::{VerifierDataToTypeTrait, VerifierDataType};
 use crate::{
     data_structures::common_types::DecryptionProof,
     direct_trust::{CertificateAuthority, VerifiySignatureTrait, VerifySignatureError},
@@ -30,6 +32,13 @@ pub struct ControlComponentShufflePayload {
     pub verifiable_decryptions: VerifiableDecryptions,
     pub signature: Signature,
 }
+
+impl VerifierDataToTypeTrait for ControlComponentShufflePayload {
+    fn data_type() -> VerifierDataType {
+        VerifierDataType::Tally(VerifierTallyDataType::ControlComponentShufflePayload)
+    }
+}
+
 implement_trait_verifier_data_json_decode!(ControlComponentShufflePayload);
 
 #[derive(Deserialize, Debug, Clone)]

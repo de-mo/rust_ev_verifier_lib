@@ -1,22 +1,16 @@
 use super::{
     file::{create_file, File},
-    file_group::{
-        add_type_for_file_group_iter_trait, impl_iterator_over_data_payload, FileGroup,
-        FileGroupIter, FileGroupIterTrait,
-    },
+    file_group::{FileGroup, FileGroupDataIter, FileGroupFileIter},
     CompletnessTestTrait, FileStructureError,
 };
 use crate::{
     config::VerifierConfig,
-    data_structures::{
-        create_verifier_tally_data_type,
-        tally::{
-            control_component_ballot_box_payload::ControlComponentBallotBoxPayload,
-            control_component_shuffle_payload::ControlComponentShufflePayload,
-            tally_component_shuffle_payload::TallyComponentShufflePayload,
-            tally_component_votes_payload::TallyComponentVotesPayload, VerifierTallyDataType,
-        },
-        VerifierDataType,
+    data_structures::tally::{
+        control_component_ballot_box_payload::ControlComponentBallotBoxPayload,
+        control_component_shuffle_payload::ControlComponentShufflePayload,
+        e_voting_decrypt::EVotingDecrypt, ech_0110::ECH0110, ech_0222::ECH0222,
+        tally_component_shuffle_payload::TallyComponentShufflePayload,
+        tally_component_votes_payload::TallyComponentVotesPayload,
     },
 };
 use std::{
@@ -24,22 +18,22 @@ use std::{
     path::{Path, PathBuf},
 };
 
-#[derive(Clone)]
+//#[derive(Clone)]
 pub struct TallyDirectory {
     location: PathBuf,
-    e_voting_decrypt_file: File,
-    ech_0110_file: File,
-    ech_0222_file: File,
+    e_voting_decrypt_file: File<EVotingDecrypt>,
+    ech_0110_file: File<ECH0110>,
+    ech_0222_file: File<ECH0222>,
     bb_directories: Vec<BBDirectory>,
 }
 
-#[derive(Clone)]
+//#[derive(Clone)]
 pub struct BBDirectory {
     location: PathBuf,
-    tally_component_votes_payload_file: File,
-    tally_component_shuffle_payload_file: File,
-    control_component_ballot_box_payload_group: FileGroup,
-    control_component_shuffle_payload_group: FileGroup,
+    tally_component_votes_payload_file: File<TallyComponentVotesPayload>,
+    tally_component_shuffle_payload_file: File<TallyComponentShufflePayload>,
+    control_component_ballot_box_payload_group: FileGroup<ControlComponentBallotBoxPayload>,
+    control_component_shuffle_payload_group: FileGroup<ControlComponentShufflePayload>,
 }
 
 /// Trait to set the necessary functions for the struct `Tally Directory` that
@@ -50,9 +44,9 @@ pub struct BBDirectory {
 pub trait TallyDirectoryTrait: CompletnessTestTrait + Send + Sync {
     type BBDirType: BBDirectoryTrait;
 
-    fn e_voting_decrypt_file(&self) -> &File;
-    fn ech_0110_file(&self) -> &File;
-    fn ech_0222_file(&self) -> &File;
+    fn e_voting_decrypt_file(&self) -> &File<EVotingDecrypt>;
+    fn ech_0110_file(&self) -> &File<ECH0110>;
+    fn ech_0222_file(&self) -> &File<ECH0222>;
     fn bb_directories(&self) -> &[Self::BBDirType];
 
     /// Collect the names of the ballot box directories
@@ -69,18 +63,13 @@ pub trait TallyDirectoryTrait: CompletnessTestTrait + Send + Sync {
 /// The trait is used as parameter of the verification functions to allow mock of
 /// test (negative tests)
 pub trait BBDirectoryTrait: CompletnessTestTrait + Send + Sync {
-    add_type_for_file_group_iter_trait!(
-        ControlComponentBallotBoxPayloadAsResultIterType,
-        ControlComponentBallotBoxPayloadAsResult
-    );
-    add_type_for_file_group_iter_trait!(
-        ControlComponentShufflePayloadAsResultIterType,
-        ControlComponentShufflePayloadAsResult
-    );
-    fn tally_component_votes_payload_file(&self) -> &File;
-    fn tally_component_shuffle_payload_file(&self) -> &File;
-    fn control_component_ballot_box_payload_group(&self) -> &FileGroup;
-    fn control_component_shuffle_payload_group(&self) -> &FileGroup;
+    fn tally_component_votes_payload_file(&self) -> &File<TallyComponentVotesPayload>;
+    fn tally_component_shuffle_payload_file(&self) -> &File<TallyComponentShufflePayload>;
+    fn control_component_ballot_box_payload_group(
+        &self,
+    ) -> &FileGroup<ControlComponentBallotBoxPayload>;
+    fn control_component_shuffle_payload_group(&self)
+        -> &FileGroup<ControlComponentShufflePayload>;
     fn tally_component_votes_payload(
         &self,
     ) -> Result<Box<TallyComponentVotesPayload>, FileStructureError>;
@@ -89,39 +78,25 @@ pub trait BBDirectoryTrait: CompletnessTestTrait + Send + Sync {
     ) -> Result<Box<TallyComponentShufflePayload>, FileStructureError>;
     fn control_component_ballot_box_payload_iter(
         &self,
-    ) -> Self::ControlComponentBallotBoxPayloadAsResultIterType;
+    ) -> FileGroupDataIter<ControlComponentBallotBoxPayload>;
     fn control_component_shuffle_payload_iter(
         &self,
-    ) -> Self::ControlComponentShufflePayloadAsResultIterType;
+    ) -> FileGroupDataIter<ControlComponentShufflePayload>;
 
     fn name(&self) -> String;
     fn location(&self) -> &Path;
 }
 
-impl_iterator_over_data_payload!(
-    ControlComponentBallotBoxPayload,
-    control_component_ballot_box_payload,
-    ControlComponentBallotBoxPayloadAsResult,
-    ControlComponentBallotBoxPayloadAsResultIter
-);
-
-impl_iterator_over_data_payload!(
-    ControlComponentShufflePayload,
-    control_component_shuffle_payload,
-    ControlComponentShufflePayloadAsResult,
-    ControlComponentShufflePayloadAsResultIter
-);
-
 impl TallyDirectoryTrait for TallyDirectory {
     type BBDirType = BBDirectory;
 
-    fn e_voting_decrypt_file(&self) -> &File {
+    fn e_voting_decrypt_file(&self) -> &File<EVotingDecrypt> {
         &self.e_voting_decrypt_file
     }
-    fn ech_0110_file(&self) -> &File {
+    fn ech_0110_file(&self) -> &File<ECH0110> {
         &self.ech_0110_file
     }
-    fn ech_0222_file(&self) -> &File {
+    fn ech_0222_file(&self) -> &File<ECH0222> {
         &self.ech_0222_file
     }
     fn bb_directories(&self) -> &[BBDirectory] {
@@ -163,47 +138,51 @@ pub(crate) use impl_completness_test_trait_for_tally;
 impl_completness_test_trait_for_tally!(TallyDirectory);
 
 impl BBDirectoryTrait for BBDirectory {
-    type ControlComponentBallotBoxPayloadAsResultIterType =
-        ControlComponentBallotBoxPayloadAsResultIter;
-    type ControlComponentShufflePayloadAsResultIterType =
-        ControlComponentShufflePayloadAsResultIter;
-    fn tally_component_votes_payload_file(&self) -> &File {
+    fn tally_component_votes_payload_file(&self) -> &File<TallyComponentVotesPayload> {
         &self.tally_component_votes_payload_file
     }
-    fn tally_component_shuffle_payload_file(&self) -> &File {
+    fn tally_component_shuffle_payload_file(&self) -> &File<TallyComponentShufflePayload> {
         &self.tally_component_shuffle_payload_file
     }
-    fn control_component_ballot_box_payload_group(&self) -> &FileGroup {
+    fn control_component_ballot_box_payload_group(
+        &self,
+    ) -> &FileGroup<ControlComponentBallotBoxPayload> {
         &self.control_component_ballot_box_payload_group
     }
-    fn control_component_shuffle_payload_group(&self) -> &FileGroup {
+    fn control_component_shuffle_payload_group(
+        &self,
+    ) -> &FileGroup<ControlComponentShufflePayload> {
         &self.control_component_shuffle_payload_group
     }
     fn tally_component_votes_payload(
         &self,
     ) -> Result<Box<TallyComponentVotesPayload>, FileStructureError> {
         self.tally_component_votes_payload_file
-            .decode_verifier_data::<TallyComponentVotesPayload>()
+            .decode_verifier_data()
             .map(Box::new)
     }
     fn tally_component_shuffle_payload(
         &self,
     ) -> Result<Box<TallyComponentShufflePayload>, FileStructureError> {
         self.tally_component_shuffle_payload_file
-            .decode_verifier_data::<TallyComponentShufflePayload>()
+            .decode_verifier_data()
             .map(Box::new)
     }
 
     fn control_component_ballot_box_payload_iter(
         &self,
-    ) -> Self::ControlComponentBallotBoxPayloadAsResultIterType {
-        FileGroupIter::new(&self.control_component_ballot_box_payload_group)
+    ) -> FileGroupDataIter<ControlComponentBallotBoxPayload> {
+        FileGroupDataIter::from(FileGroupFileIter::new(
+            &self.control_component_ballot_box_payload_group,
+        ))
     }
 
     fn control_component_shuffle_payload_iter(
         &self,
-    ) -> Self::ControlComponentShufflePayloadAsResultIterType {
-        FileGroupIter::new(&self.control_component_shuffle_payload_group)
+    ) -> FileGroupDataIter<ControlComponentShufflePayload> {
+        FileGroupDataIter::from(FileGroupFileIter::new(
+            &self.control_component_shuffle_payload_group,
+        ))
     }
 
     fn name(&self) -> String {
@@ -318,14 +297,8 @@ impl BBDirectory {
                 Tally,
                 VerifierTallyDataType::TallyComponentShufflePayload
             ),
-            control_component_ballot_box_payload_group: FileGroup::new(
-                location,
-                create_verifier_tally_data_type!(Tally, ControlComponentBallotBoxPayload),
-            ),
-            control_component_shuffle_payload_group: FileGroup::new(
-                location,
-                create_verifier_tally_data_type!(Tally, ControlComponentShufflePayload),
-            ),
+            control_component_ballot_box_payload_group: FileGroup::new(location),
+            control_component_shuffle_payload_group: FileGroup::new(location),
         }
     }
 

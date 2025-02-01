@@ -1,10 +1,7 @@
 use super::super::super::result::{VerificationEvent, VerificationResult};
 use crate::{
     config::VerifierConfig,
-    data_structures::{
-        context::control_component_public_keys_payload::ControlComponentPublicKeys,
-        ControlComponentPublicKeysPayload,
-    },
+    data_structures::context::control_component_public_keys_payload::ControlComponentPublicKeys,
     file_structure::{context_directory::ContextDirectoryTrait, VerificationDirectoryTrait},
 };
 
@@ -17,10 +14,7 @@ fn validate_cc_ccr_enc_pk<S: ContextDirectoryTrait>(
     let f = context_dir
         .control_component_public_keys_payload_group()
         .get_file_with_number(node_id);
-    let cc_pk = match f
-        .decode_verifier_data::<ControlComponentPublicKeysPayload>()
-        .map(Box::new)
-    {
+    let cc_pk = match f.decode_verifier_data().map(Box::new) {
         Ok(d) => d.control_component_public_keys,
         Err(e) => {
             result.push(

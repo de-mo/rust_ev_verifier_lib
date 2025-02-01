@@ -1,6 +1,6 @@
 use super::{
-    impl_itertor_for_mocked_group_type, impl_mock_methods_for_mocked_group,
-    impl_trait_get_method_for_mocked_group, MockFileGroupIter,
+    impl_mock_methods_for_mocked_group, impl_trait_get_method_for_mocked_group, FileGroupDataIter,
+    MockFileGroupElement, MockFileGroupElementType,
 };
 use crate::{
     data_structures::{
@@ -8,12 +8,9 @@ use crate::{
         ControlComponentCodeSharesPayload,
     },
     file_structure::{
-        file_group::FileGroupIterTrait,
         setup_directory::{
             impl_completness_test_trait_for_setup, impl_completness_test_trait_for_setup_vcs,
-            ControlComponentCodeSharesPayloadAsResultIter,
-            SetupComponentVerificationDataPayloadAsResultIter, SetupDirectory, SetupVCSDirectory,
-            SetupVCSDirectoryTrait,
+            SetupDirectory, SetupVCSDirectory, SetupVCSDirectoryTrait,
         },
         CompletnessTestTrait, FileStructureError, SetupDirectoryTrait,
     },
@@ -31,13 +28,9 @@ pub struct MockSetupDirectory {
 pub struct MockSetupVCSDirectory {
     dir: SetupVCSDirectory,
     mocked_setup_component_verification_data_payload:
-        HashMap<usize, Box<SetupComponentVerificationDataPayload>>,
-    mocked_setup_component_verification_data_payload_deleted: Vec<usize>,
-    mocked_setup_component_verification_data_payload_errors: HashMap<usize, String>,
+        HashMap<usize, Box<MockFileGroupElement<SetupComponentVerificationDataPayload>>>,
     mocked_control_component_code_shares_payload:
-        HashMap<usize, Box<ControlComponentCodeSharesPayload>>,
-    mocked_control_component_code_shares_payload_deleted: Vec<usize>,
-    mocked_control_component_code_shares_payload_errors: HashMap<usize, String>,
+        HashMap<usize, Box<MockFileGroupElement<ControlComponentCodeSharesPayload>>>,
 }
 
 impl_completness_test_trait_for_setup_vcs!(MockSetupVCSDirectory);
@@ -71,24 +64,19 @@ impl MockSetupDirectory {
     }
 }
 
-impl_itertor_for_mocked_group_type!(SetupComponentVerificationDataPayload);
-impl_itertor_for_mocked_group_type!(ControlComponentCodeSharesPayload);
+//impl_itertor_for_mocked_group_type!(SetupComponentVerificationDataPayload);
+//impl_itertor_for_mocked_group_type!(ControlComponentCodeSharesPayload);
 
 impl SetupVCSDirectoryTrait for MockSetupVCSDirectory {
-    type SetupComponentVerificationDataPayloadAsResultIterType =
-        MockSetupComponentVerificationDataPayloadAsResultIter;
-    type ControlComponentCodeSharesPayloadAsResultIterType =
-        MockControlComponentCodeSharesPayloadAsResultIter;
-
     fn setup_component_verification_data_payload_group(
         &self,
-    ) -> &crate::file_structure::file_group::FileGroup {
+    ) -> &crate::file_structure::file_group::FileGroup<SetupComponentVerificationDataPayload> {
         todo!()
     }
 
     fn control_component_code_shares_payload_group(
         &self,
-    ) -> &crate::file_structure::file_group::FileGroup {
+    ) -> &crate::file_structure::file_group::FileGroup<ControlComponentCodeSharesPayload> {
         todo!()
     }
 
@@ -116,11 +104,7 @@ impl MockSetupVCSDirectory {
         MockSetupVCSDirectory {
             dir: SetupVCSDirectory::new(location),
             mocked_setup_component_verification_data_payload: HashMap::new(),
-            mocked_setup_component_verification_data_payload_deleted: vec![],
-            mocked_control_component_code_shares_payload_errors: HashMap::new(),
             mocked_control_component_code_shares_payload: HashMap::new(),
-            mocked_control_component_code_shares_payload_deleted: vec![],
-            mocked_setup_component_verification_data_payload_errors: HashMap::new(),
         }
     }
 

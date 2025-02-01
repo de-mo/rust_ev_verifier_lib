@@ -2,24 +2,17 @@
 
 use super::{
     file::{create_file, File},
-    file_group::{
-        add_type_for_file_group_iter_trait, impl_iterator_over_data_payload, FileGroup,
-        FileGroupIter, FileGroupIterTrait,
-    },
+    file_group::{FileGroup, FileGroupDataIter, FileGroupFileIter},
     CompletnessTestTrait, FileStructureError,
 };
 use crate::{
     config::VerifierConfig,
-    data_structures::{
-        context::{
-            control_component_public_keys_payload::ControlComponentPublicKeysPayload,
-            election_event_configuration::ElectionEventConfiguration,
-            election_event_context_payload::ElectionEventContextPayload,
-            setup_component_public_keys_payload::SetupComponentPublicKeysPayload,
-            setup_component_tally_data_payload::SetupComponentTallyDataPayload,
-            VerifierContextDataType,
-        },
-        create_verifier_context_data_type, VerifierDataType,
+    data_structures::context::{
+        control_component_public_keys_payload::ControlComponentPublicKeysPayload,
+        election_event_configuration::ElectionEventConfiguration,
+        election_event_context_payload::ElectionEventContextPayload,
+        setup_component_public_keys_payload::SetupComponentPublicKeysPayload,
+        setup_component_tally_data_payload::SetupComponentTallyDataPayload,
     },
 };
 use std::{
@@ -28,13 +21,13 @@ use std::{
 };
 
 /// The context directoy, containing the files, file groues and subdirectories
-#[derive(Clone)]
+//#[derive(Clone)]
 pub struct ContextDirectory {
     location: PathBuf,
-    setup_component_public_keys_payload_file: File,
-    election_event_context_payload_file: File,
-    election_event_configuration_file: File,
-    control_component_public_keys_payload_group: FileGroup,
+    setup_component_public_keys_payload_file: File<SetupComponentPublicKeysPayload>,
+    election_event_context_payload_file: File<ElectionEventContextPayload>,
+    election_event_configuration_file: File<ElectionEventConfiguration>,
+    control_component_public_keys_payload_group: FileGroup<ControlComponentPublicKeysPayload>,
     vcs_directories: Vec<ContextVCSDirectory>,
 }
 
@@ -42,7 +35,7 @@ pub struct ContextDirectory {
 #[derive(Clone)]
 pub struct ContextVCSDirectory {
     location: PathBuf,
-    setup_component_tally_data_payload_file: File,
+    setup_component_tally_data_payload_file: File<SetupComponentTallyDataPayload>,
 }
 
 /// Trait to set the necessary functions for the struct [ContextDirectory] that
@@ -52,15 +45,13 @@ pub struct ContextVCSDirectory {
 /// test (negative tests)
 pub trait ContextDirectoryTrait: CompletnessTestTrait + Send + Sync {
     type VCSDirType: ContextVCSDirectoryTrait;
-    add_type_for_file_group_iter_trait!(
-        ControlComponentPublicKeysPayloadAsResultIterType,
-        ControlComponentPublicKeysPayloadAsResult
-    );
 
-    fn setup_component_public_keys_payload_file(&self) -> &File;
-    fn election_event_context_payload_file(&self) -> &File;
-    fn election_event_configuration_file(&self) -> &File;
-    fn control_component_public_keys_payload_group(&self) -> &FileGroup;
+    fn setup_component_public_keys_payload_file(&self) -> &File<SetupComponentPublicKeysPayload>;
+    fn election_event_context_payload_file(&self) -> &File<ElectionEventContextPayload>;
+    fn election_event_configuration_file(&self) -> &File<ElectionEventConfiguration>;
+    fn control_component_public_keys_payload_group(
+        &self,
+    ) -> &FileGroup<ControlComponentPublicKeysPayload>;
     fn vcs_directories(&self) -> &[Self::VCSDirType];
     fn setup_component_public_keys_payload(
         &self,
@@ -75,7 +66,7 @@ pub trait ContextDirectoryTrait: CompletnessTestTrait + Send + Sync {
 
     fn control_component_public_keys_payload_iter(
         &self,
-    ) -> Self::ControlComponentPublicKeysPayloadAsResultIterType;
+    ) -> FileGroupDataIter<ControlComponentPublicKeysPayload>;
 
     /// Collect the names of the vcs directories
     fn vcs_directory_names(&self) -> Vec<String> {
@@ -91,20 +82,13 @@ pub trait ContextDirectoryTrait: CompletnessTestTrait + Send + Sync {
 /// The trait is used as parameter of the verification functions to allow mock of
 /// test (negative tests)
 pub trait ContextVCSDirectoryTrait: CompletnessTestTrait + Send + Sync {
-    fn setup_component_tally_data_payload_file(&self) -> &File;
+    fn setup_component_tally_data_payload_file(&self) -> &File<SetupComponentTallyDataPayload>;
     fn setup_component_tally_data_payload(
         &self,
     ) -> Result<Box<SetupComponentTallyDataPayload>, FileStructureError>;
     fn name(&self) -> String;
     fn location(&self) -> &Path;
 }
-
-impl_iterator_over_data_payload!(
-    ControlComponentPublicKeysPayload,
-    control_component_public_keys_payload,
-    ControlComponentPublicKeysPayloadAsResult,
-    ControlComponentPublicKeysPayloadAsResultIter
-);
 
 impl ContextDirectory {
     /// New [ContextDirectory]
@@ -128,10 +112,7 @@ impl ContextDirectory {
                 Context,
                 VerifierContextDataType::ElectionEventConfiguration
             ),
-            control_component_public_keys_payload_group: FileGroup::new(
-                &location,
-                create_verifier_context_data_type!(Context, ControlComponentPublicKeysPayload),
-            ),
+            control_component_public_keys_payload_group: FileGroup::new(&location),
             vcs_directories: vec![],
         };
         let vcs_path = location.join(VerifierConfig::vcs_dir_name());
@@ -193,19 +174,19 @@ impl_completness_test_trait_for_context!(ContextDirectory);
 
 impl ContextDirectoryTrait for ContextDirectory {
     type VCSDirType = ContextVCSDirectory;
-    type ControlComponentPublicKeysPayloadAsResultIterType =
-        ControlComponentPublicKeysPayloadAsResultIter;
 
-    fn setup_component_public_keys_payload_file(&self) -> &File {
+    fn setup_component_public_keys_payload_file(&self) -> &File<SetupComponentPublicKeysPayload> {
         &self.setup_component_public_keys_payload_file
     }
-    fn election_event_context_payload_file(&self) -> &File {
+    fn election_event_context_payload_file(&self) -> &File<ElectionEventContextPayload> {
         &self.election_event_context_payload_file
     }
-    fn election_event_configuration_file(&self) -> &File {
+    fn election_event_configuration_file(&self) -> &File<ElectionEventConfiguration> {
         &self.election_event_configuration_file
     }
-    fn control_component_public_keys_payload_group(&self) -> &FileGroup {
+    fn control_component_public_keys_payload_group(
+        &self,
+    ) -> &FileGroup<ControlComponentPublicKeysPayload> {
         &self.control_component_public_keys_payload_group
     }
     fn vcs_directories(&self) -> &[ContextVCSDirectory] {
@@ -216,7 +197,7 @@ impl ContextDirectoryTrait for ContextDirectory {
         &self,
     ) -> Result<Box<SetupComponentPublicKeysPayload>, FileStructureError> {
         self.setup_component_public_keys_payload_file
-            .decode_verifier_data::<SetupComponentPublicKeysPayload>()
+            .decode_verifier_data()
             .map(Box::new)
     }
 
@@ -224,7 +205,7 @@ impl ContextDirectoryTrait for ContextDirectory {
         &self,
     ) -> Result<Box<ElectionEventContextPayload>, FileStructureError> {
         self.election_event_context_payload_file
-            .decode_verifier_data::<ElectionEventContextPayload>()
+            .decode_verifier_data()
             .map(Box::new)
     }
 
@@ -232,14 +213,16 @@ impl ContextDirectoryTrait for ContextDirectory {
         &self,
     ) -> Result<Box<ElectionEventConfiguration>, FileStructureError> {
         self.election_event_configuration_file
-            .decode_verifier_data::<ElectionEventConfiguration>()
+            .decode_verifier_data()
             .map(Box::new)
     }
 
     fn control_component_public_keys_payload_iter(
         &self,
-    ) -> Self::ControlComponentPublicKeysPayloadAsResultIterType {
-        FileGroupIter::new(&self.control_component_public_keys_payload_group)
+    ) -> FileGroupDataIter<ControlComponentPublicKeysPayload> {
+        FileGroupDataIter::from(FileGroupFileIter::new(
+            &self.control_component_public_keys_payload_group,
+        ))
     }
 
     fn location(&self) -> &Path {
@@ -287,14 +270,14 @@ impl ContextVCSDirectory {
 }
 
 impl ContextVCSDirectoryTrait for ContextVCSDirectory {
-    fn setup_component_tally_data_payload_file(&self) -> &File {
+    fn setup_component_tally_data_payload_file(&self) -> &File<SetupComponentTallyDataPayload> {
         &self.setup_component_tally_data_payload_file
     }
     fn setup_component_tally_data_payload(
         &self,
     ) -> Result<Box<SetupComponentTallyDataPayload>, FileStructureError> {
         self.setup_component_tally_data_payload_file
-            .decode_verifier_data::<SetupComponentTallyDataPayload>()
+            .decode_verifier_data()
             .map(Box::new)
     }
 

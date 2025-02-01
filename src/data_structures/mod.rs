@@ -68,26 +68,10 @@ pub enum DataStructureError {
 pub type VerifierDataType =
     DatasetType<VerifierContextDataType, VerifierSetupDataType, VerifierTallyDataType>;
 
-macro_rules! create_verifier_context_data_type {
-    ($p: ident, $s: ident) => {
-        VerifierDataType::$p(VerifierContextDataType::$s)
-    };
+/// Trait to add the funcitonality to get the [VerifierDataType] from the verifier data
+pub trait VerifierDataToTypeTrait {
+    fn data_type() -> VerifierDataType;
 }
-pub(crate) use create_verifier_context_data_type;
-
-macro_rules! create_verifier_setup_data_type {
-    ($p: ident, $s: ident) => {
-        VerifierDataType::$p(VerifierSetupDataType::$s)
-    };
-}
-pub(crate) use create_verifier_setup_data_type;
-
-macro_rules! create_verifier_tally_data_type {
-    ($p: ident, $s: ident) => {
-        VerifierDataType::$p(VerifierTallyDataType::$s)
-    };
-}
-pub(crate) use create_verifier_tally_data_type;
 
 /// A trait defining the necessary function to decode to the Verifier Data
 pub trait VerifierDataDecode: Sized {
