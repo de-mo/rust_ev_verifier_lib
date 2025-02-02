@@ -18,6 +18,7 @@ use crate::{
 use std::{
     fs,
     path::{Path, PathBuf},
+    sync::Arc,
 };
 
 /// The context directoy, containing the files, file groues and subdirectories
@@ -55,21 +56,21 @@ pub trait ContextDirectoryTrait: CompletnessTestTrait + Send + Sync {
     fn vcs_directories(&self) -> &[Self::VCSDirType];
     fn setup_component_public_keys_payload(
         &self,
-    ) -> Result<Box<SetupComponentPublicKeysPayload>, FileStructureError>;
+    ) -> Result<Arc<SetupComponentPublicKeysPayload>, FileStructureError>;
 
     fn election_event_context_payload(
         &self,
-    ) -> Result<Box<ElectionEventContextPayload>, FileStructureError>;
+    ) -> Result<Arc<ElectionEventContextPayload>, FileStructureError>;
     fn election_event_configuration(
         &self,
-    ) -> Result<Box<ElectionEventConfiguration>, FileStructureError>;
+    ) -> Result<Arc<ElectionEventConfiguration>, FileStructureError>;
 
     fn control_component_public_keys_payload_iter(
         &self,
     ) -> impl Iterator<
         Item = (
             usize,
-            Result<ControlComponentPublicKeysPayload, FileStructureError>,
+            Result<Arc<ControlComponentPublicKeysPayload>, FileStructureError>,
         ),
     >;
 
@@ -90,7 +91,7 @@ pub trait ContextVCSDirectoryTrait: CompletnessTestTrait + Send + Sync {
     fn setup_component_tally_data_payload_file(&self) -> &File<SetupComponentTallyDataPayload>;
     fn setup_component_tally_data_payload(
         &self,
-    ) -> Result<Box<SetupComponentTallyDataPayload>, FileStructureError>;
+    ) -> Result<Arc<SetupComponentTallyDataPayload>, FileStructureError>;
     fn name(&self) -> String;
     fn location(&self) -> &Path;
 }
@@ -200,26 +201,23 @@ impl ContextDirectoryTrait for ContextDirectory {
 
     fn setup_component_public_keys_payload(
         &self,
-    ) -> Result<Box<SetupComponentPublicKeysPayload>, FileStructureError> {
+    ) -> Result<Arc<SetupComponentPublicKeysPayload>, FileStructureError> {
         self.setup_component_public_keys_payload_file
             .decode_verifier_data()
-            .map(Box::new)
     }
 
     fn election_event_context_payload(
         &self,
-    ) -> Result<Box<ElectionEventContextPayload>, FileStructureError> {
+    ) -> Result<Arc<ElectionEventContextPayload>, FileStructureError> {
         self.election_event_context_payload_file
             .decode_verifier_data()
-            .map(Box::new)
     }
 
     fn election_event_configuration(
         &self,
-    ) -> Result<Box<ElectionEventConfiguration>, FileStructureError> {
+    ) -> Result<Arc<ElectionEventConfiguration>, FileStructureError> {
         self.election_event_configuration_file
             .decode_verifier_data()
-            .map(Box::new)
     }
 
     fn control_component_public_keys_payload_iter(
@@ -227,7 +225,7 @@ impl ContextDirectoryTrait for ContextDirectory {
     ) -> impl Iterator<
         Item = (
             usize,
-            Result<ControlComponentPublicKeysPayload, FileStructureError>,
+            Result<Arc<ControlComponentPublicKeysPayload>, FileStructureError>,
         ),
     > {
         FileGroupDataIter::from(FileGroupFileIter::new(
@@ -285,10 +283,9 @@ impl ContextVCSDirectoryTrait for ContextVCSDirectory {
     }
     fn setup_component_tally_data_payload(
         &self,
-    ) -> Result<Box<SetupComponentTallyDataPayload>, FileStructureError> {
+    ) -> Result<Arc<SetupComponentTallyDataPayload>, FileStructureError> {
         self.setup_component_tally_data_payload_file
             .decode_verifier_data()
-            .map(Box::new)
     }
 
     fn name(&self) -> String {

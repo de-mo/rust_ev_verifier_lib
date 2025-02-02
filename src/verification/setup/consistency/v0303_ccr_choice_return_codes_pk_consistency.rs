@@ -14,8 +14,8 @@ fn validate_cc_ccr_enc_pk<S: ContextDirectoryTrait>(
     let f = context_dir
         .control_component_public_keys_payload_group()
         .get_file_with_number(node_id);
-    let cc_pk = match f.decode_verifier_data().map(Box::new) {
-        Ok(d) => d.control_component_public_keys,
+    let context = match f.decode_verifier_data().map(Box::new) {
+        Ok(d) => d,
         Err(e) => {
             result.push(
                 VerificationEvent::new_error(&e)
@@ -24,6 +24,7 @@ fn validate_cc_ccr_enc_pk<S: ContextDirectoryTrait>(
             return;
         }
     };
+    let cc_pk = &context.as_ref().control_component_public_keys;
     if setup.ccrj_choice_return_codes_encryption_public_key.len()
         != cc_pk.ccrj_choice_return_codes_encryption_public_key.len()
     {
@@ -51,11 +52,12 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
             return;
         }
     };
-    for node in sc_pk
+    for node in &sc_pk
+        .as_ref()
         .setup_component_public_keys
         .combined_control_component_public_keys
     {
-        validate_cc_ccr_enc_pk(context_dir, &node, node.node_id, result)
+        validate_cc_ccr_enc_pk(context_dir, node, node.node_id, result)
     }
 }
 

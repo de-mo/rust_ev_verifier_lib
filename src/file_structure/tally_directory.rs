@@ -16,6 +16,7 @@ use crate::{
 use std::{
     fs,
     path::{Path, PathBuf},
+    sync::Arc,
 };
 
 //#[derive(Clone)]
@@ -72,16 +73,16 @@ pub trait BBDirectoryTrait: CompletnessTestTrait + Send + Sync {
         -> &FileGroup<ControlComponentShufflePayload>;
     fn tally_component_votes_payload(
         &self,
-    ) -> Result<Box<TallyComponentVotesPayload>, FileStructureError>;
+    ) -> Result<Arc<TallyComponentVotesPayload>, FileStructureError>;
     fn tally_component_shuffle_payload(
         &self,
-    ) -> Result<Box<TallyComponentShufflePayload>, FileStructureError>;
+    ) -> Result<Arc<TallyComponentShufflePayload>, FileStructureError>;
     fn control_component_ballot_box_payload_iter(
         &self,
     ) -> impl Iterator<
         Item = (
             usize,
-            Result<ControlComponentBallotBoxPayload, FileStructureError>,
+            Result<Arc<ControlComponentBallotBoxPayload>, FileStructureError>,
         ),
     >;
     fn control_component_shuffle_payload_iter(
@@ -89,7 +90,7 @@ pub trait BBDirectoryTrait: CompletnessTestTrait + Send + Sync {
     ) -> impl Iterator<
         Item = (
             usize,
-            Result<ControlComponentShufflePayload, FileStructureError>,
+            Result<Arc<ControlComponentShufflePayload>, FileStructureError>,
         ),
     >;
 
@@ -166,17 +167,15 @@ impl BBDirectoryTrait for BBDirectory {
     }
     fn tally_component_votes_payload(
         &self,
-    ) -> Result<Box<TallyComponentVotesPayload>, FileStructureError> {
+    ) -> Result<Arc<TallyComponentVotesPayload>, FileStructureError> {
         self.tally_component_votes_payload_file
             .decode_verifier_data()
-            .map(Box::new)
     }
     fn tally_component_shuffle_payload(
         &self,
-    ) -> Result<Box<TallyComponentShufflePayload>, FileStructureError> {
+    ) -> Result<Arc<TallyComponentShufflePayload>, FileStructureError> {
         self.tally_component_shuffle_payload_file
             .decode_verifier_data()
-            .map(Box::new)
     }
 
     fn control_component_ballot_box_payload_iter(
@@ -184,7 +183,7 @@ impl BBDirectoryTrait for BBDirectory {
     ) -> impl Iterator<
         Item = (
             usize,
-            Result<ControlComponentBallotBoxPayload, FileStructureError>,
+            Result<Arc<ControlComponentBallotBoxPayload>, FileStructureError>,
         ),
     > {
         FileGroupDataIter::from(FileGroupFileIter::new(
@@ -197,7 +196,7 @@ impl BBDirectoryTrait for BBDirectory {
     ) -> impl Iterator<
         Item = (
             usize,
-            Result<ControlComponentShufflePayload, FileStructureError>,
+            Result<Arc<ControlComponentShufflePayload>, FileStructureError>,
         ),
     > {
         FileGroupDataIter::from(FileGroupFileIter::new(
@@ -340,202 +339,3 @@ mod test {
         assert!(c.unwrap().is_empty());
     }
 }
-
-/*
-#[cfg(any(test, doc))]
-
-pub mod mock {
-    //! Module defining mocking structure for [VCSDirectory] and [SetupDirectory]
-    //!
-    //! The mocks read the correct data from the file. It is possible to change any data
-    //! with the functions mock_
-    use super::super::file_group::mock::MockFileGroupIter;
-    use super::{super::mock::wrap_file_group_getter, *};
-    use crate::file_structure::file_group::mock::{
-        impl_iterator_over_data_payload_mock, wrap_payload_iter,
-    };
-    use crate::file_structure::mock::wrap_payload_getter;
-
-    use std::collections::HashMap;
-
-    /// Mock for [BBDirectory]
-    pub struct MockBBDirectory {
-        location: PathBuf,
-        dir: BBDirectory,
-        mocked_tally_component_votes_payload_file: Option<File>,
-        mocked_tally_component_shuffle_payload_file: Option<File>,
-        mocked_control_component_ballot_box_payload_group: Option<FileGroup>,
-        mocked_control_component_shuffle_payload_group: Option<FileGroup>,
-        mocked_tally_component_votes_payload:
-            Option<Result<Box<TallyComponentVotesPayload>, FileStructureError>>,
-        mocked_tally_component_shuffle_payload:
-            Option<Result<Box<TallyComponentShufflePayload>, FileStructureError>>,
-        mocked_control_component_ballot_box_payloads:
-            HashMap<usize, ControlComponentBallotBoxPayloadAsResult>,
-        mocked_control_component_shuffle_payloads:
-            HashMap<usize, ControlComponentShufflePayloadloadAsResult>,
-
-        mocked_get_name: Option<String>,
-    }
-
-    /// Mock for [TallyDirectory]
-    pub struct MockTallyDirectory {
-        location: PathBuf,
-        dir: TallyDirectory,
-        mocked_e_voting_decrypt_file: Option<File>,
-        mocked_ech_0110_file: Option<File>,
-        mocked_ech_0222_file: Option<File>,
-        bb_directories: Vec<MockBBDirectory>,
-    }
-
-    impl_iterator_over_data_payload_mock!(
-        ControlComponentBallotBoxPayload,
-        ControlComponentBallotBoxPayloadAsResult,
-        ControlComponentBallotBoxPayloadAsResultIter,
-        MockControlComponentBallotBoxPayloadAsResultIter
-    );
-
-    impl_iterator_over_data_payload_mock!(
-        ControlComponentShufflePayload,
-        ControlComponentShufflePayloadAsResult,
-        ControlComponentShufflePayloadAsResultIter,
-        MockControlComponentShufflePayloadAsResultIter
-    );
-
-    impl_completness_test_trait_for_tally!(MockTallyDirectory);
-
-    impl BBDirectoryTrait for MockBBDirectory {
-        type ControlComponentBallotBoxPayloadAsResultIterType =
-            MockControlComponentBallotBoxPayloadAsResultIter;
-        type ControlComponentShufflePayloadloadAsResultIterType =
-            MockControlComponentShufflePayloadAsResultIter;
-        wrap_file_group_getter!(
-            tally_component_votes_payload_file,
-            mocked_tally_component_votes_payload_file,
-            File
-        );
-        wrap_file_group_getter!(
-            tally_component_shuffle_payload_file,
-            mocked_tally_component_shuffle_payload_file,
-            File
-        );
-        wrap_file_group_getter!(
-            control_component_ballot_box_payload_group,
-            mocked_control_component_ballot_box_payload_group,
-            FileGroup
-        );
-        wrap_file_group_getter!(
-            control_component_shuffle_payload_group,
-            mocked_control_component_shuffle_payload_group,
-            FileGroup
-        );
-        wrap_payload_getter!(
-            tally_component_votes_payload,
-            mocked_tally_component_votes_payload,
-            TallyComponentVotesPayload
-        );
-        wrap_payload_getter!(
-            tally_component_shuffle_payload,
-            mocked_tally_component_shuffle_payload,
-            TallyComponentShufflePayload
-        );
-        wrap_payload_iter!(
-            control_component_ballot_box_payload_iter,
-            ControlComponentBallotBoxPayloadAsResultIterType,
-            MockControlComponentBallotBoxPayloadAsResultIter,
-            mocked_control_component_ballot_box_payloads
-        );
-        wrap_payload_iter!(
-            control_component_shuffle_payload_iter,
-            ControlComponentShufflePayloadloadAsResultIterType,
-            MockControlComponentShufflePayloadAsResultIter,
-            mocked_control_component_shuffle_payloads
-        );
-
-        fn get_name(&self) -> String {
-            match &self.mocked_get_name {
-                Some(e) => e.clone(),
-                None => self.dir.get_name(),
-            }
-        }
-    }
-
-    impl_completness_test_trait_for_tally_bb!(MockBBDirectory);
-
-    impl TallyDirectoryTrait for MockTallyDirectory {
-        type BBDirType = MockBBDirectory;
-        wrap_file_group_getter!(e_voting_decrypt_file, mocked_e_voting_decrypt_file, File);
-        wrap_file_group_getter!(ech_0110_file, mocked_ech_0110_file, File);
-        wrap_file_group_getter!(ech_0222_file, mocked_ech_0222_file, File);
-
-        fn bb_directories(&self) -> &Vec<MockBBDirectory> {
-            &self.bb_directories
-        }
-    }
-
-    impl MockBBDirectory {
-        pub fn new(location: &Path) -> Self {
-            MockBBDirectory {
-                location: location.to_path_buf(),
-                dir: BBDirectory::new(location),
-                mocked_tally_component_shuffle_payload_file: None,
-                mocked_tally_component_votes_payload_file: None,
-                mocked_control_component_ballot_box_payload_group: None,
-                mocked_control_component_shuffle_payload_group: None,
-                mocked_tally_component_votes_payload: None,
-                mocked_tally_component_shuffle_payload: None,
-                mocked_control_component_ballot_box_payloads: HashMap::new(),
-                mocked_control_component_shuffle_payloads: HashMap::new(),
-                mocked_get_name: None,
-            }
-        }
-        pub fn mock_tally_component_shuffle_payload_file(&mut self, data: &File) {
-            self.mocked_tally_component_shuffle_payload_file = Some(data.clone());
-        }
-        pub fn mock_tally_component_votes_payload_file(&mut self, data: &File) {
-            self.mocked_tally_component_votes_payload_file = Some(data.clone());
-        }
-        pub fn mock_control_component_ballot_box_payload_group(&mut self, data: &FileGroup) {
-            self.mocked_control_component_ballot_box_payload_group = Some(data.clone());
-        }
-        pub fn mock_control_component_shuffle_payload_group(&mut self, data: &FileGroup) {
-            self.mocked_control_component_shuffle_payload_group = Some(data.clone());
-        }
-        pub fn mock_get_name(&mut self, data: &str) {
-            self.mocked_get_name = Some(data.to_string())
-        }
-    }
-
-    impl MockTallyDirectory {
-        pub fn new(data_location: &Path) -> Self {
-            let tally_dir = TallyDirectory::new(data_location);
-            let bb_dirs: Vec<MockBBDirectory> = tally_dir
-                .bb_directories
-                .iter()
-                .map(|d| MockBBDirectory::new(&d.location))
-                .collect();
-            MockTallyDirectory {
-                location: tally_dir.location.to_owned(),
-                dir: tally_dir,
-                mocked_e_voting_decrypt_file: None,
-                mocked_ech_0110_file: None,
-                mocked_ech_0222_file: None,
-                bb_directories: bb_dirs,
-            }
-        }
-        pub fn bb_directories_mut(&mut self) -> Vec<&mut MockBBDirectory> {
-            self.bb_directories.iter_mut().collect()
-        }
-
-        pub fn mock_e_voting_decrypt_file(&mut self, data: &File) {
-            self.mocked_e_voting_decrypt_file = Some(data.clone());
-        }
-        pub fn mock_ech_0110_file(&mut self, data: &File) {
-            self.mocked_ech_0110_file = Some(data.clone());
-        }
-        pub fn mock_ech_0222_file(&mut self, data: &File) {
-            self.mocked_ech_0222_file = Some(data.clone());
-        }
-    }
-}
- */

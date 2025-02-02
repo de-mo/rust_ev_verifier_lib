@@ -97,8 +97,8 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
 ) {
     let config_dir = dir.context();
     let setup_dir = dir.unwrap_setup();
-    let eg = match config_dir.election_event_context_payload() {
-        Ok(p) => p.encryption_group,
+    let context = match config_dir.election_event_context_payload() {
+        Ok(p) => p,
         Err(e) => {
             result.push(
                 VerificationEvent::new_error(&e)
@@ -107,10 +107,11 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
             return;
         }
     };
+    let eg = &context.as_ref().encryption_group;
     for (i, f) in config_dir.control_component_public_keys_payload_iter() {
         match f {
             Ok(cc) => result.append_with_context(
-                &verify_encryption_group(&cc.encryption_group, &eg),
+                &verify_encryption_group(&cc.encryption_group, eg),
                 format!("control_component_public_keys_payload.{}", i),
             ),
             Err(e) => result.push(VerificationEvent::new_error(&e).add_context(format!(
@@ -121,7 +122,7 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
     }
     match config_dir.setup_component_public_keys_payload() {
         Ok(p) => result.append_with_context(
-            &verify_encryption_group(&p.encryption_group, &eg),
+            &verify_encryption_group(&p.encryption_group, eg),
             "setup_component_public_keys_payload",
         ),
         Err(e) => result.push(
@@ -131,11 +132,11 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
     }
 
     for vcs in config_dir.vcs_directories().iter() {
-        verify_encryption_group_for_context_vcs_dir(vcs, &eg, result);
+        verify_encryption_group_for_context_vcs_dir(vcs, eg, result);
     }
 
     for vcs in setup_dir.vcs_directories().iter() {
-        verify_encryption_group_for_setup_vcs_dir(vcs, &eg, result);
+        verify_encryption_group_for_setup_vcs_dir(vcs, eg, result);
     }
 }
 

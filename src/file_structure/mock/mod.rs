@@ -18,6 +18,7 @@ mod context_directory_data;
 mod setup_directory_data;
 mod tally_directory_data;
 
+use super::VerificationDirectoryTrait;
 use super::{file_group::FileGroupFileIter, ContextDirectoryTrait, FileStructureError};
 use crate::{
     data_structures::{VerifierDataDecode, VerifierDataToTypeTrait},
@@ -25,10 +26,8 @@ use crate::{
 };
 pub(crate) use context_directory_data::MockContextDirectory;
 pub(crate) use setup_directory_data::MockSetupDirectory;
-use std::{collections::HashMap, path::Path};
+use std::{collections::HashMap, path::Path, sync::Arc};
 pub(crate) use tally_directory_data::MockTallyDirectory;
-
-use super::VerificationDirectoryTrait;
 
 /// Mock for [VerificationDirectory]
 pub(crate) struct MockVerificationDirectory {
@@ -177,7 +176,7 @@ use impl_mock_methods_for_mocked_data;
 /// ```ignore
 /// pub fn setup_component_public_keys_payload(
 ///     &mut self,
-/// ) Result<Box<SetupComponentPublicKeysPayload>, FileStructureError>
+/// ) Result<Arc<SetupComponentPublicKeysPayload>, FileStructureError>
 /// {todo!()}
 /// ```
 ///
@@ -189,11 +188,11 @@ macro_rules! impl_trait_get_method_for_mocked_data {
         paste! {
             fn $data_name(
                 &self,
-            ) -> Result<Box<$data_type>, FileStructureError> {
+            ) -> Result<Arc<$data_type>, FileStructureError> {
                 match &self.[<mocked_ $data_name>] {
                     None => self.dir.$data_name(),
                     Some(e) => match e.as_ref() {
-                        MockedDataType::Data(d) => Ok(Box::new(d.clone())),
+                        MockedDataType::Data(d) => Ok(Arc::new(d.clone())),
                         MockedDataType::Error(e) => Err(FileStructureError::Mock(e.to_string())),
                         MockedDataType::Deleted => Err(FileStructureError::Mock("Something wrong. Data cannot be deleted".to_string()))
                     }
@@ -244,7 +243,7 @@ macro_rules! impl_mock_methods_for_mocked_group {
             ) {
                 let orig_payload = match self.dir.[<$data_name _iter>]().find(|(i, _)| i == &pos) {
                     Some((_, res)) => match res {
-                        Ok(p) => p,
+                        Ok(p) => p.as_ref().clone(),
                         Err(_) => return
                     },
                     None => return
@@ -309,7 +308,7 @@ macro_rules! impl_trait_get_method_for_mocked_group {
             ) -> impl Iterator<
             Item = (
                 usize,
-                Result<$data_type, FileStructureError>,
+                Result<Arc<$data_type>, FileStructureError>,
             ),
         > {
             MockFileGroupDataIter::new(FileGroupFileIter::new(
@@ -393,13 +392,13 @@ impl<'a, D: VerifierDataDecode + VerifierDataToTypeTrait + Clone> MockFileGroupD
 impl<D: VerifierDataDecode + VerifierDataToTypeTrait + Clone> Iterator
     for MockFileGroupDataIter<'_, D>
 {
-    type Item = (usize, Result<D, FileStructureError>);
+    type Item = (usize, Result<Arc<D>, FileStructureError>);
 
     fn next(&mut self) -> Option<Self::Item> {
         let (pos, file_res) = self.file_group_iter.next()?;
         match self.mocked.get(&pos) {
             Some(m) => match m.to_data_res() {
-                Some(res) => Some((pos, res)),
+                Some(res) => Some((pos, res.map(Arc::new))),
                 None => self.next(),
             },
             None => Some((pos, file_res.decode_verifier_data())),

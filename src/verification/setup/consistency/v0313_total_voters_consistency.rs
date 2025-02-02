@@ -10,8 +10,8 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
     result: &mut VerificationResult,
 ) {
     let context_dir = dir.context();
-    let vcs_contexts = match context_dir.election_event_context_payload() {
-        Ok(o) => o.election_event_context.verification_card_set_contexts,
+    let payload = match context_dir.election_event_context_payload() {
+        Ok(o) => o,
         Err(e) => {
             result.push(
                 VerificationEvent::new_error(&e)
@@ -20,6 +20,9 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
             return;
         }
     };
+    let vcs_contexts = &payload
+        .election_event_context
+        .verification_card_set_contexts;
     let total_voter = match context_dir.election_event_configuration() {
         Ok(o) => match o.register.iter() {
             Ok(it) => it.count(),

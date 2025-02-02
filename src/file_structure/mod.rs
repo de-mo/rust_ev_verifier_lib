@@ -59,15 +59,21 @@ pub struct VerificationDirectory {
 }
 
 /// Enum to define the type of the file (Json or Xml)
+#[derive(Debug, Clone, PartialEq, Eq)]
 enum FileType {
     Json,
     Xml,
 }
 
-/// Enum representing the mode to read a fie (Memory or streaming).
+/// Enum representing the mode to read a fie.
+#[derive(Debug, Clone, PartialEq, Eq)]
 enum FileReadMode {
+    /// The data will be loaded in memory each time
     Memory,
+    /// The data will be streamed
     Streaming,
+    /// The data will be loaded once in memory an be chached
+    Cache,
 }
 
 /// Trait defining functions to get the filename
@@ -235,7 +241,7 @@ impl GetFileNameTrait for VerifierContextDataType {
 impl From<&VerifierContextDataType> for FileReadMode {
     fn from(value: &VerifierContextDataType) -> Self {
         match value {
-            VerifierContextDataType::ElectionEventContextPayload => FileReadMode::Memory,
+            VerifierContextDataType::ElectionEventContextPayload => FileReadMode::Cache,
             VerifierContextDataType::SetupComponentPublicKeysPayload => FileReadMode::Memory,
             VerifierContextDataType::ControlComponentPublicKeysPayload => FileReadMode::Memory,
             VerifierContextDataType::SetupComponentTallyDataPayload => FileReadMode::Memory,

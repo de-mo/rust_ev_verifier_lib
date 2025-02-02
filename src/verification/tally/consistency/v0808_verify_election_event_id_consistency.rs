@@ -15,8 +15,8 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
     let context_dir = dir.context();
     let tally_dir = dir.unwrap_tally();
 
-    let ee_id = match context_dir.election_event_context_payload() {
-        Ok(p) => p.election_event_context.election_event_id,
+    let payload = match context_dir.election_event_context_payload() {
+        Ok(p) => p,
         Err(e) => {
             result.push(
                 VerificationEvent::new_error(&e)
@@ -25,10 +25,11 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
             return;
         }
     };
+    let ee_id = &payload.election_event_context.election_event_id;
 
     for bb_dir in tally_dir.bb_directories().iter() {
         result.append_with_context(
-            &verify_for_bb_directory(bb_dir, &ee_id),
+            &verify_for_bb_directory(bb_dir, ee_id),
             format!("Ballot box directory {}", bb_dir.name()),
         );
     }

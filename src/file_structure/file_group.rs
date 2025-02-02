@@ -5,6 +5,7 @@ use std::{
     fs,
     marker::PhantomData,
     path::{Path, PathBuf},
+    sync::Arc,
 };
 
 /// File Group
@@ -59,7 +60,7 @@ impl<D: VerifierDataDecode + VerifierDataToTypeTrait + Clone> Iterator for FileG
 //where
 //    Self: GenericFileGroupIterTrait<Result<D, FileStructureError>>,
 {
-    type Item = (usize, Result<D, FileStructureError>);
+    type Item = (usize, Result<Arc<D>, FileStructureError>);
 
     fn next(&mut self) -> Option<Self::Item> {
         self.file_group_iter

@@ -17,8 +17,8 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
     let context_dir = dir.context();
     let tally_dir = dir.unwrap_tally();
 
-    let ee_context = match context_dir.election_event_context_payload() {
-        Ok(p) => p.election_event_context,
+    let payload = match context_dir.election_event_context_payload() {
+        Ok(p) => p,
         Err(e) => {
             result.push(
                 VerificationEvent::new_error(&e)
@@ -27,6 +27,7 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
             return;
         }
     };
+    let ee_context = &payload.election_event_context;
 
     for vcs_dir in context_dir.vcs_directories().iter() {
         let vcs_id = vcs_dir.name();

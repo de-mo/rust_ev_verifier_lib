@@ -3,14 +3,14 @@ use crate::data_structures::{VerifierDataDecode, VerifierDataToTypeTrait, Verifi
 use glob::glob;
 use roxmltree::Document;
 use std::{
-    marker::PhantomData,
     path::{Path, PathBuf},
+    sync::{Arc, OnceLock},
 };
 
 #[derive(Clone)]
 pub struct File<D: VerifierDataDecode + VerifierDataToTypeTrait> {
     path: PathBuf,
-    phantom: PhantomData<D>,
+    cache: OnceLock<Arc<D>>,
 }
 
 macro_rules! create_file {
@@ -41,7 +41,7 @@ impl<D: VerifierDataDecode + VerifierDataToTypeTrait> File<D> {
         }
         File {
             path,
-            phantom: PhantomData,
+            cache: OnceLock::new(),
         }
     }
 
@@ -72,18 +72,25 @@ impl<D: VerifierDataDecode + VerifierDataToTypeTrait> File<D> {
     /// Decode the verifier data containing the the file
     ///
     /// The generic `D` defines the type of the file
-    pub fn decode_verifier_data(&self) -> Result<D, FileStructureError> {
+    pub fn decode_verifier_data(&self) -> Result<Arc<D>, FileStructureError> {
+        if let Some(cache) = self.cache.get() {
+            return Ok(cache.clone());
+        }
         if !self.exists() {
             return Err(FileStructureError::PathNotFile(self.path()));
         }
-        self.read_data()
+        let res = self.read_data().map(Arc::new)?;
+        if FileReadMode::from(&Self::data_type()) == FileReadMode::Cache {
+            self.cache.get_or_init(|| res.clone());
+        }
+        Ok(res)
     }
 
     fn read_data(&self) -> Result<D, FileStructureError> {
         let file_type = FileType::from(&Self::data_type());
         let mode = FileReadMode::from(&Self::data_type());
         match mode {
-            FileReadMode::Memory => {
+            FileReadMode::Memory | FileReadMode::Cache => {
                 let s =
                     std::fs::read_to_string(self.path()).map_err(|e| FileStructureError::IO {
                         path: self.path(),

@@ -11,15 +11,11 @@ mod xml;
 
 pub use self::{
     context::{
-        control_component_public_keys_payload::ControlComponentPublicKeysPayload,
         election_event_configuration::ElectionEventConfiguration,
         election_event_context_payload::ElectionEventContextPayload, VerifierContextDataType,
     },
     dataset::DatasetType,
-    setup::{
-        control_component_code_shares_payload::ControlComponentCodeSharesPayload,
-        VerifierSetupDataType,
-    },
+    setup::VerifierSetupDataType,
     tally::{
         control_component_ballot_box_payload::ControlComponentBallotBoxPayload,
         control_component_shuffle_payload::ControlComponentShufflePayload,

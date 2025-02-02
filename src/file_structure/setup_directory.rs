@@ -14,6 +14,7 @@ use crate::{
 use std::{
     fs,
     path::{Path, PathBuf},
+    sync::Arc,
 };
 
 /// The setup directoy, containing the files, file groues and subdirectories
@@ -66,7 +67,7 @@ pub trait SetupVCSDirectoryTrait: CompletnessTestTrait + Send + Sync {
     ) -> impl Iterator<
         Item = (
             usize,
-            Result<SetupComponentVerificationDataPayload, FileStructureError>,
+            Result<Arc<SetupComponentVerificationDataPayload>, FileStructureError>,
         ),
     >;
 
@@ -75,7 +76,7 @@ pub trait SetupVCSDirectoryTrait: CompletnessTestTrait + Send + Sync {
     ) -> impl Iterator<
         Item = (
             usize,
-            Result<ControlComponentCodeSharesPayload, FileStructureError>,
+            Result<Arc<ControlComponentCodeSharesPayload>, FileStructureError>,
         ),
     >;
 
@@ -197,7 +198,7 @@ impl SetupVCSDirectoryTrait for SetupVCSDirectory {
     ) -> impl Iterator<
         Item = (
             usize,
-            Result<SetupComponentVerificationDataPayload, FileStructureError>,
+            Result<Arc<SetupComponentVerificationDataPayload>, FileStructureError>,
         ),
     > {
         FileGroupDataIter::from(FileGroupFileIter::new(
@@ -210,7 +211,7 @@ impl SetupVCSDirectoryTrait for SetupVCSDirectory {
     ) -> impl Iterator<
         Item = (
             usize,
-            Result<ControlComponentCodeSharesPayload, FileStructureError>,
+            Result<Arc<ControlComponentCodeSharesPayload>, FileStructureError>,
         ),
     > {
         FileGroupDataIter::from(FileGroupFileIter::new(

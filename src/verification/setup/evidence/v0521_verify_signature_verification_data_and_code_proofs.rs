@@ -67,8 +67,8 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
     let setup_dir = dir.unwrap_setup();
 
     // Read ee context for the context of the algorithm
-    let ee_context = match context_dir.election_event_context_payload() {
-        Ok(p) => p.election_event_context,
+    let context = match context_dir.election_event_context_payload() {
+        Ok(p) => p,
         Err(e) => {
             result.push(
                 VerificationEvent::new_error(&e)
@@ -77,6 +77,7 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
             return;
         }
     };
+    let ee_context = &context.as_ref().election_event_context;
 
     // For each vcs directory
     for vcs_dir in setup_dir.vcs_directories() {

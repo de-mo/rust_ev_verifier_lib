@@ -112,7 +112,7 @@ fn fn_0203_verify_signature_control_component_public_keys<D: VerificationDirecto
         trace!("Verification 2.03 for cc {}", i);
         match cc {
             Ok(cc) => result.append_with_context(
-                &verify_signature_for_object(&cc, config),
+                &verify_signature_for_object(cc.as_ref(), config),
                 format!("control_component_public_keys_payload_{}", i),
             ),
             Err(e) => result.push(VerificationEvent::new_error(&e).add_context(format!(

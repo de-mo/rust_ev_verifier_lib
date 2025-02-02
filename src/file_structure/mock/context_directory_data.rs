@@ -22,7 +22,7 @@ use crate::{
     },
 };
 use paste::paste;
-use std::{collections::HashMap, path::Path};
+use std::{collections::HashMap, path::Path, sync::Arc};
 
 /// Mock for [ContextVCSDirectory]
 pub struct MockContextVCSDirectory {
