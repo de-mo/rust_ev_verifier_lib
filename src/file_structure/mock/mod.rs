@@ -136,15 +136,21 @@ macro_rules! impl_mock_methods_for_mocked_data {
                 &mut self,
                 mut closure: impl FnMut(&mut $data_type),
             ) {
-                if self.[<mocked_ $data_name>].is_none() {
-                    self.[<mocked_ $data_name>] =
-                        Some(self.dir.$data_name().unwrap());
-                }
+                let orig_payload = match self.dir.[<$data_name>]() {
+                    Ok(p) => p.as_ref().clone(),
+                    Err(_) => return
+                };
+                let mut payload = match self.[<mocked_ $data_name>].as_ref() {
+                    Some(p) => match p.as_ref() {
+                        MockedDataType::Data(p) => Some(p.clone()),
+                        _ => None
+                    }
+                    None => None
+                }.unwrap_or_else(|| orig_payload);
                 closure(
-                    self.[<mocked_ $data_name>]
-                        .as_mut()
-                        .unwrap(),
+                    &mut payload
                 );
+                self.[<mocked_ $data_name>] = Some(Box::new(MockedDataType::Data(payload.clone())));
             }
             #[doc = "Mock `$data_name` with error"]
             #[allow(dead_code)]
@@ -152,17 +158,11 @@ macro_rules! impl_mock_methods_for_mocked_data {
                 &mut self,
                 error: FileStructureError,
             ) {
-                self.[<mocked_ $data_name _error>] = Some(error)
-            }
-            #[doc = "Remove the error for `$data_name`"]
-            #[allow(dead_code)]
-            pub fn  [<mock_ $data_name _remove_error>](&mut self) {
-                self.[<mocked_ $data_name _error>] = None
+                self.[<mocked_ $data_name>] = Some(Box::new(MockedDataType::Error(error.to_string())))
             }
             #[doc = "Reset the original data for `$data_name`"]
             #[allow(dead_code)]
             pub fn  [<mock_ $data_name _reset>](&mut self) {
-                self.[<mocked_ $data_name _error>] = None;
                 self.[<mocked_ $data_name>] = None;
             }
         }
@@ -190,12 +190,13 @@ macro_rules! impl_trait_get_method_for_mocked_data {
             fn $data_name(
                 &self,
             ) -> Result<Box<$data_type>, FileStructureError> {
-                match &self.[<mocked_ $data_name _error>] {
-                    Some(e) => Err(FileStructureError::Mock(e.to_string())),
-                    None => match &self.[<mocked_ $data_name>] {
-                        Some(v) => Ok(Box::new(v.as_ref().clone())),
-                        None => self.dir.$data_name(),
-                    },
+                match &self.[<mocked_ $data_name>] {
+                    None => self.dir.$data_name(),
+                    Some(e) => match e.as_ref() {
+                        MockedDataType::Data(d) => Ok(Box::new(d.clone())),
+                        MockedDataType::Error(e) => Err(FileStructureError::Mock(e.to_string())),
+                        MockedDataType::Deleted => Err(FileStructureError::Mock("Something wrong. Data cannot be deleted".to_string()))
+                    }
                 }
             }
         }

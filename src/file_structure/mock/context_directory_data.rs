@@ -27,19 +27,17 @@ use std::{collections::HashMap, path::Path};
 /// Mock for [ContextVCSDirectory]
 pub struct MockContextVCSDirectory {
     dir: ContextVCSDirectory,
-    mocked_setup_component_tally_data_payload: Option<Box<SetupComponentTallyDataPayload>>,
-    mocked_setup_component_tally_data_payload_error: Option<FileStructureError>,
+    mocked_setup_component_tally_data_payload:
+        Option<Box<MockedDataType<SetupComponentTallyDataPayload>>>,
 }
 
 /// Mock for [ContextDirectory]
 pub struct MockContextDirectory {
     pub dir: ContextDirectory,
-    mocked_setup_component_public_keys_payload: Option<Box<SetupComponentPublicKeysPayload>>,
-    mocked_setup_component_public_keys_payload_error: Option<FileStructureError>,
-    mocked_election_event_context_payload: Option<Box<ElectionEventContextPayload>>,
-    mocked_election_event_context_payload_error: Option<FileStructureError>,
-    mocked_election_event_configuration: Option<Box<ElectionEventConfiguration>>,
-    mocked_election_event_configuration_error: Option<FileStructureError>,
+    mocked_setup_component_public_keys_payload:
+        Option<Box<MockedDataType<SetupComponentPublicKeysPayload>>>,
+    mocked_election_event_context_payload: Option<Box<MockedDataType<ElectionEventContextPayload>>>,
+    mocked_election_event_configuration: Option<Box<MockedDataType<ElectionEventConfiguration>>>,
     mocked_control_component_public_keys_payload:
         HashMap<usize, Box<MockFileGroupElement<ControlComponentPublicKeysPayload>>>,
     vcs_directories: Vec<MockContextVCSDirectory>,
@@ -59,11 +57,8 @@ impl MockContextDirectory {
         MockContextDirectory {
             dir: ContextDirectory::new(location),
             mocked_setup_component_public_keys_payload: None,
-            mocked_setup_component_public_keys_payload_error: None,
             mocked_election_event_context_payload: None,
-            mocked_election_event_context_payload_error: None,
             mocked_election_event_configuration: None,
-            mocked_election_event_configuration_error: None,
             mocked_control_component_public_keys_payload: HashMap::new(),
             vcs_directories: vcs_dirs,
         }
@@ -159,7 +154,6 @@ impl MockContextVCSDirectory {
         MockContextVCSDirectory {
             dir: ContextVCSDirectory::new(location),
             mocked_setup_component_tally_data_payload: None,
-            mocked_setup_component_tally_data_payload_error: None,
         }
     }
 
@@ -244,14 +238,10 @@ mod test {
             "test error".to_string(),
         ));
         assert!(mock_dir.election_event_context_payload().is_err());
-        mock_dir.mock_election_event_context_payload_remove_error();
+        mock_dir.mock_election_event_context_payload_reset();
         assert_eq!(
-            mock_dir
-                .election_event_context_payload()
-                .unwrap()
-                .seed
-                .as_str(),
-            "TOTO"
+            mock_dir.election_event_context_payload().unwrap().seed,
+            mock_dir.dir.election_event_context_payload().unwrap().seed
         );
     }
 

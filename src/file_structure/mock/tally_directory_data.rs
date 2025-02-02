@@ -28,10 +28,9 @@ use std::{collections::HashMap, path::Path};
 /// Mock for [BBDirectory]
 pub struct MockBBDirectory {
     dir: BBDirectory,
-    mocked_tally_component_votes_payload: Option<Box<TallyComponentVotesPayload>>,
-    mocked_tally_component_votes_payload_error: Option<FileStructureError>,
-    mocked_tally_component_shuffle_payload: Option<Box<TallyComponentShufflePayload>>,
-    mocked_tally_component_shuffle_payload_error: Option<FileStructureError>,
+    mocked_tally_component_votes_payload: Option<Box<MockedDataType<TallyComponentVotesPayload>>>,
+    mocked_tally_component_shuffle_payload:
+        Option<Box<MockedDataType<TallyComponentShufflePayload>>>,
     mocked_control_component_ballot_box_payload:
         HashMap<usize, Box<MockFileGroupElement<ControlComponentBallotBoxPayload>>>,
     mocked_control_component_shuffle_payload:
@@ -91,9 +90,7 @@ impl MockBBDirectory {
         MockBBDirectory {
             dir: BBDirectory::new(location),
             mocked_tally_component_votes_payload: None,
-            mocked_tally_component_votes_payload_error: None,
             mocked_tally_component_shuffle_payload: None,
-            mocked_tally_component_shuffle_payload_error: None,
             mocked_control_component_ballot_box_payload: HashMap::new(),
             mocked_control_component_shuffle_payload: HashMap::new(),
         }
