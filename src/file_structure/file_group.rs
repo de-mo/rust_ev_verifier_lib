@@ -7,22 +7,6 @@ use std::{
     path::{Path, PathBuf},
 };
 
-pub trait GenericElementTrait<D>
-where
-    D: VerifierDataDecode + VerifierDataToTypeTrait,
-{
-    fn to_data_res(&self) -> Result<D, FileStructureError>;
-}
-
-impl<D> GenericElementTrait<D> for File<D>
-where
-    D: VerifierDataDecode + VerifierDataToTypeTrait,
-{
-    fn to_data_res(&self) -> Result<D, FileStructureError> {
-        self.decode_verifier_data()
-    }
-}
-
 /// File Group
 #[derive(Clone)]
 pub struct FileGroup<D: VerifierDataDecode + VerifierDataToTypeTrait + Clone> {
@@ -54,7 +38,7 @@ impl<D: VerifierDataDecode + VerifierDataToTypeTrait + Clone> From<FileGroupFile
     }
 }
 
-/// Implement iterator for all the [FileGroupFileIter] as generic type
+/// Implement iterator for the [FileGroupFileIter] as generic type
 impl<D: VerifierDataDecode + VerifierDataToTypeTrait + Clone> Iterator for FileGroupFileIter<D> {
     type Item = (usize, File<D>);
 
@@ -70,7 +54,7 @@ impl<D: VerifierDataDecode + VerifierDataToTypeTrait + Clone> Iterator for FileG
     }
 }
 
-/// Implement iterator for all the [FileGroupDataIter] as generic type
+/// Implement iterator for the [FileGroupDataIter] as generic type
 impl<D: VerifierDataDecode + VerifierDataToTypeTrait + Clone> Iterator for FileGroupDataIter<D>
 //where
 //    Self: GenericFileGroupIterTrait<Result<D, FileStructureError>>,
@@ -80,7 +64,7 @@ impl<D: VerifierDataDecode + VerifierDataToTypeTrait + Clone> Iterator for FileG
     fn next(&mut self) -> Option<Self::Item> {
         self.file_group_iter
             .next()
-            .map(|(i, f)| (i, f.to_data_res()))
+            .map(|(i, f)| (i, f.decode_verifier_data()))
     }
 }
 
@@ -112,6 +96,7 @@ impl<D: VerifierDataDecode + VerifierDataToTypeTrait + Clone> FileGroupFileIter<
             .map(|i| File::new(&self.file_group.location, Some(*i)))
     }
 
+    /// Is iterator over
     fn is_over(&self) -> bool {
         self.current_index().is_none()
     }
@@ -147,6 +132,7 @@ impl<D: VerifierDataDecode + VerifierDataToTypeTrait + Clone> FileGroup<D> {
         }
     }
 
+    /// get data type bbased on the generic
     pub fn data_type() -> VerifierDataType {
         D::data_type()
     }

@@ -193,7 +193,6 @@ mod test {
     }
 
     #[test]
-    #[ignore = "Mock of groups no more implemented"]
     fn test_wrong_election_event_context() {
         let mut result = VerificationResult::new();
         let mut mock_dir = get_mock_verifier_dir();
@@ -209,7 +208,6 @@ mod test {
     }
 
     #[test]
-    #[ignore = "Mock of groups no more implemented"]
     fn test_wrong_control_component_public_keys() {
         let mut result = VerificationResult::new();
         let mut mock_dir = get_mock_verifier_dir();

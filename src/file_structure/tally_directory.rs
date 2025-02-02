@@ -78,10 +78,20 @@ pub trait BBDirectoryTrait: CompletnessTestTrait + Send + Sync {
     ) -> Result<Box<TallyComponentShufflePayload>, FileStructureError>;
     fn control_component_ballot_box_payload_iter(
         &self,
-    ) -> FileGroupDataIter<ControlComponentBallotBoxPayload>;
+    ) -> impl Iterator<
+        Item = (
+            usize,
+            Result<ControlComponentBallotBoxPayload, FileStructureError>,
+        ),
+    >;
     fn control_component_shuffle_payload_iter(
         &self,
-    ) -> FileGroupDataIter<ControlComponentShufflePayload>;
+    ) -> impl Iterator<
+        Item = (
+            usize,
+            Result<ControlComponentShufflePayload, FileStructureError>,
+        ),
+    >;
 
     fn name(&self) -> String;
     fn location(&self) -> &Path;
@@ -171,7 +181,12 @@ impl BBDirectoryTrait for BBDirectory {
 
     fn control_component_ballot_box_payload_iter(
         &self,
-    ) -> FileGroupDataIter<ControlComponentBallotBoxPayload> {
+    ) -> impl Iterator<
+        Item = (
+            usize,
+            Result<ControlComponentBallotBoxPayload, FileStructureError>,
+        ),
+    > {
         FileGroupDataIter::from(FileGroupFileIter::new(
             &self.control_component_ballot_box_payload_group,
         ))
@@ -179,7 +194,12 @@ impl BBDirectoryTrait for BBDirectory {
 
     fn control_component_shuffle_payload_iter(
         &self,
-    ) -> FileGroupDataIter<ControlComponentShufflePayload> {
+    ) -> impl Iterator<
+        Item = (
+            usize,
+            Result<ControlComponentShufflePayload, FileStructureError>,
+        ),
+    > {
         FileGroupDataIter::from(FileGroupFileIter::new(
             &self.control_component_shuffle_payload_group,
         ))

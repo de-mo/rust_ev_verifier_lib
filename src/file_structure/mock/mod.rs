@@ -18,17 +18,14 @@ mod context_directory_data;
 mod setup_directory_data;
 mod tally_directory_data;
 
-use super::{
-    file_group::{FileGroup, FileGroupDataIter, GenericElementTrait},
-    ContextDirectoryTrait, FileStructureError,
-};
+use super::{file_group::FileGroupFileIter, ContextDirectoryTrait, FileStructureError};
 use crate::{
     data_structures::{VerifierDataDecode, VerifierDataToTypeTrait},
     verification::VerificationPeriod,
 };
 pub(crate) use context_directory_data::MockContextDirectory;
 pub(crate) use setup_directory_data::MockSetupDirectory;
-use std::path::Path;
+use std::{collections::HashMap, path::Path};
 pub(crate) use tally_directory_data::MockTallyDirectory;
 
 use super::VerificationDirectoryTrait;
@@ -206,60 +203,6 @@ macro_rules! impl_trait_get_method_for_mocked_data {
 }
 use impl_trait_get_method_for_mocked_data;
 
-/// Macro to implement the iterator over the mocked group of data given as parameter
-///
-/// Parameters:
-/// - $data_type: The type of the data group
-/*macro_rules! impl_itertor_for_mocked_group_type {
-    ($data_type: ident) => {
-        paste! {
-            type [<Mock $data_type AsResultIter>] = MockFileGroupIter<
-                $data_type,
-                [<$data_type AsResultIter>]
-            >;
-            // Implement iterator for all the [FileGroupIter] as generic type
-            impl Iterator for [<Mock $data_type AsResultIter>] {
-                type Item = (
-                    usize,
-                    Result<Box<$data_type>, FileStructureError>,
-                );
-                fn next(&mut self) -> Option<Self::Item> {
-                    match self.current_index() {
-                        Some(i) => {
-                            if self.is_current_element_deleted() {
-                                self.orig_mut().next();
-                                return self.next();
-                            }
-                            let res = (*i, self.current_elt().unwrap());
-                            self.orig_mut().next();
-                            Some(res)
-                        }
-                        None => None,
-                    }
-                }
-            }
-            impl FileGroupIterTrait<Result<Box<$data_type>, FileStructureError>>
-                for [<Mock $data_type AsResultIter>]
-            {
-                fn current_elt(
-                    &self,
-                ) -> Option<Result<Box<$data_type>, FileStructureError>> {
-                    self.current_elt_impl()
-                }
-
-                fn current_pos(&self) -> &usize {
-                    self.orig().current_pos()
-                }
-
-                fn current_index(&self) -> Option<&usize> {
-                    self.orig().current_index()
-                }
-            }
-        }
-    };
-}
-use impl_itertor_for_mocked_group_type;*/
-
 /// Macro to add the mock methods to mock the data group
 ///
 /// The following methods will be generated (example with `setup_component_public_keys_payload`
@@ -307,11 +250,8 @@ macro_rules! impl_mock_methods_for_mocked_group {
                 };
                 let mut payload = match self.[<mocked_ $data_name>].get(&pos) {
                     Some(p) => match &p.element_type {
-                        Some(t) => match t {
-                            MockFileGroupElementType::Data(p) => Some(p.clone()),
-                            _ => None
-                        },
-                        None => None
+                        MockedDataType::Data(p) => Some(p.clone()),
+                        _ => None
                     }
                     None => None
                 }.unwrap_or_else(|| orig_payload);
@@ -319,17 +259,13 @@ macro_rules! impl_mock_methods_for_mocked_group {
                     &mut payload
                 );
                 let _ = self.[<mocked_ $data_name>].insert(pos, Box::new(MockFileGroupElement::new(
-                    &self.dir.[<$data_name _group>]().clone(),
-                    pos,
-                    Some(MockFileGroupElementType::Data(payload.clone())))));
+                    MockedDataType::Data(payload.clone()))));
             }
 
             #[allow(dead_code)]
             pub fn [<mock_ $data_name _as_deleted>](&mut self, pos: usize) {
                 let _ = self.[<mocked_ $data_name>].insert(pos, Box::new(MockFileGroupElement::new(
-                    &self.dir.[<$data_name _group>]().clone(),
-                    pos,
-                    Some(MockFileGroupElementType::Deleted))));
+                    MockedDataType::Deleted)));
             }
 
             #[allow(dead_code)]
@@ -339,9 +275,7 @@ macro_rules! impl_mock_methods_for_mocked_group {
                 error: FileStructureError,
             ) {
                 let _ = self.[<mocked_ $data_name>].insert(pos, Box::new(MockFileGroupElement::new(
-                    &self.dir.[<$data_name _group>]().clone(),
-                    pos,
-                    Some(MockFileGroupElementType::Error(error.to_string())))));
+                    MockedDataType::Error(error.to_string()))));
             }
 
             #[allow(dead_code)]
@@ -371,28 +305,23 @@ macro_rules! impl_trait_get_method_for_mocked_group {
         paste! {
             fn [<$data_name _iter>](
                 &self,
-            ) -> FileGroupDataIter<$data_type> {
-                    self.dir.[<$data_name _iter>]()
+            ) -> impl Iterator<
+            Item = (
+                usize,
+                Result<$data_type, FileStructureError>,
+            ),
+        > {
+            MockFileGroupDataIter::new(FileGroupFileIter::new(
+                &self.dir.[<$data_name _group>]()), &self.[<mocked_ $data_name>])
             }
         }
-        /*paste! {
-            fn [<$data_name _iter>](
-                &self,
-            ) -> FileGroupDataIter<$data_type> {
-                Self::[<$data_type AsResultIterType>]::new(
-                    self.dir.[<$data_name _iter>](),
-                    &self.[<mocked_ $data_name>],
-                    &self.[<mocked_ $data_name _deleted>],
-                    &self.[<mocked_ $data_name _errors>],
-                )
-            }
-        }*/
     };
 }
 use impl_trait_get_method_for_mocked_group;
 
+/// Mocked data type
 #[derive(Clone)]
-pub enum MockFileGroupElementType<D>
+pub enum MockedDataType<D>
 where
     D: VerifierDataDecode + VerifierDataToTypeTrait,
 {
@@ -401,37 +330,27 @@ where
     Error(String),
 }
 
+/// File group element
 #[derive(Clone)]
 pub struct MockFileGroupElement<D>
 where
     D: VerifierDataDecode + VerifierDataToTypeTrait + Clone,
 {
-    file_group: FileGroup<D>,
-    number: usize,
-    element_type: Option<MockFileGroupElementType<D>>,
+    element_type: MockedDataType<D>,
 }
 
-impl<D> GenericElementTrait<D> for MockFileGroupElement<D>
+impl<D> MockFileGroupElement<D>
 where
     D: VerifierDataDecode + VerifierDataToTypeTrait + Clone,
 {
-    fn to_data_res(&self) -> Result<D, FileStructureError> {
+    /// Transform to result
+    ///
+    /// Return `None` if the element is mocked as deleted
+    fn to_data_res(&self) -> Option<Result<D, FileStructureError>> {
         match &self.element_type {
-            Some(elt_type) => match elt_type {
-                MockFileGroupElementType::Data(d) => Ok(d.clone()),
-                MockFileGroupElementType::Deleted => Err(FileStructureError::Mock(format!(
-                    "Structure at position {} is deleted",
-                    { self.number }
-                ))),
-                MockFileGroupElementType::Error(e) => Err(FileStructureError::Mock(e.to_string())),
-            },
-            None => match self.file_group.iter().find(|(pos, _)| pos == &self.number) {
-                Some((_, p)) => p,
-                None => Err(FileStructureError::Mock(format!(
-                    "No payload found for number {}",
-                    self.number
-                ))),
-            },
+            MockedDataType::Data(d) => Some(Ok(d.clone())),
+            MockedDataType::Deleted => None,
+            MockedDataType::Error(e) => Some(Err(FileStructureError::Mock(e.to_string()))),
         }
     }
 }
@@ -446,15 +365,43 @@ where
     ///
     /// During the iteration, the data of the mocked data will be return if the index exists in the hashmap,
     /// else the original data will be returned
+    pub fn new(element_type: MockedDataType<D>) -> Self {
+        MockFileGroupElement { element_type }
+    }
+}
+
+/// Iterator for the mock data in a file group
+pub struct MockFileGroupDataIter<'a, D: VerifierDataDecode + VerifierDataToTypeTrait + Clone> {
+    pub file_group_iter: FileGroupFileIter<D>,
+    pub mocked: &'a HashMap<usize, Box<MockFileGroupElement<D>>>,
+}
+
+impl<'a, D: VerifierDataDecode + VerifierDataToTypeTrait + Clone> MockFileGroupDataIter<'a, D> {
     pub fn new(
-        file_group: &FileGroup<D>,
-        number: usize,
-        element_type: Option<MockFileGroupElementType<D>>,
+        file_group_iter: FileGroupFileIter<D>,
+        mocked: &'a HashMap<usize, Box<MockFileGroupElement<D>>>,
     ) -> Self {
-        MockFileGroupElement {
-            file_group: file_group.clone(),
-            number,
-            element_type,
+        Self {
+            file_group_iter,
+            mocked,
+        }
+    }
+}
+
+/// Implement iterator for all the [MockFileGroupDataIter]
+impl<D: VerifierDataDecode + VerifierDataToTypeTrait + Clone> Iterator
+    for MockFileGroupDataIter<'_, D>
+{
+    type Item = (usize, Result<D, FileStructureError>);
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let (pos, file_res) = self.file_group_iter.next()?;
+        match self.mocked.get(&pos) {
+            Some(m) => match m.to_data_res() {
+                Some(res) => Some((pos, res)),
+                None => self.next(),
+            },
+            None => Some((pos, file_res.decode_verifier_data())),
         }
     }
 }

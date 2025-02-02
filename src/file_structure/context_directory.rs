@@ -66,7 +66,12 @@ pub trait ContextDirectoryTrait: CompletnessTestTrait + Send + Sync {
 
     fn control_component_public_keys_payload_iter(
         &self,
-    ) -> FileGroupDataIter<ControlComponentPublicKeysPayload>;
+    ) -> impl Iterator<
+        Item = (
+            usize,
+            Result<ControlComponentPublicKeysPayload, FileStructureError>,
+        ),
+    >;
 
     /// Collect the names of the vcs directories
     fn vcs_directory_names(&self) -> Vec<String> {
@@ -219,7 +224,12 @@ impl ContextDirectoryTrait for ContextDirectory {
 
     fn control_component_public_keys_payload_iter(
         &self,
-    ) -> FileGroupDataIter<ControlComponentPublicKeysPayload> {
+    ) -> impl Iterator<
+        Item = (
+            usize,
+            Result<ControlComponentPublicKeysPayload, FileStructureError>,
+        ),
+    > {
         FileGroupDataIter::from(FileGroupFileIter::new(
             &self.control_component_public_keys_payload_group,
         ))

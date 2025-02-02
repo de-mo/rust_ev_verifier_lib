@@ -63,11 +63,21 @@ pub trait SetupVCSDirectoryTrait: CompletnessTestTrait + Send + Sync {
     ) -> &FileGroup<ControlComponentCodeSharesPayload>;
     fn setup_component_verification_data_payload_iter(
         &self,
-    ) -> FileGroupDataIter<SetupComponentVerificationDataPayload>;
+    ) -> impl Iterator<
+        Item = (
+            usize,
+            Result<SetupComponentVerificationDataPayload, FileStructureError>,
+        ),
+    >;
 
     fn control_component_code_shares_payload_iter(
         &self,
-    ) -> FileGroupDataIter<ControlComponentCodeSharesPayload>;
+    ) -> impl Iterator<
+        Item = (
+            usize,
+            Result<ControlComponentCodeSharesPayload, FileStructureError>,
+        ),
+    >;
 
     fn name(&self) -> String;
 
@@ -184,7 +194,12 @@ impl SetupVCSDirectoryTrait for SetupVCSDirectory {
 
     fn setup_component_verification_data_payload_iter(
         &self,
-    ) -> FileGroupDataIter<SetupComponentVerificationDataPayload> {
+    ) -> impl Iterator<
+        Item = (
+            usize,
+            Result<SetupComponentVerificationDataPayload, FileStructureError>,
+        ),
+    > {
         FileGroupDataIter::from(FileGroupFileIter::new(
             &self.setup_component_verification_data_payload_group,
         ))
@@ -192,7 +207,12 @@ impl SetupVCSDirectoryTrait for SetupVCSDirectory {
 
     fn control_component_code_shares_payload_iter(
         &self,
-    ) -> FileGroupDataIter<ControlComponentCodeSharesPayload> {
+    ) -> impl Iterator<
+        Item = (
+            usize,
+            Result<ControlComponentCodeSharesPayload, FileStructureError>,
+        ),
+    > {
         FileGroupDataIter::from(FileGroupFileIter::new(
             &self.control_component_code_shares_payload_group,
         ))

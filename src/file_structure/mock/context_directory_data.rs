@@ -1,7 +1,7 @@
 use super::{
     impl_mock_methods_for_mocked_data, impl_mock_methods_for_mocked_group,
     impl_trait_get_method_for_mocked_data, impl_trait_get_method_for_mocked_group,
-    FileGroupDataIter, MockFileGroupElement, MockFileGroupElementType,
+    FileGroupFileIter, MockFileGroupDataIter, MockFileGroupElement, MockedDataType,
 };
 use crate::{
     data_structures::{
@@ -255,7 +255,7 @@ mod test {
         );
     }
 
-    /*#[test]
+    #[test]
     fn test_mock_group_context_delete() {
         let mut mock_dir =
             MockContextDirectory::new(test_datasets_context_path().as_path().parent().unwrap());
@@ -267,54 +267,52 @@ mod test {
         );
         mock_dir.mock_control_component_public_keys_payload_as_deleted(2);
         assert_eq!(
-            mock_dir.mocked_control_component_public_keys_payload_deleted,
-            vec![2]
-        );
-        let mut it = mock_dir.control_component_public_keys_payload_iter();
-        assert_eq!(
             mock_dir
                 .control_component_public_keys_payload_iter()
                 .count(),
             3
         );
-        assert_eq!(
-            it.next()
-                .unwrap()
-                .1
-                .unwrap()
-                .control_component_public_keys
-                .node_id,
-            1
-        );
-        assert_eq!(
-            it.next()
-                .unwrap()
-                .1
-                .unwrap()
-                .control_component_public_keys
-                .node_id,
-            3
-        );
-        assert_eq!(
-            it.next()
-                .unwrap()
-                .1
-                .unwrap()
-                .control_component_public_keys
-                .node_id,
-            4
-        );
-        assert!(it.next().is_none());
-        mock_dir.mock_control_component_public_keys_payload_remove_deleted(2);
+        {
+            let mut it = mock_dir.control_component_public_keys_payload_iter();
+            assert_eq!(
+                it.next()
+                    .unwrap()
+                    .1
+                    .unwrap()
+                    .control_component_public_keys
+                    .node_id,
+                1
+            );
+            assert_eq!(
+                it.next()
+                    .unwrap()
+                    .1
+                    .unwrap()
+                    .control_component_public_keys
+                    .node_id,
+                3
+            );
+            assert_eq!(
+                it.next()
+                    .unwrap()
+                    .1
+                    .unwrap()
+                    .control_component_public_keys
+                    .node_id,
+                4
+            );
+            assert!(it.next().is_none());
+        }
+        mock_dir.mock_control_component_public_keys_payload_reset(2);
         assert_eq!(
             mock_dir
                 .control_component_public_keys_payload_iter()
                 .count(),
             4
         );
-    }*/
+    }
+
     #[test]
-    #[ignore = "Mock of groups no more implemented"]
     fn test_mock_group_context_error() {
         let mut mock_dir =
             MockContextDirectory::new(test_datasets_context_path().as_path().parent().unwrap());
@@ -361,7 +359,6 @@ mod test {
     }
 
     #[test]
-    #[ignore = "Mock of groups no more implemented"]
     fn test_mock_group_context() {
         let mut mock_dir =
             MockContextDirectory::new(test_datasets_context_path().as_path().parent().unwrap());

@@ -1,6 +1,6 @@
 use super::{
-    impl_mock_methods_for_mocked_group, impl_trait_get_method_for_mocked_group, FileGroupDataIter,
-    MockFileGroupElement, MockFileGroupElementType,
+    impl_mock_methods_for_mocked_group, impl_trait_get_method_for_mocked_group, FileGroupFileIter,
+    MockFileGroupDataIter, MockFileGroupElement, MockedDataType,
 };
 use crate::{
     data_structures::{
