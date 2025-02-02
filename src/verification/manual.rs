@@ -14,6 +14,8 @@ use chrono::NaiveDate;
 use rust_ev_system_library::rust_ev_crypto_primitives::prelude::EncodeTrait;
 use std::{collections::HashMap, sync::Arc};
 
+type VerificationErrorsFailureInformationType = Vec<(String, (Vec<String>, Vec<String>))>;
+
 /// Trait to get the information of the manual verifications in form of string
 ///
 /// The trait can be used to print the information of the manual verifications
@@ -43,6 +45,17 @@ pub trait ManualVerificationInformationTrait {
     ///
     /// Return empty if it is not relevant
     fn verification_stati_to_key_value(&self) -> Vec<(String, String)> {
+        vec![]
+    }
+
+    /// Get the errors and failures
+    ///
+    /// Return a [Vec] of a tuples:
+    /// - The first element of the tuple is the the id/name of the verification
+    /// - The second element of the tuple is a tuple with the list of errors and the list of failures
+    ///
+    /// Return empty if it is not relevant
+    fn verification_errors_and_failures(&self) -> VerificationErrorsFailureInformationType {
         vec![]
     }
 }
@@ -311,6 +324,13 @@ impl VerificationsResult {
             })
             .collect::<Vec<_>>()
     }
+
+    fn verification_errors_and_failures(&self) -> VerificationErrorsFailureInformationType {
+        self.verifications_with_errors_and_failures
+            .iter()
+            .map(|(k, v)| (k.clone(), v.clone()))
+            .collect()
+    }
 }
 
 impl<D: VerificationDirectoryTrait> ManualVerificationsSetup<D> {
@@ -371,6 +391,10 @@ impl<D: VerificationDirectoryTrait> ManualVerificationInformationTrait
 
     fn verification_stati_to_key_value(&self) -> Vec<(String, String)> {
         self.verifications_result.verification_stati_to_key_value()
+    }
+
+    fn verification_errors_and_failures(&self) -> VerificationErrorsFailureInformationType {
+        self.verifications_result.verification_errors_and_failures()
     }
 }
 
@@ -481,6 +505,10 @@ impl<D: VerificationDirectoryTrait> ManualVerificationInformationTrait
     fn verification_stati_to_key_value(&self) -> Vec<(String, String)> {
         self.verifications_result.verification_stati_to_key_value()
     }
+
+    fn verification_errors_and_failures(&self) -> VerificationErrorsFailureInformationType {
+        self.verifications_result.verification_errors_and_failures()
+    }
 }
 
 impl<D: VerificationDirectoryTrait> ManualVerifications<D> {
@@ -557,6 +585,13 @@ impl<D: VerificationDirectoryTrait> ManualVerificationInformationTrait for Manua
         match self {
             ManualVerifications::Setup(s) => s.verification_stati_to_key_value(),
             ManualVerifications::Tally(t) => t.verification_stati_to_key_value(),
+        }
+    }
+
+    fn verification_errors_and_failures(&self) -> VerificationErrorsFailureInformationType {
+        match self {
+            ManualVerifications::Setup(s) => s.verification_errors_and_failures(),
+            ManualVerifications::Tally(t) => t.verification_errors_and_failures(),
         }
     }
 }

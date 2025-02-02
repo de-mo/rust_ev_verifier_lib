@@ -103,6 +103,17 @@ impl ReportOutputBlock {
         )
     }
 
+    /// New block with tuples
+    pub fn new_with_strings(title: ReportOutputBlockTitle, entries: &[String]) -> Self {
+        Self::new_with_entries(
+            title,
+            entries
+                .iter()
+                .map(|s| ReportOutputEntry::from(s.as_str()))
+                .collect(),
+        )
+    }
+
     /// Push an entry
     pub fn push(&mut self, entry: ReportOutputEntry) {
         self.entries.push(entry);

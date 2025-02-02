@@ -83,7 +83,7 @@ impl<'a> ReportData<'a> {
 
 impl<D: VerificationDirectoryTrait> ReportInformationTrait for ManualVerifications<D> {
     fn to_report_output(&self) -> Result<ReportOutput, ReportError> {
-        Ok(ReportOutput::from_vec(vec![
+        let mut res = vec![
             ReportOutputBlock::new_with_tuples(
                 ReportOutputBlockTitle::Fingerprints,
                 &self.dt_fingerprints_to_key_value(),
@@ -96,7 +96,34 @@ impl<D: VerificationDirectoryTrait> ReportInformationTrait for ManualVerificatio
                 ReportOutputBlockTitle::VerificationResults,
                 &self.verification_stati_to_key_value(),
             ),
-        ]))
+        ];
+        res.append(
+            &mut self
+                .verification_errors_and_failures()
+                .iter()
+                .flat_map(|(id, (errors, failures))| {
+                    vec![
+                        ReportOutputBlock::new_with_strings(
+                            ReportOutputBlockTitle::VerificationErrors(id.clone()),
+                            &errors
+                                .iter()
+                                .enumerate()
+                                .map(|(i, s)| format!("[{}] - {}", i + 1, s))
+                                .collect::<Vec<_>>(),
+                        ),
+                        ReportOutputBlock::new_with_strings(
+                            ReportOutputBlockTitle::VerificationFailures(id.clone()),
+                            &failures
+                                .iter()
+                                .enumerate()
+                                .map(|(i, s)| format!("[{}] - {}", i + 1, s))
+                                .collect::<Vec<_>>(),
+                        ),
+                    ]
+                })
+                .collect::<Vec<_>>(),
+        );
+        Ok(ReportOutput::from_vec(res))
     }
 }
 
