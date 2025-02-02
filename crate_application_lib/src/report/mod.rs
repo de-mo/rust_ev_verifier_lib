@@ -81,7 +81,7 @@ impl<'a> ReportData<'a> {
     }
 }
 
-impl<D: VerificationDirectoryTrait + Clone> ReportInformationTrait for ManualVerifications<D> {
+impl<D: VerificationDirectoryTrait> ReportInformationTrait for ManualVerifications<D> {
     fn to_report_output(&self) -> Result<ReportOutput, ReportError> {
         Ok(ReportOutput::from_vec(vec![
             ReportOutputBlock::new_with_tuples(

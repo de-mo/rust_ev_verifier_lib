@@ -12,7 +12,7 @@ use crate::{
 };
 use chrono::NaiveDate;
 use rust_ev_system_library::rust_ev_crypto_primitives::prelude::EncodeTrait;
-use std::collections::HashMap;
+use std::{collections::HashMap, sync::Arc};
 
 /// Trait to get the information of the manual verifications in form of string
 ///
@@ -49,8 +49,8 @@ pub trait ManualVerificationInformationTrait {
 
 /// Data for the manual verifications, containing all the data that
 /// are necessary for Setup and for Tally
-struct ManualVerificationsForAllPeriod<D: VerificationDirectoryTrait + Clone> {
-    verification_directory: D,
+struct ManualVerificationsForAllPeriod<D: VerificationDirectoryTrait> {
+    verification_directory: Arc<D>,
     direct_trust_certificate_fingerprints: HashMap<String, String>,
     contest_identification: String,
     contest_date: NaiveDate,
@@ -78,12 +78,12 @@ pub struct VerificationsResult {
 }
 
 /// Data for the manual verifications on the setup
-pub struct ManualVerificationsSetup<D: VerificationDirectoryTrait + Clone> {
+pub struct ManualVerificationsSetup<D: VerificationDirectoryTrait> {
     manual_verifications_all_periods: ManualVerificationsForAllPeriod<D>,
     verifications_result: VerificationsResult,
 }
 /// Data for the manual verifications on the tally
-pub struct ManualVerificationsTally<D: VerificationDirectoryTrait + Clone> {
+pub struct ManualVerificationsTally<D: VerificationDirectoryTrait> {
     manual_verifications_all_periods: ManualVerificationsForAllPeriod<D>,
     number_of_test_used_voting_cards: usize,
     number_of_productive_used_voting_cards: usize,
@@ -91,19 +91,19 @@ pub struct ManualVerificationsTally<D: VerificationDirectoryTrait + Clone> {
 }
 
 /// Enum for the manual verifications (for setup oder tally)
-pub enum ManualVerifications<D: VerificationDirectoryTrait + Clone> {
+pub enum ManualVerifications<D: VerificationDirectoryTrait> {
     Setup(ManualVerificationsSetup<D>),
     Tally(ManualVerificationsTally<D>),
 }
 
-impl<D: VerificationDirectoryTrait + Clone> ManualVerificationsForAllPeriod<D> {
+impl<D: VerificationDirectoryTrait> ManualVerificationsForAllPeriod<D> {
     /// Create a new [ManualVerificationsForAllPeriod]
     ///
     /// Inputs
     /// - `directory`: The Verification directory
     /// - `config`: The configuration of the verifier
     pub fn try_new(
-        directory: &D,
+        directory: Arc<D>,
         config: &'static VerifierConfig,
     ) -> Result<Self, VerificationError> {
         let keystore = config.keystore().map_err(VerificationError::ConfigError)?;
@@ -138,7 +138,7 @@ impl<D: VerificationDirectoryTrait + Clone> ManualVerificationsForAllPeriod<D> {
     }
 }
 
-impl<D: VerificationDirectoryTrait + Clone> ManualVerificationInformationTrait
+impl<D: VerificationDirectoryTrait> ManualVerificationInformationTrait
     for ManualVerificationsForAllPeriod<D>
 {
     fn dt_fingerprints_to_key_value(&self) -> Vec<(String, String)> {
@@ -313,7 +313,7 @@ impl VerificationsResult {
     }
 }
 
-impl<D: VerificationDirectoryTrait + Clone> ManualVerificationsSetup<D> {
+impl<D: VerificationDirectoryTrait> ManualVerificationsSetup<D> {
     /// Create new [ManualVerificationsSetup]
     ///
     /// Inputs:
@@ -327,7 +327,7 @@ impl<D: VerificationDirectoryTrait + Clone> ManualVerificationsSetup<D> {
     /// It is recommended to deliver in `verifications_with_errors_and_failures` on the verifications having errors or failures. The verification with success should
     /// not be delivered
     pub fn try_new(
-        directory: &D,
+        directory: Arc<D>,
         config: &'static VerifierConfig,
         metadata: &VerificationMetaDataList,
         verifications_status: &HashMap<String, VerificationStatus>,
@@ -348,7 +348,7 @@ impl<D: VerificationDirectoryTrait + Clone> ManualVerificationsSetup<D> {
     }
 }
 
-impl<D: VerificationDirectoryTrait + Clone> ManualVerificationInformationTrait
+impl<D: VerificationDirectoryTrait> ManualVerificationInformationTrait
     for ManualVerificationsSetup<D>
 {
     fn dt_fingerprints_to_key_value(&self) -> Vec<(String, String)> {
@@ -374,7 +374,7 @@ impl<D: VerificationDirectoryTrait + Clone> ManualVerificationInformationTrait
     }
 }
 
-impl<D: VerificationDirectoryTrait + Clone> ManualVerificationsTally<D> {
+impl<D: VerificationDirectoryTrait> ManualVerificationsTally<D> {
     /// Create new [ManualVerificationsTally]
     ///
     /// Inputs:
@@ -388,7 +388,7 @@ impl<D: VerificationDirectoryTrait + Clone> ManualVerificationsTally<D> {
     /// It is recommended to deliver in `verifications_with_errors_and_failures` on the verifications having errors or failures. The verification with success should
     /// not be delivered
     fn try_new(
-        directory: &D,
+        directory: Arc<D>,
         config: &'static VerifierConfig,
         metadata: &VerificationMetaDataList,
         verifications_status: &HashMap<String, VerificationStatus>,
@@ -449,7 +449,7 @@ impl<D: VerificationDirectoryTrait + Clone> ManualVerificationsTally<D> {
     }
 }
 
-impl<D: VerificationDirectoryTrait + Clone> ManualVerificationInformationTrait
+impl<D: VerificationDirectoryTrait> ManualVerificationInformationTrait
     for ManualVerificationsTally<D>
 {
     fn dt_fingerprints_to_key_value(&self) -> Vec<(String, String)> {
@@ -483,7 +483,7 @@ impl<D: VerificationDirectoryTrait + Clone> ManualVerificationInformationTrait
     }
 }
 
-impl<D: VerificationDirectoryTrait + Clone> ManualVerifications<D> {
+impl<D: VerificationDirectoryTrait> ManualVerifications<D> {
     /// Create new [ManualVerifications]
     ///
     /// Inputs:
@@ -498,7 +498,7 @@ impl<D: VerificationDirectoryTrait + Clone> ManualVerifications<D> {
     /// not be delivered
     pub fn try_new(
         period: VerificationPeriod,
-        directory: &D,
+        directory: Arc<D>,
         config: &'static VerifierConfig,
         verifications_status: &HashMap<String, VerificationStatus>,
         verifications_with_errors_and_failures: &VerficationsWithErrorAndFailuresType,
@@ -531,9 +531,7 @@ impl<D: VerificationDirectoryTrait + Clone> ManualVerifications<D> {
     }
 }
 
-impl<D: VerificationDirectoryTrait + Clone> ManualVerificationInformationTrait
-    for ManualVerifications<D>
-{
+impl<D: VerificationDirectoryTrait> ManualVerificationInformationTrait for ManualVerifications<D> {
     fn dt_fingerprints_to_key_value(&self) -> Vec<(String, String)> {
         match self {
             ManualVerifications::Setup(s) => s.dt_fingerprints_to_key_value(),

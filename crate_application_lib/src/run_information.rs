@@ -9,7 +9,7 @@ use rust_ev_verifier_lib::{
     },
     VerifierConfig,
 };
-use std::{collections::HashMap, path::Path, time::SystemTime};
+use std::{collections::HashMap, path::Path, sync::Arc, time::SystemTime};
 
 /// This structure contains all the information about the actual run.
 ///
@@ -233,7 +233,7 @@ impl TryFrom<&RunInformation> for ManualVerifications<VerificationDirectory> {
         );
         Self::try_new(
             value.verification_period.unwrap(),
-            &dir,
+            Arc::new(dir),
             value.config,
             &value.verifications_status,
             value.verifications_with_errors_and_failures(),
