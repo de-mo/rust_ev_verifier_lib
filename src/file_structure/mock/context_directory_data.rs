@@ -6,10 +6,11 @@ use super::{
 use crate::{
     data_structures::{
         context::{
+            control_component_public_keys_payload::ControlComponentPublicKeysPayload,
             setup_component_public_keys_payload::SetupComponentPublicKeysPayload,
             setup_component_tally_data_payload::SetupComponentTallyDataPayload,
         },
-        ControlComponentPublicKeysPayload, ElectionEventConfiguration, ElectionEventContextPayload,
+        ElectionEventConfiguration, ElectionEventContextPayload,
     },
     file_structure::{
         context_directory::{

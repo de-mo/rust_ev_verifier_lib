@@ -3,9 +3,9 @@ use super::{
     MockFileGroupDataIter, MockFileGroupElement, MockedDataType,
 };
 use crate::{
-    data_structures::{
-        setup::setup_component_verification_data_payload::SetupComponentVerificationDataPayload,
-        ControlComponentCodeSharesPayload,
+    data_structures::setup::{
+        control_component_code_shares_payload::ControlComponentCodeSharesPayload,
+        setup_component_verification_data_payload::SetupComponentVerificationDataPayload,
     },
     file_structure::{
         setup_directory::{

@@ -141,8 +141,9 @@ impl<D: VerifierDataDecode + VerifierDataToTypeTrait> File<D> {
 mod test {
     use super::*;
     use crate::config::test::{test_datasets_context_path, test_datasets_tally_path};
+    use crate::data_structures::context::control_component_public_keys_payload::ControlComponentPublicKeysPayload;
     use crate::data_structures::tally::ech_0110::ECH0110;
-    use crate::data_structures::{ControlComponentPublicKeysPayload, ElectionEventContextPayload};
+    use crate::data_structures::ElectionEventContextPayload;
 
     #[test]
     fn test_file() {

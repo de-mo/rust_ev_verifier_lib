@@ -187,8 +187,10 @@ impl<D: VerifierDataDecode + VerifierDataToTypeTrait + Clone> FileGroup<D> {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::config::test::test_datasets_context_path;
-    use crate::data_structures::ControlComponentPublicKeysPayload;
+    use crate::{
+        config::test::test_datasets_context_path,
+        data_structures::context::control_component_public_keys_payload::ControlComponentPublicKeysPayload,
+    };
 
     #[test]
     fn test_file_group() {
