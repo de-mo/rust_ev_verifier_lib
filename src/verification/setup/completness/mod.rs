@@ -5,14 +5,14 @@ use super::super::{
     verifications::Verification,
 };
 use crate::{
-    config::Config,
+    config::VerifierConfig,
     file_structure::{CompletnessTestTrait, VerificationDirectoryTrait},
     verification::VerificationError,
 };
 
 pub fn get_verifications<'a>(
     metadata_list: &'a VerificationMetaDataList,
-    config: &'static Config,
+    config: &'static VerifierConfig,
 ) -> Result<VerificationList<'a>, VerificationError> {
     Ok(VerificationList(vec![Verification::new(
         "01.01",
@@ -25,7 +25,7 @@ pub fn get_verifications<'a>(
 
 fn fn_0101_verify_setup_completeness<D: VerificationDirectoryTrait>(
     dir: &D,
-    _config: &'static Config,
+    _config: &'static VerifierConfig,
     result: &mut VerificationResult,
 ) {
     let context_dir: &<D as VerificationDirectoryTrait>::ContextDirType = dir.context();

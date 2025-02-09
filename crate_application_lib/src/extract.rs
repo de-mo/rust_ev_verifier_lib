@@ -1,7 +1,6 @@
 use super::RunnerError;
-use crate::{
-    data_structures::dataset::DatasetTypeKind, dataset::DatasetMetadata,
-    verification::VerificationPeriod, Config,
+use rust_ev_verifier_lib::{
+    dataset::DatasetMetadata, verification::VerificationPeriod, DatasetTypeKind, VerifierConfig,
 };
 use std::{
     collections::HashMap,
@@ -9,6 +8,7 @@ use std::{
 };
 use tracing::{info, instrument};
 
+#[derive(Debug, Clone)]
 pub struct ExtractDataSetResults {
     metadata_hm: HashMap<DatasetTypeKind, DatasetMetadata>,
     location: PathBuf,
@@ -30,7 +30,7 @@ impl ExtractDataSetResults {
         setup_zip_file: Option<&Path>,
         tally_zip_file: Option<&Path>,
         password: &str,
-        config: &'static Config,
+        config: &'static VerifierConfig,
     ) -> Result<Self, RunnerError> {
         let dataset_root_path = config.create_dataset_dir_path();
         let mut hm = HashMap::new();

@@ -3,7 +3,10 @@ use super::super::{
     deserialize_seq_string_base64_to_seq_integer, implement_trait_verifier_data_json_decode,
     DataStructureError, VerifierDataDecode,
 };
-use crate::direct_trust::{CertificateAuthority, VerifiySignatureTrait, VerifySignatureError};
+use crate::{
+    data_structures::{VerifierDataToTypeTrait, VerifierDataType},
+    direct_trust::{CertificateAuthority, VerifiySignatureTrait, VerifySignatureError},
+};
 use rust_ev_system_library::rust_ev_crypto_primitives::prelude::{
     elgamal::EncryptionParameters, ByteArray, HashableMessage, Integer, VerifyDomainTrait,
 };
@@ -17,6 +20,12 @@ pub struct ControlComponentPublicKeysPayload {
     pub election_event_id: String,
     pub control_component_public_keys: ControlComponentPublicKeys,
     pub signature: Signature,
+}
+
+impl VerifierDataToTypeTrait for ControlComponentPublicKeysPayload {
+    fn data_type() -> crate::data_structures::VerifierDataType {
+        VerifierDataType::Context(super::VerifierContextDataType::ControlComponentPublicKeysPayload)
+    }
 }
 
 implement_trait_verifier_data_json_decode!(ControlComponentPublicKeysPayload);

@@ -3,13 +3,13 @@ mod v1002_verify_tally_control_component;
 
 use super::super::{suite::VerificationList, verifications::Verification};
 use crate::{
-    config::Config,
+    config::VerifierConfig,
     verification::{meta_data::VerificationMetaDataList, VerificationError},
 };
 
 pub fn get_verifications<'a>(
     metadata_list: &'a VerificationMetaDataList,
-    config: &'static Config,
+    config: &'static VerifierConfig,
 ) -> Result<VerificationList<'a>, VerificationError> {
     Ok(VerificationList(vec![
         Verification::new(

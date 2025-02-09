@@ -5,9 +5,10 @@ use super::{
         DataStructureError, VerifierDataDecode,
     },
     verifiable_shuffle::{verifiy_domain_for_verifiable_shuffle, VerifiableShuffle},
+    VerifierTallyDataType,
 };
 use crate::{
-    data_structures::common_types::DecryptionProof,
+    data_structures::{common_types::DecryptionProof, VerifierDataToTypeTrait, VerifierDataType},
     direct_trust::{CertificateAuthority, VerifiySignatureTrait, VerifySignatureError},
 };
 use rust_ev_system_library::rust_ev_crypto_primitives::prelude::{
@@ -27,6 +28,13 @@ pub struct TallyComponentShufflePayload {
     pub verifiable_plaintext_decryption: VerifiablePlaintextDecryption,
     pub signature: Signature,
 }
+
+impl VerifierDataToTypeTrait for TallyComponentShufflePayload {
+    fn data_type() -> VerifierDataType {
+        VerifierDataType::Tally(VerifierTallyDataType::TallyComponentShufflePayload)
+    }
+}
+
 implement_trait_verifier_data_json_decode!(TallyComponentShufflePayload);
 
 #[derive(Deserialize, Debug, Clone)]

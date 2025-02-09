@@ -1,13 +1,13 @@
 use super::super::super::result::{VerificationEvent, VerificationResult};
 use crate::{
-    config::Config,
+    config::VerifierConfig,
     file_structure::{context_directory::ContextDirectoryTrait, VerificationDirectoryTrait},
 };
 use rust_ev_system_library::rust_ev_crypto_primitives::prelude::{ConstantsTrait, Integer};
 
 pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
     dir: &D,
-    _config: &'static Config,
+    _config: &'static VerifierConfig,
     result: &mut VerificationResult,
 ) {
     let context_dir = dir.context();
@@ -50,10 +50,10 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
     let verifb = ee_context
         .small_primes
         .iter()
-        .take(Config::maximum_supported_number_of_selections_psi_sup() - 1)
+        .take(VerifierConfig::maximum_supported_number_of_selections_psi_sup() - 1)
         .skip(
-            Config::maximum_number_of_supported_voting_options_n_sup()
-                - Config::maximum_supported_number_of_selections_psi_sup()
+            VerifierConfig::maximum_number_of_supported_voting_options_n_sup()
+                - VerifierConfig::maximum_supported_number_of_selections_psi_sup()
                 - 1,
         )
         .fold(Integer::zero().clone(), |acc, e| acc * e);

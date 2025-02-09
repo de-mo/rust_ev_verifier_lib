@@ -1,6 +1,6 @@
 use super::super::super::result::{VerificationEvent, VerificationResult};
 use crate::{
-    config::Config,
+    config::VerifierConfig,
     file_structure::{
         context_directory::ContextDirectoryTrait,
         tally_directory::{BBDirectoryTrait, TallyDirectoryTrait},
@@ -84,13 +84,13 @@ fn verify_encryption_group_for_tally_bb_dir<B: BBDirectoryTrait>(
 
 pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
     dir: &D,
-    _config: &'static Config,
+    _config: &'static VerifierConfig,
     result: &mut VerificationResult,
 ) {
     let config_dir = dir.context();
     let tally_dir = dir.unwrap_tally();
-    let eg = match config_dir.election_event_context_payload() {
-        Ok(p) => p.encryption_group,
+    let payload = match config_dir.election_event_context_payload() {
+        Ok(p) => p,
         Err(e) => {
             result.push(
                 VerificationEvent::new_error(&e)
@@ -99,9 +99,10 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
             return;
         }
     };
+    let eg = &payload.encryption_group;
 
     for bb in tally_dir.bb_directories().iter() {
-        verify_encryption_group_for_tally_bb_dir(bb, &eg, result);
+        verify_encryption_group_for_tally_bb_dir(bb, eg, result);
     }
 }
 

@@ -117,7 +117,7 @@ fn find_unique_file_with_extension(
         .filter_map(|res| res.ok())
         .map(|f| f.path())
         .filter_map(|path| {
-            if path.extension().map_or(false, |ext| ext == extension) {
+            if path.extension().is_some_and(|ext| ext == extension) {
                 Some(path)
             } else {
                 None

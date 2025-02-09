@@ -7,7 +7,7 @@ use super::super::{
     verify_signature_for_object,
 };
 use crate::{
-    config::Config,
+    config::VerifierConfig,
     file_structure::{
         context_directory::{ContextDirectoryTrait, ContextVCSDirectoryTrait},
         VerificationDirectoryTrait,
@@ -17,7 +17,7 @@ use crate::{
 
 pub fn get_verifications<'a>(
     metadata_list: &'a VerificationMetaDataList,
-    config: &'static Config,
+    config: &'static VerifierConfig,
 ) -> Result<VerificationList<'a>, VerificationError> {
     Ok(VerificationList(vec![
         Verification::new(
@@ -60,7 +60,7 @@ pub fn get_verifications<'a>(
 
 fn fn_0201_verify_signature_canton_config<D: VerificationDirectoryTrait>(
     dir: &D,
-    config: &'static Config,
+    config: &'static VerifierConfig,
     result: &mut VerificationResult,
 ) {
     let context_dir = dir.context();
@@ -82,7 +82,7 @@ fn fn_0201_verify_signature_canton_config<D: VerificationDirectoryTrait>(
 
 fn fn_0202_verify_signature_setup_component_public_keys<D: VerificationDirectoryTrait>(
     dir: &D,
-    config: &'static Config,
+    config: &'static VerifierConfig,
     result: &mut VerificationResult,
 ) {
     let context_dir = dir.context();
@@ -104,7 +104,7 @@ fn fn_0202_verify_signature_setup_component_public_keys<D: VerificationDirectory
 
 fn fn_0203_verify_signature_control_component_public_keys<D: VerificationDirectoryTrait>(
     dir: &D,
-    config: &'static Config,
+    config: &'static VerifierConfig,
     result: &mut VerificationResult,
 ) {
     let context_dir = dir.context();
@@ -125,7 +125,7 @@ fn fn_0203_verify_signature_control_component_public_keys<D: VerificationDirecto
 
 fn fn_0204_verify_signature_setup_component_tally_data<D: VerificationDirectoryTrait>(
     dir: &D,
-    config: &'static Config,
+    config: &'static VerifierConfig,
     result: &mut VerificationResult,
 ) {
     let context_dir = dir.context();
@@ -146,7 +146,7 @@ fn fn_0204_verify_signature_setup_component_tally_data<D: VerificationDirectoryT
 
 fn fn_0205_verify_signature_election_event_context<D: VerificationDirectoryTrait>(
     dir: &D,
-    config: &'static Config,
+    config: &'static VerifierConfig,
     result: &mut VerificationResult,
 ) {
     let context_dir = dir.context();

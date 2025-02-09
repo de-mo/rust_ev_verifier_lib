@@ -1,10 +1,7 @@
 use super::super::super::result::{VerificationEvent, VerificationResult};
 use crate::{
-    config::Config,
-    data_structures::{
-        context::control_component_public_keys_payload::ControlComponentPublicKeys,
-        VerifierContextDataTrait,
-    },
+    config::VerifierConfig,
+    data_structures::context::control_component_public_keys_payload::ControlComponentPublicKeys,
     file_structure::{context_directory::ContextDirectoryTrait, VerificationDirectoryTrait},
 };
 use std::iter::zip;
@@ -18,11 +15,8 @@ fn validate_ccm_and_ccr_schorr_proofs<S: ContextDirectoryTrait>(
     let f = context_dir
         .control_component_public_keys_payload_group()
         .get_file_with_number(node_id);
-    let cc_pk = match f
-        .get_verifier_data()
-        .map(|d| Box::new(d.control_component_public_keys_payload().unwrap().clone()))
-    {
-        Ok(d) => d.control_component_public_keys,
+    let context = match f.decode_verifier_data().map(Box::new) {
+        Ok(d) => d,
         Err(e) => {
             result.push(
                 VerificationEvent::new_error(&e)
@@ -31,6 +25,7 @@ fn validate_ccm_and_ccr_schorr_proofs<S: ContextDirectoryTrait>(
             return;
         }
     };
+    let cc_pk = &context.as_ref().control_component_public_keys;
     if setup.ccmj_schnorr_proofs.len() != cc_pk.ccmj_schnorr_proofs.len() {
         result.push(VerificationEvent::new_failure(&format!("The length of CCM public keys for control component {} are identical from both sources", node_id)));
     } else {
@@ -71,7 +66,7 @@ fn validate_ccm_and_ccr_schorr_proofs<S: ContextDirectoryTrait>(
 
 pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
     dir: &D,
-    _config: &'static Config,
+    _config: &'static VerifierConfig,
     result: &mut VerificationResult,
 ) {
     let context_dir = dir.context();
@@ -85,11 +80,11 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
             return;
         }
     };
-    for node in sc_pk
+    for node in &sc_pk
         .setup_component_public_keys
         .combined_control_component_public_keys
     {
-        validate_ccm_and_ccr_schorr_proofs(context_dir, &node, node.node_id, result)
+        validate_ccm_and_ccr_schorr_proofs(context_dir, node, node.node_id, result)
     }
 }
 

@@ -1,5 +1,7 @@
 //! Module containing the contstants and the way to access them
 
+use thiserror::Error;
+
 use super::consts;
 use super::direct_trust::{DirectTrustError, Keystore};
 use super::resources::VERIFICATION_LIST;
@@ -19,6 +21,19 @@ const DIRECT_TRUST_DIR_NAME: &str = "direct-trust";
 const DATA_DIR_NAME: &str = "data";
 const ZIP_TEMP_DIR_NAME: &str = "decrypted_zip";
 
+// Other Options
+const DEFAULT_TXT_REPORT_TAB_SIZE: u8 = 2;
+const DEFAULT_REPORT_FORMAT_DATE_TIME: &str = "%d.%m.%Y %H:%M:%S.%3f";
+
+// Enum representing the configuration error
+#[derive(Error, Debug)]
+pub enum VerifierConfigError {
+    #[error("Variable {0} not found in .env")]
+    Env(String),
+    #[error(transparent)]
+    DirectTrust(#[from] DirectTrustError),
+}
+
 /// Structuring getting all the configuration information relevant for the
 /// verifier
 ///
@@ -30,19 +45,19 @@ const ZIP_TEMP_DIR_NAME: &str = "decrypted_zip";
 ///     static ref CONFIG: Config = Config::new("..");
 ///  }
 /// ```
-pub struct Config(&'static str);
+pub struct VerifierConfig(&'static str);
 
 /// New config with root_dir equal "."
-impl Default for Config {
+impl Default for VerifierConfig {
     fn default() -> Self {
         Self::new(".")
     }
 }
 
-impl Config {
+impl VerifierConfig {
     /// New Config
     pub fn new(root_dir: &'static str) -> Self {
-        Config(root_dir)
+        VerifierConfig(root_dir)
     }
 
     /// Path of the root directory of the programm
@@ -151,8 +166,13 @@ impl Config {
     }
 
     /// The path to the directory where direct trust keystore is stored
+    ///
+    /// If the env variable is not used, then use the `./DIRECT_TRUST_DIR_NAME`
     pub fn direct_trust_dir_path(&self) -> PathBuf {
-        self.root_dir_path().join(DIRECT_TRUST_DIR_NAME)
+        match dotenvy::var(consts::ENV_DIRECT_TRUST_DIR_PATH) {
+            Ok(v) => PathBuf::from(v),
+            Err(_) => self.root_dir_path().join(DIRECT_TRUST_DIR_NAME),
+        }
     }
 
     /// Get the relative path of the file containing the configuration of the verifications
@@ -161,8 +181,38 @@ impl Config {
     }
 
     /// Get the keystore
-    pub fn keystore(&self) -> Result<Keystore, DirectTrustError> {
-        Keystore::try_from(self.direct_trust_dir_path().as_path())
+    pub fn keystore(&self) -> Result<Keystore, VerifierConfigError> {
+        Ok(Keystore::try_from(self.direct_trust_dir_path().as_path())?)
+    }
+
+    /// Get tab size for text reports
+    ///
+    /// If the env variable not found, use the default value
+    pub fn txt_report_tab_size(&self) -> u8 {
+        match dotenvy::var(consts::ENV_TXT_REPORT_TAB_SIZE) {
+            Ok(v) => match v.parse::<u8>() {
+                Ok(v) => v,
+                Err(_) => DEFAULT_TXT_REPORT_TAB_SIZE,
+            },
+            Err(_) => DEFAULT_TXT_REPORT_TAB_SIZE,
+        }
+    }
+
+    /// Get tab size for text reports
+    ///
+    /// If the env variable not found, use the default value
+    pub fn report_format_date(&self) -> String {
+        match dotenvy::var(consts::ENV_REPORT_FORMAT_DATE) {
+            Ok(v) => v,
+            Err(_) => DEFAULT_REPORT_FORMAT_DATE_TIME.to_string(),
+        }
+    }
+
+    /// Get the password to decrypt the zip files
+    pub fn decrypt_password(&self) -> Result<String, VerifierConfigError> {
+        dotenvy::var(consts::ENV_VERIFIER_DATASET_PASSWORD).map_err(|_| {
+            VerifierConfigError::Env(consts::ENV_VERIFIER_DATASET_PASSWORD.to_string())
+        })
     }
 }
 
@@ -203,7 +253,7 @@ pub(crate) mod test {
     const TEST_DECRYPT_ZIP_PASSWORD: &str = "LongPassword_Encryption1";
 
     lazy_static! {
-        pub(crate) static ref CONFIG_TEST: Config = Config::new(".");
+        pub(crate) static ref CONFIG_TEST: VerifierConfig = VerifierConfig::new(".");
     }
 
     pub(crate) fn test_datasets_path() -> PathBuf {
@@ -357,7 +407,7 @@ pub(crate) mod test {
 
     #[test]
     fn test_config() {
-        let c = Config::default();
+        let c = VerifierConfig::default();
         assert_eq!(c.root_dir_path(), Path::new("."));
         assert_eq!(c.log_file_path(), Path::new("./log/log.txt"));
         assert_eq!(c.direct_trust_dir_path(), Path::new("./direct-trust"));

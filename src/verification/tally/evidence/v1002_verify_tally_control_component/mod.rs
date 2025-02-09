@@ -8,7 +8,7 @@ use crate::{
         VerificationDirectoryTrait,
     },
     verification::{VerificationEvent, VerificationResult},
-    Config,
+    VerifierConfig,
 };
 use rayon::prelude::*;
 use rust_ev_system_library::rust_ev_crypto_primitives::prelude::{mix_net::ShuffleArgument, Integer};
@@ -18,7 +18,7 @@ use verify_tally_control_component_ballot_box::{
 
 pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
     dir: &D,
-    _config: &'static Config,
+    _config: &'static VerifierConfig,
     result: &mut VerificationResult,
 ) {
     let context_dir = dir.context();

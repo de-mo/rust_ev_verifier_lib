@@ -1,16 +1,24 @@
-//! Module implementing common functionalities for all Verifier applications (console and GUI)
+//! Crate implementing common functionalities for all Verifier applications (console and GUI)
+//!
+//! Following functionalities are provided
+//! - [runner::Runner] provides the possibility to run all the verifications
+//! - `extract` provides the functionalities to extract the zip files
+//! - [run_information::RunInformation] stores all the information about the current running
+//! - [report] provides the possibility to report the actual stituation
 
-mod checks;
 mod extract;
+pub mod report;
+mod run_information;
 mod runner;
 
-pub use checks::*;
 pub use extract::*;
-pub use runner::{no_action_after_fn, no_action_before_fn, RunParallel, Runner};
-
-use thiserror::Error;
-
-use crate::{
+//pub use report::*;
+pub use run_information::RunInformation;
+pub use runner::{
+    no_action_after_fn, no_action_after_runner_fn, no_action_before_fn, no_action_before_runner_fn,
+    RunParallel, Runner, RunnerInformation, VerificationRunInformation,
+};
+use rust_ev_verifier_lib::{
     dataset::DatasetError,
     file_structure::{
         ContextDirectoryTrait, FileStructureError, VerificationDirectory,
@@ -18,6 +26,7 @@ use crate::{
     },
     verification::VerificationError,
 };
+use thiserror::Error;
 
 // Enum representing the datza structure errors
 #[derive(Error, Debug)]
@@ -41,6 +50,8 @@ pub enum RunnerError {
         msg: String,
         source: Box<FileStructureError>,
     },
+    #[error("Error for RunInformation: {0}")]
+    RunInformationError(String),
 }
 
 fn prepare_fixed_based_optimization(dir: &VerificationDirectory) -> Result<(), RunnerError> {
@@ -52,7 +63,7 @@ fn prepare_fixed_based_optimization(dir: &VerificationDirectory) -> Result<(), R
                 msg: "election_event_context_payload".to_string(),
                 source: Box::new(e),
             })?;
-    rust_ev_system_library::rust_ev_crypto_primitives::prelude::prepare_fixed_based_optimization(
+    let _ = rust_ev_system_library::rust_ev_crypto_primitives::prelude::prepare_fixed_based_optimization(
         context.encryption_group.g(),
         context.encryption_group.p(),
     );

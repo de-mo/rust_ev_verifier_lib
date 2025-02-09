@@ -1,9 +1,15 @@
-use super::super::{
-    common_types::{CiphertextDef, EncryptionParametersDef, Signature},
-    implement_trait_verifier_data_json_decode, DataStructureError, VerifierDataDecode,
+use super::{
+    super::{
+        common_types::{CiphertextDef, EncryptionParametersDef, Signature},
+        implement_trait_verifier_data_json_decode, DataStructureError, VerifierDataDecode,
+    },
+    VerifierTallyDataType,
 };
 use crate::{
-    data_structures::common_types::{DecryptionProof, SchnorrProof},
+    data_structures::{
+        common_types::{DecryptionProof, SchnorrProof},
+        VerifierDataToTypeTrait, VerifierDataType,
+    },
     direct_trust::{CertificateAuthority, VerifiySignatureTrait, VerifySignatureError},
 };
 
@@ -24,6 +30,13 @@ pub struct ControlComponentBallotBoxPayload {
     pub confirmed_encrypted_votes: Vec<ConfirmedEncryptedVote>,
     pub signature: Signature,
 }
+
+impl VerifierDataToTypeTrait for ControlComponentBallotBoxPayload {
+    fn data_type() -> VerifierDataType {
+        VerifierDataType::Tally(VerifierTallyDataType::ControlComponentBallotBoxPayload)
+    }
+}
+
 implement_trait_verifier_data_json_decode!(ControlComponentBallotBoxPayload);
 
 #[derive(Deserialize, Debug, Clone)]

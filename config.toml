@@ -1,2 +1,0 @@
-[env]
-OPENSSL_NO_VENDOR = {value="true", force=true}

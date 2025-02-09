@@ -12,13 +12,13 @@ mod v0811_verify_encryption_group_consistency;
 
 use super::super::{suite::VerificationList, verifications::Verification};
 use crate::{
-    config::Config,
+    config::VerifierConfig,
     verification::{meta_data::VerificationMetaDataList, VerificationError},
 };
 
 pub fn get_verifications<'a>(
     metadata_list: &'a VerificationMetaDataList,
-    config: &'static Config,
+    config: &'static VerifierConfig,
 ) -> Result<VerificationList<'a>, VerificationError> {
     Ok(VerificationList(vec![
         Verification::new(

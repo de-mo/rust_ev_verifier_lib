@@ -6,7 +6,7 @@ use super::super::{
     verifications::Verification,
 };
 use crate::{
-    config::Config,
+    config::VerifierConfig,
     file_structure::{
         context_directory::{ContextDirectoryTrait, ContextVCSDirectoryTrait},
         setup_directory::{SetupDirectoryTrait, SetupVCSDirectoryTrait},
@@ -18,7 +18,7 @@ use rust_ev_system_library::rust_ev_crypto_primitives::prelude::VerifyDomainTrai
 
 pub fn get_verifications<'a>(
     metadata_list: &'a VerificationMetaDataList,
-    config: &'static Config,
+    config: &'static VerifierConfig,
 ) -> Result<VerificationList<'a>, VerificationError> {
     Ok(VerificationList(vec![Verification::new(
         "04.01",
@@ -181,7 +181,7 @@ fn validate_context_dir<C: ContextDirectoryTrait>(dir: &C, result: &mut Verifica
 
 fn fn_0401_verify_setup_integrity<D: VerificationDirectoryTrait>(
     dir: &D,
-    _config: &'static Config,
+    _config: &'static VerifierConfig,
     result: &mut VerificationResult,
 ) {
     let context_dir = dir.context();

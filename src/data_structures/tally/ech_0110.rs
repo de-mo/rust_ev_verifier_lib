@@ -1,8 +1,14 @@
-use super::super::{
-    xml::{hashable::XMLFileHashable, SchemaKind},
-    DataStructureError, VerifierDataDecode,
+use super::{
+    super::{
+        xml::{hashable::XMLFileHashable, SchemaKind},
+        DataStructureError, VerifierDataDecode,
+    },
+    VerifierTallyDataType,
 };
-use crate::direct_trust::{CertificateAuthority, VerifiySignatureTrait, VerifySignatureError};
+use crate::{
+    data_structures::{VerifierDataToTypeTrait, VerifierDataType},
+    direct_trust::{CertificateAuthority, VerifiySignatureTrait, VerifySignatureError},
+};
 use rust_ev_system_library::rust_ev_crypto_primitives::prelude::{
     ByteArray, HashableMessage, RecursiveHashTrait,
 };
@@ -11,6 +17,12 @@ use std::path::{Path, PathBuf};
 #[derive(Debug, Clone)]
 pub struct ECH0110 {
     pub path: PathBuf,
+}
+
+impl VerifierDataToTypeTrait for ECH0110 {
+    fn data_type() -> VerifierDataType {
+        VerifierDataType::Tally(VerifierTallyDataType::ECH0110)
+    }
 }
 
 impl VerifierDataDecode for ECH0110 {

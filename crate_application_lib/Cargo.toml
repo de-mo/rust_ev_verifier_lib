@@ -1,0 +1,25 @@
+[package]
+name = "rust_ev_verifier_application_lib"
+description = "Library for common elements to implement an application using the crate `rust_ev_verifier_lib`"
+authors.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+repository.workspace = true
+version.workspace = true
+license.workspace = true
+readme = "README.md"
+categories.workspace = true
+keywords.workspace = true
+
+[dependencies]
+rust_ev_verifier_lib = { path = ".." }
+rust_ev_system_library.workspace = true
+thiserror.workspace = true
+rayon.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+tracing.workspace = true
+strum.workspace = true
+chrono.workspace = true
+typed-builder.workspace = true
+derive-getters.workspace = true

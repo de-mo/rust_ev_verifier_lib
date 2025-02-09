@@ -1,6 +1,6 @@
 use super::super::super::result::{VerificationEvent, VerificationResult};
 use crate::{
-    config::Config,
+    config::VerifierConfig,
     file_structure::{
         context_directory::{ContextDirectoryTrait, ContextVCSDirectoryTrait},
         setup_directory::{SetupDirectoryTrait, SetupVCSDirectoryTrait},
@@ -84,24 +84,25 @@ fn test_ee_id_for_setup_vcs_dir<V: SetupVCSDirectoryTrait>(
 
 pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
     dir: &D,
-    _config: &'static Config,
+    _config: &'static VerifierConfig,
     result: &mut VerificationResult,
 ) {
     let context_dir = dir.context();
     let setup_dir = dir.unwrap_setup();
-    let ee_id = match context_dir.election_event_context_payload() {
-        Ok(o) => o.election_event_context.election_event_id,
+    let context = match context_dir.election_event_context_payload() {
+        Ok(p) => p,
         Err(e) => {
             result.push(
                 VerificationEvent::new_error(&e)
-                    .add_context("Cannot extract election_event_context_payload"),
+                    .add_context("election_event_context_payload cannot be read"),
             );
             return;
         }
     };
+    let ee_id = &context.as_ref().election_event_context.election_event_id;
     match context_dir.setup_component_public_keys_payload() {
         Ok(p) => result.append_with_context(
-            &test_election_event_id(&p.election_event_id, &ee_id),
+            &test_election_event_id(&p.election_event_id, ee_id),
             "setup_component_public_keys_payload",
         ),
         Err(e) => result.push(
@@ -116,16 +117,16 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
                 i
             ))),
             Ok(cc) => result.append_with_context(
-                &test_election_event_id(&cc.election_event_id, &ee_id),
+                &test_election_event_id(&cc.election_event_id, ee_id),
                 format!("control_component_public_keys_payload.{}", i),
             ),
         }
     }
     for vcs in context_dir.vcs_directories().iter() {
-        test_ee_id_for_context_vcs_dir(vcs, &ee_id, result);
+        test_ee_id_for_context_vcs_dir(vcs, ee_id, result);
     }
     for vcs in setup_dir.vcs_directories().iter() {
-        test_ee_id_for_setup_vcs_dir(vcs, &ee_id, result);
+        test_ee_id_for_setup_vcs_dir(vcs, ee_id, result);
     }
 }
 

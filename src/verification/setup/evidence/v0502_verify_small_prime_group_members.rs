@@ -1,12 +1,12 @@
 use super::super::super::result::{VerificationEvent, VerificationResult};
 use crate::{
-    config::Config,
+    config::VerifierConfig,
     file_structure::{context_directory::ContextDirectoryTrait, VerificationDirectoryTrait},
 };
 
 pub(super) fn fn_0502_verify_small_prime_group_members<D: VerificationDirectoryTrait>(
     dir: &D,
-    _config: &'static Config,
+    _config: &'static VerifierConfig,
     result: &mut VerificationResult,
 ) {
     let context_dir = dir.context();
@@ -22,7 +22,7 @@ pub(super) fn fn_0502_verify_small_prime_group_members<D: VerificationDirectoryT
     };
     let primes = match eg
         .encryption_group
-        .get_small_prime_group_members(Config::maximum_number_of_supported_voting_options_n_sup())
+        .get_small_prime_group_members(VerifierConfig::maximum_number_of_supported_voting_options_n_sup())
     {
         Ok(p) => p,
         Err(e) => {

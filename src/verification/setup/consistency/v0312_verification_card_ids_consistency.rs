@@ -2,7 +2,7 @@ use std::collections::{HashMap, HashSet};
 
 use super::super::super::result::{VerificationEvent, VerificationResult};
 use crate::{
-    config::Config,
+    config::VerifierConfig,
     file_structure::{
         context_directory::{ContextDirectoryTrait, ContextVCSDirectoryTrait},
         setup_directory::{SetupDirectoryTrait, SetupVCSDirectoryTrait},
@@ -26,8 +26,8 @@ fn verrify_card_ids_context_vcs<V: ContextVCSDirectoryTrait>(
     vcs_dir: &V,
 ) -> (Vec<String>, VerificationResult) {
     let mut res = VerificationResult::new();
-    let vc_ids = match vcs_dir.setup_component_tally_data_payload() {
-        Ok(p) => p.verification_card_ids,
+    let payload = match vcs_dir.setup_component_tally_data_payload() {
+        Ok(p) => p,
         Err(e) => {
             res.push(
                 VerificationEvent::new_error(&e)
@@ -36,6 +36,7 @@ fn verrify_card_ids_context_vcs<V: ContextVCSDirectoryTrait>(
             return (vec![], res);
         }
     };
+    let vc_ids = &payload.verification_card_ids;
     let mut uniq = HashSet::new();
     let no_duplicate = vc_ids.iter().all(move |x| uniq.insert(x));
     if !no_duplicate {
@@ -44,7 +45,7 @@ fn verrify_card_ids_context_vcs<V: ContextVCSDirectoryTrait>(
             vc_ids.join(",")
         )));
     }
-    (vc_ids, res)
+    (vc_ids.clone(), res)
 }
 
 fn verrify_card_ids_setup_vcs<V: SetupVCSDirectoryTrait>(
@@ -64,7 +65,7 @@ fn verrify_card_ids_setup_vcs<V: SetupVCSDirectoryTrait>(
                 i
             ))),
             Ok(p) => {
-                for share in p.0 {
+                for share in &p.0 {
                     let mut v: Vec<String> = share.vc_ids().iter().map(|s| s.to_string()).collect();
                     hm_vc_ids.get_mut(&share.node_id).unwrap().append(&mut v);
                 }
@@ -99,7 +100,7 @@ fn verrify_card_ids_setup_vcs<V: SetupVCSDirectoryTrait>(
 
 pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
     dir: &D,
-    _config: &'static Config,
+    _config: &'static VerifierConfig,
     result: &mut VerificationResult,
 ) {
     let context_dir = dir.context();

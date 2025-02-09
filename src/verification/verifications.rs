@@ -5,7 +5,7 @@ use super::{
     VerificationError, VerificationStatus,
 };
 use crate::{
-    config::Config,
+    config::VerifierConfig,
     file_structure::{VerificationDirectory, VerificationDirectoryTrait},
 };
 use std::time::{Duration, SystemTime};
@@ -19,10 +19,10 @@ pub struct Verification<'a, D: VerificationDirectoryTrait> {
     /// The meta data is a reference to the metadata list loaded from json
     meta_data: &'a VerificationMetaData,
     status: VerificationStatus,
-    verification_fn: Box<dyn Fn(&D, &'static Config, &mut VerificationResult) + Send + Sync>,
+    verification_fn: Box<dyn Fn(&D, &'static VerifierConfig, &mut VerificationResult) + Send + Sync>,
     duration: Option<Duration>,
     result: Box<VerificationResult>,
-    config: &'static Config,
+    config: &'static VerifierConfig,
 }
 
 impl<'a> Verification<'a, VerificationDirectory> {
@@ -49,12 +49,12 @@ impl<'a> Verification<'a, VerificationDirectory> {
     pub fn new(
         id: &str,
         name: &str,
-        verification_fn: impl Fn(&VerificationDirectory, &'static Config, &mut VerificationResult)
+        verification_fn: impl Fn(&VerificationDirectory, &'static VerifierConfig, &mut VerificationResult)
             + Send
             + Sync
             + 'static,
         metadata_list: &'a VerificationMetaDataList,
-        config: &'static Config,
+        config: &'static VerifierConfig,
     ) -> Result<Self, VerificationError> {
         let meta_data = match metadata_list.meta_data_from_id(id) {
             Some(m) => m,
@@ -70,7 +70,7 @@ impl<'a> Verification<'a, VerificationDirectory> {
         }
         Ok(Verification {
             meta_data,
-            status: VerificationStatus::Stopped,
+            status: VerificationStatus::NotStarted,
             verification_fn: Box::new(verification_fn),
             duration: None,
             result: Box::new(VerificationResult::new()),
@@ -88,6 +88,11 @@ impl<'a> Verification<'a, VerificationDirectory> {
         self.meta_data
     }
 
+    /// Get status
+    pub fn status(&self) -> VerificationStatus {
+        self.status
+    }
+
     /// Get the result of the verification
     pub fn verification_result(&self) -> &VerificationResult {
         &self.result
@@ -95,11 +100,10 @@ impl<'a> Verification<'a, VerificationDirectory> {
 
     /// `true` if the verification finished
     pub fn is_result_final(&self) -> bool {
-        match self.status {
-            VerificationStatus::Stopped => false,
-            VerificationStatus::Running => false,
-            VerificationStatus::Finished => true,
-        }
+        !matches!(
+            self.status,
+            VerificationStatus::NotStarted | VerificationStatus::Running
+        )
     }
 
     /// Has the result errors
@@ -143,7 +147,10 @@ impl<'a> Verification<'a, VerificationDirectory> {
         );
         (self.verification_fn)(directory, self.config, self.result.as_mut());
         self.duration = Some(start_time.elapsed().unwrap());
-        self.status = VerificationStatus::Finished;
+        self.status = VerificationStatus::calculate_finished(
+            self.result.has_errors(),
+            self.result.has_failures(),
+        );
         if self.is_ok().unwrap() {
             info!(
                 "Verification {} ({}) finished successfully. Duration: {}s",
@@ -184,7 +191,7 @@ mod test {
 
     #[test]
     fn test_creation() {
-        fn ok(_: &VerificationDirectory, _: &'static Config, _: &mut VerificationResult) {}
+        fn ok(_: &VerificationDirectory, _: &'static VerifierConfig, _: &mut VerificationResult) {}
         let md_list =
             VerificationMetaDataList::load(CONFIG_TEST.get_verification_list_str()).unwrap();
         assert!(Verification::new(
@@ -208,7 +215,7 @@ mod test {
 
     #[test]
     fn run_ok() {
-        fn ok(_: &VerificationDirectory, _: &'static Config, _: &mut VerificationResult) {}
+        fn ok(_: &VerificationDirectory, _: &'static VerifierConfig, _: &mut VerificationResult) {}
         let md_list =
             VerificationMetaDataList::load(CONFIG_TEST.get_verification_list_str()).unwrap();
         let mut verif = Verification::new(
@@ -219,7 +226,7 @@ mod test {
             &CONFIG_TEST,
         )
         .unwrap();
-        assert_eq!(verif.status, VerificationStatus::Stopped);
+        assert_eq!(verif.status, VerificationStatus::NotStarted);
         assert!(!verif.is_result_final());
         assert!(verif.is_ok().is_none());
         assert!(verif.has_errors().is_none());
@@ -228,7 +235,7 @@ mod test {
             &VerificationPeriod::Setup,
             Path::new("."),
         ));
-        assert_eq!(verif.status, VerificationStatus::Finished);
+        assert_eq!(verif.status, VerificationStatus::FinishedSuccessfully);
         assert!(verif.is_result_final());
         assert!(verif.is_ok().unwrap());
         assert!(!verif.has_errors().unwrap());
@@ -237,7 +244,7 @@ mod test {
 
     #[test]
     fn run_error() {
-        fn error(_: &VerificationDirectory, _: &'static Config, result: &mut VerificationResult) {
+        fn error(_: &VerificationDirectory, _: &'static VerifierConfig, result: &mut VerificationResult) {
             result.push(VerificationEvent::new_error("toto"));
             result.push(VerificationEvent::new_error("toto2"));
             result.push(VerificationEvent::new_failure("toto3"));
@@ -252,7 +259,7 @@ mod test {
             &CONFIG_TEST,
         )
         .unwrap();
-        assert_eq!(verif.status, VerificationStatus::Stopped);
+        assert_eq!(verif.status, VerificationStatus::NotStarted);
         assert!(!verif.is_result_final());
         assert!(verif.is_ok().is_none());
         assert!(verif.has_errors().is_none());
@@ -261,7 +268,10 @@ mod test {
             &VerificationPeriod::Setup,
             Path::new("."),
         ));
-        assert_eq!(verif.status, VerificationStatus::Finished);
+        assert_eq!(
+            verif.status,
+            VerificationStatus::FinishedWithFailuresAndErrors
+        );
         assert!(verif.is_result_final());
         assert!(!verif.is_ok().unwrap());
         assert!(verif.has_errors().unwrap());
@@ -272,7 +282,7 @@ mod test {
 
     #[test]
     fn run_failure() {
-        fn failure(_: &VerificationDirectory, _: &'static Config, result: &mut VerificationResult) {
+        fn failure(_: &VerificationDirectory, _: &'static VerifierConfig, result: &mut VerificationResult) {
             result.push(VerificationEvent::new_failure("toto"));
             result.push(VerificationEvent::new_failure("toto2"));
         }
@@ -286,7 +296,7 @@ mod test {
             &CONFIG_TEST,
         )
         .unwrap();
-        assert_eq!(verif.status, VerificationStatus::Stopped);
+        assert_eq!(verif.status, VerificationStatus::NotStarted);
         assert!(!verif.is_result_final());
         assert!(verif.is_ok().is_none());
         assert!(verif.has_errors().is_none());
@@ -295,7 +305,7 @@ mod test {
             &VerificationPeriod::Setup,
             Path::new("."),
         ));
-        assert_eq!(verif.status, VerificationStatus::Finished);
+        assert_eq!(verif.status, VerificationStatus::FinishedWithFailures);
         assert!(verif.is_result_final());
         assert!(!verif.is_ok().unwrap());
         assert!(!verif.has_errors().unwrap());

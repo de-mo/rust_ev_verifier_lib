@@ -1,3 +1,4 @@
+use crate::data_structures::dataset::DatasetTypeKind;
 use chrono::Local;
 use rust_ev_system_library::rust_ev_crypto_primitives::prelude::{
     argon2::Argon2id,
@@ -11,8 +12,6 @@ use std::{
 };
 use thiserror::Error;
 use tracing::{instrument, trace};
-
-use crate::data_structures::dataset::DatasetTypeKind;
 
 // Enum representing the direct trust errors
 #[derive(Error, Debug)]
@@ -69,31 +68,39 @@ impl DatasetMetadata {
         }
     }
 
+    /// Source path
     pub fn source_path(&self) -> &Path {
         &self.source_path
     }
 
+    /// Path of the zip decrypted
     pub fn decrypted_zip_path(&self) -> &Path {
         &self.decrypted_zip_path
     }
+
+    /// Path of the folder containing the extracted files
     pub fn extracted_dir_path(&self) -> &Path {
         &self.extracted_dir_path
     }
+
+    /// Fingerprint of the source encrypted zip
     pub fn fingerprint(&self) -> &ByteArray {
         &self.fingerprint
     }
 
+    /// Fingerprint of the source encrypted zip as string (16 coding)
     pub fn fingerprint_str(&self) -> String {
         self.fingerprint().base16_encode().unwrap()
     }
 
+    /// Kind of the dataset
     pub fn kind(&self) -> DatasetTypeKind {
         self.dataset_kind
     }
 
     /// Extract the data as datatype given with the kind of the dataset type.
     ///
-    /// Return [DatasetType] with the correct metadata or Error if something goes wrong
+    /// Return [DatasetMetadata] with the correct metadata or Error if something goes wrong
     pub fn extract_dataset_kind_with_inputs(
         kind: DatasetTypeKind,
         input: &Path,
@@ -106,7 +113,7 @@ impl DatasetMetadata {
 
     /// Extract the data as datatype give with the name of the dataset type.
     ///
-    /// Return [DatasetType] with the correct metadata or Error if something goes wrong
+    /// Return [DatasetMetadata] with the correct metadata or Error if something goes wrong
     pub fn extract_dataset_str_with_inputs(
         datasettype_str: &str,
         input: &Path,
@@ -136,6 +143,12 @@ impl DatasetMetadata {
         })
     }
 
+    /// Process all the operations
+    ///
+    /// - Decrypt the zip defined by `input` to the `zip_temp_dir_path` using the password
+    /// - Extract the decrypted zip to `extract_dir`
+    ///
+    /// Return [Self] with the correct metadata or Error if something goes wrong
     #[instrument(skip(password))]
     pub fn process_dataset_operations(
         datasetkind: DatasetTypeKind,
@@ -143,7 +156,7 @@ impl DatasetMetadata {
         password: &str,
         extract_dir: &Path,
         zip_temp_dir_path: &Path,
-    ) -> Result<DatasetMetadata, DatasetError> {
+    ) -> Result<Self, DatasetError> {
         if !input.exists() {
             return Err(DatasetError::PathNotExist(input.to_path_buf()));
         }

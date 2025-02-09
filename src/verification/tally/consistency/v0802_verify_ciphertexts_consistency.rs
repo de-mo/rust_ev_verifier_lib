@@ -1,6 +1,6 @@
 use super::super::super::result::{VerificationEvent, VerificationResult};
 use crate::{
-    config::Config,
+    config::VerifierConfig,
     data_structures::{
         ControlComponentBallotBoxPayload, ControlComponentShufflePayload,
         TallyComponentShufflePayload,
@@ -15,29 +15,32 @@ use rust_ev_system_library::rust_ev_crypto_primitives::prelude::elgamal::Ciphert
 
 pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
     dir: &D,
-    _config: &'static Config,
+    _config: &'static VerifierConfig,
     result: &mut VerificationResult,
 ) {
     let context_dir = dir.context();
     let tally_dir = dir.unwrap_tally();
 
-    let vc_contexts = match context_dir.election_event_context_payload() {
-        Ok(p) => p.election_event_context.verification_card_set_contexts,
+    let payload = match context_dir.election_event_context_payload() {
+        Ok(o) => o,
         Err(e) => {
             result.push(
                 VerificationEvent::new_error(&e)
-                    .add_context("election_event_context_payload cannot be read"),
+                    .add_context("Cannot extract election_event_context_payload"),
             );
             return;
         }
     };
+    let vcs_contexts = &payload
+        .election_event_context
+        .verification_card_set_contexts;
 
     let mut res = VerificationResult::join(
         tally_dir
             .bb_directories()
             .iter()
             .map(
-                |dir| match vc_contexts.iter().find(|c| c.ballot_box_id == dir.name()) {
+                |dir| match vcs_contexts.iter().find(|c| c.ballot_box_id == dir.name()) {
                     Some(c) => {
                         verify_pro_ballot_box(dir, c.primes_mapping_table.p_table.get_delta())
                     }

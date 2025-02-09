@@ -20,19 +20,6 @@ Following application are implemented:
 
 ## Information about the project
 
-###  Structure of the project
-
-The library contains the following modules:
-
-- [data_structures](src/data_structures/mod.rs): The implementation of structure of the data used for the Verifier. The data are reading from the files using [serde](https://docs.rs/serde/latest/serde/)
-- [file_structure](src/file_structure/mod.rs): The necessary functions to implement the files and directories
-- [verification](src/verification/mod.rs): The implementation of each verification.
-- [application_runner](src/application_runner/mod.rs): The runner that can be used by a gui or an application to run all the verifications. It contains also some helpers
-
-The library depends from the following crates
-- [rust_ev_crypto_primitives](https://github.com/de-mo/rust_ev_crypto_primitives)
-- [rust_ev_system_library](https://github.com/de-mo/rust_ev_system_library)
-
 ###  Difference to the Swiss Post implementation
 
 The implementation not used any code of Swiss Post. It is only based on the published documentation.
@@ -48,11 +35,9 @@ The Verifier is not ready for production.
 - For most of the verifications, the negative unit tests are not implemented. A mechanisms of mocks is implemented
 - The report of the verifications is not generated
 
-## Development guide
+## Usage
 
-Copy the directoy `/datasets/direct-trust` to the root.
-
-The build on Windows must be done with MSYS2 (see [Crypto Primitives](https://github.com/de-mo/rust_ev_crypto_primitives) for details)
+See the [crate documentation](https://docs.rs/crate/rust_ev_verifier_lib/0.2.2)
 
 ## Licence
 

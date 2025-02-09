@@ -1,6 +1,6 @@
 use super::super::super::result::{VerificationEvent, VerificationResult};
 use crate::{
-    config::Config,
+    config::VerifierConfig,
     data_structures::{
         tally::control_component_ballot_box_payload::ConfirmedEncryptedVote,
         ControlComponentBallotBoxPayload,
@@ -13,7 +13,7 @@ use std::fmt::Display;
 
 pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
     dir: &D,
-    _config: &'static Config,
+    _config: &'static VerifierConfig,
     result: &mut VerificationResult,
 ) {
     let tally_dir = dir.unwrap_tally();

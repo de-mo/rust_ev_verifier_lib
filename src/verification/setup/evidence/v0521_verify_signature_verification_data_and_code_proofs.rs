@@ -1,6 +1,6 @@
 use super::super::super::result::{VerificationEvent, VerificationResult};
 use crate::{
-    config::Config,
+    config::VerifierConfig,
     data_structures::{
         common_types::SchnorrProof,
         setup::{
@@ -9,7 +9,6 @@ use crate::{
                 SetupComponentVerificationDataInner, SetupComponentVerificationDataPayload,
             },
         },
-        VerifierSetupDataTrait,
     },
     file_structure::{
         context_directory::ContextDirectoryTrait,
@@ -47,29 +46,29 @@ struct ContextAlgorithm34<'a, 'b, 'c, 'd, 'e> {
 
 fn algorithm_0301_verify_signature_setup_component_verification_data(
     verification_data_payload: &SetupComponentVerificationDataPayload,
-    config: &'static Config,
+    config: &'static VerifierConfig,
 ) -> VerificationResult {
     verify_signature_for_object(verification_data_payload, config)
 }
 
 fn algorithm_0302_verify_signature_control_component_code_shares(
     control_component_code_shares: &ControlComponentCodeSharesPayloadInner,
-    config: &'static Config,
+    config: &'static VerifierConfig,
 ) -> VerificationResult {
     verify_signature_for_object(control_component_code_shares, config)
 }
 
 pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
     dir: &D,
-    config: &'static Config,
+    config: &'static VerifierConfig,
     result: &mut VerificationResult,
 ) {
     let context_dir = dir.context();
     let setup_dir = dir.unwrap_setup();
 
     // Read ee context for the context of the algorithm
-    let ee_context = match context_dir.election_event_context_payload() {
-        Ok(p) => p.election_event_context,
+    let context = match context_dir.election_event_context_payload() {
+        Ok(p) => p,
         Err(e) => {
             result.push(
                 VerificationEvent::new_error(&e)
@@ -78,6 +77,7 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
             return;
         }
     };
+    let ee_context = &context.as_ref().election_event_context;
 
     // For each vcs directory
     for vcs_dir in setup_dir.vcs_directories() {
@@ -154,10 +154,10 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
             match vcs_dir
                 .control_component_code_shares_payload_group()
                 .get_file_with_number(chunk_id)
-                .get_verifier_data()
+                .decode_verifier_data()
             {
-                Ok(s) => {
-                    let cc_shares = s.control_component_code_shares_payload().unwrap();
+                Ok(cc_shares) => {
+                    //let cc_shares = s.control_component_code_shares_payload().unwrap();
                     // For each CC (1 to 4)
                     let mut res_cc: Vec<VerificationResult> = cc_shares.0
                                 .iter()

@@ -1,6 +1,6 @@
 use super::super::super::result::{VerificationEvent, VerificationResult};
 use crate::{
-    config::Config,
+    config::VerifierConfig,
     file_structure::{context_directory::ContextDirectoryTrait, VerificationDirectoryTrait},
 };
 use rust_ev_system_library::rust_ev_crypto_primitives::prelude::Integer;
@@ -8,20 +8,21 @@ use rust_ev_system_library::rust_ev_crypto_primitives::prelude::{ConstantsTrait,
 
 pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
     dir: &D,
-    _config: &'static Config,
+    _config: &'static VerifierConfig,
     result: &mut VerificationResult,
 ) {
     let context_dir = dir.context();
-    let eg = match context_dir.election_event_context_payload() {
-        Ok(o) => o.encryption_group,
+    let context = match context_dir.election_event_context_payload() {
+        Ok(p) => p,
         Err(e) => {
             result.push(
                 VerificationEvent::new_error(&e)
-                    .add_context("Cannot extract election_event_context_payload"),
+                    .add_context("election_event_context_payload cannot be read"),
             );
             return;
         }
     };
+    let eg = &context.as_ref().encryption_group;
     let sc_pk = match context_dir.setup_component_public_keys_payload() {
         Ok(o) => o,
         Err(e) => {
@@ -32,10 +33,10 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
             return;
         }
     };
-    let combined_cc_pk = sc_pk
+    let combined_cc_pk = &sc_pk
         .setup_component_public_keys
         .combined_control_component_public_keys;
-    let setup_ccr = sc_pk
+    let setup_ccr = &sc_pk
         .setup_component_public_keys
         .choice_return_codes_encryption_public_key;
 

@@ -1,10 +1,14 @@
-use super::super::{
-    common_types::{CiphertextDef, EncryptionParametersDef, SchnorrProof, Signature},
-    deserialize_seq_string_base64_to_seq_integer, implement_trait_verifier_data_json_decode,
-    DataStructureError, VerifierDataDecode,
+use super::{
+    super::{
+        common_types::{CiphertextDef, EncryptionParametersDef, SchnorrProof, Signature},
+        deserialize_seq_string_base64_to_seq_integer, implement_trait_verifier_data_json_decode,
+        DataStructureError, VerifierDataDecode,
+    },
+    VerifierSetupDataType,
 };
-use crate::direct_trust::{
-    CertificateAuthority, Keystore, VerifiySignatureTrait, VerifySignatureError,
+use crate::{
+    data_structures::{VerifierDataToTypeTrait, VerifierDataType},
+    direct_trust::{CertificateAuthority, Keystore, VerifiySignatureTrait, VerifySignatureError},
 };
 use rust_ev_system_library::rust_ev_crypto_primitives::prelude::{elgamal::Ciphertext, Integer};
 use rust_ev_system_library::rust_ev_crypto_primitives::prelude::{
@@ -14,6 +18,12 @@ use serde::Deserialize;
 
 #[derive(Deserialize, Debug, Clone)]
 pub struct ControlComponentCodeSharesPayload(pub Vec<ControlComponentCodeSharesPayloadInner>);
+
+impl VerifierDataToTypeTrait for ControlComponentCodeSharesPayload {
+    fn data_type() -> crate::data_structures::VerifierDataType {
+        VerifierDataType::Setup(VerifierSetupDataType::ControlComponentCodeSharesPayload)
+    }
+}
 
 implement_trait_verifier_data_json_decode!(ControlComponentCodeSharesPayload);
 

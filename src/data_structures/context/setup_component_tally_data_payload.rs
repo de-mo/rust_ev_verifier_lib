@@ -3,7 +3,10 @@ use super::super::{
     deserialize_seq_seq_string_base64_to_seq_seq_integer,
     implement_trait_verifier_data_json_decode, DataStructureError, VerifierDataDecode,
 };
-use crate::direct_trust::{CertificateAuthority, VerifiySignatureTrait, VerifySignatureError};
+use crate::{
+    data_structures::{VerifierDataToTypeTrait, VerifierDataType},
+    direct_trust::{CertificateAuthority, VerifiySignatureTrait, VerifySignatureError},
+};
 use rust_ev_system_library::rust_ev_crypto_primitives::prelude::Integer;
 use rust_ev_system_library::rust_ev_crypto_primitives::prelude::{
     elgamal::EncryptionParameters, ByteArray, HashableMessage, VerifyDomainTrait,
@@ -22,6 +25,12 @@ pub struct SetupComponentTallyDataPayload {
     #[serde(deserialize_with = "deserialize_seq_seq_string_base64_to_seq_seq_integer")]
     pub verification_card_public_keys: Vec<Vec<Integer>>,
     pub signature: Signature,
+}
+
+impl VerifierDataToTypeTrait for SetupComponentTallyDataPayload {
+    fn data_type() -> crate::data_structures::VerifierDataType {
+        VerifierDataType::Context(super::VerifierContextDataType::SetupComponentTallyDataPayload)
+    }
 }
 
 implement_trait_verifier_data_json_decode!(SetupComponentTallyDataPayload);

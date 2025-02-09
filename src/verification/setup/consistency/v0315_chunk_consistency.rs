@@ -1,6 +1,7 @@
 use super::super::super::result::{VerificationEvent, VerificationResult};
 use crate::{
-    config::Config,
+    config::VerifierConfig,
+    data_structures::{VerifierDataDecode, VerifierDataToTypeTrait},
     file_structure::{
         file_group::FileGroup,
         setup_directory::{SetupDirectoryTrait, SetupVCSDirectoryTrait},
@@ -8,8 +9,10 @@ use crate::{
     },
 };
 
-fn verify_uninterrupted_monotonic_sequence(
-    fg: &FileGroup,
+fn verify_uninterrupted_monotonic_sequence<
+    D: VerifierDataDecode + VerifierDataToTypeTrait + Clone,
+>(
+    fg: &FileGroup<D>,
     result: &mut VerificationResult,
     dir: &String,
 ) {
@@ -26,7 +29,7 @@ fn verify_uninterrupted_monotonic_sequence(
 
 pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
     dir: &D,
-    _config: &'static Config,
+    _config: &'static VerifierConfig,
     result: &mut VerificationResult,
 ) {
     let setup_dir = dir.unwrap_setup();

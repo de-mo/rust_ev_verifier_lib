@@ -1,54 +1,51 @@
 use super::{
-    impl_itertor_for_mocked_group_type, impl_mock_methods_for_mocked_data,
-    impl_mock_methods_for_mocked_group, impl_trait_get_method_for_mocked_data,
-    impl_trait_get_method_for_mocked_group, MockFileGroupIter,
+    impl_mock_methods_for_mocked_data, impl_mock_methods_for_mocked_group,
+    impl_trait_get_method_for_mocked_data, impl_trait_get_method_for_mocked_group,
+    FileGroupFileIter, MockFileGroupDataIter, MockFileGroupElement, MockedDataType,
 };
 use crate::{
     data_structures::{
-        ControlComponentPublicKeysPayload, ElectionEventConfiguration, ElectionEventContextPayload,
-        SetupComponentPublicKeysPayload, SetupComponentTallyDataPayload,
+        context::{
+            control_component_public_keys_payload::ControlComponentPublicKeysPayload,
+            setup_component_public_keys_payload::SetupComponentPublicKeysPayload,
+            setup_component_tally_data_payload::SetupComponentTallyDataPayload,
+        },
+        ElectionEventConfiguration, ElectionEventContextPayload,
     },
     file_structure::{
         context_directory::{
             impl_completness_test_trait_for_context, impl_completness_test_trait_for_context_vcs,
             ContextVCSDirectory, ContextVCSDirectoryTrait,
-            ControlComponentPublicKeysPayloadAsResultIter,
         },
         file::File,
-        file_group::{FileGroup, FileGroupIterTrait},
+        file_group::FileGroup,
         CompletnessTestTrait, ContextDirectory, ContextDirectoryTrait, FileStructureError,
     },
 };
 use paste::paste;
-use std::{collections::HashMap, path::Path};
+use std::{collections::HashMap, path::Path, sync::Arc};
 
 /// Mock for [ContextVCSDirectory]
 pub struct MockContextVCSDirectory {
     dir: ContextVCSDirectory,
-    mocked_setup_component_tally_data_payload: Option<Box<SetupComponentTallyDataPayload>>,
-    mocked_setup_component_tally_data_payload_error: Option<FileStructureError>,
+    mocked_setup_component_tally_data_payload:
+        Option<Box<MockedDataType<SetupComponentTallyDataPayload>>>,
 }
 
 /// Mock for [ContextDirectory]
 pub struct MockContextDirectory {
     pub dir: ContextDirectory,
-    mocked_setup_component_public_keys_payload: Option<Box<SetupComponentPublicKeysPayload>>,
-    mocked_setup_component_public_keys_payload_error: Option<FileStructureError>,
-    mocked_election_event_context_payload: Option<Box<ElectionEventContextPayload>>,
-    mocked_election_event_context_payload_error: Option<FileStructureError>,
-    mocked_election_event_configuration: Option<Box<ElectionEventConfiguration>>,
-    mocked_election_event_configuration_error: Option<FileStructureError>,
+    mocked_setup_component_public_keys_payload:
+        Option<Box<MockedDataType<SetupComponentPublicKeysPayload>>>,
+    mocked_election_event_context_payload: Option<Box<MockedDataType<ElectionEventContextPayload>>>,
+    mocked_election_event_configuration: Option<Box<MockedDataType<ElectionEventConfiguration>>>,
     mocked_control_component_public_keys_payload:
-        HashMap<usize, Box<ControlComponentPublicKeysPayload>>,
-    mocked_control_component_public_keys_payload_deleted: Vec<usize>,
-    mocked_control_component_public_keys_payload_errors: HashMap<usize, String>,
+        HashMap<usize, Box<MockFileGroupElement<ControlComponentPublicKeysPayload>>>,
     vcs_directories: Vec<MockContextVCSDirectory>,
 }
 
 impl_completness_test_trait_for_context_vcs!(MockContextVCSDirectory);
 impl_completness_test_trait_for_context!(MockContextDirectory);
-
-impl_itertor_for_mocked_group_type!(ControlComponentPublicKeysPayload);
 
 impl MockContextDirectory {
     pub fn new(location: &Path) -> Self {
@@ -61,14 +58,9 @@ impl MockContextDirectory {
         MockContextDirectory {
             dir: ContextDirectory::new(location),
             mocked_setup_component_public_keys_payload: None,
-            mocked_setup_component_public_keys_payload_error: None,
             mocked_election_event_context_payload: None,
-            mocked_election_event_context_payload_error: None,
             mocked_election_event_configuration: None,
-            mocked_election_event_configuration_error: None,
             mocked_control_component_public_keys_payload: HashMap::new(),
-            mocked_control_component_public_keys_payload_deleted: Vec::new(),
-            mocked_control_component_public_keys_payload_errors: HashMap::new(),
             vcs_directories: vcs_dirs,
         }
     }
@@ -91,22 +83,21 @@ impl MockContextDirectory {
 impl ContextDirectoryTrait for MockContextDirectory {
     type VCSDirType = MockContextVCSDirectory;
 
-    type ControlComponentPublicKeysPayloadAsResultIterType =
-        MockControlComponentPublicKeysPayloadAsResultIter;
-
-    fn setup_component_public_keys_payload_file(&self) -> &File {
+    fn setup_component_public_keys_payload_file(&self) -> &File<SetupComponentPublicKeysPayload> {
         self.dir.setup_component_public_keys_payload_file()
     }
 
-    fn election_event_context_payload_file(&self) -> &File {
+    fn election_event_context_payload_file(&self) -> &File<ElectionEventContextPayload> {
         self.dir.election_event_context_payload_file()
     }
 
-    fn election_event_configuration_file(&self) -> &File {
+    fn election_event_configuration_file(&self) -> &File<ElectionEventConfiguration> {
         self.dir.election_event_configuration_file()
     }
 
-    fn control_component_public_keys_payload_group(&self) -> &FileGroup {
+    fn control_component_public_keys_payload_group(
+        &self,
+    ) -> &FileGroup<ControlComponentPublicKeysPayload> {
         self.dir.control_component_public_keys_payload_group()
     }
 
@@ -140,7 +131,7 @@ impl ContextDirectoryTrait for MockContextDirectory {
 }
 
 impl ContextVCSDirectoryTrait for MockContextVCSDirectory {
-    fn setup_component_tally_data_payload_file(&self) -> &File {
+    fn setup_component_tally_data_payload_file(&self) -> &File<SetupComponentTallyDataPayload> {
         todo!()
     }
 
@@ -164,7 +155,6 @@ impl MockContextVCSDirectory {
         MockContextVCSDirectory {
             dir: ContextVCSDirectory::new(location),
             mocked_setup_component_tally_data_payload: None,
-            mocked_setup_component_tally_data_payload_error: None,
         }
     }
 
@@ -249,14 +239,10 @@ mod test {
             "test error".to_string(),
         ));
         assert!(mock_dir.election_event_context_payload().is_err());
-        mock_dir.mock_election_event_context_payload_remove_error();
+        mock_dir.mock_election_event_context_payload_reset();
         assert_eq!(
-            mock_dir
-                .election_event_context_payload()
-                .unwrap()
-                .seed
-                .as_str(),
-            "TOTO"
+            mock_dir.election_event_context_payload().unwrap().seed,
+            mock_dir.dir.election_event_context_payload().unwrap().seed
         );
     }
 
@@ -272,45 +258,43 @@ mod test {
         );
         mock_dir.mock_control_component_public_keys_payload_as_deleted(2);
         assert_eq!(
-            mock_dir.mocked_control_component_public_keys_payload_deleted,
-            vec![2]
-        );
-        let mut it = mock_dir.control_component_public_keys_payload_iter();
-        assert_eq!(
             mock_dir
                 .control_component_public_keys_payload_iter()
                 .count(),
             3
         );
-        assert_eq!(
-            it.next()
-                .unwrap()
-                .1
-                .unwrap()
-                .control_component_public_keys
-                .node_id,
-            1
-        );
-        assert_eq!(
-            it.next()
-                .unwrap()
-                .1
-                .unwrap()
-                .control_component_public_keys
-                .node_id,
-            3
-        );
-        assert_eq!(
-            it.next()
-                .unwrap()
-                .1
-                .unwrap()
-                .control_component_public_keys
-                .node_id,
-            4
-        );
-        assert!(it.next().is_none());
-        mock_dir.mock_control_component_public_keys_payload_remove_deleted(2);
+        {
+            let mut it = mock_dir.control_component_public_keys_payload_iter();
+            assert_eq!(
+                it.next()
+                    .unwrap()
+                    .1
+                    .unwrap()
+                    .control_component_public_keys
+                    .node_id,
+                1
+            );
+            assert_eq!(
+                it.next()
+                    .unwrap()
+                    .1
+                    .unwrap()
+                    .control_component_public_keys
+                    .node_id,
+                3
+            );
+            assert_eq!(
+                it.next()
+                    .unwrap()
+                    .1
+                    .unwrap()
+                    .control_component_public_keys
+                    .node_id,
+                4
+            );
+            assert!(it.next().is_none());
+        }
+        mock_dir.mock_control_component_public_keys_payload_reset(2);
         assert_eq!(
             mock_dir
                 .control_component_public_keys_payload_iter()

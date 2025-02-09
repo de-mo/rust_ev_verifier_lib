@@ -4,7 +4,7 @@ use super::super::{
     verifications::Verification,
 };
 use crate::{
-    config::Config,
+    config::VerifierConfig,
     file_structure::{
         tally_directory::{BBDirectoryTrait, TallyDirectoryTrait},
         VerificationDirectoryTrait,
@@ -15,7 +15,7 @@ use rust_ev_system_library::rust_ev_crypto_primitives::prelude::VerifyDomainTrai
 
 pub fn get_verifications<'a>(
     metadata_list: &'a VerificationMetaDataList,
-    config: &'static Config,
+    config: &'static VerifierConfig,
 ) -> Result<VerificationList<'a>, VerificationError> {
     Ok(VerificationList(vec![Verification::new(
         "09.01",
@@ -115,7 +115,7 @@ fn validate_bb_dir<B: BBDirectoryTrait>(dir: &B, result: &mut VerificationResult
 
 fn fn_0901_verify_tally_integrity<D: VerificationDirectoryTrait>(
     dir: &D,
-    _config: &'static Config,
+    _config: &'static VerifierConfig,
     result: &mut VerificationResult,
 ) {
     let setup_dir = dir.unwrap_tally();

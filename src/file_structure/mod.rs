@@ -4,7 +4,7 @@
 pub(crate) mod context_directory;
 pub(crate) mod file;
 pub(crate) mod file_group;
-#[cfg(any(test, doc))]
+#[cfg(test)]
 pub(crate) mod mock;
 pub(crate) mod setup_directory;
 pub(crate) mod tally_directory;
@@ -50,7 +50,7 @@ pub enum FileStructureError {
     PathIsNotDir(PathBuf),
 }
 
-#[derive(Clone)]
+//#[derive(Clone)]
 /// Type represending a VerificationDirectory (subdirectory context and setup or tally)
 pub struct VerificationDirectory {
     context: ContextDirectory,
@@ -59,15 +59,21 @@ pub struct VerificationDirectory {
 }
 
 /// Enum to define the type of the file (Json or Xml)
+#[derive(Debug, Clone, PartialEq, Eq)]
 enum FileType {
     Json,
     Xml,
 }
 
-/// Enum representing the mode to read a fie (Memory or streaming).
+/// Enum representing the mode to read a fie.
+#[derive(Debug, Clone, PartialEq, Eq)]
 enum FileReadMode {
+    /// The data will be loaded in memory each time
     Memory,
+    /// The data will be streamed
     Streaming,
+    /// The data will be loaded once in memory an be chached
+    Cache,
 }
 
 /// Trait defining functions to get the filename
@@ -232,10 +238,10 @@ impl GetFileNameTrait for VerifierContextDataType {
     }
 }
 
-impl From<VerifierContextDataType> for FileReadMode {
-    fn from(value: VerifierContextDataType) -> Self {
+impl From<&VerifierContextDataType> for FileReadMode {
+    fn from(value: &VerifierContextDataType) -> Self {
         match value {
-            VerifierContextDataType::ElectionEventContextPayload => FileReadMode::Memory,
+            VerifierContextDataType::ElectionEventContextPayload => FileReadMode::Cache,
             VerifierContextDataType::SetupComponentPublicKeysPayload => FileReadMode::Memory,
             VerifierContextDataType::ControlComponentPublicKeysPayload => FileReadMode::Memory,
             VerifierContextDataType::SetupComponentTallyDataPayload => FileReadMode::Memory,
@@ -244,8 +250,8 @@ impl From<VerifierContextDataType> for FileReadMode {
     }
 }
 
-impl From<VerifierContextDataType> for FileType {
-    fn from(value: VerifierContextDataType) -> Self {
+impl From<&VerifierContextDataType> for FileType {
+    fn from(value: &VerifierContextDataType) -> Self {
         match value {
             VerifierContextDataType::ElectionEventContextPayload => FileType::Json,
             VerifierContextDataType::SetupComponentPublicKeysPayload => FileType::Json,
@@ -268,8 +274,8 @@ impl GetFileNameTrait for VerifierSetupDataType {
     }
 }
 
-impl From<VerifierSetupDataType> for FileReadMode {
-    fn from(value: VerifierSetupDataType) -> Self {
+impl From<&VerifierSetupDataType> for FileReadMode {
+    fn from(value: &VerifierSetupDataType) -> Self {
         match value {
             VerifierSetupDataType::SetupComponentVerificationDataPayload => FileReadMode::Memory,
             VerifierSetupDataType::ControlComponentCodeSharesPayload => FileReadMode::Memory,
@@ -277,8 +283,8 @@ impl From<VerifierSetupDataType> for FileReadMode {
     }
 }
 
-impl From<VerifierSetupDataType> for FileType {
-    fn from(value: VerifierSetupDataType) -> Self {
+impl From<&VerifierSetupDataType> for FileType {
+    fn from(value: &VerifierSetupDataType) -> Self {
         match value {
             VerifierSetupDataType::SetupComponentVerificationDataPayload => FileType::Json,
             VerifierSetupDataType::ControlComponentCodeSharesPayload => FileType::Json,
@@ -301,8 +307,8 @@ impl GetFileNameTrait for VerifierTallyDataType {
     }
 }
 
-impl From<VerifierTallyDataType> for FileReadMode {
-    fn from(value: VerifierTallyDataType) -> Self {
+impl From<&VerifierTallyDataType> for FileReadMode {
+    fn from(value: &VerifierTallyDataType) -> Self {
         match value {
             VerifierTallyDataType::EVotingDecrypt => FileReadMode::Memory,
             VerifierTallyDataType::ECH0110 => FileReadMode::Memory,
@@ -315,8 +321,8 @@ impl From<VerifierTallyDataType> for FileReadMode {
     }
 }
 
-impl From<VerifierTallyDataType> for FileType {
-    fn from(value: VerifierTallyDataType) -> Self {
+impl From<&VerifierTallyDataType> for FileType {
+    fn from(value: &VerifierTallyDataType) -> Self {
         match value {
             VerifierTallyDataType::EVotingDecrypt => FileType::Xml,
             VerifierTallyDataType::ECH0110 => FileType::Xml,
@@ -339,8 +345,8 @@ impl GetFileNameTrait for VerifierDataType {
     }
 }
 
-impl From<VerifierDataType> for FileReadMode {
-    fn from(value: VerifierDataType) -> Self {
+impl From<&VerifierDataType> for FileReadMode {
+    fn from(value: &VerifierDataType) -> Self {
         match value {
             VerifierDataType::Context(t) => FileReadMode::from(t),
             VerifierDataType::Setup(t) => FileReadMode::from(t),
@@ -349,8 +355,8 @@ impl From<VerifierDataType> for FileReadMode {
     }
 }
 
-impl From<VerifierDataType> for FileType {
-    fn from(value: VerifierDataType) -> Self {
+impl From<&VerifierDataType> for FileType {
+    fn from(value: &VerifierDataType) -> Self {
         match value {
             VerifierDataType::Context(t) => FileType::from(t),
             VerifierDataType::Setup(t) => FileType::from(t),
