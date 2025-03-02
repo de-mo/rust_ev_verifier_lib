@@ -12,7 +12,7 @@ categories.workspace = true
 keywords.workspace = true
 
 [dependencies]
-rust_ev_verifier_lib = { path = ".." }
+rust_ev_verifier_lib = { version = "0.3.0", path = ".." }
 rust_ev_system_library.workspace = true
 thiserror.workspace = true
 rayon.workspace = true
