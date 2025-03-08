@@ -36,7 +36,7 @@ impl RunInformation {
             verifications_status: HashMap::default(),
             excluded_verifications: vec![],
             verifications_with_errors_and_failures: HashMap::default(),
-            runner_information: RunnerInformation::default(),
+            runner_information: RunnerInformation::new(config),
         }
     }
 

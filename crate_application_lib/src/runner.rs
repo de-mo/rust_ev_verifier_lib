@@ -1,3 +1,4 @@
+use chrono::{DateTime, Local};
 //use futures::{stream::FuturesUnordered, StreamExt};
 use rust_ev_verifier_lib::{
     file_structure::{VerificationDirectory, VerificationDirectoryTrait},
@@ -35,19 +36,84 @@ pub struct VerificationRunInformation {
 }
 
 /// Information of the runner, that can be used to know some information about the runner.
-#[derive(Debug, Clone, Default)]
+#[derive(Clone)]
 pub struct RunnerInformation {
+    config: &'static VerifierConfig,
     pub start_time: Option<SystemTime>,
     pub duration: Option<Duration>,
 }
 
 impl RunnerInformation {
+    pub fn new(config: &'static VerifierConfig) -> Self {
+        Self {
+            config,
+            start_time: None,
+            duration: None,
+        }
+    }
+
     pub fn is_finished(&self) -> bool {
         self.duration.is_some()
     }
 
     pub fn is_running(&self) -> bool {
         self.start_time.is_some() && self.duration.is_none()
+    }
+
+    pub fn start_time(&self) -> Option<SystemTime> {
+        self.start_time
+    }
+
+    pub fn duration(&self) -> Option<Duration> {
+        self.duration
+    }
+
+    pub fn stop_time(&self) -> Option<SystemTime> {
+        match self.start_time.is_some() && self.duration.is_some() {
+            true => Some(self.start_time.unwrap() + self.duration.unwrap()),
+            false => None,
+        }
+    }
+
+    pub fn start_time_to_string(&self) -> Option<String> {
+        self.start_time.map(|t| {
+            std::convert::Into::<DateTime<Local>>::into(t)
+                .format(self.config.report_format_date().as_str())
+                .to_string()
+        })
+    }
+
+    pub fn stop_time_to_string(&self) -> Option<String> {
+        self.stop_time().map(|t| {
+            std::convert::Into::<DateTime<Local>>::into(t)
+                .format(self.config.report_format_date().as_str())
+                .to_string()
+        })
+    }
+
+    pub fn duration_as_secs(&self) -> Option<u64> {
+        self.duration.map(|d| d.as_secs())
+    }
+
+    pub fn duration_as_secs_to_string(&self) -> Option<String> {
+        self.duration_as_secs().map(|d| {
+            let mut s = d;
+            let res;
+            if s < 60 {
+                res = format!("{s}s");
+            } else {
+                let mut m = s / 60;
+                s %= 60;
+                if m < 60 {
+                    res = format!("{m}m {s}s");
+                } else {
+                    let h = m / 60;
+                    m %= 60;
+                    res = format!("{h}h {m}m {s}s")
+                }
+            }
+            res
+        })
     }
 }
 
@@ -308,6 +374,7 @@ where
         }
         self.duration = Some(self.start_time.unwrap().elapsed().unwrap());
         (self.action_after_runner)(RunnerInformation {
+            config: self.config,
             start_time: self.start_time,
             duration: self.duration,
         });
