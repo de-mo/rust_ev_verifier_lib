@@ -1,3 +1,19 @@
+// Copyright © 2025 Denis Morel
+//
+// This program is free software: you can redistribute it and/or modify it under
+// the terms of the GNU General Public License as published by the Free
+// Software Foundation, either version 3 of the License, or (at your option) any
+// later version.
+//
+// This program is distributed in the hope that it will be useful, but WITHOUT
+// ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+// FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+// details.
+//
+// You should have received a copy of the GNU General Public License and
+// a copy of the GNU General Public License along with this program. If not, see
+// <https://www.gnu.org/licenses/>.
+
 //! Module to read the static schema and to prodive some functionalities in the
 //! structure
 //!
@@ -225,7 +241,7 @@ impl<'a> Schema<'a> {
     /// Try to create a new schema of kind [schema_kind] with the static str [xsd_str]
     ///
     /// Panic if it is not possible to create it
-    
+
     pub fn new(schema_kind: Option<SchemaKind>, xsd_str: &'static str) -> Self {
         Self::try_new(schema_kind, xsd_str).unwrap()
     }
@@ -236,7 +252,7 @@ impl<'a> Schema<'a> {
     }
 
     /// The source document of type [Document]
-    
+
     pub fn document(&self) -> &Document {
         &self.document
     }
@@ -266,7 +282,7 @@ impl<'a> Schema<'a> {
     ///
     /// # Error
     /// Return an error if the namespace is not found
-    
+
     pub fn sub_schema_name(&'a self, namespace_name: &str) -> Result<&'a Schema<'a>, SchemaError> {
         self.namespace_uri(namespace_name).map_or(
             Err(SchemaError::NoNamespaceName(namespace_name.to_string())),
@@ -275,19 +291,19 @@ impl<'a> Schema<'a> {
     }
 
     /// Return the namespace uri given by the namespace name. `None` if not found
-    
+
     pub fn namespace_uri(&self, namespace_name: &str) -> Option<&str> {
         self.namespaces.get(namespace_name).map(|uri| uri.as_str())
     }
 
     /// Check if the schema with the given namespace exists
-    
+
     pub fn contains_schema(&self, namespace: &str) -> bool {
         self.namespaces.contains_key(namespace)
     }
 
     /// Check if the schema with the given namespace name exists
-    
+
     pub fn contains_schema_with_namespace_name(&self, namespace_name: &str) -> bool {
         match self.namespaces.get(namespace_name) {
             Some(uri) => self.contains_schema(uri),

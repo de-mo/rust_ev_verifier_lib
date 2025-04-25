@@ -1,3 +1,19 @@
+// Copyright © 2025 Denis Morel
+//
+// This program is free software: you can redistribute it and/or modify it under
+// the terms of the GNU General Public License as published by the Free
+// Software Foundation, either version 3 of the License, or (at your option) any
+// later version.
+//
+// This program is distributed in the hope that it will be useful, but WITHOUT
+// ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+// FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+// details.
+//
+// You should have received a copy of the GNU General Public License and
+// a copy of the GNU General Public License along with this program. If not, see
+// <https://www.gnu.org/licenses/>.
+
 use super::verify_process_plaintexts::{
     verify_process_plaintexts, ContextAlgorithm43, InputsAlgorithm43,
 };
@@ -5,13 +21,13 @@ use crate::{
     data_structures::common_types::DecryptionProof,
     verification::{VerificationEvent, VerificationResult},
 };
+use rust_ev_system_library::preliminaries::{PTable, PTableTrait};
 use rust_ev_system_library::rust_ev_crypto_primitives::prelude::{
     elgamal::{Ciphertext, EncryptionParameters},
     mix_net::{verify_shuffle, MixNetResultTrait, ShuffleArgument},
     zero_knowledge_proofs::verify_decryption,
     Integer,
 };
-use rust_ev_system_library::preliminaries::{PTable, PTableTrait};
 
 /// Context data for algorithm 4.2 according to the specifications
 pub struct ContextAlgorithm42<'a> {

@@ -1,3 +1,19 @@
+// Copyright © 2025 Denis Morel
+//
+// This program is free software: you can redistribute it and/or modify it under
+// the terms of the GNU General Public License as published by the Free
+// Software Foundation, either version 3 of the License, or (at your option) any
+// later version.
+//
+// This program is distributed in the hope that it will be useful, but WITHOUT
+// ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+// FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+// details.
+//
+// You should have received a copy of the GNU General Public License and
+// a copy of the GNU General Public License along with this program. If not, see
+// <https://www.gnu.org/licenses/>.
+
 //! Module implementing the structure of a verification
 use super::{
     meta_data::{VerificationMetaData, VerificationMetaDataList},
@@ -19,7 +35,8 @@ pub struct Verification<'a, D: VerificationDirectoryTrait> {
     /// The meta data is a reference to the metadata list loaded from json
     meta_data: &'a VerificationMetaData,
     status: VerificationStatus,
-    verification_fn: Box<dyn Fn(&D, &'static VerifierConfig, &mut VerificationResult) + Send + Sync>,
+    verification_fn:
+        Box<dyn Fn(&D, &'static VerifierConfig, &mut VerificationResult) + Send + Sync>,
     duration: Option<Duration>,
     result: Box<VerificationResult>,
     config: &'static VerifierConfig,
@@ -244,7 +261,11 @@ mod test {
 
     #[test]
     fn run_error() {
-        fn error(_: &VerificationDirectory, _: &'static VerifierConfig, result: &mut VerificationResult) {
+        fn error(
+            _: &VerificationDirectory,
+            _: &'static VerifierConfig,
+            result: &mut VerificationResult,
+        ) {
             result.push(VerificationEvent::new_error("toto"));
             result.push(VerificationEvent::new_error("toto2"));
             result.push(VerificationEvent::new_failure("toto3"));
@@ -282,7 +303,11 @@ mod test {
 
     #[test]
     fn run_failure() {
-        fn failure(_: &VerificationDirectory, _: &'static VerifierConfig, result: &mut VerificationResult) {
+        fn failure(
+            _: &VerificationDirectory,
+            _: &'static VerifierConfig,
+            result: &mut VerificationResult,
+        ) {
             result.push(VerificationEvent::new_failure("toto"));
             result.push(VerificationEvent::new_failure("toto2"));
         }
