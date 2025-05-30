@@ -19,6 +19,8 @@
 use std::{collections::HashMap, fmt::Display};
 use strum::AsRefStr;
 
+use crate::ErrorChain;
+
 /// Kind of the event during a verification
 #[derive(Debug, Clone, AsRefStr)]
 pub enum VerificationEventKind {
@@ -30,8 +32,7 @@ pub enum VerificationEventKind {
 #[derive(Debug, Clone)]
 pub struct VerificationEvent {
     kind: VerificationEventKind,
-    source: String,
-    contexts: Vec<String>,
+    results: Vec<String>,
 }
 
 /// Struct representing a result of the verification
@@ -60,8 +61,20 @@ impl VerificationEvent {
     pub fn new<T: Display + ?Sized>(kind: VerificationEventKind, value: &T) -> Self {
         Self {
             kind,
-            source: format!("{}", value),
-            contexts: vec![],
+            results: vec![format!("{}", value)],
+        }
+    }
+
+    pub fn new_from_error<T: std::error::Error + Display>(
+        kind: VerificationEventKind,
+        error: &T,
+    ) -> Self {
+        let chain = ErrorChain::new(error);
+        let mut values = chain.map(|e| e.to_string()).collect::<Vec<_>>();
+        values.reverse();
+        Self {
+            kind,
+            results: values,
         }
     }
 
@@ -78,7 +91,7 @@ impl VerificationEvent {
     where
         C: Display + Send + Sync + 'static,
     {
-        self.contexts.push(context.to_string());
+        self.results.push(context.to_string());
         self
     }
 
@@ -94,17 +107,41 @@ impl VerificationEvent {
 
     /// Source of the event
     pub fn source(&self) -> &str {
-        self.source.as_str()
+        match self.results.first() {
+            Some(s) => s.as_str(),
+            None => "",
+        }
+    }
+
+    /// Last comment of the event (the main element of the event)
+    pub fn last(&self) -> &str {
+        match self.results.last() {
+            Some(s) => s.as_str(),
+            None => "",
+        }
+    }
+
+    /// Contexts of the event
+    pub fn contexts(&self) -> Vec<&str> {
+        self.results.iter().skip(1).map(|s| s.as_str()).collect()
     }
 }
 
 impl Display for VerificationEvent {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let mut res = format!("{}: {}", self.kind.as_ref(), self.source);
-        if !self.contexts.is_empty() {
-            res = format!("{} ({})", res, self.contexts.join(" -> "));
+        let mut res = vec![format!("{}: {}", self.kind.as_ref(), self.last())];
+        if self.results.len() > 1 {
+            res.push("backtrace:".to_string());
+            res.append(
+                &mut self
+                    .results
+                    .iter()
+                    .enumerate()
+                    .map(|(i, s)| format!("{}: {}", i, s))
+                    .collect(),
+            );
         }
-        write!(f, "{}", res)
+        write!(f, "{}", res.join("\n"))
     }
 }
 
@@ -169,7 +206,7 @@ impl VerificationResult {
     {
         self.results
             .iter_mut()
-            .for_each(|event| event.contexts.push(context.to_string()));
+            .for_each(|event| event.results.push(context.to_string()));
     }
 
     /// Clone self and add the context
@@ -298,6 +335,29 @@ impl Default for VerificationResult {
 #[cfg(test)]
 mod test {
     use super::*;
+    use thiserror::Error;
+
+    #[derive(Error, Debug)]
+    #[error("inner 21 error")]
+    struct Inner21 {}
+
+    #[derive(Error, Debug)]
+    #[error("inner 22 error")]
+    struct Inner22 {}
+
+    #[derive(Error, Debug)]
+    enum Inner {
+        #[error("Context 21")]
+        Inner21 { source: Inner21 },
+        #[error("Context 22")]
+        Inner22 { source: Inner22 },
+    }
+
+    #[derive(Error, Debug)]
+    enum Outer {
+        #[error("Context Inner")]
+        Inner { source: Inner },
+    }
 
     #[test]
     fn test_create_result() {
@@ -314,7 +374,35 @@ mod test {
             .add_context("first");
         assert_eq!(
             event.to_string(),
-            "Error: toto (context -> first)".to_string()
+            "Error: first\nbacktrace:\n0: toto\n1: context\n2: first".to_string()
         )
+    }
+
+    #[test]
+    fn test_from_error() {
+        let e = Outer::Inner {
+            source: Inner::Inner21 { source: Inner21 {} },
+        };
+        let event = VerificationEvent::new_from_error(VerificationEventKind::Error, &e);
+        assert_eq!(
+            event.to_string(),
+            "Error: Context Inner\nbacktrace:\n0: inner 21 error\n1: Context 21\n2: Context Inner"
+                .to_string()
+        );
+    }
+
+    #[test]
+    fn test_from_error_with_context() {
+        let e = Outer::Inner {
+            source: Inner::Inner22 { source: Inner22 {} },
+        };
+        let event = VerificationEvent::new_from_error(VerificationEventKind::Error, &e)
+            .add_context("Context 1")
+            .add_context("Context 2");
+        assert_eq!(
+            event.to_string(),
+            "Error: Context 2\nbacktrace:\n0: inner 22 error\n1: Context 22\n2: Context Inner\n3: Context 1\n4: Context 2"
+                .to_string()
+        );
     }
 }

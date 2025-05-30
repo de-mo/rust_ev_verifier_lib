@@ -69,6 +69,7 @@ mod consts;
 mod data_structures;
 pub mod dataset;
 pub mod direct_trust;
+mod error_utils;
 pub mod file_structure;
 mod resources;
 pub mod startup_checks;
@@ -76,3 +77,4 @@ pub mod verification;
 
 pub use config::VerifierConfig;
 pub use data_structures::{dataset::DatasetTypeKind, DatasetType};
+pub use error_utils::ErrorChain;
