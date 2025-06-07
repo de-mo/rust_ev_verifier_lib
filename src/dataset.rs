@@ -29,31 +29,57 @@ use std::{
 use thiserror::Error;
 use tracing::{instrument, trace};
 
-// Enum representing the direct trust errors
 #[derive(Error, Debug)]
-pub enum DatasetError {
-    #[error("IO error {msg} -> caused by: {source}")]
-    IO { msg: String, source: std::io::Error },
+#[error(transparent)]
+/// Error with dataset
+pub struct DatasetError(#[from] DatasetErrorImpl);
+
+#[derive(Error, Debug)]
+enum DatasetErrorImpl {
+    #[error("Kind {0} delivered. Only context, setup and tally possible")]
+    WrongKindStr(String),
+    #[error("Error opening file {path} to calculate fingerprint")]
+    IOFingerprint {
+        path: PathBuf,
+        source: std::io::Error,
+    },
+    #[error("Error calculating fingerprint of {path}")]
+    Fingerprint {
+        path: PathBuf,
+        source: BasisCryptoError,
+    },
     #[error("Path doesn't exists {0}")]
     PathNotExist(PathBuf),
     #[error("Path is not a file {0}")]
     PathNotFile(PathBuf),
     #[error("Path is not a directory {0}")]
     PathIsNotDir(PathBuf),
-    #[error("Crypto error {msg} -> caused by: {source}")]
-    CryptoError {
-        msg: String,
-        source: BasisCryptoError,
+    #[error("IO Error form {path}: {msg}")]
+    IO {
+        path: PathBuf,
+        msg: &'static str,
+        source: std::io::Error,
+    },
+    #[error("IO Error with the buffer: {msg}")]
+    IOBuf {
+        msg: &'static str,
+        source: std::io::Error,
     },
     #[error("Byte length error {0}")]
     ByteLengthError(String),
-    #[error("Error Unzipping {file}: {source}")]
-    Unzip {
+    #[error("Error creating decrypter")]
+    Decrypter { source: BasisCryptoError },
+    #[error("Error deecrypting the zip file")]
+    Decrypt { source: BasisCryptoError },
+    #[error("Error extracting {file}")]
+    Extract {
         file: PathBuf,
         source: zip_extract::ZipExtractError,
     },
-    #[error("Kind {0} delivered. Only context, setup and tally possible")]
-    WrongKindStr(String),
+    #[error("process_dataset_operations: Error crreating EncryptedZipReader")]
+    ProcessNewEncryptedZipReader { source: Box<DatasetError> },
+    #[error("process_dataset_operations: Error unzipping")]
+    ProcessUnzip { source: Box<DatasetError> },
 }
 
 /// Metadata containing the information of the zip dataset before and after extraction
@@ -139,7 +165,7 @@ impl DatasetMetadata {
     ) -> Result<Self, DatasetError> {
         Self::extract_dataset_kind_with_inputs(
             DatasetTypeKind::try_from(datasettype_str)
-                .map_err(|_| DatasetError::WrongKindStr(datasettype_str.to_string()))?,
+                .map_err(|_| DatasetErrorImpl::WrongKindStr(datasettype_str.to_string()))?,
             input,
             password,
             extract_dir,
@@ -147,14 +173,14 @@ impl DatasetMetadata {
         )
     }
 
-    fn calculate_fingerprint(input: &Path) -> Result<ByteArray, DatasetError> {
-        let f = std::fs::File::open(input).map_err(|e| DatasetError::IO {
-            msg: "Opening file for calculation of fingerprint".to_string(),
+    fn calculate_fingerprint(input: &Path) -> Result<ByteArray, DatasetErrorImpl> {
+        let f = std::fs::File::open(input).map_err(|e| DatasetErrorImpl::IOFingerprint {
+            path: input.to_path_buf(),
             source: e,
         })?;
         let mut reader = std::io::BufReader::new(f);
-        sha256_stream(&mut reader).map_err(|e| DatasetError::CryptoError {
-            msg: "Calculating fingerprint".to_string(),
+        sha256_stream(&mut reader).map_err(|e| DatasetErrorImpl::Fingerprint {
+            path: input.to_path_buf(),
             source: e,
         })
     }
@@ -173,17 +199,36 @@ impl DatasetMetadata {
         extract_dir: &Path,
         zip_temp_dir_path: &Path,
     ) -> Result<Self, DatasetError> {
+        Self::process_dataset_operations_impl(
+            datasetkind,
+            input,
+            password,
+            extract_dir,
+            zip_temp_dir_path,
+        )
+        .map_err(DatasetError::from)
+    }
+
+    fn process_dataset_operations_impl(
+        datasetkind: DatasetTypeKind,
+        input: &Path,
+        password: &str,
+        extract_dir: &Path,
+        zip_temp_dir_path: &Path,
+    ) -> Result<Self, DatasetErrorImpl> {
         if !input.exists() {
-            return Err(DatasetError::PathNotExist(input.to_path_buf()));
+            return Err(DatasetErrorImpl::PathNotExist(input.to_path_buf()));
         }
         if !input.is_file() {
-            return Err(DatasetError::PathNotFile(input.to_path_buf()));
+            return Err(DatasetErrorImpl::PathNotFile(input.to_path_buf()));
         }
         if !extract_dir.is_dir() {
-            return Err(DatasetError::PathIsNotDir(extract_dir.to_path_buf()));
+            return Err(DatasetErrorImpl::PathIsNotDir(extract_dir.to_path_buf()));
         }
         if !zip_temp_dir_path.is_dir() {
-            return Err(DatasetError::PathIsNotDir(zip_temp_dir_path.to_path_buf()));
+            return Err(DatasetErrorImpl::PathIsNotDir(
+                zip_temp_dir_path.to_path_buf(),
+            ));
         }
         trace!("Start process_dataset_operations");
         let fingerprint = Self::calculate_fingerprint(input)?;
@@ -193,9 +238,14 @@ impl DatasetMetadata {
             password,
             &extract_dir_with_context,
             zip_temp_dir_path,
-        )?;
+        )
+        .map_err(|e| DatasetErrorImpl::ProcessNewEncryptedZipReader {
+            source: Box::new(e),
+        })?;
         trace!("Zip decrypter");
-        reader.unzip()?;
+        reader.unzip().map_err(|e| DatasetErrorImpl::ProcessUnzip {
+            source: Box::new(e),
+        })?;
         trace!("unzip finished");
         Ok(DatasetMetadata::new(
             datasetkind,
@@ -238,29 +288,41 @@ impl EncryptedZipReader {
         target_dir: &Path,
         temp_zip_dir: &Path,
     ) -> Result<Self, DatasetError> {
-        let f = File::open(file).map_err(|e| DatasetError::IO {
-            msg: format!("File {}", file.file_name().unwrap().to_str().unwrap()),
+        Self::new_impl(file, password, target_dir, temp_zip_dir).map_err(DatasetError::from)
+    }
+
+    fn new_impl(
+        file: &Path,
+        password: &str,
+        target_dir: &Path,
+        temp_zip_dir: &Path,
+    ) -> Result<Self, DatasetErrorImpl> {
+        let f = File::open(file).map_err(|e| DatasetErrorImpl::IO {
+            path: file.to_path_buf(),
+            msg: "Opening file",
             source: e,
         })?;
         let mut buf = BufReader::new(f);
         let mut salt_buf: Vec<u8> = vec![0; SALT_BYTE_LENGTH as usize];
         let mut nonce_buf: Vec<u8> = vec![0; NONCE_BYTE_LENGTH as usize];
-        let bytes_red = buf.read(&mut salt_buf).map_err(|e| DatasetError::IO {
-            msg: "Reading salt".to_string(),
+        let bytes_red = buf.read(&mut salt_buf).map_err(|e| DatasetErrorImpl::IO {
+            path: file.to_path_buf(),
+            msg: "Reading salt",
             source: e,
         })?;
         if bytes_red != SALT_BYTE_LENGTH as usize {
-            return Err(DatasetError::ByteLengthError(format!(
+            return Err(DatasetErrorImpl::ByteLengthError(format!(
                 "size of bytes read {bytes_red} for salt wrong. Expected: {SALT_BYTE_LENGTH}"
             )));
         }
         let salt = ByteArray::from_bytes(&salt_buf);
-        let bytes_red = buf.read(&mut nonce_buf).map_err(|e| DatasetError::IO {
-            msg: "Reading nonce".to_string(),
+        let bytes_red = buf.read(&mut nonce_buf).map_err(|e| DatasetErrorImpl::IO {
+            path: file.to_path_buf(),
+            msg: "Reading nonce",
             source: e,
         })?;
         if bytes_red != NONCE_BYTE_LENGTH as usize {
-            return Err(DatasetError::ByteLengthError(format!(
+            return Err(DatasetErrorImpl::ByteLengthError(format!(
                 "size of bytes read {bytes_red} for nonce wrong. Expected: {NONCE_BYTE_LENGTH}"
             )));
         }
@@ -270,29 +332,29 @@ impl EncryptedZipReader {
             .unwrap();
         Ok(Self {
             internal_reader: buf,
-            decrypter: Decrypter::new(&nonce, &derive_key).map_err(|e| {
-                DatasetError::CryptoError {
-                    msg: "Creating decrypter".to_string(),
-                    source: e,
-                }
-            })?,
+            decrypter: Decrypter::new(&nonce, &derive_key)
+                .map_err(|e| DatasetErrorImpl::Decrypter { source: e })?,
             target_dir: target_dir.to_path_buf(),
             temp_zip: Self::temp_zip_path(file, temp_zip_dir),
         })
     }
 
-    fn decrypt_to_zip(&mut self) -> Result<PathBuf, DatasetError> {
-        let mut target = std::fs::File::create(&self.temp_zip).map_err(|e| DatasetError::IO {
-            msg: "Creating Temp Zip".to_string(),
-            source: e,
-        })?;
+    fn decrypt_to_zip(&mut self) -> Result<PathBuf, DatasetErrorImpl> {
+        let mut target =
+            std::fs::File::create(&self.temp_zip).map_err(|e| DatasetErrorImpl::IO {
+                path: self.temp_zip.clone(),
+                msg: "Creating Temp Zip",
+                source: e,
+            })?;
         let buf = &mut self.internal_reader;
         loop {
             let mut temp_buffer = vec![0; ENCRYPTED_BLOCK_SIZE];
-            let count = buf.read(&mut temp_buffer).map_err(|e| DatasetError::IO {
-                msg: "Reading buffer".to_string(),
-                source: e,
-            })?;
+            let count = buf
+                .read(&mut temp_buffer)
+                .map_err(|e| DatasetErrorImpl::IOBuf {
+                    msg: "Reading buffer",
+                    source: e,
+                })?;
             if count == 0 {
                 break;
             }
@@ -300,14 +362,11 @@ impl EncryptedZipReader {
             let plaintext = self
                 .decrypter
                 .decrypt(&ByteArray::from_bytes(&temp_buffer))
-                .map_err(|e| DatasetError::CryptoError {
-                    msg: "Decrypting cipher".to_string(),
-                    source: e,
-                })?;
+                .map_err(|e| DatasetErrorImpl::Decrypt { source: e })?;
             target
                 .write_all(plaintext.to_bytes())
-                .map_err(|e| DatasetError::IO {
-                    msg: "Writing temp zip".to_string(),
+                .map_err(|e| DatasetErrorImpl::IOBuf {
+                    msg: "Writing temp zip",
                     source: e,
                 })?;
         }
@@ -318,19 +377,23 @@ impl EncryptedZipReader {
     ///
     /// The method return the target directory
     pub fn unzip(&mut self) -> Result<PathBuf, DatasetError> {
+        self.unzip_impl().map_err(DatasetError::from)
+    }
+
+    fn unzip_impl(&mut self) -> Result<PathBuf, DatasetErrorImpl> {
         if !self.temp_zip.exists() {
             self.decrypt_to_zip()?;
         }
-        let f = std::fs::File::open(&self.temp_zip).map_err(|e| DatasetError::IO {
-            msg: format!(
-                "Opening temp zip file {}",
-                self.temp_zip.file_name().unwrap().to_str().unwrap()
-            ),
+        let f = std::fs::File::open(&self.temp_zip).map_err(|e| DatasetErrorImpl::IO {
+            path: self.temp_zip.clone(),
+            msg: "Opening temp zip file {}",
             source: e,
         })?;
-        zip_extract::extract(&f, &self.target_dir, true).map_err(|e| DatasetError::Unzip {
-            file: self.temp_zip.to_path_buf(),
-            source: e,
+        zip_extract::extract(&f, &self.target_dir, true).map_err(|e| {
+            DatasetErrorImpl::Extract {
+                file: self.temp_zip.to_path_buf(),
+                source: e,
+            }
         })?;
         Ok(self.target_dir.to_owned())
     }
