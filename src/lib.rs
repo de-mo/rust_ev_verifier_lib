@@ -77,4 +77,4 @@ pub mod verification;
 
 pub use config::VerifierConfig;
 pub use data_structures::{dataset::DatasetTypeKind, DatasetType};
-pub use error_utils::ErrorChain;
+pub use error_utils::{ErrorChain, Report};
