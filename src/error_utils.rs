@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 /// An iterator over an Error and its sources.
 ///
 /// If you want to omit the initial error and only process its sources, use `skip(1)`.
@@ -24,6 +26,37 @@ impl<'a, 'b> Iterator for ErrorChain<'a, 'b> {
                 Some(e)
             }
         }
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct Report<'a> {
+    inner: &'a (dyn std::error::Error),
+}
+
+impl<'a> Report<'a> {
+    pub fn new(error: &'a (dyn std::error::Error)) -> Self {
+        Self { inner: error }
+    }
+}
+
+impl<'a> Display for Report<'a> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let error_str = ErrorChain::new(self.inner)
+            .map(|e| e.to_string())
+            .collect::<Vec<_>>();
+        let mut res = vec![self.inner.to_string()];
+        if error_str.len() > 1 {
+            res.push("backtrace:".to_string());
+            res.append(
+                &mut error_str
+                    .iter()
+                    .enumerate()
+                    .map(|(i, s)| format!("{}: {}", i, s))
+                    .collect(),
+            );
+        }
+        write!(f, "{}", res.join("\n"))
     }
 }
 
