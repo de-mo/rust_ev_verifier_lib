@@ -26,9 +26,8 @@ use crate::{
         common_types::{DecryptionProof, SchnorrProof},
         VerifierDataToTypeTrait, VerifierDataType,
     },
-    direct_trust::{CertificateAuthority, VerifiySignatureTrait, VerifySignatureError},
+    direct_trust::{CertificateAuthority, VerifiySignatureTrait},
 };
-
 use rust_ev_system_library::rust_ev_crypto_primitives::prelude::{
     elgamal::{Ciphertext, EncryptionParameters},
     ByteArray, HashableMessage, VerifyDomainTrait,
@@ -123,7 +122,7 @@ impl<'a> From<&'a ContextIds> for HashableMessage<'a> {
 }
 
 impl<'a> VerifiySignatureTrait<'a> for ControlComponentBallotBoxPayload {
-    fn get_hashable(&'a self) -> Result<HashableMessage<'a>, Box<VerifySignatureError>> {
+    fn get_hashable(&'a self) -> Result<HashableMessage<'a>, DataStructureError> {
         Ok(HashableMessage::from(self))
     }
 

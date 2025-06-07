@@ -25,7 +25,7 @@ use crate::{
 };
 use crate::{
     data_structures::VerifierDataToTypeTrait,
-    direct_trust::{CertificateAuthority, VerifiySignatureTrait, VerifySignatureError},
+    direct_trust::{CertificateAuthority, VerifiySignatureTrait},
 };
 use chrono::NaiveDate;
 use chrono::NaiveDateTime;
@@ -363,7 +363,7 @@ impl<'a> From<&'a ElectionEventContextPayload> for HashableMessage<'a> {
 }
 
 impl<'a> VerifiySignatureTrait<'a> for ElectionEventContextPayload {
-    fn get_hashable(&'a self) -> Result<HashableMessage<'a>, Box<VerifySignatureError>> {
+    fn get_hashable(&'a self) -> Result<HashableMessage<'a>, DataStructureError> {
         Ok(HashableMessage::from(self))
     }
 

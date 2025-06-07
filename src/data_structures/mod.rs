@@ -51,7 +51,7 @@ use serde::{
 };
 use std::path::Path;
 use thiserror::Error;
-pub use xml::XMLError;
+use xml::XMLError;
 
 // Enum representing the datza structure errors
 #[derive(Error, Debug)]
@@ -73,6 +73,8 @@ pub enum DataStructureError {
     },
     #[error("Data error {0}")]
     DataError(String),
+    #[error("XMLError")]
+    XMLError(#[from] XMLError),
 }
 
 /// The type VerifierDataType implement an option between

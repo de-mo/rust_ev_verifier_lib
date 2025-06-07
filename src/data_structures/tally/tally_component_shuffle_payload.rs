@@ -25,7 +25,7 @@ use super::{
 };
 use crate::{
     data_structures::{common_types::DecryptionProof, VerifierDataToTypeTrait, VerifierDataType},
-    direct_trust::{CertificateAuthority, VerifiySignatureTrait, VerifySignatureError},
+    direct_trust::{CertificateAuthority, VerifiySignatureTrait},
 };
 use rust_ev_system_library::rust_ev_crypto_primitives::prelude::{
     elgamal::EncryptionParameters, ByteArray, DomainVerifications, HashableMessage, Integer,
@@ -105,7 +105,7 @@ impl<'a> From<&'a TallyComponentShufflePayload> for HashableMessage<'a> {
 }
 
 impl<'a> VerifiySignatureTrait<'a> for TallyComponentShufflePayload {
-    fn get_hashable(&'a self) -> Result<HashableMessage<'a>, Box<VerifySignatureError>> {
+    fn get_hashable(&'a self) -> Result<HashableMessage<'a>, DataStructureError> {
         Ok(HashableMessage::from(self))
     }
 

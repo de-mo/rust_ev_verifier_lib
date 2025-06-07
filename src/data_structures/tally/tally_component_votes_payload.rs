@@ -14,11 +14,6 @@
 // a copy of the GNU General Public License along with this program. If not, see
 // <https://www.gnu.org/licenses/>.
 
-use crate::{
-    data_structures::{VerifierDataToTypeTrait, VerifierDataType},
-    direct_trust::{CertificateAuthority, VerifiySignatureTrait, VerifySignatureError},
-};
-
 use super::{
     super::{
         common_types::{EncryptionParametersDef, Signature},
@@ -26,7 +21,10 @@ use super::{
     },
     VerifierTallyDataType,
 };
-
+use crate::{
+    data_structures::{VerifierDataToTypeTrait, VerifierDataType},
+    direct_trust::{CertificateAuthority, VerifiySignatureTrait},
+};
 use rust_ev_system_library::rust_ev_crypto_primitives::prelude::{
     elgamal::EncryptionParameters, ByteArray, HashableMessage, VerifyDomainTrait,
 };
@@ -78,7 +76,7 @@ impl<'a> From<&'a TallyComponentVotesPayload> for HashableMessage<'a> {
 }
 
 impl<'a> VerifiySignatureTrait<'a> for TallyComponentVotesPayload {
-    fn get_hashable(&'a self) -> Result<HashableMessage<'a>, Box<VerifySignatureError>> {
+    fn get_hashable(&'a self) -> Result<HashableMessage<'a>, DataStructureError> {
         Ok(HashableMessage::from(self))
     }
 

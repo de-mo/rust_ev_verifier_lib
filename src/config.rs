@@ -16,12 +16,13 @@
 
 //! Module containing the contstants and the way to access them
 
-use thiserror::Error;
+use crate::direct_trust::DirectTrustError;
 
 use super::consts;
-use super::direct_trust::{DirectTrustError, Keystore};
+use super::direct_trust::Keystore;
 use super::resources::VERIFICATION_LIST;
 use std::path::{Path, PathBuf};
+use thiserror::Error;
 
 // Directory structure
 const CONTEXT_DIR_NAME: &str = "context";
@@ -41,12 +42,16 @@ const ZIP_TEMP_DIR_NAME: &str = "decrypted_zip";
 const DEFAULT_TXT_REPORT_TAB_SIZE: u8 = 2;
 const DEFAULT_REPORT_FORMAT_DATE_TIME: &str = "%d.%m.%Y %H:%M:%S.%3f";
 
-// Enum representing the configuration error
 #[derive(Error, Debug)]
-pub enum VerifierConfigError {
+#[error(transparent)]
+/// Error with the configuration of Verifier
+pub struct VerifierConfigError(#[from] VerifierConfigErrorImpl);
+
+#[derive(Error, Debug)]
+enum VerifierConfigErrorImpl {
     #[error("Variable {0} not found in .env")]
     Env(String),
-    #[error(transparent)]
+    #[error("Error reading the keystore")]
     DirectTrust(#[from] DirectTrustError),
 }
 
@@ -198,7 +203,9 @@ impl VerifierConfig {
 
     /// Get the keystore
     pub fn keystore(&self) -> Result<Keystore, VerifierConfigError> {
-        Ok(Keystore::try_from(self.direct_trust_dir_path().as_path())?)
+        Keystore::try_from(self.direct_trust_dir_path().as_path())
+            .map_err(VerifierConfigErrorImpl::from)
+            .map_err(VerifierConfigError::from)
     }
 
     /// Get tab size for text reports
@@ -226,9 +233,11 @@ impl VerifierConfig {
 
     /// Get the password to decrypt the zip files
     pub fn decrypt_password(&self) -> Result<String, VerifierConfigError> {
-        dotenvy::var(consts::ENV_VERIFIER_DATASET_PASSWORD).map_err(|_| {
-            VerifierConfigError::Env(consts::ENV_VERIFIER_DATASET_PASSWORD.to_string())
-        })
+        dotenvy::var(consts::ENV_VERIFIER_DATASET_PASSWORD)
+            .map_err(|_| {
+                VerifierConfigErrorImpl::Env(consts::ENV_VERIFIER_DATASET_PASSWORD.to_string())
+            })
+            .map_err(VerifierConfigError::from)
     }
 }
 
@@ -240,6 +249,7 @@ pub(crate) mod test {
         direct_trust::CertificateAuthority,
         file_structure::{mock::MockVerificationDirectory, VerificationDirectory},
         verification::VerificationPeriod,
+        Report,
     };
     use lazy_static::lazy_static;
     use rust_ev_system_library::rust_ev_crypto_primitives::prelude::direct_trust::Keystore as BasisKeystore;
@@ -380,9 +390,7 @@ pub(crate) mod test {
     }
 
     /// Get the signing keystore
-    pub fn signing_keystore(
-        authority: CertificateAuthority,
-    ) -> Result<BasisKeystore, DirectTrustError> {
+    pub fn signing_keystore(authority: CertificateAuthority) -> Result<BasisKeystore, String> {
         let (ks_name, pwd_name) = match authority {
             CertificateAuthority::Canton => (
                 CANTON_KEYSTORE_FILE_NAME,
@@ -407,14 +415,9 @@ pub(crate) mod test {
                 (CC4_KEYSTORE_FILE_NAME, CC4_KEYSTORE_PASSWORD_FILE_NAME)
             }
         };
-        BasisKeystore::from_pkcs12(
-            &get_test_signing_direct_trust_path().join(ks_name),
-            &get_test_signing_direct_trust_path().join(pwd_name),
-        )
-        .map_err(|e| DirectTrustError::Keystore {
-            msg: "Problem reading the keystore for test signing".to_string(),
-            source: e,
-        })
+        let path = get_test_signing_direct_trust_path().join(ks_name);
+        BasisKeystore::from_pkcs12(&path, &get_test_signing_direct_trust_path().join(pwd_name))
+            .map_err(|e| Report::new(&e).to_string())
     }
 
     pub(crate) fn test_resources_path() -> PathBuf {

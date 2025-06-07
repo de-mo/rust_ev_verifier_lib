@@ -14,6 +14,7 @@
 // a copy of the GNU General Public License along with this program. If not, see
 // <https://www.gnu.org/licenses/>.
 
+use crate::data_structures::DataStructureError;
 use rust_ev_system_library::rust_ev_crypto_primitives::prelude::{
     basic_crypto_functions::BasisCryptoError,
     direct_trust::{DirectTrustError as BasisDirectTrustError, Keystore as BasisKeystore},
@@ -28,42 +29,66 @@ use std::{
 };
 use thiserror::Error;
 
-use crate::data_structures::XMLError;
-
 pub struct Keystore(pub(crate) BasisKeystore);
 
-// Enum representing the direct trust errors
 #[derive(Error, Debug)]
-pub enum DirectTrustError {
-    #[error("IO error {msg} -> caused by: {source}")]
-    IO { msg: String, source: std::io::Error },
-    #[error("No file with extension {0} found")]
-    FileNotFound(String),
-    #[error("More than one file with extension {0} found")]
-    NotUniqueFile(String),
-    #[error("Keystore error {msg} -> caused by: {source}")]
-    Keystore {
-        msg: String,
-        source: BasisDirectTrustError,
+#[error(transparent)]
+/// Error with DirectTrust
+pub struct DirectTrustError(#[from] DirectTrustErrorImpl);
+
+#[derive(Error, Debug)]
+enum DirectTrustErrorImpl {
+    #[error("Error finding unique file with extension {extension}")]
+    FindUniqueFile {
+        extension: &'static str,
+        source: FindUniqueFileError,
     },
-    #[error("Crypto error {msg} -> caused by: {source}")]
-    Crypto {
-        msg: String,
+    #[error("Problem reading the keystore {path}")]
+    Keystore {
+        path: PathBuf,
+        source: Box<BasisDirectTrustError>,
+    },
+    #[error("Error getting the public cartificate for CA {ca}")]
+    PublicCertificate {
+        ca: String,
+        source: Box<BasisDirectTrustError>,
+    },
+    #[error("Error calculating fingerprint of public certificate for CA {ca}")]
+    FingerPrint {
+        ca: String,
         source: BasisCryptoError,
     },
-    #[error("No signing Keystore for Voting Server")]
-    NoSigningVotingServer,
 }
 
-// Enum representing the direct trust errors
 #[derive(Error, Debug)]
-pub enum VerifySignatureError {
+enum FindUniqueFileError {
+    #[error("Error reading directory")]
+    DirIO {
+        path: PathBuf,
+        source: std::io::Error,
+    },
+    #[error("No file with extension {extension} found in {path}")]
+    FileWithExtNotFound { path: PathBuf, extension: String },
+    #[error("More than one file with extension {extension} found in {path}")]
+    NotUniqueFile { path: PathBuf, extension: String },
+}
+
+#[derive(Error, Debug)]
+#[error(transparent)]
+/// Error verifiying Signature
+pub struct VerifySignatureError(#[from] VerifySignatureErrorImpl);
+
+#[derive(Error, Debug)]
+enum VerifySignatureErrorImpl {
     #[error("No certificate authority given")]
     NoCA,
-    #[error("Signature error {msg} -> caused by: {source}")]
+    #[error("Signature error in {msg}")]
     SignatureError { msg: String, source: SignatureError },
-    #[error("XML error {msg} -> caused by: {source}")]
-    XMLError { msg: String, source: XMLError },
+    #[error("Error getting hashable in {function}")]
+    GetHashable {
+        function: &'static str,
+        source: Box<DataStructureError>,
+    },
 }
 
 /// List of valide Certificate authorities
@@ -124,10 +149,10 @@ impl Display for CertificateAuthority {
 fn find_unique_file_with_extension(
     path: &Path,
     extension: &str,
-) -> Result<PathBuf, DirectTrustError> {
+) -> Result<PathBuf, FindUniqueFileError> {
     let pathes = std::fs::read_dir(path)
-        .map_err(|e| DirectTrustError::IO {
-            msg: path.as_os_str().to_str().unwrap().to_string(),
+        .map_err(|e| FindUniqueFileError::DirIO {
+            path: path.to_path_buf(),
             source: e,
         })?
         .filter_map(|res| res.ok())
@@ -141,9 +166,15 @@ fn find_unique_file_with_extension(
         })
         .collect::<Vec<_>>();
     match pathes.len() {
-        0 => Err(DirectTrustError::FileNotFound(extension.to_string())),
+        0 => Err(FindUniqueFileError::FileWithExtNotFound {
+            path: path.to_path_buf(),
+            extension: extension.to_string(),
+        }),
         1 => Ok(pathes[0].clone()),
-        _ => Err(DirectTrustError::NotUniqueFile(extension.to_string())),
+        _ => Err(FindUniqueFileError::NotUniqueFile {
+            path: path.to_path_buf(),
+            extension: extension.to_string(),
+        }),
     }
 }
 
@@ -151,16 +182,23 @@ impl TryFrom<&Path> for Keystore {
     type Error = DirectTrustError;
 
     fn try_from(value: &Path) -> Result<Self, Self::Error> {
-        let keystore_path = find_unique_file_with_extension(value, "p12")?;
-        let password_path = find_unique_file_with_extension(value, "txt")?;
+        let keystore_path = find_unique_file_with_extension(value, "p12").map_err(|e| {
+            DirectTrustErrorImpl::FindUniqueFile {
+                extension: "p12",
+                source: e,
+            }
+        })?;
+        let password_path = find_unique_file_with_extension(value, "txt").map_err(|e| {
+            DirectTrustErrorImpl::FindUniqueFile {
+                extension: "p12",
+                source: e,
+            }
+        })?;
         Ok(Keystore(
             BasisKeystore::from_pkcs12(&keystore_path, &password_path).map_err(|e| {
-                DirectTrustError::Keystore {
-                    msg: format!(
-                        "Problem reading the keystore in {}",
-                        value.as_os_str().to_str().unwrap()
-                    ),
-                    source: e,
+                DirectTrustErrorImpl::Keystore {
+                    path: keystore_path.clone(),
+                    source: Box::new(e),
                 }
             })?,
         ))
@@ -181,16 +219,18 @@ impl Keystore {
     pub fn fingerprint(&self, ca: CertificateAuthority) -> Result<ByteArray, DirectTrustError> {
         self.0
             .public_certificate(&ca.to_string())
-            .map_err(|e| DirectTrustError::Keystore {
-                msg: "calculating fingerprint".to_string(),
-                source: e,
-            })?
+            .map_err(|e| DirectTrustErrorImpl::PublicCertificate {
+                ca: ca.to_string(),
+                source: Box::new(e),
+            })
+            .map_err(DirectTrustError::from)?
             .signing_certificate()
             .digest()
-            .map_err(|e| DirectTrustError::Crypto {
-                msg: "calculating fingerprint".to_string(),
+            .map_err(|e| DirectTrustErrorImpl::FingerPrint {
+                ca: ca.to_string(),
                 source: e,
             })
+            .map_err(DirectTrustError::from)
     }
 }
 
@@ -206,7 +246,7 @@ where
     Self: 'a,
 {
     /// Get the hashable from the object
-    fn get_hashable(&'a self) -> Result<HashableMessage<'a>, Box<VerifySignatureError>>;
+    fn get_hashable(&'a self) -> Result<HashableMessage<'a>, DataStructureError>;
 
     /// Get the context data of the object according to the specifications
     fn get_context_data(&'a self) -> Vec<HashableMessage<'a>>;
@@ -226,12 +266,17 @@ where
     }
 
     /// Verfiy the signature according to the specifications of Verifier
-    fn verifiy_signature(&'a self, keystore: &Keystore) -> Result<bool, Box<VerifySignatureError>> {
+    fn verifiy_signature(&'a self, keystore: &Keystore) -> Result<bool, VerifySignatureError> {
         let ca = match self.get_certificate_authority() {
             Some(ca) => ca,
-            None => return Err(Box::new(VerifySignatureError::NoCA)),
+            None => return Err(VerifySignatureError::from(VerifySignatureErrorImpl::NoCA)),
         };
-        let hashable_message = self.get_hashable()?;
+        let hashable_message =
+            self.get_hashable()
+                .map_err(|e| VerifySignatureErrorImpl::GetHashable {
+                    function: "verify_signature",
+                    source: Box::new(e),
+                })?;
         verify_signature(
             &keystore.0,
             &ca.to_string(),
@@ -239,35 +284,36 @@ where
             &self.get_context_hashable(),
             &self.get_signature(),
         )
-        .map_err(|e| {
-            Box::new(VerifySignatureError::SignatureError {
-                msg: "Error verifying the signature".to_string(),
-                source: e,
-            })
+        .map_err(|e| VerifySignatureErrorImpl::SignatureError {
+            msg: "Error verifying the signature".to_string(),
+            source: e,
         })
+        .map_err(VerifySignatureError::from)
     }
 
     /// Sign according to the specifications of Verifier
     ///
     /// Can be usefull to resign the payload after mocking it
-    fn sign(&'a self, keystore: &Keystore) -> Result<ByteArray, Box<VerifySignatureError>> {
-        let hashable_message = self.get_hashable()?;
-        sign(&keystore.0, &hashable_message, &self.get_context_hashable()).map_err(|e| {
-            Box::new(VerifySignatureError::SignatureError {
+    fn sign(&'a self, keystore: &Keystore) -> Result<ByteArray, VerifySignatureError> {
+        let hashable_message =
+            self.get_hashable()
+                .map_err(|e| VerifySignatureErrorImpl::GetHashable {
+                    function: "sign",
+                    source: Box::new(e),
+                })?;
+        sign(&keystore.0, &hashable_message, &self.get_context_hashable())
+            .map_err(|e| VerifySignatureErrorImpl::SignatureError {
                 msg: "Error signing".to_string(),
                 source: e,
             })
-        })
+            .map_err(VerifySignatureError::from)
     }
 
     /// Verify signatures of an array element
     ///
     /// Per default return an array of one element containing the result of the element verified
     /// The method must be rewritten for a array of elements
-    fn verify_signatures(
-        &'a self,
-        keystore: &Keystore,
-    ) -> Vec<Result<bool, Box<VerifySignatureError>>> {
+    fn verify_signatures(&'a self, keystore: &Keystore) -> Vec<Result<bool, VerifySignatureError>> {
         vec![self.verifiy_signature(keystore)]
     }
 }

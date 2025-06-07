@@ -27,7 +27,7 @@ use crate::{
         xml::{impl_iterator_for_tag_many_iter, TagManyIter, TagManyWithIterator},
         VerifierDataToTypeTrait, VerifierDataType,
     },
-    direct_trust::{CertificateAuthority, VerifiySignatureTrait, VerifySignatureError},
+    direct_trust::{CertificateAuthority, VerifiySignatureTrait},
 };
 use chrono::NaiveDate;
 pub use election::{Candidate, Election, ElectionInformation, List, WriteInCandidate};
@@ -473,14 +473,11 @@ impl Voter {
 }
 
 impl VerifiySignatureTrait<'_> for ElectionEventConfiguration {
-    fn get_hashable(&self) -> Result<HashableMessage, Box<VerifySignatureError>> {
+    fn get_hashable(&self) -> Result<HashableMessage, DataStructureError> {
         let hashable = XMLFileHashable::new(&self.path, &SchemaKind::Config, "signature");
         let hash = hashable
             .recursive_hash()
-            .map_err(|e| VerifySignatureError::XMLError {
-                msg: String::default(),
-                source: e,
-            })?;
+            .map_err(DataStructureError::from)?;
         Ok(HashableMessage::Hashed(hash))
     }
 

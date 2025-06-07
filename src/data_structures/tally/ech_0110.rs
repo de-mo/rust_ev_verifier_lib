@@ -23,7 +23,7 @@ use super::{
 };
 use crate::{
     data_structures::{VerifierDataToTypeTrait, VerifierDataType},
-    direct_trust::{CertificateAuthority, VerifiySignatureTrait, VerifySignatureError},
+    direct_trust::{CertificateAuthority, VerifiySignatureTrait},
 };
 use rust_ev_system_library::rust_ev_crypto_primitives::prelude::{
     ByteArray, HashableMessage, RecursiveHashTrait,
@@ -50,14 +50,11 @@ impl VerifierDataDecode for ECH0110 {
 }
 
 impl<'a> VerifiySignatureTrait<'a> for ECH0110 {
-    fn get_hashable(&'a self) -> Result<HashableMessage<'a>, Box<VerifySignatureError>> {
+    fn get_hashable(&'a self) -> Result<HashableMessage<'a>, DataStructureError> {
         let hashable = XMLFileHashable::new(&self.path, &SchemaKind::Ech0110, "eCH-0110:extension");
         let hash = hashable
             .recursive_hash()
-            .map_err(|e| VerifySignatureError::XMLError {
-                msg: String::default(),
-                source: e,
-            })?;
+            .map_err(DataStructureError::from)?;
         Ok(HashableMessage::Hashed(hash))
     }
 
