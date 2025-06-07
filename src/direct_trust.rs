@@ -83,7 +83,10 @@ enum VerifySignatureErrorImpl {
     #[error("No certificate authority given")]
     NoCA,
     #[error("Signature error in {msg}")]
-    SignatureError { msg: String, source: SignatureError },
+    SignatureError {
+        msg: String,
+        source: Box<SignatureError>,
+    },
     #[error("Error getting hashable in {function}")]
     GetHashable {
         function: &'static str,
@@ -286,7 +289,7 @@ where
         )
         .map_err(|e| VerifySignatureErrorImpl::SignatureError {
             msg: "Error verifying the signature".to_string(),
-            source: e,
+            source: Box::new(e),
         })
         .map_err(VerifySignatureError::from)
     }
@@ -304,7 +307,7 @@ where
         sign(&keystore.0, &hashable_message, &self.get_context_hashable())
             .map_err(|e| VerifySignatureErrorImpl::SignatureError {
                 msg: "Error signing".to_string(),
-                source: e,
+                source: Box::new(e),
             })
             .map_err(VerifySignatureError::from)
     }
