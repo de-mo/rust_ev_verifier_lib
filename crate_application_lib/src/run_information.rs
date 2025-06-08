@@ -14,6 +14,8 @@
 // a copy of the GNU General Public License along with this program. If not, see
 // <https://www.gnu.org/licenses/>.
 
+use crate::RunnerErrorImpl;
+
 use super::{
     runner::VerificationRunInformation, ExtractDataSetResults, RunnerError, RunnerInformation,
 };
@@ -69,18 +71,18 @@ impl RunInformation {
         let all_verifs = match verification_period {
             VerificationPeriod::Setup => {
                 get_verifications_setup(verification_metadata, self.config).map_err(|e| {
-                    RunnerError::RunInformationError(format!(
-                        "Collecting verifications setup: {}",
-                        e
-                    ))
+                    RunnerErrorImpl::CollectVerifications {
+                        period: verification_period,
+                        source: Box::new(e),
+                    }
                 })?
             }
             VerificationPeriod::Tally => {
                 get_verifications_tally(verification_metadata, self.config).map_err(|e| {
-                    RunnerError::RunInformationError(format!(
-                        "Collecting verifications setup: {}",
-                        e
-                    ))
+                    RunnerErrorImpl::CollectVerifications {
+                        period: verification_period,
+                        source: Box::new(e),
+                    }
                 })?
             }
         };
@@ -239,8 +241,8 @@ impl TryFrom<&RunInformation> for ManualVerifications<VerificationDirectory> {
 
     fn try_from(value: &RunInformation) -> Result<Self, Self::Error> {
         if !value.is_prepared() {
-            return Err(RunnerError::RunInformationError(
-                "The run information must be prepared".to_string(),
+            return Err(RunnerError::from(
+                RunnerErrorImpl::ManualRunInformationNotPrepared,
             ));
         }
         let dir = VerificationDirectory::new(
@@ -255,11 +257,9 @@ impl TryFrom<&RunInformation> for ManualVerifications<VerificationDirectory> {
             value.verifications_with_errors_and_failures(),
             &value.excluded_verifications,
         )
-        .map_err(|e| {
-            RunnerError::RunInformationError(format!(
-                "Error creating the manual verifications: {}",
-                e
-            ))
+        .map_err(|e| RunnerErrorImpl::Manual {
+            source: Box::new(e),
         })
+        .map_err(RunnerError::from)
     }
 }

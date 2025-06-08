@@ -14,6 +14,8 @@
 // a copy of the GNU General Public License along with this program. If not, see
 // <https://www.gnu.org/licenses/>.
 
+use crate::RunnerErrorImpl;
+
 use super::RunnerError;
 use rust_ev_verifier_lib::{
     dataset::DatasetMetadata, verification::VerificationPeriod, DatasetTypeKind, VerifierConfig,
@@ -48,14 +50,31 @@ impl ExtractDataSetResults {
         password: &str,
         config: &'static VerifierConfig,
     ) -> Result<Self, RunnerError> {
+        Self::extract_datasets_impl(
+            period,
+            context_zip_file,
+            setup_zip_file,
+            tally_zip_file,
+            password,
+            config,
+        )
+        .map_err(RunnerError::from)
+    }
+
+    fn extract_datasets_impl(
+        period: VerificationPeriod,
+        context_zip_file: &Path,
+        setup_zip_file: Option<&Path>,
+        tally_zip_file: Option<&Path>,
+        password: &str,
+        config: &'static VerifierConfig,
+    ) -> Result<Self, RunnerErrorImpl> {
         let dataset_root_path = config.create_dataset_dir_path();
         let mut hm = HashMap::new();
         match period {
             VerificationPeriod::Setup => {
                 if setup_zip_file.is_none() {
-                    return Err(RunnerError::FileMissing(
-                        "For setup, the dataset for setup must be delivered".to_string(),
-                    ));
+                    return Err(RunnerErrorImpl::ExtractFileMissing { period: "setup" });
                 } else {
                     let md = DatasetMetadata::extract_dataset_kind_with_inputs(
                         DatasetTypeKind::Setup,
@@ -64,9 +83,9 @@ impl ExtractDataSetResults {
                         &dataset_root_path,
                         &config.zip_temp_dir_path(),
                     )
-                    .map_err(|e| RunnerError::Dataset {
-                        msg: "Extracting setup".to_string(),
-                        source: e,
+                    .map_err(|e| RunnerErrorImpl::ExtractError {
+                        name: "setup",
+                        source: Box::new(e),
                     })?;
                     info!(
                         "Setup extracted by {} (fingerprint: {}",
@@ -78,9 +97,7 @@ impl ExtractDataSetResults {
             }
             VerificationPeriod::Tally => {
                 if tally_zip_file.is_none() {
-                    return Err(RunnerError::FileMissing(
-                        "For tally, the dataset for tally must be delivered".to_string(),
-                    ));
+                    return Err(RunnerErrorImpl::ExtractFileMissing { period: "tally" });
                 } else {
                     let md = DatasetMetadata::extract_dataset_kind_with_inputs(
                         DatasetTypeKind::Tally,
@@ -89,9 +106,9 @@ impl ExtractDataSetResults {
                         &dataset_root_path,
                         &config.zip_temp_dir_path(),
                     )
-                    .map_err(|e| RunnerError::Dataset {
-                        msg: "Extracting tally".to_string(),
-                        source: e,
+                    .map_err(|e| RunnerErrorImpl::ExtractError {
+                        name: "tally",
+                        source: Box::new(e),
                     })?;
                     info!(
                         "Tally extracted by {} (fingerprint: {}",
@@ -109,9 +126,9 @@ impl ExtractDataSetResults {
             &dataset_root_path,
             &config.zip_temp_dir_path(),
         )
-        .map_err(|e| RunnerError::Dataset {
-            msg: "Extracting context".to_string(),
-            source: e,
+        .map_err(|e| RunnerErrorImpl::ExtractError {
+            name: "context",
+            source: Box::new(e),
         })?;
         info!(
             "Context extracted by {} (fingerprint: {}",

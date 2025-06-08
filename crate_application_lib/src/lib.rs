@@ -40,45 +40,66 @@ use rust_ev_verifier_lib::{
         ContextDirectoryTrait, FileStructureError, VerificationDirectory,
         VerificationDirectoryTrait,
     },
-    verification::VerificationError,
+    verification::{VerificationError, VerificationPeriod},
 };
 use thiserror::Error;
 
-// Enum representing the datza structure errors
 #[derive(Error, Debug)]
-pub enum RunnerError {
-    #[error("IO error {msg} -> caused by: {source}")]
-    IO { msg: String, source: std::io::Error },
-    #[error("Check error: {0}")]
-    CheckError(String),
-    #[error(transparent)]
-    Verification(VerificationError),
+#[error(transparent)]
+/// Error during the runner
+pub struct RunnerError(#[from] RunnerErrorImpl);
+
+#[derive(Error, Debug)]
+enum RunnerErrorImpl {
+    #[error("Error reading election event context (in prepare_fixed_based_optimization)")]
+    EEContextPrepareFixedBased { source: FileStructureError },
+    #[error("Extract dataset: For {period}, the dataset for {period} must be delivered")]
+    ExtractFileMissing { period: &'static str },
+    #[error("Error extracting the dataset {name}")]
+    ExtractError {
+        name: &'static str,
+        source: Box<DatasetError>,
+    },
+    #[error("Error collecting the verifications for {period}")]
+    CollectVerifications {
+        period: VerificationPeriod,
+        source: Box<VerificationError>,
+    },
+    #[error(
+        "Not possible to create the manual verifications: The run information must be prepared"
+    )]
+    ManualRunInformationNotPrepared,
+    #[error("Error creating the manual verifications")]
+    Manual { source: Box<VerificationError> },
+    #[error("Check error during {function}: {msg}")]
+    CheckError { function: &'static str, msg: String },
+    #[error("Error prepare_fixed_based_optimization creating the runner")]
+    RunnerFixBased { source: Box<RunnerError> },
+    #[error("Error creating the verifications suite in {function}")]
+    Suite {
+        function: &'static str,
+        source: Box<VerificationError>,
+    },
     #[error("Runner is already running. Cannot be started")]
     IsRunning,
     #[error("Runner has already run. Cannot be started before resetting it")]
     HasAlreadyRun,
+    /*
     #[error("IO error {msg} -> caused by: {source}")]
-    Dataset { msg: String, source: DatasetError },
-    #[error("{0}")]
-    FileMissing(String),
+    IO { msg: String, source: std::io::Error },
     #[error("File structure error {msg} -> caused by: {source}")]
     FileStructure {
         msg: String,
         source: Box<FileStructureError>,
     },
-    #[error("Error for RunInformation: {0}")]
-    RunInformationError(String),
+     */
 }
 
 fn prepare_fixed_based_optimization(dir: &VerificationDirectory) -> Result<(), RunnerError> {
     let context_dir = dir.context();
-    let context =
-        context_dir
-            .election_event_context_payload()
-            .map_err(|e| RunnerError::FileStructure {
-                msg: "election_event_context_payload".to_string(),
-                source: Box::new(e),
-            })?;
+    let context = context_dir
+        .election_event_context_payload()
+        .map_err(|e| RunnerErrorImpl::EEContextPrepareFixedBased { source: e })?;
     let _ = rust_ev_system_library::rust_ev_crypto_primitives::prelude::prepare_fixed_based_optimization(
         context.encryption_group.g(),
         context.encryption_group.p(),

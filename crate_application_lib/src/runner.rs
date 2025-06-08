@@ -16,6 +16,7 @@
 
 use chrono::{DateTime, Local};
 //use futures::{stream::FuturesUnordered, StreamExt};
+use crate::RunnerErrorImpl;
 use rust_ev_verifier_lib::{
     file_structure::{VerificationDirectory, VerificationDirectoryTrait},
     startup_checks::{check_complete, check_verification_dir, start_check},
@@ -25,6 +26,7 @@ use rust_ev_verifier_lib::{
     VerifierConfig,
 };
 use tracing::{info, warn};
+
 //use std::future::Future;
 use super::{prepare_fixed_based_optimization, RunnerError};
 use rayon::prelude::*;
@@ -140,10 +142,10 @@ pub trait RunStrategy<'a> {
     /// - `verifications`: The suite of verifications, which will be modified during the run
     /// - `directory`: Verification directoy containing the datasets extracted
     /// - `action_before_verification`:
-    ///     Function that will be call before the run of each verification. As parameter take the id of the verification
+    ///   Function that will be call before the run of each verification. As parameter take the id of the verification
     /// - `action_after_verification`:
-    ///     Function that will be call before the run of each verification.
-    ///     As parameter take the information regarding the run of the verification
+    ///   Function that will be call before the run of each verification.
+    ///   As parameter take the information regarding the run of the verification
     fn run(
         &self,
         verifications: &'a mut VerificationSuite<'a>,
@@ -244,10 +246,10 @@ where
     /// - `run_strategy`: The choosen run strategy
     /// - `config`: The configuration of the verifier
     /// - `action_before_verification`:
-    ///     Function that will be call before the run of each verification. As parameter take the id of the verification
+    ///   Function that will be call before the run of each verification. As parameter take the id of the verification
     /// - `action_after_verification`:
-    ///     Function that will be call before the run of each verification.
-    ///     As parameter take the information regarding the run of the verification
+    ///   Function that will be call before the run of each verification.
+    ///   As parameter take the information regarding the run of the verification
     ///
     /// It is recommended to keep the data in the calling function and to update them in the closure as follow:
     /// ```ignored
@@ -312,17 +314,62 @@ where
         action_after_verification: impl Fn(VerificationRunInformation) + Send + Sync + 'static,
         action_after_runner: impl Fn(RunnerInformation) + Send + Sync + 'static,
     ) -> Result<Runner<'a, T>, RunnerError> {
-        start_check(config).map_err(RunnerError::CheckError)?;
-        check_verification_dir(period, path).map_err(RunnerError::CheckError)?;
+        Self::new_impl(
+            path,
+            period,
+            metadata,
+            exclusion,
+            run_strategy,
+            config,
+            action_before_runner,
+            action_before_verification,
+            action_after_verification,
+            action_after_runner,
+        )
+        .map_err(RunnerError::from)
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    fn new_impl(
+        path: &Path,
+        period: &VerificationPeriod,
+        metadata: &'a VerificationMetaDataList,
+        exclusion: &[String],
+        run_strategy: T,
+        config: &'static VerifierConfig,
+        action_before_runner: impl Fn(SystemTime) + Send + Sync + 'static,
+        action_before_verification: impl Fn(&str) + Send + Sync + 'static,
+        action_after_verification: impl Fn(VerificationRunInformation) + Send + Sync + 'static,
+        action_after_runner: impl Fn(RunnerInformation) + Send + Sync + 'static,
+    ) -> Result<Runner<'a, T>, RunnerErrorImpl> {
+        start_check(config).map_err(|msg| RunnerErrorImpl::CheckError {
+            function: "start_check",
+            msg,
+        })?;
+        check_verification_dir(period, path).map_err(|msg| RunnerErrorImpl::CheckError {
+            function: "check_verification_dir",
+            msg,
+        })?;
         let directory = VerificationDirectory::new(period, path);
-        check_complete(period, &directory).map_err(RunnerError::CheckError)?;
-        prepare_fixed_based_optimization(&directory)?;
+        check_complete(period, &directory).map_err(|msg| RunnerErrorImpl::CheckError {
+            function: "check_complete",
+            msg,
+        })?;
+        prepare_fixed_based_optimization(&directory).map_err(|e| {
+            RunnerErrorImpl::RunnerFixBased {
+                source: Box::new(e),
+            }
+        })?;
         Ok(Runner {
             path: path.to_path_buf(),
             verification_directory: Box::new(directory),
             verifications: Box::new(
-                VerificationSuite::new(period, metadata, exclusion, config)
-                    .map_err(RunnerError::Verification)?,
+                VerificationSuite::new(period, metadata, exclusion, config).map_err(|e| {
+                    RunnerErrorImpl::Suite {
+                        function: "new runner",
+                        source: Box::new(e),
+                    }
+                })?,
             ),
             start_time: None,
             duration: None,
@@ -349,7 +396,10 @@ where
                 self.verifications.exclusion(),
                 self.config,
             )
-            .map_err(RunnerError::Verification)?,
+            .map_err(|e| RunnerErrorImpl::Suite {
+                function: "reset runner",
+                source: Box::new(e),
+            })?,
         );
         Ok(())
     }
@@ -360,10 +410,10 @@ where
         metadata_list: &'a VerificationMetaDataList,
     ) -> Result<(), RunnerError> {
         if self.is_running() {
-            return Err(RunnerError::IsRunning);
+            return Err(RunnerError::from(RunnerErrorImpl::IsRunning));
         }
         if self.is_finished() {
-            return Err(RunnerError::HasAlreadyRun);
+            return Err(RunnerError::from(RunnerErrorImpl::HasAlreadyRun));
         }
         self.start_time = Some(SystemTime::now());
         info!(

@@ -14,7 +14,6 @@
 // a copy of the GNU General Public License along with this program. If not, see
 // <https://www.gnu.org/licenses/>.
 
-use super::ReportError;
 use std::iter::once;
 
 /// Enum with the title types
@@ -39,7 +38,7 @@ pub trait OutputToString {
     /// Transform the output to a multiline string.
     ///
     /// Take the verifier configuration as input for the tab size
-    fn output_to_string(&self, tab_size: u8) -> Result<String, ReportError>;
+    fn output_to_string(&self, tab_size: u8) -> String;
 }
 
 /// Structure to store an output entry
@@ -61,9 +60,9 @@ pub struct ReportOutputBlock {
 }
 
 impl OutputToString for ReportOutputBlock {
-    fn output_to_string(&self, tab_size: u8) -> Result<String, ReportError> {
+    fn output_to_string(&self, tab_size: u8) -> String {
         let max_key_length = self.max_key_length();
-        Ok(once(self.title.to_string())
+        once(self.title.to_string())
             .chain(self.entries.iter().map(|e| match e {
                 ReportOutputEntry::KeyValue((k, v)) => format!(
                     "{}{}:{} {}",
@@ -75,7 +74,7 @@ impl OutputToString for ReportOutputBlock {
                 ReportOutputEntry::OnlyValue(v) => v.clone(),
             }))
             .collect::<Vec<_>>()
-            .join("\n"))
+            .join("\n")
     }
 }
 
@@ -187,12 +186,11 @@ impl ReportOutput {
 }
 
 impl OutputToString for ReportOutput {
-    fn output_to_string(&self, tab_size: u8) -> Result<String, ReportError> {
-        Ok(self
-            .blocks
+    fn output_to_string(&self, tab_size: u8) -> String {
+        self.blocks
             .iter()
             .map(|b| b.output_to_string(tab_size))
-            .collect::<Result<Vec<_>, _>>()?
-            .join("\n\n"))
+            .collect::<Vec<_>>()
+            .join("\n\n")
     }
 }

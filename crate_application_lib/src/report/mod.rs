@@ -31,15 +31,21 @@ use std::fmt::Display;
 use thiserror::Error;
 use tracing::{debug, error, info, trace, warn, Level};
 
-// Enum representing the datza structure errors
 #[derive(Error, Debug)]
-pub enum ReportError {
-    #[error("IO error {msg} -> caused by: {source}")]
-    IO { msg: String, source: std::io::Error },
+#[error(transparent)]
+/// Error related to the report
+pub struct ReportError(#[from] ReportErrorImpl);
+
+#[derive(Error, Debug)]
+enum ReportErrorImpl {
     #[error("Error transforming to title, key, value: {0}")]
-    ToTitleKeyValue(String),
-    #[error(transparent)]
-    RunnerError(#[from] RunnerError),
+    ToTitleKeyValue(&'static str),
+    #[error("Error transforming output to string")]
+    OutpuToString { source: Box<ReportError> },
+    #[error("Error getting the output")]
+    ToOutput { source: Box<ReportError> },
+    #[error("Error getting the manual verifications from the inputs")]
+    Manual { source: Box<RunnerError> },
 }
 
 /// Trait to collect the report information
@@ -51,7 +57,12 @@ pub trait ReportInformationTrait {
     ///
     /// Take the verifier configuration as input for the tab size
     fn info_to_string(&self, tab_size: u8) -> Result<String, ReportError> {
-        self.to_report_output()?.output_to_string(tab_size)
+        Ok(self
+            .to_report_output()
+            .map_err(|e| ReportErrorImpl::OutpuToString {
+                source: Box::new(e),
+            })?
+            .output_to_string(tab_size))
     }
 }
 
@@ -145,9 +156,9 @@ impl<D: VerificationDirectoryTrait> ReportInformationTrait for ManualVerificatio
 impl ReportInformationTrait for ReportData<'_> {
     fn to_report_output(&self) -> Result<ReportOutput, ReportError> {
         if !self.run_information.is_prepared() {
-            return Err(ReportError::ToTitleKeyValue(
-                "The run information used is not prepared".to_string(),
-            ));
+            return Err(ReportError::from(ReportErrorImpl::ToTitleKeyValue(
+                "The run information used is not prepared",
+            )));
         }
         let period = self.run_information.verification_period().unwrap();
         let extracted_information = self.run_information.extracted_dataset_result().unwrap();
@@ -213,8 +224,14 @@ impl ReportInformationTrait for ReportData<'_> {
         let mut res = ReportOutput::new();
         res.push(running_information);
         res.append(
-            &mut ManualVerifications::<VerificationDirectory>::try_from(self.run_information)?
-                .to_report_output()?,
+            &mut ManualVerifications::<VerificationDirectory>::try_from(self.run_information)
+                .map_err(|e| ReportErrorImpl::Manual {
+                    source: Box::new(e),
+                })?
+                .to_report_output()
+                .map_err(|e| ReportErrorImpl::ToOutput {
+                    source: Box::new(e),
+                })?,
         );
         Ok(res)
     }
