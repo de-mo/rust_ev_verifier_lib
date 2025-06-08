@@ -43,9 +43,40 @@ use std::path::{Path, PathBuf};
 use tally_directory::TallyDirectory;
 use thiserror::Error;
 
+#[derive(Error, Debug)]
+#[error(transparent)]
+/// Error in file structure
+pub struct FileStructureError(#[from] FileStructureErrorImpl);
+
 // Enum representing the direct trust errors
 #[derive(Error, Debug)]
-pub enum FileStructureError {
+enum FileStructureErrorImpl {
+    #[error("Path is not a file {0}")]
+    PathNotFile(PathBuf),
+    #[error("Error reading data in decode data")]
+    ReadDataDecoding { source: Box<FileStructureError> },
+    #[error("IO error reading file {path}")]
+    IO {
+        path: PathBuf,
+        source: std::io::Error,
+    },
+    #[error("Error with {path}: {msg}")]
+    ReadDataStructure {
+        msg: &'static str,
+        path: PathBuf,
+        source: Box<DataStructureError>,
+    },
+    #[error("Error with {path}: Cannot parse content of xml file")]
+    ParseRoXML {
+        path: PathBuf,
+        source: RoXmlTreeError,
+    },
+    #[error("Path is not a directory {0}")]
+    PathIsNotDir(PathBuf),
+    #[cfg(test)]
+    #[error("Mock error: {0}")]
+    Mock(String),
+    /*
     #[error("IO error for {path} -> caused by: {source}")]
     IO {
         path: PathBuf,
@@ -53,8 +84,6 @@ pub enum FileStructureError {
     },
     #[error("Path is not a file {0}")]
     PathNotFile(PathBuf),
-    #[error("Error parsing xml {msg} -> caused by: {source}")]
-    ParseRoXML { msg: String, source: RoXmlTreeError },
     #[error("Mock error: {0}")]
     Mock(String),
     #[error("Error reading data structure {path} -> caudes by: {source}")]
@@ -64,6 +93,7 @@ pub enum FileStructureError {
     },
     #[error("Path is not a directory {0}")]
     PathIsNotDir(PathBuf),
+    */
 }
 
 //#[derive(Clone)]

@@ -35,7 +35,10 @@ mod setup_directory_data;
 mod tally_directory_data;
 
 use super::VerificationDirectoryTrait;
-use super::{file_group::FileGroupFileIter, ContextDirectoryTrait, FileStructureError};
+use super::{
+    file_group::FileGroupFileIter, ContextDirectoryTrait, FileStructureError,
+    FileStructureErrorImpl,
+};
 use crate::{
     data_structures::{VerifierDataDecode, VerifierDataToTypeTrait},
     verification::VerificationPeriod,
@@ -209,8 +212,8 @@ macro_rules! impl_trait_get_method_for_mocked_data {
                     None => self.dir.$data_name(),
                     Some(e) => match e.as_ref() {
                         MockedDataType::Data(d) => Ok(Arc::new(d.clone())),
-                        MockedDataType::Error(e) => Err(FileStructureError::Mock(e.to_string())),
-                        MockedDataType::Deleted => Err(FileStructureError::Mock("Something wrong. Data cannot be deleted".to_string()))
+                        MockedDataType::Error(e) => Err(FileStructureError::from(FileStructureErrorImpl::Mock(e.to_string()))),
+                        MockedDataType::Deleted => Err(FileStructureError::from(FileStructureErrorImpl::Mock("Something wrong. Data cannot be deleted".to_string())))
                     }
                 }
             }
@@ -366,7 +369,9 @@ where
         match &self.element_type {
             MockedDataType::Data(d) => Some(Ok(d.clone())),
             MockedDataType::Deleted => None,
-            MockedDataType::Error(e) => Some(Err(FileStructureError::Mock(e.to_string()))),
+            MockedDataType::Error(e) => Some(Err(FileStructureError::from(
+                FileStructureErrorImpl::Mock(e.to_string()),
+            ))),
         }
     }
 }

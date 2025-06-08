@@ -19,7 +19,7 @@
 use super::{
     file::{create_file, File},
     file_group::{FileGroup, FileGroupDataIter, FileGroupFileIter},
-    CompletnessTestTrait, FileStructureError,
+    CompletnessTestTrait, FileStructureError, FileStructureErrorImpl,
 };
 use crate::{
     config::VerifierConfig,
@@ -155,7 +155,7 @@ macro_rules! impl_completness_test_trait_for_context {
         impl CompletnessTestTrait for $t {
             fn test_completness(&self) -> Result<Vec<String>, FileStructureError> {
                 if !self.location().is_dir() {
-                    return Err(FileStructureError::PathIsNotDir(self.location().to_path_buf()))
+                    return Err(FileStructureError::from(FileStructureErrorImpl::PathIsNotDir(self.location().to_path_buf())))
                 }
                 let mut missings = vec![];
                 if !self.election_event_context_payload_file().exists() {
@@ -259,8 +259,8 @@ macro_rules! impl_completness_test_trait_for_context_vcs {
         impl CompletnessTestTrait for $t {
             fn test_completness(&self) -> Result<Vec<String>, FileStructureError> {
                 if !self.location().is_dir() {
-                    return Err(FileStructureError::PathIsNotDir(
-                        self.location().to_path_buf(),
+                    return Err(FileStructureError::from(
+                        FileStructureErrorImpl::PathIsNotDir(self.location().to_path_buf()),
                     ));
                 }
                 let mut missings = vec![];

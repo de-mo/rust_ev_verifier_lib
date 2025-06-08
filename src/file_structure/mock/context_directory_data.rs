@@ -36,6 +36,7 @@ use crate::{
         file::File,
         file_group::FileGroup,
         CompletnessTestTrait, ContextDirectory, ContextDirectoryTrait, FileStructureError,
+        FileStructureErrorImpl,
     },
 };
 use paste::paste;
@@ -251,8 +252,8 @@ mod test {
                 .as_str(),
             "TOTO"
         );
-        mock_dir.mock_election_event_context_payload_error(FileStructureError::Mock(
-            "test error".to_string(),
+        mock_dir.mock_election_event_context_payload_error(FileStructureError::from(
+            FileStructureErrorImpl::Mock("test error".to_string()),
         ));
         assert!(mock_dir.election_event_context_payload().is_err());
         mock_dir.mock_election_event_context_payload_reset();
@@ -325,7 +326,7 @@ mod test {
             MockContextDirectory::new(test_datasets_context_path().as_path().parent().unwrap());
         mock_dir.mock_control_component_public_keys_payload_error(
             2,
-            FileStructureError::Mock("Test".to_string()),
+            FileStructureError::from(FileStructureErrorImpl::Mock("Test".to_string())),
         );
         let mut it = mock_dir.control_component_public_keys_payload_iter();
         assert_eq!(

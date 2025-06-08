@@ -72,10 +72,7 @@ impl<D: VerifierDataDecode + VerifierDataToTypeTrait + Clone> Iterator for FileG
 }
 
 /// Implement iterator for the [FileGroupDataIter] as generic type
-impl<D: VerifierDataDecode + VerifierDataToTypeTrait + Clone> Iterator for FileGroupDataIter<D>
-//where
-//    Self: GenericFileGroupIterTrait<Result<D, FileStructureError>>,
-{
+impl<D: VerifierDataDecode + VerifierDataToTypeTrait + Clone> Iterator for FileGroupDataIter<D> {
     type Item = (usize, Result<Arc<D>, FileStructureError>);
 
     fn next(&mut self) -> Option<Self::Item> {

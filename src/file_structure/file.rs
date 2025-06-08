@@ -14,7 +14,7 @@
 // a copy of the GNU General Public License along with this program. If not, see
 // <https://www.gnu.org/licenses/>.
 
-use super::{FileReadMode, FileStructureError, FileType, GetFileNameTrait};
+use super::{FileReadMode, FileStructureError, FileStructureErrorImpl, FileType, GetFileNameTrait};
 use crate::data_structures::{VerifierDataDecode, VerifierDataToTypeTrait, VerifierDataType};
 use glob::glob;
 use roxmltree::Document;
@@ -93,9 +93,15 @@ impl<D: VerifierDataDecode + VerifierDataToTypeTrait> File<D> {
             return Ok(cache.clone());
         }
         if !self.exists() {
-            return Err(FileStructureError::PathNotFile(self.path()));
+            return Err(FileStructureError::from(
+                FileStructureErrorImpl::PathNotFile(self.path()),
+            ));
         }
-        let res = self.read_data().map(Arc::new)?;
+        let res = self.read_data().map(Arc::new).map_err(|e| {
+            FileStructureErrorImpl::ReadDataDecoding {
+                source: Box::new(e),
+            }
+        })?;
         if FileReadMode::from(&Self::data_type()) == FileReadMode::Cache {
             self.cache.get_or_init(|| res.clone());
         }
@@ -107,47 +113,52 @@ impl<D: VerifierDataDecode + VerifierDataToTypeTrait> File<D> {
         let mode = FileReadMode::from(&Self::data_type());
         match mode {
             FileReadMode::Memory | FileReadMode::Cache => {
-                let s =
-                    std::fs::read_to_string(self.path()).map_err(|e| FileStructureError::IO {
+                let s = std::fs::read_to_string(self.path()).map_err(|e| {
+                    FileStructureErrorImpl::IO {
                         path: self.path(),
                         source: e,
-                    })?;
+                    }
+                })?;
                 match file_type {
-                    FileType::Json => D::decode_json(s.as_str()).map_err(|e| {
-                        FileStructureError::ReadDataStructure {
+                    FileType::Json => D::decode_json(s.as_str())
+                        .map_err(|e| FileStructureErrorImpl::ReadDataStructure {
+                            msg: "Decoding json",
                             path: self.path(),
-                            source: e,
-                        }
-                    }),
-                    FileType::Xml => {
-                        let doc =
-                            Document::parse(&s).map_err(|e| FileStructureError::ParseRoXML {
-                                msg: format!(
-                                    "Cannot parse content of xml file {}",
-                                    self.path_to_str()
-                                ),
-                                source: e,
-                            })?;
-                        D::decode_xml(&doc).map_err(|e| FileStructureError::ReadDataStructure {
-                            path: self.path(),
-                            source: e,
+                            source: Box::new(e),
                         })
+                        .map_err(FileStructureError::from),
+                    FileType::Xml => {
+                        let doc = Document::parse(&s).map_err(|e| {
+                            FileStructureErrorImpl::ParseRoXML {
+                                path: self.path(),
+                                source: e,
+                            }
+                        })?;
+                        D::decode_xml(&doc)
+                            .map_err(|e| FileStructureErrorImpl::ReadDataStructure {
+                                msg: "Decoding xml",
+                                path: self.path(),
+                                source: Box::new(e),
+                            })
+                            .map_err(FileStructureError::from)
                     }
                 }
             }
             FileReadMode::Streaming => match file_type {
-                FileType::Json => D::stream_json(self.path().as_path()).map_err(|e| {
-                    FileStructureError::ReadDataStructure {
+                FileType::Json => D::stream_json(self.path().as_path())
+                    .map_err(|e| FileStructureErrorImpl::ReadDataStructure {
+                        msg: "Streaming json",
                         path: self.path(),
-                        source: e,
-                    }
-                }),
-                FileType::Xml => D::stream_xml(self.path().as_path()).map_err(|e| {
-                    FileStructureError::ReadDataStructure {
+                        source: Box::new(e),
+                    })
+                    .map_err(FileStructureError::from),
+                FileType::Xml => D::stream_xml(self.path().as_path())
+                    .map_err(|e| FileStructureErrorImpl::ReadDataStructure {
+                        msg: "Streaming xml",
                         path: self.path(),
-                        source: e,
-                    }
-                }),
+                        source: Box::new(e),
+                    })
+                    .map_err(FileStructureError::from),
             },
         }
     }

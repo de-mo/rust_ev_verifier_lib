@@ -35,7 +35,7 @@ use crate::{
             impl_completness_test_trait_for_tally, impl_completness_test_trait_for_tally_bb,
             BBDirectory, BBDirectoryTrait, TallyDirectory,
         },
-        CompletnessTestTrait, FileStructureError, TallyDirectoryTrait,
+        CompletnessTestTrait, FileStructureError, FileStructureErrorImpl, TallyDirectoryTrait,
     },
 };
 use paste::paste;
