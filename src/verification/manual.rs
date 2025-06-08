@@ -16,7 +16,7 @@
 
 use super::{
     meta_data::VerificationMetaDataList, VerficationsWithErrorAndFailuresType, VerificationError,
-    VerificationPeriod, VerificationStatus,
+    VerificationErrorImpl, VerificationPeriod, VerificationStatus,
 };
 use crate::{
     config::VerifierConfig,
@@ -135,22 +135,30 @@ impl<D: VerificationDirectoryTrait> ManualVerificationsForAllPeriod<D> {
         directory: Arc<D>,
         config: &'static VerifierConfig,
     ) -> Result<Self, VerificationError> {
-        let keystore = config.keystore().map_err(VerificationError::ConfigError)?;
+        Self::try_new_impl(directory, config).map_err(VerificationError::from)
+    }
+
+    fn try_new_impl(
+        directory: Arc<D>,
+        config: &'static VerifierConfig,
+    ) -> Result<Self, VerificationErrorImpl> {
+        let keystore = config
+            .keystore()
+            .map_err(|e| VerificationErrorImpl::KeystoreNewAll { source: e })?;
         let fingerprints = keystore
             .fingerprints()
-            .map_err(VerificationError::DirectTrust)?
+            .map_err(|e| VerificationErrorImpl::FingerprintsNewAll { source: e })?
             .iter()
             .map(|(k, v)| (k.to_string(), v.base16_encode().unwrap()))
             .collect::<HashMap<_, _>>();
         let config_dir = directory.context();
         let ee_config = config_dir.election_event_configuration().map_err(|e| {
-            VerificationError::FileStructureError {
-                msg: "Error reading election_event_configuration".to_string(),
+            VerificationErrorImpl::EEContextNewAll {
                 source: Box::new(e),
             }
         })?;
         let manual_inputs = ManuelVerificationInputFromConfiguration::try_from(ee_config.as_ref())
-            .map_err(VerificationError::DataStructure)?;
+            .map_err(|e| VerificationErrorImpl::VerifInputsNewAll { source: e })?;
         Ok(Self {
             verification_directory: directory.clone(),
             direct_trust_certificate_fingerprints: fingerprints,
@@ -373,7 +381,10 @@ impl<D: VerificationDirectoryTrait> ManualVerificationsSetup<D> {
         Ok(Self {
             manual_verifications_all_periods: ManualVerificationsForAllPeriod::try_new(
                 directory, config,
-            )?,
+            )
+            .map_err(|e| VerificationErrorImpl::NewAllInNewSetup {
+                source: Box::new(e),
+            })?,
             verifications_result: VerificationsResult::new(
                 metadata,
                 verifications_status,
@@ -438,8 +449,7 @@ impl<D: VerificationDirectoryTrait> ManualVerificationsTally<D> {
         let tally_dir = directory.unwrap_tally();
         let config_dir = directory.context();
         let ee_context = config_dir.election_event_context_payload().map_err(|e| {
-            VerificationError::FileStructureError {
-                msg: "Error reading election_event_context_payload".to_string(),
+            VerificationErrorImpl::EEContextNewTally {
                 source: Box::new(e),
             }
         })?;
@@ -455,15 +465,13 @@ impl<D: VerificationDirectoryTrait> ManualVerificationsTally<D> {
                 .bb_directories()
                 .iter()
                 .find(|dir| &dir.name() == bb_id)
-                .ok_or_else(|| {
-                    VerificationError::Generic(format!(
-                        "Ballot box Directory {bb_id} not found in tally"
-                    ))
+                .ok_or_else(|| VerificationErrorImpl::BBNotFoundNewTally {
+                    bb_id: bb_id.clone(),
                 })?;
             let nb_used_vc = bb_dir
                 .tally_component_votes_payload()
-                .map_err(|e| VerificationError::FileStructureError {
-                    msg: format!("Error reading {}/tally_component_votes_payload", bb_id),
+                .map_err(|e| VerificationErrorImpl::BBVotesNewTally {
+                    bb_id: bb_id.clone(),
                     source: Box::new(e),
                 })?
                 .votes
@@ -476,7 +484,10 @@ impl<D: VerificationDirectoryTrait> ManualVerificationsTally<D> {
         Ok(Self {
             manual_verifications_all_periods: ManualVerificationsForAllPeriod::try_new(
                 directory, config,
-            )?,
+            )
+            .map_err(|e| VerificationErrorImpl::NewAllInNewTally {
+                source: Box::new(e),
+            })?,
             number_of_productive_used_voting_cards,
             number_of_test_used_voting_cards,
             verifications_result: VerificationsResult::new(
@@ -549,7 +560,10 @@ impl<D: VerificationDirectoryTrait> ManualVerifications<D> {
         excluded_verifications: &[String],
     ) -> Result<Self, VerificationError> {
         let meta_data =
-            VerificationMetaDataList::load_period(config.get_verification_list_str(), &period)?;
+            VerificationMetaDataList::load_period(config.get_verification_list_str(), &period)
+                .map_err(|e| VerificationErrorImpl::MetadataNew {
+                    source: Box::new(e),
+                })?;
         match period {
             VerificationPeriod::Setup => Ok(ManualVerifications::Setup(
                 ManualVerificationsSetup::try_new(
@@ -559,7 +573,11 @@ impl<D: VerificationDirectoryTrait> ManualVerifications<D> {
                     verifications_status,
                     verifications_with_errors_and_failures,
                     excluded_verifications,
-                )?,
+                )
+                .map_err(|e| VerificationErrorImpl::NewManual {
+                    period: VerificationPeriod::Setup,
+                    source: Box::new(e),
+                })?,
             )),
             VerificationPeriod::Tally => Ok(ManualVerifications::Tally(
                 ManualVerificationsTally::try_new(
@@ -569,7 +587,11 @@ impl<D: VerificationDirectoryTrait> ManualVerifications<D> {
                     verifications_status,
                     verifications_with_errors_and_failures,
                     excluded_verifications,
-                )?,
+                )
+                .map_err(|e| VerificationErrorImpl::NewManual {
+                    period: VerificationPeriod::Tally,
+                    source: Box::new(e),
+                })?,
             )),
         }
     }

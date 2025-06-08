@@ -18,7 +18,7 @@
 //!
 //! The metadata list is loaded from the file in resources.
 
-use super::{VerificationCategory, VerificationError, VerificationPeriod};
+use super::{VerificationCategory, VerificationError, VerificationErrorImpl, VerificationPeriod};
 use serde::{
     de::{Deserialize as Deserialize2, Deserializer, Error},
     Deserialize,
@@ -54,15 +54,18 @@ pub struct VerificationMetaData {
 
 impl VerificationMetaDataList {
     pub fn load(data: &str) -> Result<Self, VerificationError> {
-        serde_json::from_str(data).map_err(|e| VerificationError::ParseJSON {
-            msg: "Cannot deserialize the verification list from json".to_string(),
-            source: e,
-        })
+        serde_json::from_str(data)
+            .map_err(|e| VerificationErrorImpl::LoadMetadata { source: e })
+            .map_err(VerificationError::from)
     }
 
     pub fn load_period(data: &str, period: &VerificationPeriod) -> Result<Self, VerificationError> {
         Ok(Self(
-            Self::load(data)?
+            Self::load(data)
+                .map_err(|e| VerificationErrorImpl::LoadMetadataPeriod {
+                    period: *period,
+                    source: Box::new(e),
+                })?
                 .0
                 .iter()
                 .filter(|&m| m.period() == period)

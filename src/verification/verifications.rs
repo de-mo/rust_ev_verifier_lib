@@ -23,6 +23,7 @@ use super::{
 use crate::{
     config::VerifierConfig,
     file_structure::{VerificationDirectory, VerificationDirectoryTrait},
+    verification::VerificationErrorImpl,
 };
 use std::time::{Duration, SystemTime};
 use tracing::{error, info, warn};
@@ -75,15 +76,20 @@ impl<'a> Verification<'a, VerificationDirectory> {
     ) -> Result<Self, VerificationError> {
         let meta_data = match metadata_list.meta_data_from_id(id) {
             Some(m) => m,
-            None => return Err(VerificationError::MetadataNotFound(id.to_string())),
+            None => {
+                return Err(VerificationError::from(
+                    VerificationErrorImpl::MetadataNotFound { id: id.to_string() },
+                ))
+            }
         };
         if name != meta_data.name() {
-            return Err(VerificationError::Generic(format!(
-                "name {} for verification id {} doesn't match with give name {}",
-                meta_data.name(),
-                id,
-                name
-            )));
+            return Err(VerificationError::from(
+                VerificationErrorImpl::NameMismatch {
+                    name: meta_data.name().to_string(),
+                    id: id.to_string(),
+                    input_name: name.to_string(),
+                },
+            ));
         }
         Ok(Verification {
             meta_data,

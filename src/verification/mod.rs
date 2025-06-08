@@ -113,9 +113,65 @@ impl Display for VerificationPeriod {
     }
 }
 
-// Enum representing the verification errors
 #[derive(Error, Debug)]
-pub enum VerificationError {
+#[error(transparent)]
+/// Error during the verification process
+pub struct VerificationError(#[from] VerificationErrorImpl);
+
+#[derive(Error, Debug)]
+enum VerificationErrorImpl {
+    #[error("Error loading metadata")]
+    LoadMetadata { source: serde_json::Error },
+    #[error("Error loading metadata for period {period}")]
+    LoadMetadataPeriod {
+        period: VerificationPeriod,
+        source: Box<VerificationError>,
+    },
+    #[error("Error getting the keystore creating the manual verifications for all periods")]
+    KeystoreNewAll { source: VerifierConfigError },
+    #[error("Error getting the fingerprints of the certificate creating the manual verifications for all periods")]
+    FingerprintsNewAll { source: DirectTrustError },
+    #[error("Error getting the election event context creating the manual verifications for all periods")]
+    EEContextNewAll { source: Box<FileStructureError> },
+    #[error(
+        "Error getting the election event context creating the manual verifications for tally"
+    )]
+    EEContextNewTally { source: Box<FileStructureError> },
+    #[error("Ballot box {bb_id} not found in the directories")]
+    BBNotFoundNewTally { bb_id: String },
+    #[error(
+        "Error reading {bb_id}/tally_component_votes_payload creating the manual verifications for tally"
+    )]
+    BBVotesNewTally {
+        bb_id: String,
+        source: Box<FileStructureError>,
+    },
+    #[error(
+        "Error creating the manual verifications for all period creating the manual verifications for tally"
+    )]
+    NewAllInNewTally { source: Box<VerificationError> },
+    #[error(
+        "Error creating the manual verifications for all period creating the manual verifications for setup"
+    )]
+    NewAllInNewSetup { source: Box<VerificationError> },
+    #[error("Error collecting metadata creating the manual verifications")]
+    MetadataNew { source: Box<VerificationError> },
+    #[error("Error creating manual verifications for {period} creating the manual verifications")]
+    NewManual {
+        period: VerificationPeriod,
+        source: Box<VerificationError>,
+    },
+    #[error("Error creating the inputs for the manual verifications from the election event context (creating verifications for all periods)")]
+    VerifInputsNewAll { source: DataStructureError },
+    #[error("Metadata for verification {id} not found in the list of metadata (creating the verification")]
+    MetadataNotFound { id: String },
+    #[error("name {name} for verification id {id} doesn't match with give name {input_name} (creating the verification)")]
+    NameMismatch {
+        name: String,
+        id: String,
+        input_name: String,
+    },
+    /*
     #[error("Error parsing json {msg} -> caused by: {source}")]
     ParseJSON {
         msg: String,
@@ -135,7 +191,7 @@ pub enum VerificationError {
         source: Box<FileStructureError>,
     },
     #[error("{0}")]
-    Generic(String),
+    Generic(String), */
 }
 
 impl VerificationPeriod {
