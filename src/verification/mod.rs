@@ -171,27 +171,21 @@ enum VerificationErrorImpl {
         id: String,
         input_name: String,
     },
-    /*
-    #[error("Error parsing json {msg} -> caused by: {source}")]
-    ParseJSON {
-        msg: String,
-        source: serde_json::Error,
+    #[error("Error creating verification {name}")]
+    GetVerification {
+        name: &'static str,
+        source: Box<VerificationError>,
     },
-    #[error(transparent)]
-    DirectTrust(DirectTrustError),
-    #[error(transparent)]
-    ConfigError(VerifierConfigError),
-    #[error(transparent)]
-    DataStructure(DataStructureError),
-    #[error("metadata for verification id {0} not found")]
-    MetadataNotFound(String),
-    #[error("{msg} -> caused by: {source}")]
-    FileStructureError {
-        msg: String,
-        source: Box<FileStructureError>,
+    #[error("Error creating verifications for categroy {category}")]
+    GetCategory {
+        category: &'static str,
+        source: Box<VerificationError>,
     },
-    #[error("{0}")]
-    Generic(String), */
+    #[error("Error creating verifications for period {period}")]
+    GetPeriod {
+        period: VerificationPeriod,
+        source: Box<VerificationError>,
+    },
 }
 
 impl VerificationPeriod {

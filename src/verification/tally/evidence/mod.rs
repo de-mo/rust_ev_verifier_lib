@@ -20,7 +20,7 @@ mod v1002_verify_tally_control_component;
 use super::super::{suite::VerificationList, verifications::Verification};
 use crate::{
     config::VerifierConfig,
-    verification::{meta_data::VerificationMetaDataList, VerificationError},
+    verification::{meta_data::VerificationMetaDataList, VerificationError, VerificationErrorImpl},
 };
 
 pub fn get_verifications<'a>(
@@ -34,13 +34,21 @@ pub fn get_verifications<'a>(
             v1001_verify_online_control_components::fn_verification,
             metadata_list,
             config,
-        )?,
+        )
+        .map_err(|e| VerificationErrorImpl::GetVerification {
+            name: "VerifyOnlineControlComponents",
+            source: Box::new(e),
+        })?,
         Verification::new(
             "10.02",
             "VerifyTallyControlComponent",
             v1002_verify_tally_control_component::fn_verification,
             metadata_list,
             config,
-        )?,
+        )
+        .map_err(|e| VerificationErrorImpl::GetVerification {
+            name: "VerifyTallyControlComponent",
+            source: Box::new(e),
+        })?,
     ]))
 }

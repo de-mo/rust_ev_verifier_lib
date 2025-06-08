@@ -28,7 +28,7 @@ use crate::{
         context_directory::{ContextDirectoryTrait, ContextVCSDirectoryTrait},
         VerificationDirectoryTrait,
     },
-    verification::{meta_data::VerificationMetaDataList, VerificationError},
+    verification::{meta_data::VerificationMetaDataList, VerificationError, VerificationErrorImpl},
 };
 
 pub fn get_verifications<'a>(
@@ -42,35 +42,55 @@ pub fn get_verifications<'a>(
             fn_0201_verify_signature_canton_config,
             metadata_list,
             config,
-        )?,
+        )
+        .map_err(|e| VerificationErrorImpl::GetVerification {
+            name: "VerifySignatureCantonConfig",
+            source: Box::new(e),
+        })?,
         Verification::new(
             "02.02",
             "VerifySignatureSetupComponentPublicKeys",
             fn_0202_verify_signature_setup_component_public_keys,
             metadata_list,
             config,
-        )?,
+        )
+        .map_err(|e| VerificationErrorImpl::GetVerification {
+            name: "VerifySignatureSetupComponentPublicKeys",
+            source: Box::new(e),
+        })?,
         Verification::new(
             "02.03",
             "VerifySignatureControlComponentPublicKeys",
             fn_0203_verify_signature_control_component_public_keys,
             metadata_list,
             config,
-        )?,
+        )
+        .map_err(|e| VerificationErrorImpl::GetVerification {
+            name: "VerifySignatureControlComponentPublicKeys",
+            source: Box::new(e),
+        })?,
         Verification::new(
             "02.04",
             "VerifySignatureSetupComponentTallyData",
             fn_0204_verify_signature_setup_component_tally_data,
             metadata_list,
             config,
-        )?,
+        )
+        .map_err(|e| VerificationErrorImpl::GetVerification {
+            name: "VerifySignatureSetupComponentTallyData",
+            source: Box::new(e),
+        })?,
         Verification::new(
             "02.05",
             "VerifySignatureElectionEventContext",
             fn_0205_verify_signature_election_event_context,
             metadata_list,
             config,
-        )?,
+        )
+        .map_err(|e| VerificationErrorImpl::GetVerification {
+            name: "VerifySignatureElectionEventContext",
+            source: Box::new(e),
+        })?,
     ]))
 }
 

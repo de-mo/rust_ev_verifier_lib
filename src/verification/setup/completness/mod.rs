@@ -23,7 +23,7 @@ use super::super::{
 use crate::{
     config::VerifierConfig,
     file_structure::{CompletnessTestTrait, VerificationDirectoryTrait},
-    verification::VerificationError,
+    verification::{VerificationError, VerificationErrorImpl},
 };
 
 pub fn get_verifications<'a>(
@@ -36,7 +36,11 @@ pub fn get_verifications<'a>(
         fn_0101_verify_setup_completeness,
         metadata_list,
         config,
-    )?]))
+    )
+    .map_err(|e| VerificationErrorImpl::GetVerification {
+        name: "VerifySetupCompleteness",
+        source: Box::new(e),
+    })?]))
 }
 
 fn fn_0101_verify_setup_completeness<D: VerificationDirectoryTrait>(

@@ -14,18 +14,18 @@
 // a copy of the GNU General Public License along with this program. If not, see
 // <https://www.gnu.org/licenses/>.
 
-use crate::{
-    config::VerifierConfig,
-    file_structure::{CompletnessTestTrait, VerificationDirectoryTrait},
-    verification::VerificationError,
-};
-
 use super::super::{
     meta_data::VerificationMetaDataList,
     result::{VerificationEvent, VerificationResult},
     suite::VerificationList,
     verifications::Verification,
 };
+use crate::{
+    config::VerifierConfig,
+    file_structure::{CompletnessTestTrait, VerificationDirectoryTrait},
+    verification::{VerificationError, VerificationErrorImpl},
+};
+
 pub fn get_verifications<'a>(
     metadata_list: &'a VerificationMetaDataList,
     config: &'static VerifierConfig,
@@ -36,7 +36,11 @@ pub fn get_verifications<'a>(
         fn_0601_verify_tally_completeness,
         metadata_list,
         config,
-    )?]))
+    )
+    .map_err(|e| VerificationErrorImpl::GetVerification {
+        name: "VerifyTallyCompleteness",
+        source: Box::new(e),
+    })?]))
 }
 
 fn fn_0601_verify_tally_completeness<D: VerificationDirectoryTrait>(

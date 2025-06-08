@@ -28,7 +28,7 @@ use crate::{
         setup_directory::{SetupDirectoryTrait, SetupVCSDirectoryTrait},
         VerificationDirectoryTrait,
     },
-    verification::{meta_data::VerificationMetaDataList, VerificationError},
+    verification::{meta_data::VerificationMetaDataList, VerificationError, VerificationErrorImpl},
 };
 use rust_ev_system_library::rust_ev_crypto_primitives::prelude::VerifyDomainTrait;
 
@@ -42,7 +42,10 @@ pub fn get_verifications<'a>(
         fn_0401_verify_setup_integrity,
         metadata_list,
         config,
-    )?]))
+    ).map_err(|e| VerificationErrorImpl::GetVerification {
+            name: "VerifySetupIntegrity",
+            source: Box::new(e),
+        })?]))
 }
 
 fn validate_context_vcs_dir<V: ContextVCSDirectoryTrait>(dir: &V, result: &mut VerificationResult) {

@@ -30,10 +30,12 @@ mod v0313_total_voters_consistency;
 mod v0314_verify_node_ids_consistency;
 mod v0315_chunk_consistency;
 
-use crate::{config::VerifierConfig, verification::VerificationError};
-
 use super::super::{
     meta_data::VerificationMetaDataList, suite::VerificationList, verifications::Verification,
+};
+use crate::{
+    config::VerifierConfig,
+    verification::{VerificationError, VerificationErrorImpl},
 };
 
 pub fn get_verifications<'a>(
@@ -47,104 +49,164 @@ pub fn get_verifications<'a>(
             v0301_encryption_group_consistency::fn_verification,
             metadata_list,
             config,
-        )?,
+        )
+        .map_err(|e| VerificationErrorImpl::GetVerification {
+            name: "VerifyEncryptionGroupConsistency",
+            source: Box::new(e),
+        })?,
         Verification::new(
             "03.02",
             "VerifySetupFileNamesConsistency",
             v0302_setup_file_names_consistency::fn_verification,
             metadata_list,
             config,
-        )?,
+        )
+        .map_err(|e| VerificationErrorImpl::GetVerification {
+            name: "VerifySetupFileNamesConsistency",
+            source: Box::new(e),
+        })?,
         Verification::new(
             "03.03",
             "VerifyCCRChoiceReturnCodesPublicKeyConsistency",
             v0303_ccr_choice_return_codes_pk_consistency::fn_verification,
             metadata_list,
             config,
-        )?,
+        )
+        .map_err(|e| VerificationErrorImpl::GetVerification {
+            name: "VerifyCCRChoiceReturnCodesPublicKeyConsistency",
+            source: Box::new(e),
+        })?,
         Verification::new(
             "03.04",
             "VerifyCCMElectionPublicKeyConsistency",
             v0304_ccm_election_pk_consistency::fn_verification,
             metadata_list,
             config,
-        )?,
+        )
+        .map_err(|e| VerificationErrorImpl::GetVerification {
+            name: "VerifyCCMElectionPublicKeyConsistency",
+            source: Box::new(e),
+        })?,
         Verification::new(
             "03.05",
             "VerifyCCMAndCCRSchnorrProofsConsistency",
             v0305_ccm_and_ccr_schnorr_proofs_consistency::fn_verification,
             metadata_list,
             config,
-        )?,
+        )
+        .map_err(|e| VerificationErrorImpl::GetVerification {
+            name: "VerifyCCMAndCCRSchnorrProofsConsistency",
+            source: Box::new(e),
+        })?,
         Verification::new(
             "03.06",
             "VerifyChoiceReturnCodesPublicKeyConsistency",
             v0306_choice_return_codes_public_key_consistency::fn_verification,
             metadata_list,
             config,
-        )?,
+        )
+        .map_err(|e| VerificationErrorImpl::GetVerification {
+            name: "VerifyChoiceReturnCodesPublicKeyConsistency",
+            source: Box::new(e),
+        })?,
         Verification::new(
             "03.07",
             "VerifyElectionPublicKeyConsistency",
             v0307_election_pk_consistency::fn_verification,
             metadata_list,
             config,
-        )?,
+        )
+        .map_err(|e| VerificationErrorImpl::GetVerification {
+            name: "VerifyElectionPublicKeyConsistency",
+            source: Box::new(e),
+        })?,
         Verification::new(
             "03.08",
             "VerifyPrimesMappingTableConsistency",
             v0308_primes_mapping_table_consistency::fn_verification,
             metadata_list,
             config,
-        )?,
+        )
+        .map_err(|e| VerificationErrorImpl::GetVerification {
+            name: "VerifyPrimesMappingTableConsistency",
+            source: Box::new(e),
+        })?,
         Verification::new(
             "03.09",
             "VerifyElectionEventIdConsistency",
             v0309_election_event_id_consistency::fn_verification,
             metadata_list,
             config,
-        )?,
+        )
+        .map_err(|e| VerificationErrorImpl::GetVerification {
+            name: "VerifyElectionEventIdConsistency",
+            source: Box::new(e),
+        })?,
         Verification::new(
             "03.10",
             "VerifyVerificationCardSetIdsConsistency",
             v0310_verification_card_set_ids_consistency::fn_verification,
             metadata_list,
             config,
-        )?,
+        )
+        .map_err(|e| VerificationErrorImpl::GetVerification {
+            name: "VerifyVerificationCardSetIdsConsistency",
+            source: Box::new(e),
+        })?,
         Verification::new(
             "03.11",
             "VerifyFileNameVerificationCardSetIdsConsistency",
             v0311_file_name_verification_card_set_ids_consistency::fn_verification,
             metadata_list,
             config,
-        )?,
+        )
+        .map_err(|e| VerificationErrorImpl::GetVerification {
+            name: "VerifyFileNameVerificationCardSetIdsConsistency",
+            source: Box::new(e),
+        })?,
         Verification::new(
             "03.12",
             "VerifyVerificationCardIdsConsistency",
             v0312_verification_card_ids_consistency::fn_verification,
             metadata_list,
             config,
-        )?,
+        )
+        .map_err(|e| VerificationErrorImpl::GetVerification {
+            name: "VerifyVerificationCardIdsConsistency",
+            source: Box::new(e),
+        })?,
         Verification::new(
             "03.13",
             "VerifyTotalVotersConsistency",
             v0313_total_voters_consistency::fn_verification,
             metadata_list,
             config,
-        )?,
+        )
+        .map_err(|e| VerificationErrorImpl::GetVerification {
+            name: "VerifyTotalVotersConsistency",
+            source: Box::new(e),
+        })?,
         Verification::new(
             "03.14",
             "VerifyNodeIdsConsistency",
             v0314_verify_node_ids_consistency::fn_verification,
             metadata_list,
             config,
-        )?,
+        )
+        .map_err(|e| VerificationErrorImpl::GetVerification {
+            name: "VerifyNodeIdsConsistency",
+            source: Box::new(e),
+        })?,
         Verification::new(
             "03.15",
             "VerifyChunkConsistency",
             v0315_chunk_consistency::fn_verification,
             metadata_list,
             config,
-        )?,
+        )
+        .map_err(|e| VerificationErrorImpl::GetVerification {
+            name: "VerifyChunkConsistency",
+            source: Box::new(e),
+        })?,
     ]))
 }

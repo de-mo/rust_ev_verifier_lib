@@ -25,7 +25,7 @@ use crate::{
         tally_directory::{BBDirectoryTrait, TallyDirectoryTrait},
         VerificationDirectoryTrait,
     },
-    verification::{meta_data::VerificationMetaDataList, VerificationError},
+    verification::{meta_data::VerificationMetaDataList, VerificationError, VerificationErrorImpl},
 };
 use rust_ev_system_library::rust_ev_crypto_primitives::prelude::VerifyDomainTrait;
 
@@ -39,7 +39,10 @@ pub fn get_verifications<'a>(
         fn_0901_verify_tally_integrity,
         metadata_list,
         config,
-    )?]))
+    ).map_err(|e| VerificationErrorImpl::GetVerification {
+            name: "VerifyTallyIntegrity",
+            source: Box::new(e),
+        })?]))
 }
 
 fn validate_bb_dir<B: BBDirectoryTrait>(dir: &B, result: &mut VerificationResult) {

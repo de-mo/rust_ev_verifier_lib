@@ -26,6 +26,7 @@ use crate::{
     verification::{
         meta_data::VerificationMetaDataList, result::VerificationResult,
         verification_unimplemented, verify_signature_for_object, VerificationError,
+        VerificationErrorImpl,
     },
 };
 
@@ -40,49 +41,77 @@ pub fn get_verifications<'a>(
             fn_0701_verify_signature_control_component_ballot_box,
             metadata_list,
             config,
-        )?,
+        )
+        .map_err(|e| VerificationErrorImpl::GetVerification {
+            name: "VerifySignatureControlComponentBallotBox",
+            source: Box::new(e),
+        })?,
         Verification::new(
             "07.02",
             "VerifySignatureControlComponentShuffle",
             fn_0702_verify_verify_signature_control_component_shuffle,
             metadata_list,
             config,
-        )?,
+        )
+        .map_err(|e| VerificationErrorImpl::GetVerification {
+            name: "VerifySignatureControlComponentShuffle",
+            source: Box::new(e),
+        })?,
         Verification::new(
             "07.03",
             "VerifySignatureTallyComponentShuffle",
             fn_0703_verify_signature_tally_component_shuffle,
             metadata_list,
             config,
-        )?,
+        )
+        .map_err(|e| VerificationErrorImpl::GetVerification {
+            name: "VerifySignatureTallyComponentShuffle",
+            source: Box::new(e),
+        })?,
         Verification::new(
             "07.04",
             "VerifySignatureTallyComponentVotes",
             fn_0704_verify_signature_tally_component_votes,
             metadata_list,
             config,
-        )?,
+        )
+        .map_err(|e| VerificationErrorImpl::GetVerification {
+            name: "VerifySignatureTallyComponentVotes",
+            source: Box::new(e),
+        })?,
         Verification::new(
             "07.05",
             "VerifySignatureTallyComponentDecrypt",
             verification_unimplemented,
             metadata_list,
             config,
-        )?,
+        )
+        .map_err(|e| VerificationErrorImpl::GetVerification {
+            name: "VerifySignatureTallyComponentDecrypt",
+            source: Box::new(e),
+        })?,
         Verification::new(
             "07.06",
             "VerifySignatureTallyComponentEch0222",
             verification_unimplemented,
             metadata_list,
             config,
-        )?,
+        )
+        .map_err(|e| VerificationErrorImpl::GetVerification {
+            name: "VerifySignatureTallyComponentEch0222",
+            source: Box::new(e),
+        })?,
         Verification::new(
             "07.07",
             "VerifySignatureTallyComponentEch0110",
             verification_unimplemented,
             metadata_list,
             config,
-        )?,
+        )
+        .map_err(|e| VerificationErrorImpl::GetVerification {
+            name: "VerifySignatureTallyComponentEch0110",
+            source: Box::new(e),
+        })?,
     ]))
 }
 

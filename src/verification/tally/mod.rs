@@ -22,22 +22,55 @@ mod integrity;
 
 use crate::config::VerifierConfig;
 
-use super::{meta_data::VerificationMetaDataList, suite::VerificationList, VerificationError};
+use super::{
+    meta_data::VerificationMetaDataList, suite::VerificationList, VerificationError,
+    VerificationErrorImpl,
+};
 
 pub fn get_verifications<'a>(
     metadata_list: &'a VerificationMetaDataList,
     config: &'static VerifierConfig,
 ) -> Result<VerificationList<'a>, VerificationError> {
     let mut res = VerificationList(vec![]);
-    res.0
-        .append(&mut authenticity::get_verifications(metadata_list, config)?.0);
-    res.0
-        .append(&mut completness::get_verifications(metadata_list, config)?.0);
-    res.0
-        .append(&mut consistency::get_verifications(metadata_list, config)?.0);
-    res.0
-        .append(&mut evidence::get_verifications(metadata_list, config)?.0);
-    res.0
-        .append(&mut integrity::get_verifications(metadata_list, config)?.0);
+    res.0.append(
+        &mut authenticity::get_verifications(metadata_list, config)
+            .map_err(|e| VerificationErrorImpl::GetCategory {
+                category: "Authenticity",
+                source: Box::new(e),
+            })?
+            .0,
+    );
+    res.0.append(
+        &mut completness::get_verifications(metadata_list, config)
+            .map_err(|e| VerificationErrorImpl::GetCategory {
+                category: "Completness",
+                source: Box::new(e),
+            })?
+            .0,
+    );
+    res.0.append(
+        &mut consistency::get_verifications(metadata_list, config)
+            .map_err(|e| VerificationErrorImpl::GetCategory {
+                category: "Consistency",
+                source: Box::new(e),
+            })?
+            .0,
+    );
+    res.0.append(
+        &mut evidence::get_verifications(metadata_list, config)
+            .map_err(|e| VerificationErrorImpl::GetCategory {
+                category: "Evidence",
+                source: Box::new(e),
+            })?
+            .0,
+    );
+    res.0.append(
+        &mut integrity::get_verifications(metadata_list, config)
+            .map_err(|e| VerificationErrorImpl::GetCategory {
+                category: "Integrity",
+                source: Box::new(e),
+            })?
+            .0,
+    );
     Ok(res)
 }

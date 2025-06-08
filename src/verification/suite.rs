@@ -19,7 +19,7 @@
 use super::{
     meta_data::VerificationMetaDataList, setup::get_verifications as get_verifications_setup,
     tally::get_verifications as get_verifications_tally, verifications::Verification,
-    VerificationCategory, VerificationError, VerificationPeriod,
+    VerificationCategory, VerificationError, VerificationErrorImpl, VerificationPeriod,
 };
 use crate::{config::VerifierConfig, file_structure::VerificationDirectory};
 
@@ -44,11 +44,20 @@ impl<'a> VerificationSuite<'a> {
         exclusion: &[String],
         config: &'static VerifierConfig,
     ) -> Result<VerificationSuite<'a>, VerificationError> {
-        let all_verifs = match period {
-            VerificationPeriod::Setup => get_verifications_setup(metadata_list, config)?,
+        let all_verifs =
+            match period {
+                VerificationPeriod::Setup => get_verifications_setup(metadata_list, config)
+                    .map_err(|e| VerificationErrorImpl::GetPeriod {
+                        period: VerificationPeriod::Setup,
+                        source: Box::new(e),
+                    })?,
 
-            VerificationPeriod::Tally => get_verifications_tally(metadata_list, config)?,
-        };
+                VerificationPeriod::Tally => get_verifications_tally(metadata_list, config)
+                    .map_err(|e| VerificationErrorImpl::GetPeriod {
+                        period: VerificationPeriod::Tally,
+                        source: Box::new(e),
+                    })?,
+            };
         let all_ids: Vec<String> = all_verifs.0.iter().map(|v| v.id().to_string()).collect();
         let verifs = all_verifs
             .0

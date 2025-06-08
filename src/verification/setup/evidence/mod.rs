@@ -23,7 +23,7 @@ mod v0521_verify_signature_verification_data_and_code_proofs;
 use super::super::{suite::VerificationList, verifications::Verification};
 use crate::{
     config::VerifierConfig,
-    verification::{meta_data::VerificationMetaDataList, VerificationError},
+    verification::{meta_data::VerificationMetaDataList, VerificationError, VerificationErrorImpl},
 };
 
 pub fn get_verifications<'a>(
@@ -37,34 +37,54 @@ pub fn get_verifications<'a>(
             v0501_encryption_parameters::fn_0501_verify_encryption_parameters,
             metadata_list,
             config,
-        )?,
+        )
+        .map_err(|e| VerificationErrorImpl::GetVerification {
+            name: "VerifyEncryptionParameters",
+            source: Box::new(e),
+        })?,
         Verification::new(
             "05.02",
             "VerifySmallPrimeGroupMembers",
             v0502_verify_small_prime_group_members::fn_0502_verify_small_prime_group_members,
             metadata_list,
             config,
-        )?,
+        )
+        .map_err(|e| VerificationErrorImpl::GetVerification {
+            name: "VerifySmallPrimeGroupMembers",
+            source: Box::new(e),
+        })?,
         Verification::new(
             "05.03",
             "VerifyVotingOptions",
             v0503_voting_options::fn_verification,
             metadata_list,
             config,
-        )?,
+        )
+        .map_err(|e| VerificationErrorImpl::GetVerification {
+            name: "VerifyVotingOptions",
+            source: Box::new(e),
+        })?,
         Verification::new(
             "05.04",
             "VerifySchnorrProofs",
             v0504_key_generation_schnorr_proofs::fn_verification,
             metadata_list,
             config,
-        )?,
+        )
+        .map_err(|e| VerificationErrorImpl::GetVerification {
+            name: "VerifySchnorrProofs",
+            source: Box::new(e),
+        })?,
         Verification::new(
             "05.21",
             "VerifySignatureVerificationDataAndCodeProofs",
             v0521_verify_signature_verification_data_and_code_proofs::fn_verification,
             metadata_list,
             config,
-        )?,
+        )
+        .map_err(|e| VerificationErrorImpl::GetVerification {
+            name: "VerifySignatureVerificationDataAndCodeProofs",
+            source: Box::new(e),
+        })?,
     ]))
 }
