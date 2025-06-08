@@ -17,7 +17,7 @@
 use super::super::{
     common_types::{EncryptionParametersDef, Signature},
     deserialize_string_string_to_datetime, implement_trait_verifier_data_json_decode,
-    DataStructureError, VerifierDataDecode,
+    DataStructureError, VerifierDataDecode,DataStructureErrorImpl
 };
 use crate::{
     config::VerifierConfig,

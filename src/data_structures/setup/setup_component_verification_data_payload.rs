@@ -18,7 +18,7 @@ use super::{
     super::{
         common_types::{CiphertextDef, EncryptionParametersDef, Signature},
         deserialize_seq_string_base64_to_seq_integer, implement_trait_verifier_data_json_decode,
-        DataStructureError, VerifierDataDecode,
+        DataStructureError, VerifierDataDecode,DataStructureErrorImpl
     },
     VerifierSetupDataType,
 };

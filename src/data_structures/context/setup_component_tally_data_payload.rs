@@ -17,7 +17,7 @@
 use super::super::{
     common_types::{EncryptionParametersDef, Signature},
     deserialize_seq_seq_string_base64_to_seq_seq_integer,
-    implement_trait_verifier_data_json_decode, DataStructureError, VerifierDataDecode,
+    implement_trait_verifier_data_json_decode, DataStructureError, VerifierDataDecode,DataStructureErrorImpl
 };
 use crate::{
     data_structures::{VerifierDataToTypeTrait, VerifierDataType},

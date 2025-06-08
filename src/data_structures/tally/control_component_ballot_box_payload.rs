@@ -17,7 +17,7 @@
 use super::{
     super::{
         common_types::{CiphertextDef, EncryptionParametersDef, Signature},
-        implement_trait_verifier_data_json_decode, DataStructureError, VerifierDataDecode,
+        implement_trait_verifier_data_json_decode, DataStructureError, VerifierDataDecode,DataStructureErrorImpl
     },
     VerifierTallyDataType,
 };

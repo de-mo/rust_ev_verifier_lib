@@ -14,7 +14,7 @@
 // a copy of the GNU General Public License along with this program. If not, see
 // <https://www.gnu.org/licenses/>.
 
-use crate::data_structures::DataStructureError;
+use crate::data_structures::{DataStructureError, DataStructureErrorImpl};
 use quick_xml::Reader;
 use std::{
     fmt::Debug,
@@ -70,14 +70,15 @@ where
     }
 
     pub fn reader(&self) -> Result<Reader<BufReader<File>>, DataStructureError> {
-        let mut reader =
-            Reader::from_file(&self.file_path).map_err(|e| DataStructureError::ParseQuickXML {
+        let mut reader = Reader::from_file(&self.file_path).map_err(|e| {
+            DataStructureErrorImpl::ParseQuickXML {
                 msg: format!(
                     "Error creating xml reader for file {}",
                     self.file_path.to_str().unwrap()
                 ),
                 source: e,
-            })?;
+            }
+        })?;
         reader.stream().consume(self.position_in_buffer);
         Ok(reader)
     }

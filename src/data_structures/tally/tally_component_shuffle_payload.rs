@@ -18,7 +18,7 @@ use super::{
     super::{
         common_types::{EncryptionParametersDef, Signature},
         deserialize_seq_string_base64_to_seq_integer, implement_trait_verifier_data_json_decode,
-        DataStructureError, VerifierDataDecode,
+        DataStructureError, DataStructureErrorImpl, VerifierDataDecode,
     },
     verifiable_shuffle::{verifiy_domain_for_verifiable_shuffle, VerifiableShuffle},
     VerifierTallyDataType,

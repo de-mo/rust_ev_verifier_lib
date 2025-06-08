@@ -22,7 +22,7 @@ use super::{
     VerifierTallyDataType,
 };
 use crate::{
-    data_structures::{VerifierDataToTypeTrait, VerifierDataType},
+    data_structures::{DataStructureErrorImpl, VerifierDataToTypeTrait, VerifierDataType},
     direct_trust::{CertificateAuthority, VerifiySignatureTrait},
 };
 use rust_ev_system_library::rust_ev_crypto_primitives::prelude::{
@@ -54,7 +54,7 @@ impl<'a> VerifiySignatureTrait<'a> for EVotingDecrypt {
         let hashable = XMLFileHashable::new(&self.path, &SchemaKind::Decrypt, "signature");
         let hash = hashable
             .recursive_hash()
-            .map_err(DataStructureError::from)?;
+            .map_err(|e| DataStructureErrorImpl::HashXML { source: e })?;
         Ok(HashableMessage::Hashed(hash))
     }
 

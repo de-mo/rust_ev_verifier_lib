@@ -25,7 +25,7 @@ use crate::{
     data_structures::{
         common_types::Signature,
         xml::{impl_iterator_for_tag_many_iter, TagManyIter, TagManyWithIterator},
-        VerifierDataToTypeTrait, VerifierDataType,
+        DataStructureErrorImpl, VerifierDataToTypeTrait, VerifierDataType,
     },
     direct_trust::{CertificateAuthority, VerifiySignatureTrait},
 };
@@ -154,10 +154,11 @@ impl VerifyDomainTrait<String> for ElectionEventConfiguration {}
 
 impl VerifierDataDecode for ElectionEventConfiguration {
     fn stream_xml(p: &Path) -> Result<Self, DataStructureError> {
-        let mut reader = Reader::from_file(p).map_err(|e| DataStructureError::ParseQuickXML {
-            msg: format!("Error creating xml reader for file {}", p.to_str().unwrap()),
-            source: e,
-        })?;
+        let mut reader =
+            Reader::from_file(p).map_err(|e| DataStructureErrorImpl::ParseQuickXML {
+                msg: format!("Error creating xml reader for file {}", p.to_str().unwrap()),
+                source: e,
+            })?;
         let reader_config_mut = reader.config_mut();
         reader_config_mut.trim_text(true);
 
@@ -173,10 +174,12 @@ impl VerifierDataDecode for ElectionEventConfiguration {
         loop {
             match reader.read_event_into(&mut buf) {
                 Err(e) => {
-                    return Err(DataStructureError::ParseQuickXML {
-                        msg: format!("Error at position {}", reader.buffer_position()),
-                        source: e,
-                    })
+                    return Err(DataStructureError::from(
+                        DataStructureErrorImpl::ParseQuickXML {
+                            msg: format!("Error at position {}", reader.buffer_position()),
+                            source: e,
+                        },
+                    ))
                 }
                 Ok(Event::Eof) => break,
                 Ok(Event::Start(e)) => {
@@ -190,7 +193,7 @@ impl VerifierDataDecode for ElectionEventConfiguration {
                         contest = Some(Contest::new(p, reader.buffer_position() as usize));
                         let mut buffer = vec![];
                         xml_read_to_end_into_buffer(&mut reader, CONTEST_TAG, &mut buffer)
-                            .map_err(|e| DataStructureError::ParseQuickXML {
+                            .map_err(|e| DataStructureErrorImpl::ParseQuickXML {
                                 msg: "Error reading contest bytes".to_string(),
                                 source: e,
                             })?;
@@ -204,7 +207,7 @@ impl VerifierDataDecode for ElectionEventConfiguration {
                         ));
                         let mut buffer = vec![];
                         xml_read_to_end_into_buffer(&mut reader, AUTHORIZATIONS_TAG, &mut buffer)
-                            .map_err(|e| DataStructureError::ParseQuickXML {
+                            .map_err(|e| DataStructureErrorImpl::ParseQuickXML {
                             msg: "Error reading authorizations bytes".to_string(),
                             source: e,
                         })?;
@@ -218,7 +221,7 @@ impl VerifierDataDecode for ElectionEventConfiguration {
                         ));
                         let mut buffer = vec![];
                         xml_read_to_end_into_buffer(&mut reader, REGISTER_TAG, &mut buffer)
-                            .map_err(|e| DataStructureError::ParseQuickXML {
+                            .map_err(|e| DataStructureErrorImpl::ParseQuickXML {
                                 msg: "Error reading regitrer bytes".to_string(),
                                 source: e,
                             })?;
@@ -244,16 +247,16 @@ impl VerifierDataDecode for ElectionEventConfiguration {
         }
         Ok(Self {
             path: p.to_path_buf(),
-            header: config_header.ok_or(DataStructureError::DataError(
+            header: config_header.ok_or(DataStructureErrorImpl::XMLDataError(
                 "Header not found".to_string(),
             ))?,
-            contest: contest.ok_or(DataStructureError::DataError(
+            contest: contest.ok_or(DataStructureErrorImpl::XMLDataError(
                 "Context not found".to_string(),
             ))?,
-            authorizations: authorizations.ok_or(DataStructureError::DataError(
+            authorizations: authorizations.ok_or(DataStructureErrorImpl::XMLDataError(
                 "Authorizations not found".to_string(),
             ))?,
-            register: register.ok_or(DataStructureError::DataError(
+            register: register.ok_or(DataStructureErrorImpl::XMLDataError(
                 "Register not found".to_string(),
             ))?,
             signature: signature.unwrap(),
@@ -267,17 +270,17 @@ impl ConfigHeader {
     ) -> Result<Self, DataStructureError> {
         let mut header_bytes = vec![];
         xml_read_to_end_into_buffer(reader, HEADER_TAG, &mut header_bytes).map_err(|e| {
-            DataStructureError::ParseQuickXML {
+            DataStructureErrorImpl::ParseQuickXML {
                 msg: "Error reading header bytes".to_string(),
                 source: e,
             }
         })?;
-        xml_de_from_str(&String::from_utf8_lossy(&header_bytes)).map_err(|e| {
-            DataStructureError::ParseQuickXMLDE {
+        xml_de_from_str(&String::from_utf8_lossy(&header_bytes))
+            .map_err(|e| DataStructureErrorImpl::ParseQuickXMLDE {
                 msg: "Error deserializing header".to_string(),
                 source: e,
-            }
-        })
+            })
+            .map_err(DataStructureError::from)
     }
 }
 
@@ -302,14 +305,15 @@ impl Contest {
     }
 
     fn reader(&self) -> Result<Reader<BufReader<File>>, DataStructureError> {
-        let mut reader =
-            Reader::from_file(&self.file_path).map_err(|e| DataStructureError::ParseQuickXML {
+        let mut reader = Reader::from_file(&self.file_path).map_err(|e| {
+            DataStructureErrorImpl::ParseQuickXML {
                 msg: format!(
                     "Error creating xml reader for file {}",
                     self.file_path.to_str().unwrap()
                 ),
                 source: e,
-            })?;
+            }
+        })?;
         reader.stream().consume(self.position_in_buffer);
         Ok(reader)
     }
@@ -320,16 +324,17 @@ impl Contest {
         loop {
             match reader.read_event_into(&mut buf) {
                 Err(e) => {
-                    return Err(DataStructureError::ParseQuickXML {
-                        msg: format!("Error reading the tag {}", tag_name),
-                        source: e,
-                    })
+                    return Err(DataStructureError::from(
+                        DataStructureErrorImpl::ParseQuickXML {
+                            msg: format!("Error reading the tag {}", tag_name),
+                            source: e,
+                        },
+                    ))
                 }
                 Ok(Event::Eof) => {
-                    return Err(DataStructureError::DataError(format!(
-                        "Tag {} not found",
-                        tag_name
-                    )))
+                    return Err(DataStructureError::from(
+                        DataStructureErrorImpl::XMLDataError(format!("Tag {} not found", tag_name)),
+                    ))
                 }
                 Ok(Event::Start(e)) => {
                     if e == BytesStart::new(tag_name) {
@@ -345,17 +350,23 @@ impl Contest {
                                             .to_string()
                                     })
                                     .map_err(|e| {
-                                        DataStructureError::DataError(format!(
+                                        DataStructureErrorImpl::XMLDataError(format!(
                                             "Error reading the content of the tag {}: {}",
                                             &tag_name, e
                                         ))
-                                    });
+                                    })
+                                    .map_err(DataStructureError::from);
                             }
                             Err(e) => {
-                                return Err(DataStructureError::ParseQuickXML {
-                                    msg: format!("Error finding the end of the tag {}", &tag_name),
-                                    source: e,
-                                })
+                                return Err(DataStructureError::from(
+                                    DataStructureErrorImpl::ParseQuickXML {
+                                        msg: format!(
+                                            "Error finding the end of the tag {}",
+                                            &tag_name
+                                        ),
+                                        source: e,
+                                    },
+                                ))
                             }
                         };
                     }
@@ -375,12 +386,14 @@ impl Contest {
 
     pub fn contest_date(&self) -> Result<NaiveDate, DataStructureError> {
         let date_str = self.read_tag(CONTEST_DATE_TAG)?;
-        NaiveDate::parse_from_str(&date_str, "%Y-%m-%d").map_err(|e| {
-            DataStructureError::DataError(format!(
-                "Contest date {} cannot be converted: {}",
-                &date_str, e
-            ))
-        })
+        NaiveDate::parse_from_str(&date_str, "%Y-%m-%d")
+            .map_err(|e| {
+                DataStructureErrorImpl::XMLDataError(format!(
+                    "Contest date {} cannot be converted: {}",
+                    &date_str, e
+                ))
+            })
+            .map_err(DataStructureError::from)
     }
 
     pub fn number_of_elections(&self) -> Result<usize, DataStructureError> {
@@ -477,7 +490,7 @@ impl VerifiySignatureTrait<'_> for ElectionEventConfiguration {
         let hashable = XMLFileHashable::new(&self.path, &SchemaKind::Config, "signature");
         let hash = hashable
             .recursive_hash()
-            .map_err(DataStructureError::from)?;
+            .map_err(|e| DataStructureErrorImpl::HashXML { source: e })?;
         Ok(HashableMessage::Hashed(hash))
     }
 

@@ -42,7 +42,7 @@ use crate::config::VerifierConfig;
 use chrono::NaiveDateTime;
 use common_types::CiphertextDef;
 use quick_xml::{DeError as QuickXmDeError, Error as QuickXmlError};
-use roxmltree::{Document, Error as RoXmlTreeError};
+use roxmltree::Document;
 use rust_ev_system_library::rust_ev_crypto_primitives::prelude::{elgamal::Ciphertext, Integer};
 use rust_ev_system_library::rust_ev_crypto_primitives::prelude::{ByteArray, DecodeTrait, Hexa};
 use serde::{
@@ -53,28 +53,33 @@ use std::path::Path;
 use thiserror::Error;
 use xml::XMLError;
 
-// Enum representing the datza structure errors
 #[derive(Error, Debug)]
-pub enum DataStructureError {
-    #[error("IO error {msg} -> caused by: {source}")]
-    IO { msg: String, source: std::io::Error },
+#[error(transparent)]
+pub struct DataStructureError(#[from] DataStructureErrorImpl);
+
+#[derive(Error, Debug)]
+enum DataStructureErrorImpl {
     #[error("Not implemented: {0}")]
-    NotImplemented(String),
-    #[error("Error parsing xml {msg} -> caused by: {source}")]
-    ParseRoXML { msg: String, source: RoXmlTreeError },
-    #[error("Error parsing xml {msg} -> caused by: {source}")]
-    ParseQuickXML { msg: String, source: QuickXmlError },
-    #[error("Error parsing xml {msg} -> caused by: {source}")]
-    ParseQuickXMLDE { msg: String, source: QuickXmDeError },
-    #[error("Error parsing json {msg} -> caused by: {source}")]
+    NotImplemented(&'static str),
+    #[error("Error parsing json {msg}")]
     ParseJSON {
         msg: String,
         source: serde_json::Error,
     },
+    #[error("Error parsing xml {msg} -> caused by: {source}")]
+    ParseQuickXML { msg: String, source: QuickXmlError },
+    #[error("Error parsing xml {msg} -> caused by: {source}")]
+    ParseQuickXMLDE { msg: String, source: QuickXmDeError },
     #[error("Data error {0}")]
-    DataError(String),
-    #[error("XMLError")]
-    XMLError(#[from] XMLError),
+    XMLDataError(String),
+    #[error("XMLError hashing")]
+    HashXML { source: XMLError },
+    /*
+    #[error("IO error {msg} -> caused by: {source}")]
+    IO { msg: String, source: std::io::Error },
+    #[error("Error parsing xml {msg} -> caused by: {source}")]
+    ParseRoXML { msg: String, source: RoXmlTreeError },
+     */
 }
 
 /// The type VerifierDataType implement an option between
@@ -95,8 +100,8 @@ pub trait VerifierDataDecode: Sized {
     /// The decoded data or [DataStructureError] if something wrong, e.g. if it is not allowed, or if an error
     /// occured during the decoding
     fn decode_json(_: &str) -> Result<Self, DataStructureError> {
-        Err(DataStructureError::NotImplemented(
-            "decode_json".to_string(),
+        Err(DataStructureError::from(
+            DataStructureErrorImpl::NotImplemented("decode_json"),
         ))
     }
 
@@ -106,7 +111,9 @@ pub trait VerifierDataDecode: Sized {
     /// The decoded data or [DataStructureError] if something wrong, e.g. if it is not allowed, or if an error
     /// occured during the decoding
     fn decode_xml<'a>(_: &'a Document<'a>) -> Result<Self, DataStructureError> {
-        Err(DataStructureError::NotImplemented("decode_xml".to_string()))
+        Err(DataStructureError::from(
+            DataStructureErrorImpl::NotImplemented("decode_xml"),
+        ))
     }
 
     /// Prepare the streamin of data from a json file
@@ -115,8 +122,8 @@ pub trait VerifierDataDecode: Sized {
     /// The decoded data or [DataStructureError] if something wrong, e.g. if it is not allowed, or if an error
     /// occured during the decoding
     fn stream_json(_: &Path) -> Result<Self, DataStructureError> {
-        Err(DataStructureError::NotImplemented(
-            "stream_json".to_string(),
+        Err(DataStructureError::from(
+            DataStructureErrorImpl::NotImplemented("stream_json"),
         ))
     }
 
@@ -126,7 +133,9 @@ pub trait VerifierDataDecode: Sized {
     /// The decoded data or [DataStructureError] if something wrong, e.g. if it is not allowed, or if an error
     /// occured during the decoding
     fn stream_xml(_: &Path) -> Result<Self, DataStructureError> {
-        Err(DataStructureError::NotImplemented("stream_xml".to_string()))
+        Err(DataStructureError::from(
+            DataStructureErrorImpl::NotImplemented("stream_xml"),
+        ))
     }
 }
 
@@ -135,10 +144,12 @@ macro_rules! implement_trait_verifier_data_json_decode {
     ($s: ty) => {
         impl VerifierDataDecode for $s {
             fn decode_json(s: &str) -> Result<Self, DataStructureError> {
-                serde_json::from_str(s).map_err(|e| DataStructureError::ParseJSON {
-                    msg: format!("Cannot deserialize json"),
-                    source: e,
-                })
+                serde_json::from_str(s)
+                    .map_err(|e| DataStructureErrorImpl::ParseJSON {
+                        msg: format!("Cannot deserialize json"),
+                        source: e,
+                    })
+                    .map_err(DataStructureError::from)
             }
         }
     };
