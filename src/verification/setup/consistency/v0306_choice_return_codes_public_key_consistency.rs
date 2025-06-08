@@ -32,7 +32,7 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
         Ok(p) => p,
         Err(e) => {
             result.push(
-                VerificationEvent::new_error(&e)
+                VerificationEvent::new_error_from_error(&e)
                     .add_context("election_event_context_payload cannot be read"),
             );
             return;
@@ -43,7 +43,7 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
         Ok(o) => o,
         Err(e) => {
             result.push(
-                VerificationEvent::new_error(&e)
+                VerificationEvent::new_error_from_error(&e)
                     .add_context("Cannot extract setup_component_public_keys_payload"),
             );
             return;

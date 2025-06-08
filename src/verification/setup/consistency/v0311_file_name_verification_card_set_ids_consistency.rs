@@ -51,7 +51,7 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
         Ok(payload) => payload,
         Err(e) => {
             result.push(
-                VerificationEvent::new_error(&e)
+                VerificationEvent::new_error_from_error(&e)
                     .add_context("Cannot read payload for election_event_context_payload"),
             );
             return;

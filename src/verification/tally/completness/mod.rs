@@ -51,12 +51,12 @@ fn fn_0601_verify_tally_completeness<D: VerificationDirectoryTrait>(
     let context_dir = dir.context();
     match context_dir.test_completness() {
         Ok(v) => result.append_failures_from_string_slice(&v),
-        Err(e) => result.push(VerificationEvent::new_error(&e)),
+        Err(e) => result.push(VerificationEvent::new_error_from_error(&e)),
     }
     let tally_dir = dir.unwrap_tally();
     match tally_dir.test_completness() {
         Ok(v) => result.append_failures_from_string_slice(&v),
-        Err(e) => result.push(VerificationEvent::new_error(&e)),
+        Err(e) => result.push(VerificationEvent::new_error_from_error(&e)),
     }
 }
 

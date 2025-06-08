@@ -46,7 +46,7 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
         Ok(p) => p,
         Err(e) => {
             result.push(
-                VerificationEvent::new_error(&e)
+                VerificationEvent::new_error_from_error(&e)
                     .add_context("election_event_context_payload cannot be read"),
             );
             return;
@@ -57,7 +57,7 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
         Ok(p) => p,
         Err(e) => {
             result.push(
-                VerificationEvent::new_error(&e)
+                VerificationEvent::new_error_from_error(&e)
                     .add_context("setup_component_public_keys_payload cannot be read"),
             );
             return;
@@ -123,7 +123,7 @@ fn verify_for_ballotbox<B: BBDirectoryTrait>(
         Some((_, p)) => match p {
             Ok(p) => p,
             Err(e) => {
-                return VerificationResult::from(&VerificationEvent::new_error(&e).add_context(
+                return VerificationResult::from(&VerificationEvent::new_error_from_error(&e).add_context(
                     format!(
                         "{}/control_component_shuffle_payload_4 cannot be read",
                         bb_id
@@ -142,7 +142,7 @@ fn verify_for_ballotbox<B: BBDirectoryTrait>(
     let tally_shuffle_payload = match tally_dir.tally_component_shuffle_payload() {
         Ok(p) => p,
         Err(e) => {
-            return VerificationResult::from(&VerificationEvent::new_error(&e).add_context(
+            return VerificationResult::from(&VerificationEvent::new_error_from_error(&e).add_context(
                 format!("{}/tally_component_shuffle_payload cannot be read", bb_id),
             ));
         }
@@ -151,7 +151,7 @@ fn verify_for_ballotbox<B: BBDirectoryTrait>(
     let tally_votes_payload = match tally_dir.tally_component_votes_payload() {
         Ok(p) => p,
         Err(e) => {
-            return VerificationResult::from(&VerificationEvent::new_error(&e).add_context(
+            return VerificationResult::from(&VerificationEvent::new_error_from_error(&e).add_context(
                 format!("{}/tally_component_votes_payload cannot be read", bb_id),
             ));
         }
@@ -160,7 +160,7 @@ fn verify_for_ballotbox<B: BBDirectoryTrait>(
         match ShuffleArgument::try_from(&tally_shuffle_payload.verifiable_shuffle.shuffle_argument)
         {
             Ok(a) => a,
-            Err(e) => return VerificationResult::from(&VerificationEvent::new_error(&e).add_context(
+            Err(e) => return VerificationResult::from(&VerificationEvent::new_error_from_error(&e).add_context(
                 format!("Error converting shuffle argument for {}/tally_component_shuffle_payload cannot be read", bb_id),
             )),
         };

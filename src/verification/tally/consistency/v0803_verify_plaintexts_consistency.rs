@@ -36,7 +36,7 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
         Ok(o) => o,
         Err(e) => {
             result.push(
-                VerificationEvent::new_error(&e)
+                VerificationEvent::new_error_from_error(&e)
                     .add_context("Cannot extract election_event_context_payload"),
             );
             return;
@@ -74,7 +74,7 @@ fn verify_pro_ballot_box<B: BBDirectoryTrait>(bb_dir: &B, delta: usize) -> Verif
     let tally_shuffle_payload = match bb_dir.tally_component_shuffle_payload() {
         Ok(tally_shuffle_payload) => tally_shuffle_payload,
         Err(e) => {
-            return VerificationResult::from(&VerificationEvent::new_error(&e).add_context(
+            return VerificationResult::from(&VerificationEvent::new_error_from_error(&e).add_context(
                 format!(
                     "{}/tally_component_shuffle_payload has wrong format",
                     bb_dir.name(),

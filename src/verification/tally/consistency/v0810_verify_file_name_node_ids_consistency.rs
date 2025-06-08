@@ -34,7 +34,7 @@ fn verify_nod_ir_for_tally_bb_dir<B: BBDirectoryTrait>(dir: &B, result: &mut Ver
                     )
                 }
             }
-            Err(e) => result.push(VerificationEvent::new_error(&e).add_context(format!(
+            Err(e) => result.push(VerificationEvent::new_error_from_error(&e).add_context(format!(
                 "{}/control_component_ballot_box_payload.{} has wrong format",
                 dir.name(),
                 i
@@ -52,7 +52,7 @@ fn verify_nod_ir_for_tally_bb_dir<B: BBDirectoryTrait>(dir: &B, result: &mut Ver
                     )
                 }
             }
-            Err(e) => result.push(VerificationEvent::new_error(&e).add_context(format!(
+            Err(e) => result.push(VerificationEvent::new_error_from_error(&e).add_context(format!(
                 "{}/control_component_shuffle_payload.{} has wrong format",
                 dir.name(),
                 i

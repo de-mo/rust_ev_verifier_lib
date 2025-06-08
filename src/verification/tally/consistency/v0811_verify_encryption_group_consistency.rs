@@ -53,7 +53,7 @@ fn verify_encryption_group_for_tally_bb_dir<B: BBDirectoryTrait>(
                 &verify_encryption_group(&s.encryption_group, eg),
                 format!("{}/control_component_ballot_box_payload.{}", dir.name(), i),
             ),
-            Err(e) => result.push(VerificationEvent::new_error(&e).add_context(format!(
+            Err(e) => result.push(VerificationEvent::new_error_from_error(&e).add_context(format!(
                 "{}/control_component_ballot_box_payload.{} has wrong format",
                 dir.name(),
                 i
@@ -67,7 +67,7 @@ fn verify_encryption_group_for_tally_bb_dir<B: BBDirectoryTrait>(
                 &verify_encryption_group(&s.encryption_group, eg),
                 format!("{}/control_component_shuffle_payload.{}", dir.name(), i),
             ),
-            Err(e) => result.push(VerificationEvent::new_error(&e).add_context(format!(
+            Err(e) => result.push(VerificationEvent::new_error_from_error(&e).add_context(format!(
                 "{}/control_component_shuffle_payload.{} has wrong format",
                 dir.name(),
                 i
@@ -80,7 +80,7 @@ fn verify_encryption_group_for_tally_bb_dir<B: BBDirectoryTrait>(
             &verify_encryption_group(&s.encryption_group, eg),
             format!("{}/tally_component_shuffle_payload", dir.name()),
         ),
-        Err(e) => result.push(VerificationEvent::new_error(&e).add_context(format!(
+        Err(e) => result.push(VerificationEvent::new_error_from_error(&e).add_context(format!(
             "{}/tally_component_shuffle_payload has wrong format",
             dir.name()
         ))),
@@ -91,7 +91,7 @@ fn verify_encryption_group_for_tally_bb_dir<B: BBDirectoryTrait>(
             &verify_encryption_group(&s.encryption_group, eg),
             format!("{}/tally_component_votes_payload", dir.name()),
         ),
-        Err(e) => result.push(VerificationEvent::new_error(&e).add_context(format!(
+        Err(e) => result.push(VerificationEvent::new_error_from_error(&e).add_context(format!(
             "{}/tally_component_votes_payload has wrong format",
             dir.name()
         ))),
@@ -109,7 +109,7 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
         Ok(p) => p,
         Err(e) => {
             result.push(
-                VerificationEvent::new_error(&e)
+                VerificationEvent::new_error_from_error(&e)
                     .add_context("election_event_context_payload cannot be read"),
             );
             return;

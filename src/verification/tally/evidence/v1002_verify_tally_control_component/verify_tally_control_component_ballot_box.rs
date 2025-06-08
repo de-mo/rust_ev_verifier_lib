@@ -82,7 +82,7 @@ pub fn verify_tally_control_component_ballot_box<'a>(
             }
         }
         Err(e) => res.push_with_context(
-            VerificationEvent::new_error(&e),
+            VerificationEvent::new_error_from_error(&e),
             format!("Error with VerifyShuffle for bb {}", context.bb_id),
         ),
     };
@@ -114,7 +114,7 @@ pub fn verify_tally_control_component_ballot_box<'a>(
                         );
                     }
                 }
-                Err(e) => res.push(VerificationEvent::new_error(&e).add_context(format!(
+                Err(e) => res.push(VerificationEvent::new_error_from_error(&e).add_context(format!(
                     "Error with VerifyDecrpyption at position {} for bb {}",
                     i, context.bb_id
                 ))),

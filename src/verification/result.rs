@@ -65,9 +65,9 @@ impl VerificationEvent {
         }
     }
 
-    pub fn new_from_error<T: std::error::Error + Display>(
+    pub fn new_from_error<E: std::error::Error + Display>(
         kind: VerificationEventKind,
-        error: &T,
+        error: &E,
     ) -> Self {
         let chain = ErrorChain::new(error);
         let mut values = chain.map(|e| e.to_string()).collect::<Vec<_>>();
@@ -76,6 +76,10 @@ impl VerificationEvent {
             kind,
             results: values,
         }
+    }
+
+    pub fn new_error_from_error<E: std::error::Error + Display>(error: &E) -> Self {
+        Self::new_from_error(VerificationEventKind::Error, error)
     }
 
     pub fn new_error<T: Display + ?Sized>(value: &T) -> Self {

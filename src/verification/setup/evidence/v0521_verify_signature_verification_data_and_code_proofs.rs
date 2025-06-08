@@ -87,7 +87,7 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
         Ok(p) => p,
         Err(e) => {
             result.push(
-                VerificationEvent::new_error(&e)
+                VerificationEvent::new_error_from_error(&e)
                     .add_context("election_event_context_payload cannot be read"),
             );
             return;
@@ -116,7 +116,7 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
             );
             if let Err(e) = setup_verification_data_payload_result {
                 result.push(
-                    VerificationEvent::new_error(&e)
+                    VerificationEvent::new_error_from_error(&e)
                         .add_context(format!("{} cannot be read", setup_verif_data_chunk_name)),
                 );
                 break;
@@ -224,7 +224,7 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
                     }
                 }
                 Err(e) => result.push(
-                    VerificationEvent::new_error(&e)
+                    VerificationEvent::new_error_from_error(&e)
                         .add_context(format!("{} cannot be read", cc_share_chunk_name)),
                 ),
             }

@@ -34,7 +34,7 @@ fn validate_cc_ccm_pk<S: ContextDirectoryTrait>(
         Ok(d) => d,
         Err(e) => {
             result.push(
-                VerificationEvent::new_error(&e)
+                VerificationEvent::new_error_from_error(&e)
                     .add_context(format!("Cannot read data from file {}", f.path_to_str())),
             );
             return;
@@ -63,7 +63,7 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
         Ok(o) => o,
         Err(e) => {
             result.push(
-                VerificationEvent::new_error(&e)
+                VerificationEvent::new_error_from_error(&e)
                     .add_context("Cannot extract setup_component_public_keys_payload"),
             );
             return;

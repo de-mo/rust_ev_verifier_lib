@@ -41,7 +41,7 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
         Ok(o) => o,
         Err(e) => {
             result.push(
-                VerificationEvent::new_error(&e)
+                VerificationEvent::new_error_from_error(&e)
                     .add_context("Cannot extract election_event_context_payload"),
             );
             return;
@@ -85,7 +85,7 @@ fn verify_pro_ballot_box<B: BBDirectoryTrait>(bb_dir: &B, delta: usize) -> Verif
                     i
                 ),
             ),
-            Err(e) => res.push(VerificationEvent::new_error(&e).add_context(format!(
+            Err(e) => res.push(VerificationEvent::new_error_from_error(&e).add_context(format!(
                 "{}/control_component_ballot_box_payload_.{} has wrong format",
                 bb_dir.name(),
                 i
@@ -103,7 +103,7 @@ fn verify_pro_ballot_box<B: BBDirectoryTrait>(bb_dir: &B, delta: usize) -> Verif
                     i
                 ),
             ),
-            Err(e) => res.push(VerificationEvent::new_error(&e).add_context(format!(
+            Err(e) => res.push(VerificationEvent::new_error_from_error(&e).add_context(format!(
                 "{}/control_component_ballot_box_payload_.{} has wrong format",
                 bb_dir.name(),
                 i
@@ -116,7 +116,7 @@ fn verify_pro_ballot_box<B: BBDirectoryTrait>(bb_dir: &B, delta: usize) -> Verif
             &verify_tally_shuffle_payload(&tally_shuffle_payload, delta),
             format!("{}/tally_component_shuffle_payload", bb_dir.name(),),
         ),
-        Err(e) => res.push(VerificationEvent::new_error(&e).add_context(format!(
+        Err(e) => res.push(VerificationEvent::new_error_from_error(&e).add_context(format!(
             "{}/tally_component_shuffle_payload has wrong format",
             bb_dir.name(),
         ))),

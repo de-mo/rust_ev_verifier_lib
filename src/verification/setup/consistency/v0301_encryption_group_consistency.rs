@@ -52,7 +52,7 @@ fn verify_encryption_group_for_context_vcs_dir<V: ContextVCSDirectoryTrait>(
             &verify_encryption_group(&p.encryption_group, eg),
             format!("{}/setup_component_tally_data_payload", dir.name()),
         ),
-        Err(e) => result.push(VerificationEvent::new_error(&e).add_context(format!(
+        Err(e) => result.push(VerificationEvent::new_error_from_error(&e).add_context(format!(
             "{}/setup_component_tally_data_payload has wrong format",
             dir.name()
         ))),
@@ -74,7 +74,7 @@ fn verify_encryption_group_for_setup_vcs_dir<V: SetupVCSDirectoryTrait>(
                     dir.name()
                 ),
             ),
-            Err(e) => result.push(VerificationEvent::new_error(&e).add_context(format!(
+            Err(e) => result.push(VerificationEvent::new_error_from_error(&e).add_context(format!(
                 "{}/setup_component_verification_data_payload.{} has wrong format",
                 dir.name(),
                 i
@@ -97,7 +97,7 @@ fn verify_encryption_group_for_setup_vcs_dir<V: SetupVCSDirectoryTrait>(
                     )
                 }
             }
-            Err(e) => result.push(VerificationEvent::new_error(&e).add_context(format!(
+            Err(e) => result.push(VerificationEvent::new_error_from_error(&e).add_context(format!(
                 "{}/control_component_code_shares_payload_.{} has wrong format",
                 dir.name(),
                 i
@@ -117,7 +117,7 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
         Ok(p) => p,
         Err(e) => {
             result.push(
-                VerificationEvent::new_error(&e)
+                VerificationEvent::new_error_from_error(&e)
                     .add_context("election_event_context_payload cannot be read"),
             );
             return;
@@ -130,7 +130,7 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
                 &verify_encryption_group(&cc.encryption_group, eg),
                 format!("control_component_public_keys_payload.{}", i),
             ),
-            Err(e) => result.push(VerificationEvent::new_error(&e).add_context(format!(
+            Err(e) => result.push(VerificationEvent::new_error_from_error(&e).add_context(format!(
                 "control_component_public_keys_payload.{} has wrong format",
                 i
             ))),
@@ -142,7 +142,7 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
             "setup_component_public_keys_payload",
         ),
         Err(e) => result.push(
-            VerificationEvent::new_error(&e)
+            VerificationEvent::new_error_from_error(&e)
                 .add_context("election_event_context_payload has wrong format"),
         ),
     }

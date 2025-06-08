@@ -222,7 +222,9 @@ where
     let ks = match config.keystore() {
         Ok(ks) => ks,
         Err(e) => {
-            result.push(VerificationEvent::new_error(&e).add_context("Cannot read keystore"));
+            result.push(
+                VerificationEvent::new_error_from_error(&e).add_context("Cannot read keystore"),
+            );
             return result;
         }
     };

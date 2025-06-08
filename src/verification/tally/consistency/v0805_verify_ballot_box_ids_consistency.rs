@@ -52,7 +52,7 @@ fn verify_for_bb_directory<B: BBDirectoryTrait>(bb_dir: &B) -> VerificationResul
                 )));
                 }
             }
-            Err(e) => result.push(VerificationEvent::new_error(&e).add_context(format!(
+            Err(e) => result.push(VerificationEvent::new_error_from_error(&e).add_context(format!(
                 "{}/control_component_ballot_box_payload_{} cannot be read",
                 bb_id, i
             ))),
@@ -69,7 +69,7 @@ fn verify_for_bb_directory<B: BBDirectoryTrait>(bb_dir: &B) -> VerificationResul
                 )));
                 }
             }
-            Err(e) => result.push(VerificationEvent::new_error(&e).add_context(format!(
+            Err(e) => result.push(VerificationEvent::new_error_from_error(&e).add_context(format!(
                 "{}/control_component_shuffle_payload_{} cannot be read",
                 bb_id, i
             ))),
@@ -85,7 +85,7 @@ fn verify_for_bb_directory<B: BBDirectoryTrait>(bb_dir: &B) -> VerificationResul
             )));
             }
         }
-        Err(e) => result.push(VerificationEvent::new_error(&e).add_context(format!(
+        Err(e) => result.push(VerificationEvent::new_error_from_error(&e).add_context(format!(
             "{}/tally_component_shuffle_payload cannot be read",
             bb_id
         ))),

@@ -32,7 +32,7 @@ pub(super) fn fn_0501_verify_encryption_parameters<D: VerificationDirectoryTrait
         Ok(eg) => eg,
         Err(e) => {
             result.push(
-                VerificationEvent::new_error(&e)
+                VerificationEvent::new_error_from_error(&e)
                     .add_context("election_event_context_payload cannot be read"),
             );
             return;
@@ -41,7 +41,7 @@ pub(super) fn fn_0501_verify_encryption_parameters<D: VerificationDirectoryTrait
     let eg_test = match EncryptionParameters::get_encryption_parameters(&eg.seed) {
         Ok(eg) => eg,
         Err(e) => {
-            result.push(VerificationEvent::new_error(&e).add_context(format!(
+            result.push(VerificationEvent::new_error_from_error(&e).add_context(format!(
                 "Error calculating encrpytion parameters from seed {}",
                 eg.seed
             )));

@@ -45,7 +45,7 @@ fn test_ee_id_for_context_vcs_dir<V: ContextVCSDirectoryTrait>(
             &test_election_event_id(&p.election_event_id, expected),
             format!("{}/setup_component_tally_data_payload", dir.name()),
         ),
-        Err(e) => result.push(VerificationEvent::new_error(&e).add_context(format!(
+        Err(e) => result.push(VerificationEvent::new_error_from_error(&e).add_context(format!(
             "{}/setup_component_tally_data_payload has wrong format",
             dir.name()
         ))),
@@ -59,7 +59,7 @@ fn test_ee_id_for_setup_vcs_dir<V: SetupVCSDirectoryTrait>(
 ) {
     for (i, f) in dir.control_component_code_shares_payload_iter() {
         match f {
-            Err(e) => result.push(VerificationEvent::new_error(&e).add_context(format!(
+            Err(e) => result.push(VerificationEvent::new_error_from_error(&e).add_context(format!(
                 "{}/control_component_code_shares_payload_.{} has wrong format",
                 dir.name(),
                 i
@@ -81,7 +81,7 @@ fn test_ee_id_for_setup_vcs_dir<V: SetupVCSDirectoryTrait>(
     }
     for (i, f) in dir.setup_component_verification_data_payload_iter() {
         match f {
-            Err(e) => result.push(VerificationEvent::new_error(&e).add_context(format!(
+            Err(e) => result.push(VerificationEvent::new_error_from_error(&e).add_context(format!(
                 "{}/setup_component_verification_data_payload.{} has wrong format",
                 dir.name(),
                 i
@@ -109,7 +109,7 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
         Ok(p) => p,
         Err(e) => {
             result.push(
-                VerificationEvent::new_error(&e)
+                VerificationEvent::new_error_from_error(&e)
                     .add_context("election_event_context_payload cannot be read"),
             );
             return;
@@ -122,13 +122,13 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
             "setup_component_public_keys_payload",
         ),
         Err(e) => result.push(
-            VerificationEvent::new_error(&e)
+            VerificationEvent::new_error_from_error(&e)
                 .add_context("election_event_context_payload has wrong format"),
         ),
     }
     for (i, f) in context_dir.control_component_public_keys_payload_iter() {
         match f {
-            Err(e) => result.push(VerificationEvent::new_error(&e).add_context(format!(
+            Err(e) => result.push(VerificationEvent::new_error_from_error(&e).add_context(format!(
                 "control_component_public_keys_payload.{} has wrong format",
                 i
             ))),

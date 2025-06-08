@@ -104,7 +104,7 @@ fn fn_0201_verify_signature_canton_config<D: VerificationDirectoryTrait>(
         Ok(p) => p,
         Err(e) => {
             result.push(
-                VerificationEvent::new_error(&e)
+                VerificationEvent::new_error_from_error(&e)
                     .add_context(format!("{} cannot be read", "election_event_configuration")),
             );
             return;
@@ -125,10 +125,12 @@ fn fn_0202_verify_signature_setup_component_public_keys<D: VerificationDirectory
     let payload = match context_dir.setup_component_public_keys_payload() {
         Ok(p) => p,
         Err(e) => {
-            result.push(VerificationEvent::new_error(&e).add_context(format!(
-                "{} cannot be read",
-                "setup_component_public_keys_payload"
-            )));
+            result.push(
+                VerificationEvent::new_error_from_error(&e).add_context(format!(
+                    "{} cannot be read",
+                    "setup_component_public_keys_payload"
+                )),
+            );
             return;
         }
     };
@@ -151,10 +153,9 @@ fn fn_0203_verify_signature_control_component_public_keys<D: VerificationDirecto
                 &verify_signature_for_object(cc.as_ref(), config),
                 format!("control_component_public_keys_payload_{}", i),
             ),
-            Err(e) => result.push(VerificationEvent::new_error(&e).add_context(format!(
-                "control_component_public_keys_payload_{} cannot be read",
-                i
-            ))),
+            Err(e) => result.push(VerificationEvent::new_error_from_error(&e).add_context(
+                format!("control_component_public_keys_payload_{} cannot be read", i),
+            )),
         }
     }
 }
@@ -172,10 +173,9 @@ fn fn_0204_verify_signature_setup_component_tally_data<D: VerificationDirectoryT
                 &verify_signature_for_object(p.as_ref(), config),
                 format!("{}/setup_component_tally_data_payload.json", d.name(),),
             ),
-            Err(e) => result.push(VerificationEvent::new_error(&e).add_context(format!(
-                "{}/setup_component_tally_data_payload.json",
-                d.name(),
-            ))),
+            Err(e) => result.push(VerificationEvent::new_error_from_error(&e).add_context(
+                format!("{}/setup_component_tally_data_payload.json", d.name(),),
+            )),
         }
     }
 }
@@ -189,10 +189,12 @@ fn fn_0205_verify_signature_election_event_context<D: VerificationDirectoryTrait
     let rp = match context_dir.election_event_context_payload() {
         Ok(p) => p,
         Err(e) => {
-            result.push(VerificationEvent::new_error(&e).add_context(format!(
-                "{} cannot be read",
-                "election_event_context_payload"
-            )));
+            result.push(
+                VerificationEvent::new_error_from_error(&e).add_context(format!(
+                    "{} cannot be read",
+                    "election_event_context_payload"
+                )),
+            );
             return;
         }
     };

@@ -37,7 +37,7 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
         Ok(p) => p,
         Err(e) => {
             result.push(
-                VerificationEvent::new_error(&e)
+                VerificationEvent::new_error_from_error(&e)
                     .add_context("election_event_context_payload cannot be read"),
             );
             return;
@@ -51,7 +51,7 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
             Ok(p) => p,
             Err(e) => {
                 result.push(
-                    VerificationEvent::new_error(&e)
+                    VerificationEvent::new_error_from_error(&e)
                         .add_context("setup_component_tally_data_payload cannot be read"),
                 );
                 break;
@@ -88,7 +88,7 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
         };
         for (i, cc_bb_paylod) in bb_dir.control_component_ballot_box_payload_iter() {
             if let Err(e) = cc_bb_paylod {
-                result.push(VerificationEvent::new_error(&e).add_context(format!(
+                result.push(VerificationEvent::new_error_from_error(&e).add_context(format!(
                     "{}/control_component_ballot_box_payload_{} cannot be read",
                     bb_id, i
                 )));

@@ -36,7 +36,7 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
         Ok(o) => o,
         Err(e) => {
             result.push(
-                VerificationEvent::new_error(&e)
+                VerificationEvent::new_error_from_error(&e)
                     .add_context("Cannot extract election_event_context_payload"),
             );
             return;
@@ -47,7 +47,7 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
         Ok(o) => o,
         Err(e) => {
             result.push(
-                VerificationEvent::new_error(&e)
+                VerificationEvent::new_error_from_error(&e)
                     .add_context("Cannot extract election_event_configuration"),
             );
             return;

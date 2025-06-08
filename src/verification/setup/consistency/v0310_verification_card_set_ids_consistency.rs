@@ -29,7 +29,7 @@ fn verrify_card_set_ids_setup_vcs<V: SetupVCSDirectoryTrait>(vcs_dir: &V) -> Ver
     let vcs_id = vcs_dir.name();
     for (chunk, payload_res) in vcs_dir.setup_component_verification_data_payload_iter() {
         if let Err(e) = payload_res {
-            res.push(VerificationEvent::new_error(&e).add_context(format!(
+            res.push(VerificationEvent::new_error_from_error(&e).add_context(format!(
                 "Cannot read payload for setup_component_verification_data.{}",
                 chunk
             )));
@@ -50,7 +50,7 @@ fn verrify_card_set_ids_setup_vcs<V: SetupVCSDirectoryTrait>(vcs_dir: &V) -> Ver
 
     for (chunk, payload_res) in vcs_dir.control_component_code_shares_payload_iter() {
         if let Err(e) = payload_res {
-            res.push(VerificationEvent::new_error(&e).add_context(format!(
+            res.push(VerificationEvent::new_error_from_error(&e).add_context(format!(
                 "Cannot read payload for setup_component_verification_data.{}",
                 chunk
             )));
@@ -93,7 +93,7 @@ fn verrify_card_set_ids_context_vcs<V: ContextVCSDirectoryTrait>(
             }
         }
         Err(e) => res.push(
-            VerificationEvent::new_error(&e)
+            VerificationEvent::new_error_from_error(&e)
                 .add_context("Cannot read payload for setup_component_tally_data_payload"),
         ),
     }

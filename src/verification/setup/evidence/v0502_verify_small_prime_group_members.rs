@@ -30,7 +30,7 @@ pub(super) fn fn_0502_verify_small_prime_group_members<D: VerificationDirectoryT
         Ok(eg) => eg,
         Err(e) => {
             result.push(
-                VerificationEvent::new_error(&e)
+                VerificationEvent::new_error_from_error(&e)
                     .add_context("election_event_context_payload cannot be read"),
             );
             return;
@@ -42,7 +42,7 @@ pub(super) fn fn_0502_verify_small_prime_group_members<D: VerificationDirectoryT
         Ok(p) => p,
         Err(e) => {
             result.push(
-                VerificationEvent::new_error(&e)
+                VerificationEvent::new_error_from_error(&e)
                     .add_context("Error getting small prime group members"),
             );
             return;

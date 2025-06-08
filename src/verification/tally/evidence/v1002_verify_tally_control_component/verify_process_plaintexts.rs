@@ -49,7 +49,7 @@ pub fn verify_process_plaintexts(
         ProcessPlaintextsOutput::process_plaintexts(&EPPTableAsContext::from(context), input.ms);
     if let Err(e) = process_output_res {
         return VerificationResult::from(
-            &VerificationEvent::new_error(&e).add_context("Error VerifyProcessPlaintexts"),
+            &VerificationEvent::new_error_from_error(&e).add_context("Error VerifyProcessPlaintexts"),
         );
     }
     let process_output = process_output_res.unwrap();

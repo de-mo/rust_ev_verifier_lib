@@ -51,7 +51,7 @@ fn verify_pro_ballot_box<B: BBDirectoryTrait>(bb_dir: &B) -> VerificationResult 
         Some((i, res)) => match res {
             Ok(r) => r,
             Err(e) => {
-                return VerificationResult::from(&VerificationEvent::new_error(&e).add_context(
+                return VerificationResult::from(&VerificationEvent::new_error_from_error(&e).add_context(
                     format!(
                         "{}/control_component_ballot_box_payload_.{} has wrong format",
                         bb_dir.name(),
@@ -76,7 +76,7 @@ fn verify_pro_ballot_box<B: BBDirectoryTrait>(bb_dir: &B) -> VerificationResult 
                     first_node.node_id, n.node_id
                 ),
             ),
-            Err(e) => res.push(VerificationEvent::new_error(&e).add_context(format!(
+            Err(e) => res.push(VerificationEvent::new_error_from_error(&e).add_context(format!(
                 "{}/control_component_ballot_box_payload_.{} has wrong format",
                 bb_dir.name(),
                 i

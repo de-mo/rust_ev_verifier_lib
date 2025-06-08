@@ -46,7 +46,7 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
         Ok(p) => p,
         Err(e) => {
             result.push(
-                VerificationEvent::new_error(&e)
+                VerificationEvent::new_error_from_error(&e)
                     .add_context("election_event_context_payload cannot be read"),
             );
             return;
@@ -57,7 +57,7 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
         Ok(p) => p,
         Err(e) => {
             result.push(
-                VerificationEvent::new_error(&e)
+                VerificationEvent::new_error_from_error(&e)
                     .add_context("setup_component_public_keys_payload cannot be read"),
             );
             return;
@@ -149,7 +149,7 @@ fn verify_for_ballotbox<B: BBDirectoryTrait, S: ContextVCSDirectoryTrait>(
         Some((_, p)) => match p {
             Ok(p) => p,
             Err(e) => {
-                return VerificationResult::from(&VerificationEvent::new_error(&e).add_context(
+                return VerificationResult::from(&VerificationEvent::new_error_from_error(&e).add_context(
                     format!(
                         "{}/control_component_ballot_box_payload_iter_1 cannot be read",
                         bb_id
@@ -210,7 +210,7 @@ fn verify_for_ballotbox<B: BBDirectoryTrait, S: ContextVCSDirectoryTrait>(
         .control_component_shuffle_payload_iter()
         .map(|(j, payload)| match payload {
             Ok(p) => Ok((p.node_id, p)),
-            Err(e) => Err(VerificationEvent::new_error(&e).add_context(format!(
+            Err(e) => Err(VerificationEvent::new_error_from_error(&e).add_context(format!(
                 "control_component_shuffle_payload_{} cannot be read",
                 j
             ))),
@@ -235,7 +235,7 @@ fn verify_for_ballotbox<B: BBDirectoryTrait, S: ContextVCSDirectoryTrait>(
         Ok(v) => v,
         Err(e) => {
             return VerificationResult::from(
-                &VerificationEvent::new_error(&e).add_context("Error creating Shuffle Argument"),
+                &VerificationEvent::new_error_from_error(&e).add_context("Error creating Shuffle Argument"),
             )
         }
     };
@@ -252,7 +252,7 @@ fn verify_for_ballotbox<B: BBDirectoryTrait, S: ContextVCSDirectoryTrait>(
         Ok(p) => p,
         Err(e) => {
             return VerificationResult::from(
-                &VerificationEvent::new_error(&e)
+                &VerificationEvent::new_error_from_error(&e)
                     .add_context("setup_component_tally_data_payload cannot be read"),
             )
         }

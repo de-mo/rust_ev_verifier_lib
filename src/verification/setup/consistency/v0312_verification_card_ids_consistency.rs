@@ -46,7 +46,7 @@ fn verrify_card_ids_context_vcs<V: ContextVCSDirectoryTrait>(
         Ok(p) => p,
         Err(e) => {
             res.push(
-                VerificationEvent::new_error(&e)
+                VerificationEvent::new_error_from_error(&e)
                     .add_context("Cannot read payload for setup_component_tally_data_payload"),
             );
             return (vec![], res);
@@ -76,7 +76,7 @@ fn verrify_card_ids_setup_vcs<V: SetupVCSDirectoryTrait>(
     hm_vc_ids.insert(4, vec![]);
     for (i, p) in vcs_dir.control_component_code_shares_payload_iter() {
         match p {
-            Err(e) => res.push(VerificationEvent::new_error(&e).add_context(format!(
+            Err(e) => res.push(VerificationEvent::new_error_from_error(&e).add_context(format!(
                 "Cannot read payload for control_component_code_shares_payload.{}",
                 i
             ))),
@@ -97,7 +97,7 @@ fn verrify_card_ids_setup_vcs<V: SetupVCSDirectoryTrait>(
     let mut vc_ids = vec![];
     for (i, p) in vcs_dir.setup_component_verification_data_payload_iter() {
         match p {
-            Err(e) => res.push(VerificationEvent::new_error(&e).add_context(format!(
+            Err(e) => res.push(VerificationEvent::new_error_from_error(&e).add_context(format!(
                 "Cannot read payload for setup_component_verification_data_payload.{}",
                 i
             ))),

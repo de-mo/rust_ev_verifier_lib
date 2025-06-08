@@ -35,7 +35,7 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
         Ok(p) => p,
         Err(e) => {
             result.push(
-                VerificationEvent::new_error(&e)
+                VerificationEvent::new_error_from_error(&e)
                     .add_context("election_event_context_payload cannot be read"),
             );
             return;
@@ -73,7 +73,7 @@ fn verify_for_bb_directory<B: BBDirectoryTrait>(bb_dir: &B, ee_id: &str) -> Veri
                 &test_election_event_id(&p.election_event_id, ee_id),
                 format!("{}/control_component_ballot_box_payload_{}", bb_name, i),
             ),
-            Err(e) => result.push(VerificationEvent::new_error(&e).add_context(format!(
+            Err(e) => result.push(VerificationEvent::new_error_from_error(&e).add_context(format!(
                 "{}/control_component_ballot_box_payload_{} cannot be read",
                 bb_name, i
             ))),
@@ -86,7 +86,7 @@ fn verify_for_bb_directory<B: BBDirectoryTrait>(bb_dir: &B, ee_id: &str) -> Veri
                 &test_election_event_id(&p.election_event_id, ee_id),
                 format!("{}/control_component_shuffle_payload_{}", bb_name, i),
             ),
-            Err(e) => result.push(VerificationEvent::new_error(&e).add_context(format!(
+            Err(e) => result.push(VerificationEvent::new_error_from_error(&e).add_context(format!(
                 "{}/control_component_shuffle_payload_{} cannot be read",
                 bb_name, i
             ))),
@@ -98,7 +98,7 @@ fn verify_for_bb_directory<B: BBDirectoryTrait>(bb_dir: &B, ee_id: &str) -> Veri
             &test_election_event_id(&p.election_event_id, ee_id),
             format!("{}/tally_component_votes_payload", bb_name),
         ),
-        Err(e) => result.push(VerificationEvent::new_error(&e).add_context(format!(
+        Err(e) => result.push(VerificationEvent::new_error_from_error(&e).add_context(format!(
             "{}/tally_component_shuffle_payload cannot be read",
             bb_name
         ))),
@@ -109,7 +109,7 @@ fn verify_for_bb_directory<B: BBDirectoryTrait>(bb_dir: &B, ee_id: &str) -> Veri
             &test_election_event_id(&p.election_event_id, ee_id),
             format!("{}/tally_component_shuffle_payload", bb_name),
         ),
-        Err(e) => result.push(VerificationEvent::new_error(&e).add_context(format!(
+        Err(e) => result.push(VerificationEvent::new_error_from_error(&e).add_context(format!(
             "{}/tally_component_shuffle_payload cannot be read",
             bb_name
         ))),

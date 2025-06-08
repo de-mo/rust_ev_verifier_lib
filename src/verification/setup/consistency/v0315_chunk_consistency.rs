@@ -71,7 +71,7 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
                         )))
                     }
                 }
-                Err(e) => result.push(VerificationEvent::new_error(&e).add_context(format!(
+                Err(e) => result.push(VerificationEvent::new_error_from_error(&e).add_context(format!(
                     "Error getting setup_component_verification_data_payload for chunk {} in {}",
                     i,
                     vcs.name()
@@ -91,7 +91,7 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
                         }
                     }
                 }
-                Err(e) => result.push(VerificationEvent::new_error(&e).add_context(format!(
+                Err(e) => result.push(VerificationEvent::new_error_from_error(&e).add_context(format!(
                     "Error getting control_component_code_shares_payload for chunk {} in {}",
                     i,
                     vcs.name()
