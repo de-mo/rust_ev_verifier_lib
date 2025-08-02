@@ -141,7 +141,7 @@ impl Display for VerificationEvent {
                     .results
                     .iter()
                     .enumerate()
-                    .map(|(i, s)| format!("{}: {}", i, s))
+                    .map(|(i, s)| format!("{i}: {s}"))
                     .collect(),
             );
         }

@@ -34,14 +34,14 @@ pub fn start_check(config: &'static VerifierConfig) -> Result<(), String> {
     }
     config
         .keystore()
-        .map_err(|e| format!("Cannot read keystore: {}", e))?;
+        .map_err(|e| format!("Cannot read keystore: {e}"))?;
     Ok(())
 }
 
 /// Check that the verification directory correct ist
 pub fn check_verification_dir(period: &VerificationPeriod, path: &Path) -> Result<(), String> {
     if !path.is_dir() {
-        return Err(format!("Given directory {:?} does not exist", path));
+        return Err(format!("Given directory {path:?} does not exist"));
     };
     if !path.join(VerifierConfig::context_dir_name()).is_dir() {
         return Err(format!(
@@ -56,8 +56,7 @@ pub fn check_verification_dir(period: &VerificationPeriod, path: &Path) -> Resul
     };
     if !path.join(dir_name).is_dir() {
         return Err(format!(
-            "Directory {} does not exist in directory {:?}",
-            dir_name, path
+            "Directory {dir_name} does not exist in directory {path:?}"
         ));
     };
     Ok(())

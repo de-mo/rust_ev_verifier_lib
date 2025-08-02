@@ -52,7 +52,7 @@ impl<'a> Display for Report<'a> {
                 &mut error_str
                     .iter()
                     .enumerate()
-                    .map(|(i, s)| format!("{}: {}", i, s))
+                    .map(|(i, s)| format!("{i}: {s}"))
                     .collect(),
             );
         }

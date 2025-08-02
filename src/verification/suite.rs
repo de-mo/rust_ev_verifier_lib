@@ -161,7 +161,7 @@ mod test {
         );
         if r_verifs.is_err() {
             let err = r_verifs.as_ref().err().unwrap();
-            println!("{:?}", err)
+            println!("{err:?}")
         }
         assert!(r_verifs.is_ok());
         let verifs = r_verifs.unwrap();
@@ -188,7 +188,7 @@ mod test {
         );
         if r_verifs.is_err() {
             let err = r_verifs.as_ref().err().unwrap();
-            println!("{:?}", err)
+            println!("{err:?}")
         }
         assert!(r_verifs.is_ok());
         let verifs = r_verifs.unwrap();
