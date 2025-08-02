@@ -31,7 +31,6 @@
 //! ```
 
 mod context_directory_data;
-mod setup_directory_data;
 mod tally_directory_data;
 
 use super::VerificationDirectoryTrait;
@@ -44,28 +43,18 @@ use crate::{
     verification::VerificationPeriod,
 };
 pub(crate) use context_directory_data::MockContextDirectory;
-pub(crate) use setup_directory_data::MockSetupDirectory;
 use std::{collections::HashMap, path::Path, sync::Arc};
 pub(crate) use tally_directory_data::MockTallyDirectory;
 
 /// Mock for [VerificationDirectory]
 pub(crate) struct MockVerificationDirectory {
     context: MockContextDirectory,
-    setup: Option<MockSetupDirectory>,
     tally: Option<MockTallyDirectory>,
 }
 
 impl VerificationDirectoryTrait for MockVerificationDirectory {
     type ContextDirType = MockContextDirectory;
-    type SetupDirType = MockSetupDirectory;
     type TallyDirType = MockTallyDirectory;
-
-    fn unwrap_setup(&self) -> &MockSetupDirectory {
-        match &self.setup {
-            Some(t) => t,
-            None => panic!("called `unwrap_setup()` on a `Tally` value"),
-        }
-    }
 
     fn unwrap_tally(&self) -> &MockTallyDirectory {
         match &self.tally {
@@ -90,12 +79,10 @@ impl MockVerificationDirectory {
         match period {
             VerificationPeriod::Setup => MockVerificationDirectory {
                 context,
-                setup: Some(MockSetupDirectory::new(location)),
                 tally: None,
             },
             VerificationPeriod::Tally => MockVerificationDirectory {
                 context,
-                setup: None,
                 tally: Some(MockTallyDirectory::new(location)),
             },
         }
@@ -104,15 +91,6 @@ impl MockVerificationDirectory {
     /// Context mut
     pub fn context_mut(&mut self) -> &mut MockContextDirectory {
         &mut self.context
-    }
-
-    /// Unwrap [MockSetupDirectory] as mutable
-    #[allow(dead_code)]
-    pub fn unwrap_setup_mut(&mut self) -> &mut MockSetupDirectory {
-        match &mut self.setup {
-            Some(t) => t,
-            None => panic!("called `unwrap_tally()` on a `Setup` value"),
-        }
     }
 
     /// Unwrap [TallyDirectory] as mutable

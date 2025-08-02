@@ -15,9 +15,7 @@
 // <https://www.gnu.org/licenses/>.
 
 use super::super::{
-    result::{
-        VerificationEvent, VerificationResult,
-    },
+    result::{VerificationEvent, VerificationResult},
     suite::VerificationList,
     verifications::Verification,
 };
@@ -25,7 +23,6 @@ use crate::{
     config::VerifierConfig,
     file_structure::{
         context_directory::{ContextDirectoryTrait, ContextVCSDirectoryTrait},
-        setup_directory::{SetupDirectoryTrait, SetupVCSDirectoryTrait},
         VerificationDirectoryTrait,
     },
     verification::{meta_data::VerificationMetaDataList, VerificationError, VerificationErrorImpl},
@@ -42,10 +39,11 @@ pub fn get_verifications<'a>(
         fn_0401_verify_setup_integrity,
         metadata_list,
         config,
-    ).map_err(|e| VerificationErrorImpl::GetVerification {
-            name: "VerifySetupIntegrity",
-            source: Box::new(e),
-        })?]))
+    )
+    .map_err(|e| VerificationErrorImpl::GetVerification {
+        name: "VerifySetupIntegrity",
+        source: Box::new(e),
+    })?]))
 }
 
 fn validate_context_vcs_dir<V: ContextVCSDirectoryTrait>(dir: &V, result: &mut VerificationResult) {
@@ -65,132 +63,64 @@ fn validate_context_vcs_dir<V: ContextVCSDirectoryTrait>(dir: &V, result: &mut V
     }
 }
 
-fn validate_setup_vcs_dir<V: SetupVCSDirectoryTrait>(dir: &V, result: &mut VerificationResult) {
-    for (i, f) in dir.control_component_code_shares_payload_iter() {
-        match f {
-            Ok(d) => {
-                for e in d.verifiy_domain() {
-                    result.push(VerificationEvent::new_failure(&e).add_context(format!(
-                        "Error verifying domain for {}/control_component_public_keys_payload.{}",
-                        dir.name(),
-                        i
-                    )))
-                }
-            }
-            Err(e) => result.push(VerificationEvent::new_failure(&e)
-            .add_context(
-                format!(
-                    "{}/control_component_code_shares_payload.{} has wrong format",
-                    dir.name(),
-                    i
-                )                
-            )),
-        }
-    }
-    for (i, f) in dir.setup_component_verification_data_payload_iter() {
-        match f {
-            Ok(d) => {
-                for e in d.verifiy_domain() {
-                    result.push(VerificationEvent::new_failure(&e)
-                    .add_context(
-                        format!(
-                            "Error verifying domain for {}/setup_component_verification_data_payload.{}",
-                            dir.name(),
-                            i
-                        )
-                        
-                    ))
-                }
-            }
-            Err(e) => result.push(VerificationEvent::new_failure(&e)
-            .add_context(
-                format!(
-                    "{}/setup_component_verification_data_payload.{} has wrong format",
-                    dir.name(),
-                    i
-                )
-                
-            )),
-        }
-    }
-}
-
-fn validate_setup_dir<S: SetupDirectoryTrait>(dir: &S, result: &mut VerificationResult) {
-    for d in dir.vcs_directories().iter() {
-        validate_setup_vcs_dir(d, result);
-    }
-}
-
 fn validate_context_dir<C: ContextDirectoryTrait>(dir: &C, result: &mut VerificationResult) {
     match dir.election_event_context_payload() {
         Ok(d) => {
             for e in d.verifiy_domain() {
-                result.push(VerificationEvent::new_failure(&e)
-                .add_context(
-                    "Error verifying domain for election_event_context_payload"
-                    
-                ))
+                result.push(
+                    VerificationEvent::new_failure(&e)
+                        .add_context("Error verifying domain for election_event_context_payload"),
+                )
             }
         }
-        Err(e) => result.push(VerificationEvent::new_failure(&e)
-        .add_context(
-            "election_event_context_payload has wrong format"            
-        )),
+        Err(e) => result.push(
+            VerificationEvent::new_failure(&e)
+                .add_context("election_event_context_payload has wrong format"),
+        ),
     }
     match dir.setup_component_public_keys_payload() {
         Ok(d) => {
             for e in d.verifiy_domain() {
-                result.push(VerificationEvent::new_failure(&e)
-                .add_context(
-                    "Error verifying domain for setup_component_public_keys_payload"
-                    
-                ))
+                result.push(
+                    VerificationEvent::new_failure(&e).add_context(
+                        "Error verifying domain for setup_component_public_keys_payload",
+                    ),
+                )
             }
         }
-        Err(e) => result.push(VerificationEvent::new_failure(&e)
-        .add_context(
-            "setup_component_public_keys_payload has wrong format"
-            
-        )),
+        Err(e) => result.push(
+            VerificationEvent::new_failure(&e)
+                .add_context("setup_component_public_keys_payload has wrong format"),
+        ),
     }
     match dir.election_event_configuration() {
         Ok(d) => {
             for e in d.verifiy_domain() {
-                result.push(VerificationEvent::new_failure(&e)
-                .add_context(
-                    "Error verifying domain for election_event_configuration"
-                    
-                ))
+                result.push(
+                    VerificationEvent::new_failure(&e)
+                        .add_context("Error verifying domain for election_event_configuration"),
+                )
             }
         }
-        Err(e) => result.push(VerificationEvent::new_failure(&e)
-        .add_context(
-            "election_event_configuration has wrong format"
-            
-        )),
+        Err(e) => result.push(
+            VerificationEvent::new_failure(&e)
+                .add_context("election_event_configuration has wrong format"),
+        ),
     }
     for (i, f) in dir.control_component_public_keys_payload_iter() {
         match f {
             Ok(d) => {
                 for e in d.verifiy_domain() {
-                    result.push(VerificationEvent::new_failure(&e)
-                    .add_context(
-                        format!(
-                            "Error verifying domain for control_component_public_keys_payload.{}",
-                            i
-                        )
-                        
-                    ))
+                    result.push(VerificationEvent::new_failure(&e).add_context(format!(
+                        "Error verifying domain for control_component_public_keys_payload.{}",
+                        i
+                    )))
                 }
             }
-            Err(e) => result.push(VerificationEvent::new_failure(&e)
-            .add_context(
-                format!(
-                    "control_component_public_keys_payload.{} has wrong format",
-                    i
-                )
-                
-            )),
+            Err(e) => result.push(VerificationEvent::new_failure(&e).add_context(format!(
+                "control_component_public_keys_payload.{} has wrong format",
+                i
+            ))),
         }
     }
     for d in dir.vcs_directories().iter() {
@@ -205,8 +135,6 @@ fn fn_0401_verify_setup_integrity<D: VerificationDirectoryTrait>(
 ) {
     let context_dir = dir.context();
     validate_context_dir(context_dir, result);
-    let setup_dir = dir.unwrap_setup();
-    validate_setup_dir(setup_dir, result);
 }
 
 #[cfg(test)]

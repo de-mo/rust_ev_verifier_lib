@@ -22,12 +22,10 @@ pub(crate) mod file;
 pub(crate) mod file_group;
 #[cfg(test)]
 pub(crate) mod mock;
-pub(crate) mod setup_directory;
 pub(crate) mod tally_directory;
 
 pub use self::{
     context_directory::{ContextDirectory, ContextDirectoryTrait},
-    setup_directory::SetupDirectoryTrait,
     tally_directory::TallyDirectoryTrait,
 };
 use crate::{
@@ -38,7 +36,6 @@ use crate::{
     verification::VerificationPeriod,
 };
 use roxmltree::Error as RoXmlTreeError;
-use setup_directory::SetupDirectory;
 use std::path::{Path, PathBuf};
 use tally_directory::TallyDirectory;
 use thiserror::Error;
@@ -76,31 +73,12 @@ enum FileStructureErrorImpl {
     #[cfg(test)]
     #[error("Mock error: {0}")]
     Mock(String),
-    /*
-    #[error("IO error for {path} -> caused by: {source}")]
-    IO {
-        path: PathBuf,
-        source: std::io::Error,
-    },
-    #[error("Path is not a file {0}")]
-    PathNotFile(PathBuf),
-    #[error("Mock error: {0}")]
-    Mock(String),
-    #[error("Error reading data structure {path} -> caudes by: {source}")]
-    ReadDataStructure {
-        path: PathBuf,
-        source: DataStructureError,
-    },
-    #[error("Path is not a directory {0}")]
-    PathIsNotDir(PathBuf),
-    */
 }
 
 //#[derive(Clone)]
 /// Type represending a VerificationDirectory (subdirectory context and setup or tally)
 pub struct VerificationDirectory {
     context: ContextDirectory,
-    setup: Option<SetupDirectory>,
     tally: Option<TallyDirectory>,
 }
 
@@ -177,16 +155,10 @@ trait GetFileNameTrait {
 /// and not the structs. Then it is possible to mock the data
 pub trait VerificationDirectoryTrait {
     type ContextDirType: ContextDirectoryTrait;
-    type SetupDirType: SetupDirectoryTrait;
     type TallyDirType: TallyDirectoryTrait;
 
     /// Reference to context
     fn context(&self) -> &Self::ContextDirType;
-
-    /// Unwrap setup and give a reference to the directory
-    ///
-    /// panic if other type
-    fn unwrap_setup(&self) -> &Self::SetupDirType;
 
     /// Unwrap tally and give a reference to the directory
     ///
@@ -210,20 +182,18 @@ impl VerificationDirectory {
         match period {
             VerificationPeriod::Setup => VerificationDirectory {
                 context,
-                setup: Some(SetupDirectory::new(location)),
                 tally: None,
             },
             VerificationPeriod::Tally => VerificationDirectory {
                 context,
-                setup: None,
                 tally: Some(TallyDirectory::new(location)),
             },
         }
     }
 
     /// Is setup
-    pub fn is_setup(&self) -> bool {
-        self.setup.is_some()
+    pub fn is_config(&self) -> bool {
+        self.tally.is_none()
     }
 
     /// Is tally
@@ -233,27 +203,16 @@ impl VerificationDirectory {
 
     /// Are the entries valid
     pub fn is_valid(&self) -> bool {
-        self.is_setup() != self.is_tally()
+        self.is_config() != self.is_tally()
     }
 }
 
 impl VerificationDirectoryTrait for VerificationDirectory {
     type ContextDirType = ContextDirectory;
-    type SetupDirType = SetupDirectory;
     type TallyDirType = TallyDirectory;
 
     fn context(&self) -> &ContextDirectory {
         &self.context
-    }
-
-    /// Unwrap setup and give a reference to S
-    ///
-    /// panic if type is tally
-    fn unwrap_setup(&self) -> &SetupDirectory {
-        match &self.setup {
-            Some(s) => s,
-            None => panic!("called `unwrap_setup()` on a `Tally` value"),
-        }
     }
 
     /// Unwrap tally and give a reference to S

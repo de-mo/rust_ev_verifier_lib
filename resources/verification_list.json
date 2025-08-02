@@ -160,14 +160,6 @@
         "description": ""
     },
     {
-        "id": "03.15",
-        "name": "VerifyChunkConsistency",
-        "algorithm": "",
-        "period": "setup",
-        "category": "consistency",
-        "description": ""
-    },
-    {
         "id": "04.01",
         "name": "VerifySetupIntegrity",
         "algorithm": "",
@@ -202,14 +194,6 @@
     {
         "id": "05.04",
         "name": "VerifySchnorrProofs",
-        "algorithm": "",
-        "period": "setup",
-        "category": "evidence",
-        "description": ""
-    },
-    {
-        "id": "05.21",
-        "name": "VerifySignatureVerificationDataAndCodeProofs",
         "algorithm": "",
         "period": "setup",
         "category": "evidence",

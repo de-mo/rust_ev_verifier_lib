@@ -17,10 +17,7 @@
 use super::super::super::result::{VerificationEvent, VerificationResult};
 use crate::{
     config::VerifierConfig,
-    file_structure::{
-        context_directory::ContextDirectoryTrait, setup_directory::SetupDirectoryTrait,
-        VerificationDirectoryTrait,
-    },
+    file_structure::{context_directory::ContextDirectoryTrait, VerificationDirectoryTrait},
 };
 
 fn verify_file_name_correct(vcs_ids: &[&str], dir_names: &[String]) -> VerificationResult {
@@ -45,7 +42,6 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
     result: &mut VerificationResult,
 ) {
     let context_dir = dir.context();
-    let setup_dir = dir.unwrap_setup();
 
     let ee_context = match context_dir.election_event_context_payload() {
         Ok(payload) => payload,
@@ -62,11 +58,6 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
     result.append_with_context(
         &verify_file_name_correct(&vcs_ids, &context_dir.vcs_directory_names()),
         "Context directory",
-    );
-
-    result.append_with_context(
-        &verify_file_name_correct(&vcs_ids, &setup_dir.vcs_directory_names()),
-        "Setup directory",
     );
 }
 

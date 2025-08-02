@@ -28,7 +28,6 @@ mod v0311_file_name_verification_card_set_ids_consistency;
 mod v0312_verification_card_ids_consistency;
 mod v0313_total_voters_consistency;
 mod v0314_verify_node_ids_consistency;
-mod v0315_chunk_consistency;
 
 use super::super::{
     meta_data::VerificationMetaDataList, suite::VerificationList, verifications::Verification,
@@ -195,17 +194,6 @@ pub fn get_verifications<'a>(
         )
         .map_err(|e| VerificationErrorImpl::GetVerification {
             name: "VerifyNodeIdsConsistency",
-            source: Box::new(e),
-        })?,
-        Verification::new(
-            "03.15",
-            "VerifyChunkConsistency",
-            v0315_chunk_consistency::fn_verification,
-            metadata_list,
-            config,
-        )
-        .map_err(|e| VerificationErrorImpl::GetVerification {
-            name: "VerifyChunkConsistency",
             source: Box::new(e),
         })?,
     ]))

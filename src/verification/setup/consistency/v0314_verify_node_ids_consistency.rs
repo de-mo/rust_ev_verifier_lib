@@ -19,10 +19,7 @@ use std::collections::HashSet;
 use super::super::super::result::{VerificationEvent, VerificationResult};
 use crate::{
     config::VerifierConfig,
-    file_structure::{
-        setup_directory::{SetupDirectoryTrait, SetupVCSDirectoryTrait},
-        ContextDirectoryTrait, VerificationDirectoryTrait,
-    },
+    file_structure::{ContextDirectoryTrait, VerificationDirectoryTrait},
 };
 
 const LIST_CC_NUMBER: &[usize] = &[1, 2, 3, 4];
@@ -33,14 +30,7 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
     result: &mut VerificationResult,
 ) {
     let context_dir = dir.context();
-    let setup_dir = dir.unwrap_setup();
     result.append(&mut verify_cc_pk_payload(context_dir));
-    for vcs in setup_dir.vcs_directories() {
-        result.append_with_context(
-            &verify_cc_code_shares(vcs),
-            format!("vcs dir: {}", vcs.name()),
-        );
-    }
 }
 
 fn verifiy_one_to_for(list: &[usize]) -> VerificationResult {
@@ -75,38 +65,6 @@ fn verify_cc_pk_payload<C: ContextDirectoryTrait>(dir: &C) -> VerificationResult
             Err(e) => result.push(VerificationEvent::new_error(&format!(
                 "Cannot open conntrolComponentPubllicKeysPayload.{}.json: {}",
                 i, e
-            ))),
-        }
-    }
-    result
-}
-
-fn verify_cc_code_shares<V: SetupVCSDirectoryTrait>(dir: &V) -> VerificationResult {
-    let mut result = VerificationResult::new();
-    for (chunk_id, payload_res) in dir.control_component_code_shares_payload_iter() {
-        match payload_res {
-            Ok(paylod) => {
-                result.append_with_context(
-                    &verifiy_one_to_for(
-                        paylod
-                            .0
-                            .iter()
-                            .map(|p| p.node_id)
-                            .collect::<Vec<_>>()
-                            .as_slice(),
-                    ),
-                    format!(
-                        "setup/{}/controlComponentCodeSharesPayload.{}.json",
-                        dir.name(),
-                        chunk_id
-                    ),
-                );
-            }
-            Err(e) => result.push(VerificationEvent::new_error(&format!(
-                "cannot open setup/{}/controlComponentCodeSharesPayload.{}.json: {}",
-                dir.name(),
-                chunk_id,
-                e
             ))),
         }
     }

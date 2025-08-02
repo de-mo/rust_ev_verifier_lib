@@ -79,10 +79,7 @@ pub fn check_complete(
         ));
     }
     let complete = match period {
-        VerificationPeriod::Setup => dir
-            .unwrap_setup()
-            .test_completness()
-            .map_err(|e| e.to_string())?,
+        VerificationPeriod::Setup => vec![],
         VerificationPeriod::Tally => dir
             .unwrap_tally()
             .test_completness()
