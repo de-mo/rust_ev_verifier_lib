@@ -273,9 +273,9 @@ pub(crate) mod test {
     const BB_ID_ONE_VOTE: &str = "A6733AB3D38BC47B964FB2DF09404877";
     const BB_ID_ZERO_VOTE: &str = "80DEAF0E396ACC1183EFD4E8A0BCD172";
     const BB_ID_MANY_VOTES: &str = "2705DAB8C622B8DD4EE6A0D490A914B4";
-    const CONTEXT_ZIP_FILENAME: &str = "Dataset-context-NE_20231124_TT05-20241016_1513.zip";
+    const CONTEXT_ZIP_FILENAME: &str = "Context_Post_E2E_DEV_2025-08-02.zip";
     const SETUP_ZIP_FILENAME: &str = "Dataset-setup-NE_20231124_TT05-20241016_1513.zip";
-    const TALLY_ZIP_FILENAME: &str = "Dataset-tally-NE_20231124_TT05-20241016_1707.zip";
+    const TALLY_ZIP_FILENAME: &str = "Tally_Post_E2E_DEV_2025-08-02.zip";
     const TEST_DECRYPT_ZIP_PASSWORD: &str = "LongPassword_Encryption1";
 
     lazy_static! {
