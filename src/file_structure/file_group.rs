@@ -214,7 +214,7 @@ mod test {
         assert_eq!(fg.get_location(), location);
         assert_eq!(fg.get_numbers(), &[1, 2, 3, 4]);
         for (i, f) in fg.iter_file() {
-            let name = format!("controlComponentPublicKeysPayload.{}.json", i);
+            let name = format!("controlComponentPublicKeysPayload.{i}.json");
             assert_eq!(f.path(), location.join(name));
         }
     }

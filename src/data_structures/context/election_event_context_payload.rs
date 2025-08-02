@@ -238,15 +238,13 @@ fn validate_seed(seed: &str) -> Vec<String> {
     let date = seed.get(3..11).unwrap();
     if let Err(e) = NaiveDate::parse_from_str(date, "%Y%m%d") {
         res.push(format!(
-            "the date {} of the seed {} is not valid: {}",
-            seed, date, e
+            "the date {seed} of the seed {date} is not valid: {e}"
         ))
     }
     let event_type = seed.get(12..14).unwrap();
     if event_type != "TT" && event_type != "TP" && event_type != "PP" {
         res.push(format!(
-            "the event type {} of the seed {} is not valid. Must be TT, TP or PP",
-            seed, event_type
+            "the event type {seed} of the seed {event_type} is not valid. Must be TT, TP or PP"
         ))
     }
     res

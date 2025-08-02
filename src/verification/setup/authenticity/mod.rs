@@ -151,10 +151,10 @@ fn fn_0203_verify_signature_control_component_public_keys<D: VerificationDirecto
         match cc {
             Ok(cc) => result.append_with_context(
                 &verify_signature_for_object(cc.as_ref(), config),
-                format!("control_component_public_keys_payload_{}", i),
+                format!("control_component_public_keys_payload_{i}"),
             ),
             Err(e) => result.push(VerificationEvent::new_error_from_error(&e).add_context(
-                format!("control_component_public_keys_payload_{} cannot be read", i),
+                format!("control_component_public_keys_payload_{i} cannot be read"),
             )),
         }
     }
@@ -217,10 +217,10 @@ mod test {
         fn_0201_verify_signature_canton_config(&dir, &CONFIG_TEST, &mut result);
         if !result.is_ok() {
             for e in result.errors() {
-                println!("{:?}", e);
+                println!("{e:?}");
             }
             for f in result.failures() {
-                println!("{:?}", f);
+                println!("{f:?}");
             }
         }
         assert!(result.is_ok());
@@ -231,7 +231,7 @@ mod test {
         let dir = get_verifier_dir();
         let mut result = VerificationResult::new();
         fn_0202_verify_signature_setup_component_public_keys(&dir, &CONFIG_TEST, &mut result);
-        println!("{:?}", result);
+        println!("{result:?}");
         assert!(result.is_ok());
     }
 

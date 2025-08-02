@@ -82,7 +82,7 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
             .iter()
             .fold(VerificationResult::new(), |acc, (name, result)| {
                 let mut res = acc.clone();
-                res.append_with_context(result, format!("Ballot box {}", name));
+                res.append_with_context(result, format!("Ballot box {name}"));
                 res
             }),
     );
@@ -101,8 +101,7 @@ fn verify_for_ballotbox<B: BBDirectoryTrait>(
         Some(vcs) => vcs,
         None => {
             return VerificationResult::from(&VerificationEvent::new_error(&format!(
-                "No verification card set found for ballot box {}",
-                bb_id
+                "No verification card set found for ballot box {bb_id}"
             )))
         }
     };
@@ -123,18 +122,16 @@ fn verify_for_ballotbox<B: BBDirectoryTrait>(
         Some((_, p)) => match p {
             Ok(p) => p,
             Err(e) => {
-                return VerificationResult::from(&VerificationEvent::new_error_from_error(&e).add_context(
-                    format!(
-                        "{}/control_component_shuffle_payload_4 cannot be read",
-                        bb_id
-                    ),
-                ));
+                return VerificationResult::from(
+                    &VerificationEvent::new_error_from_error(&e).add_context(format!(
+                        "{bb_id}/control_component_shuffle_payload_4 cannot be read"
+                    )),
+                );
             }
         },
         None => {
             return VerificationResult::from(&VerificationEvent::new_error(&format!(
-                "{}/tally_component_shuffle_payload_4 not found",
-                bb_id
+                "{bb_id}/tally_component_shuffle_payload_4 not found",
             )));
         }
     };
@@ -142,18 +139,22 @@ fn verify_for_ballotbox<B: BBDirectoryTrait>(
     let tally_shuffle_payload = match tally_dir.tally_component_shuffle_payload() {
         Ok(p) => p,
         Err(e) => {
-            return VerificationResult::from(&VerificationEvent::new_error_from_error(&e).add_context(
-                format!("{}/tally_component_shuffle_payload cannot be read", bb_id),
-            ));
+            return VerificationResult::from(
+                &VerificationEvent::new_error_from_error(&e).add_context(format!(
+                    "{bb_id}/tally_component_shuffle_payload cannot be read"
+                )),
+            );
         }
     };
 
     let tally_votes_payload = match tally_dir.tally_component_votes_payload() {
         Ok(p) => p,
         Err(e) => {
-            return VerificationResult::from(&VerificationEvent::new_error_from_error(&e).add_context(
-                format!("{}/tally_component_votes_payload cannot be read", bb_id),
-            ));
+            return VerificationResult::from(
+                &VerificationEvent::new_error_from_error(&e).add_context(format!(
+                    "{bb_id}/tally_component_votes_payload cannot be read"
+                )),
+            );
         }
     };
     let pi_mix_5 =
@@ -161,7 +162,7 @@ fn verify_for_ballotbox<B: BBDirectoryTrait>(
         {
             Ok(a) => a,
             Err(e) => return VerificationResult::from(&VerificationEvent::new_error_from_error(&e).add_context(
-                format!("Error converting shuffle argument for {}/tally_component_shuffle_payload cannot be read", bb_id),
+                format!("Error converting shuffle argument for {bb_id}/tally_component_shuffle_payload cannot be read", ),
             )),
         };
 
@@ -205,10 +206,10 @@ mod test {
         fn_verification(&dir, &CONFIG_TEST, &mut result);
         if !result.is_ok() {
             for r in result.errors_to_string() {
-                println!("{:?}", r)
+                println!("{r:?}")
             }
             for r in result.failures_to_string() {
-                println!("{:?}", r)
+                println!("{r:?}")
             }
         }
         assert!(result.is_ok());

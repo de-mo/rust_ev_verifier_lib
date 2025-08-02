@@ -150,8 +150,7 @@ pub fn verify_online_control_components_ballot_box(
         Ok(res) => res.c_init_j,
         Err(e) => {
             result.push(VerificationEvent::new_error(&format!(
-                "Error getting initial ciphertext c_init_1: {}",
-                e
+                "Error getting initial ciphertext c_init_1: {e}"
             )));
             return result;
         }

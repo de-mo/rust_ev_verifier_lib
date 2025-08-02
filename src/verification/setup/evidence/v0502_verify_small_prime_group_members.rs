@@ -84,10 +84,10 @@ mod test {
         fn_0502_verify_small_prime_group_members(&dir, &CONFIG_TEST, &mut result);
         if !result.is_ok() {
             for e in result.errors() {
-                println!("{:?}", e);
+                println!("{e:?}");
             }
             for f in result.failures() {
-                println!("{:?}", f);
+                println!("{f:?}");
             }
         }
         assert!(result.is_ok());

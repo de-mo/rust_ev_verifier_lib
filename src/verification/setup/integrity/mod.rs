@@ -112,14 +112,12 @@ fn validate_context_dir<C: ContextDirectoryTrait>(dir: &C, result: &mut Verifica
             Ok(d) => {
                 for e in d.verifiy_domain() {
                     result.push(VerificationEvent::new_failure(&e).add_context(format!(
-                        "Error verifying domain for control_component_public_keys_payload.{}",
-                        i
+                        "Error verifying domain for control_component_public_keys_payload.{i}"
                     )))
                 }
             }
             Err(e) => result.push(VerificationEvent::new_failure(&e).add_context(format!(
-                "control_component_public_keys_payload.{} has wrong format",
-                i
+                "control_component_public_keys_payload.{i} has wrong format"
             ))),
         }
     }
@@ -147,7 +145,7 @@ mod test {
         let dir = get_verifier_dir();
         let mut result = VerificationResult::new();
         fn_0401_verify_setup_integrity(&dir, &CONFIG_TEST, &mut result);
-        println!("{:?}", result);
+        println!("{result:?}");
         assert!(result.is_ok());
     }
 }

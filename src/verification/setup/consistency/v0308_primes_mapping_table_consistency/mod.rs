@@ -108,10 +108,10 @@ mod test {
         fn_verification(&dir, &CONFIG_TEST, &mut result);
         if !result.is_ok() {
             for r in result.errors_to_string() {
-                println!("{:?}", r)
+                println!("{r:?}")
             }
             for r in result.failures_to_string() {
-                println!("{:?}", r)
+                println!("{r:?}")
             }
         }
         assert!(result.is_ok());

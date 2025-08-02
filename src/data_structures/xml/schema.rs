@@ -25,7 +25,7 @@ use roxmltree::{Document, Node as RoNode};
 use std::collections::HashMap;
 use std::sync::OnceLock;
 
-use super::{SchemaError, XMLError};
+use super::SchemaError;
 
 const NS_ECH_0006: &str = "http://www.ech.ch/xmlns/eCH-0006/2";
 const NS_ECH_0007: &str = "http://www.ech.ch/xmlns/eCH-0007/6";

@@ -88,8 +88,7 @@ pub fn verification_2_3_same_than_xml(
         if expected_count != p_table_count {
             result.push(
             VerificationEvent::new_failure(&format!(
-                "The number of entries in the p_table (={}) is not the same than the number of entries calculated (={})",
-                p_table_count, expected_count
+                "The number of entries in the p_table (={p_table_count}) is not the same than the number of entries calculated (={expected_count})"
             ))
             .add_context(format!(
                 "Verification 2 for vcs_id {}",
@@ -154,7 +153,7 @@ fn generate_all_p_table_elements(
             .contest
             .votes
             .iter()
-            .map_err(|e| format!("Error iterating votes: {}", e))?
+            .map_err(|e| format!("Error iterating votes: {e}"))?
             .filter(|v| v.has_authorization(&auth))
             .flat_map(|v| generate_p_table_for_vote(&v.vote))
             .collect(),
@@ -164,7 +163,7 @@ fn generate_all_p_table_elements(
             .contest
             .election_groups
             .iter()
-            .map_err(|e| format!("Error iterating election groups: {}", e))?
+            .map_err(|e| format!("Error iterating election groups: {e}"))?
             .filter(|v| v.has_authorization(&auth))
             .flat_map(|eg| {
                 eg.election_information

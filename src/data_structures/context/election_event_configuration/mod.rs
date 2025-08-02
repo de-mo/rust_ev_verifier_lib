@@ -326,14 +326,14 @@ impl Contest {
                 Err(e) => {
                     return Err(DataStructureError::from(
                         DataStructureErrorImpl::ParseQuickXML {
-                            msg: format!("Error reading the tag {}", tag_name),
+                            msg: format!("Error reading the tag {tag_name}"),
                             source: e,
                         },
                     ))
                 }
                 Ok(Event::Eof) => {
                     return Err(DataStructureError::from(
-                        DataStructureErrorImpl::XMLDataError(format!("Tag {} not found", tag_name)),
+                        DataStructureErrorImpl::XMLDataError(format!("Tag {tag_name} not found")),
                     ))
                 }
                 Ok(Event::Start(e)) => {
@@ -343,9 +343,9 @@ impl Contest {
                             Ok(_) => {
                                 return String::from_utf8(buffer)
                                     .map(|s| {
-                                        s.strip_prefix(&format!("<{}>", tag_name))
+                                        s.strip_prefix(&format!("<{tag_name}>"))
                                             .unwrap()
-                                            .strip_suffix(&format!("</{}>", tag_name))
+                                            .strip_suffix(&format!("</{tag_name}>"))
                                             .unwrap()
                                             .to_string()
                                     })
@@ -437,10 +437,7 @@ impl Iterator for VoterIter {
                             &mut buffer,
                         ) {
                             Ok(_) => {
-                                match xml_de_from_str::<Voter>(&String::from_utf8_lossy(&buffer)) {
-                                    Ok(v) => Some(v),
-                                    Err(_) => None,
-                                }
+                                xml_de_from_str::<Voter>(&String::from_utf8_lossy(&buffer)).ok()
                             }
                             Err(_) => None,
                         };

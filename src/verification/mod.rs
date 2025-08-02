@@ -238,7 +238,7 @@ where
             }
             Err(e) => {
                 result.push(
-                    VerificationEvent::new_failure(e).add_context(format!("at position {}", i)),
+                    VerificationEvent::new_failure(e).add_context(format!("at position {i}")),
                 );
             }
         }

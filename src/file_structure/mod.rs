@@ -447,7 +447,7 @@ mod test {
     #[test]
     fn test_setup_groups_exist() {
         let path2 = test_setup_verification_card_set_path();
-        println!("{:?}", path2);
+        println!("{path2:?}");
         assert!(path2
             .join(
                 VerifierDataType::Setup(VerifierSetupDataType::ControlComponentCodeSharesPayload)
