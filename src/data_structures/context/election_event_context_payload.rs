@@ -17,7 +17,7 @@
 use super::super::{
     common_types::{EncryptionParametersDef, Signature},
     deserialize_string_string_to_datetime, implement_trait_verifier_data_json_decode,
-    DataStructureError, VerifierDataDecode,DataStructureErrorImpl
+    DataStructureError, DataStructureErrorImpl, VerifierDataDecode,
 };
 use crate::{
     config::VerifierConfig,
@@ -427,7 +427,7 @@ impl<'a> From<&'a VerificationCardSetContext> for VerificationCardSetContextInSy
             upper_n_upper_e: value.number_of_voting_cards,
             grace_period: value.grace_period,
             p_table: &value.primes_mapping_table.p_table,
-            encryption_parameters: &value.primes_mapping_table.encryption_group,
+            dois: todo!(),
         }
     }
 }

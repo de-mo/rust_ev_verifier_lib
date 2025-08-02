@@ -16,14 +16,17 @@
 
 use crate::data_structures::dataset::DatasetTypeKind;
 use chrono::Local;
-use rust_ev_system_library::rust_ev_crypto_primitives::prelude::{
-    argon2::Argon2id,
-    basic_crypto_functions::{sha256_stream, BasisCryptoError, Decrypter},
-    ByteArray, EncodeTrait,
+use rust_ev_system_library::{
+    chanel_security::stream::{get_stream_plaintext, StreamSymEncryptionError},
+    rust_ev_crypto_primitives::prelude::{
+        argon2::Argon2id,
+        basic_crypto_functions::{sha256_stream, BasisCryptoError, Decrypter},
+        ByteArray, EncodeTrait,
+    },
 };
 use std::{
     fs::File,
-    io::{BufReader, Read, Write},
+    io::{BufReader, BufWriter, Read, Write},
     path::{Path, PathBuf},
 };
 use thiserror::Error;
@@ -80,6 +83,11 @@ enum DatasetErrorImpl {
     ProcessNewEncryptedZipReader { source: Box<DatasetError> },
     #[error("process_dataset_operations: Error unzipping")]
     ProcessUnzip { source: Box<DatasetError> },
+    #[error("Error streaming the file {path}")]
+    GetStreamPlaintext {
+        path: PathBuf,
+        source: StreamSymEncryptionError,
+    },
 }
 
 /// Metadata containing the information of the zip dataset before and after extraction
@@ -269,7 +277,7 @@ const ENCRYPTED_BLOCK_SIZE: usize = 512;
 /// In a second step, the extraction is done in the target directory (with strip away the topmost directory)
 pub struct EncryptedZipReader {
     internal_reader: BufReader<File>,
-    decrypter: Decrypter,
+    password: String,
     target_dir: PathBuf,
     temp_zip: PathBuf,
 }
@@ -303,37 +311,9 @@ impl EncryptedZipReader {
             source: e,
         })?;
         let mut buf = BufReader::new(f);
-        let mut salt_buf: Vec<u8> = vec![0; SALT_BYTE_LENGTH as usize];
-        let mut nonce_buf: Vec<u8> = vec![0; NONCE_BYTE_LENGTH as usize];
-        let bytes_red = buf.read(&mut salt_buf).map_err(|e| DatasetErrorImpl::IO {
-            path: file.to_path_buf(),
-            msg: "Reading salt",
-            source: e,
-        })?;
-        if bytes_red != SALT_BYTE_LENGTH as usize {
-            return Err(DatasetErrorImpl::ByteLengthError(format!(
-                "size of bytes read {bytes_red} for salt wrong. Expected: {SALT_BYTE_LENGTH}"
-            )));
-        }
-        let salt = ByteArray::from_bytes(&salt_buf);
-        let bytes_red = buf.read(&mut nonce_buf).map_err(|e| DatasetErrorImpl::IO {
-            path: file.to_path_buf(),
-            msg: "Reading nonce",
-            source: e,
-        })?;
-        if bytes_red != NONCE_BYTE_LENGTH as usize {
-            return Err(DatasetErrorImpl::ByteLengthError(format!(
-                "size of bytes read {bytes_red} for nonce wrong. Expected: {NONCE_BYTE_LENGTH}"
-            )));
-        }
-        let nonce = ByteArray::from_bytes(&nonce_buf);
-        let derive_key = Argon2id::new_standard()
-            .get_argon2id(&ByteArray::from(password), &salt)
-            .unwrap();
         Ok(Self {
             internal_reader: buf,
-            decrypter: Decrypter::new(&nonce, &derive_key)
-                .map_err(|e| DatasetErrorImpl::Decrypter { source: e })?,
+            password: password.to_string(),
             target_dir: target_dir.to_path_buf(),
             temp_zip: Self::temp_zip_path(file, temp_zip_dir),
         })
@@ -346,30 +326,17 @@ impl EncryptedZipReader {
                 msg: "Creating Temp Zip",
                 source: e,
             })?;
-        let buf = &mut self.internal_reader;
-        loop {
-            let mut temp_buffer = vec![0; ENCRYPTED_BLOCK_SIZE];
-            let count = buf
-                .read(&mut temp_buffer)
-                .map_err(|e| DatasetErrorImpl::IOBuf {
-                    msg: "Reading buffer",
-                    source: e,
-                })?;
-            if count == 0 {
-                break;
-            }
-            temp_buffer.truncate(count);
-            let plaintext = self
-                .decrypter
-                .decrypt(&ByteArray::from_bytes(&temp_buffer))
-                .map_err(|e| DatasetErrorImpl::Decrypt { source: e })?;
-            target
-                .write_all(plaintext.to_bytes())
-                .map_err(|e| DatasetErrorImpl::IOBuf {
-                    msg: "Writing temp zip",
-                    source: e,
-                })?;
-        }
+        let mut target_writer = BufWriter::new(target);
+        get_stream_plaintext(
+            &mut self.internal_reader,
+            &self.password,
+            &ByteArray::default(),
+            &mut target_writer,
+        )
+        .map_err(|e| DatasetErrorImpl::GetStreamPlaintext {
+            path: self.temp_zip.clone(),
+            source: e,
+        })?;
         Ok(self.temp_zip.to_owned())
     }
 
