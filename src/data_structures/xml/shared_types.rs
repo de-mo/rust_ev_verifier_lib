@@ -22,6 +22,7 @@ use std::{
     io::{BufRead, BufReader},
     marker::PhantomData,
     path::{Path, PathBuf},
+    sync::Arc,
 };
 
 #[derive(Clone, Debug)]
@@ -33,18 +34,18 @@ pub struct TagManyWithIterator<T>
 where
     T: Clone + Debug,
 {
-    file_path: PathBuf,
+    data: Arc<String>,
     position_in_buffer: usize,
     tag_name: String,
     external_tag_name: String,
     phantom_t: PhantomData<T>,
 }
 
-pub struct TagManyIter<T>
+pub struct TagManyIter<'a, T>
 where
     T: Clone + Debug,
 {
-    reader: Reader<BufReader<File>>,
+    reader: Reader<&'a [u8]>,
     tag_name: String,
     external_tag_name: String,
     phantom: PhantomData<T>,
@@ -55,13 +56,13 @@ where
     T: Clone + Debug,
 {
     pub fn new(
-        path: &Path,
+        data: &Arc<String>,
         position_in_buffer: usize,
         tag_name: &str,
         external_tag_name: &str,
     ) -> Self {
         Self {
-            file_path: path.to_path_buf(),
+            data: data.clone(),
             position_in_buffer,
             tag_name: tag_name.to_string(),
             external_tag_name: external_tag_name.to_string(),
@@ -69,16 +70,8 @@ where
         }
     }
 
-    pub fn reader(&self) -> Result<Reader<BufReader<File>>, DataStructureError> {
-        let mut reader = Reader::from_file(&self.file_path).map_err(|e| {
-            DataStructureErrorImpl::ParseQuickXML {
-                msg: format!(
-                    "Error creating xml reader for file {}",
-                    self.file_path.to_str().unwrap()
-                ),
-                source: e,
-            }
-        })?;
+    pub fn reader(&self) -> Result<Reader<&[u8]>, DataStructureError> {
+        let mut reader = Reader::from_str(&self.data);
         reader.stream().consume(self.position_in_buffer);
         Ok(reader)
     }
@@ -93,11 +86,11 @@ where
     }
 }
 
-impl<T> TagManyIter<T>
+impl<'a, T> TagManyIter<'a, T>
 where
     T: Clone + Debug,
 {
-    pub fn reader(&mut self) -> &mut Reader<BufReader<File>> {
+    pub fn reader(&mut self) -> &mut Reader<&'a [u8]> {
         &mut self.reader
     }
 
@@ -112,7 +105,7 @@ where
 
 macro_rules! impl_iterator_for_tag_many_iter {
     ($type: ident) => {
-        impl Iterator for TagManyIter<$type> {
+        impl<'a> Iterator for TagManyIter<'a, $type> {
             type Item = $type;
 
             fn next(&mut self) -> Option<Self::Item> {
