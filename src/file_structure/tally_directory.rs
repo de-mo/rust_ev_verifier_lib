@@ -23,8 +23,7 @@ use crate::{
     config::VerifierConfig,
     data_structures::tally::{
         control_component_ballot_box_payload::ControlComponentBallotBoxPayload,
-        control_component_shuffle_payload::ControlComponentShufflePayload,
-        e_voting_decrypt::EVotingDecrypt, ech_0110::ECH0110, ech_0222::ECH0222,
+        control_component_shuffle_payload::ControlComponentShufflePayload, ech_0222::ECH0222,
         tally_component_shuffle_payload::TallyComponentShufflePayload,
         tally_component_votes_payload::TallyComponentVotesPayload,
     },
@@ -38,8 +37,6 @@ use std::{
 //#[derive(Clone)]
 pub struct TallyDirectory {
     location: PathBuf,
-    e_voting_decrypt_file: File<EVotingDecrypt>,
-    ech_0110_file: File<ECH0110>,
     ech_0222_file: File<ECH0222>,
     bb_directories: Vec<BBDirectory>,
 }
@@ -61,8 +58,6 @@ pub struct BBDirectory {
 pub trait TallyDirectoryTrait: CompletnessTestTrait + Send + Sync {
     type BBDirType: BBDirectoryTrait;
 
-    fn e_voting_decrypt_file(&self) -> &File<EVotingDecrypt>;
-    fn ech_0110_file(&self) -> &File<ECH0110>;
     fn ech_0222_file(&self) -> &File<ECH0222>;
     fn bb_directories(&self) -> &[Self::BBDirType];
 
@@ -117,12 +112,6 @@ pub trait BBDirectoryTrait: CompletnessTestTrait + Send + Sync {
 impl TallyDirectoryTrait for TallyDirectory {
     type BBDirType = BBDirectory;
 
-    fn e_voting_decrypt_file(&self) -> &File<EVotingDecrypt> {
-        &self.e_voting_decrypt_file
-    }
-    fn ech_0110_file(&self) -> &File<ECH0110> {
-        &self.ech_0110_file
-    }
     fn ech_0222_file(&self) -> &File<ECH0222> {
         &self.ech_0222_file
     }
@@ -140,14 +129,8 @@ macro_rules! impl_completness_test_trait_for_tally {
         impl CompletnessTestTrait for $t {
             fn test_completness(&self) -> Result<Vec<String>, FileStructureError> {
                 let mut missings = vec![];
-                if !self.ech_0110_file().exists() {
-                    missings.push("ech_0110 does not exist".to_string())
-                }
                 if !self.ech_0222_file().exists() {
                     missings.push("ech_0222 does not exist".to_string())
-                }
-                if !self.e_voting_decrypt_file().exists() {
-                    missings.push("e_voting_decrypt does not exist".to_string())
                 }
                 if self.bb_directories().is_empty() {
                     missings.push("No bb directory found".to_string());
@@ -292,12 +275,6 @@ impl TallyDirectory {
         let location = data_location.join(VerifierConfig::tally_dir_name());
         let mut res = TallyDirectory {
             location: location.to_path_buf(),
-            e_voting_decrypt_file: create_file!(
-                location,
-                Tally,
-                VerifierTallyDataType::EVotingDecrypt
-            ),
-            ech_0110_file: create_file!(location, Tally, VerifierTallyDataType::ECH0110),
             ech_0222_file: create_file!(location, Tally, VerifierTallyDataType::ECH0222),
             bb_directories: vec![],
         };

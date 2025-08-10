@@ -300,8 +300,6 @@ impl From<&VerifierSetupDataType> for FileType {
 impl GetFileNameTrait for VerifierTallyDataType {
     fn get_raw_file_name(&self) -> String {
         let s = match self {
-            Self::ECH0110 => "eCH-0110_*.xml",
-            Self::EVotingDecrypt => "evoting-decrypt_*.xml",
             Self::ECH0222 => "eCH-0222_*.xml",
             Self::TallyComponentVotesPayload => "tallyComponentVotesPayload.json",
             Self::TallyComponentShufflePayload => "tallyComponentShufflePayload.json",
@@ -315,8 +313,6 @@ impl GetFileNameTrait for VerifierTallyDataType {
 impl From<&VerifierTallyDataType> for FileReadMode {
     fn from(value: &VerifierTallyDataType) -> Self {
         match value {
-            VerifierTallyDataType::EVotingDecrypt => FileReadMode::Memory,
-            VerifierTallyDataType::ECH0110 => FileReadMode::Memory,
             VerifierTallyDataType::ECH0222 => FileReadMode::Memory,
             VerifierTallyDataType::TallyComponentVotesPayload => FileReadMode::Memory,
             VerifierTallyDataType::TallyComponentShufflePayload => FileReadMode::Memory,
@@ -329,8 +325,6 @@ impl From<&VerifierTallyDataType> for FileReadMode {
 impl From<&VerifierTallyDataType> for FileType {
     fn from(value: &VerifierTallyDataType) -> Self {
         match value {
-            VerifierTallyDataType::EVotingDecrypt => FileType::Xml,
-            VerifierTallyDataType::ECH0110 => FileType::Xml,
             VerifierTallyDataType::ECH0222 => FileType::Xml,
             VerifierTallyDataType::TallyComponentVotesPayload => FileType::Json,
             VerifierTallyDataType::TallyComponentShufflePayload => FileType::Json,

@@ -169,7 +169,7 @@ mod test {
     use super::*;
     use crate::config::test::{test_datasets_context_path, test_datasets_tally_path};
     use crate::data_structures::context::control_component_public_keys_payload::ControlComponentPublicKeysPayload;
-    use crate::data_structures::tally::ech_0110::ECH0110;
+    use crate::data_structures::tally::ech_0222::ECH0222;
     use crate::data_structures::ElectionEventContextPayload;
 
     #[test]
@@ -226,12 +226,12 @@ mod test {
     #[test]
     fn test_file_with_astrerix() {
         let location = test_datasets_tally_path();
-        let f = File::<ECH0110>::new(&location, None);
+        let f = File::<ECH0222>::new(&location, None);
         assert!(f.exists());
         assert_eq!(f.location(), location);
         assert_eq!(
             f.path(),
-            location.join("eCH-0110_v4-0_NE_20231124_TT05.xml")
+            location.join("eCH-0222_v4-0_NE_20231124_TT05.xml")
         );
     }
 

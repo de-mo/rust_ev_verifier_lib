@@ -21,10 +21,7 @@ use super::{
 };
 use crate::{
     data_structures::{
-        tally::{
-            e_voting_decrypt::EVotingDecrypt, ech_0110::ECH0110, ech_0222::ECH0222,
-            tally_component_votes_payload::TallyComponentVotesPayload,
-        },
+        tally::{ech_0222::ECH0222, tally_component_votes_payload::TallyComponentVotesPayload},
         ControlComponentBallotBoxPayload, ControlComponentShufflePayload,
         TallyComponentShufflePayload,
     },
@@ -79,14 +76,6 @@ impl MockTallyDirectory {
 
 impl TallyDirectoryTrait for MockTallyDirectory {
     type BBDirType = MockBBDirectory;
-
-    fn e_voting_decrypt_file(&self) -> &File<EVotingDecrypt> {
-        self.dir.e_voting_decrypt_file()
-    }
-
-    fn ech_0110_file(&self) -> &File<ECH0110> {
-        self.dir.ech_0110_file()
-    }
 
     fn ech_0222_file(&self) -> &File<ECH0222> {
         self.dir.ech_0222_file()
