@@ -19,6 +19,7 @@ use chrono::Local;
 use rust_ev_system_library::{
     chanel_security::stream::{get_stream_plaintext, StreamSymEncryptionError},
     rust_ev_crypto_primitives::prelude::{
+        argon2::Argon2idParameters,
         basic_crypto_functions::{sha256_stream, BasisCryptoError},
         ByteArray, EncodeTrait,
     },
@@ -322,6 +323,7 @@ impl EncryptedZipReader {
             &self.password,
             &ByteArray::default(),
             &mut target_writer,
+            Argon2idParameters::default(),
         )
         .map_err(|e| DatasetErrorImpl::GetStreamPlaintext {
             path: self.temp_zip.clone(),
