@@ -210,7 +210,7 @@ pub(super) fn verification_unimplemented<D: VerificationDirectoryTrait>(
     ));
 }
 
-/// Verify the signatue for a given object implementing [VerifiySignatureTrait]
+/// Verify the signatue for a given object implementing [VerifiySignatureSkeletonTrait]
 fn verify_signature_for_object<'a, T>(
     obj: &'a T,
     config: &'static VerifierConfig,

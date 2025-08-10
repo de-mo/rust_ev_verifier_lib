@@ -14,25 +14,20 @@
 // a copy of the GNU General Public License along with this program. If not, see
 // <https://www.gnu.org/licenses/>.
 
+use roxmltree::Document;
+
 use super::{
-    super::{
-        xml::{hashable::XMLFileHashable, SchemaKind},
-        DataStructureError, VerifierDataDecode,
-    },
+    super::{DataStructureError, VerifierDataDecode},
     VerifierTallyDataType,
 };
 use crate::{
-    data_structures::{DataStructureErrorImpl, VerifierDataToTypeTrait, VerifierDataType},
-    direct_trust::{CertificateAuthority, VerifiySignatureTrait},
+    data_structures::{VerifierDataToTypeTrait, VerifierDataType},
+    direct_trust::{CertificateAuthority, VerifiySignatureTrait, VerifiyXMLSignatureTrait},
 };
-use rust_ev_system_library::rust_ev_crypto_primitives::prelude::{
-    ByteArray, HashableMessage, RecursiveHashTrait,
-};
-use std::path::{Path, PathBuf};
 
 #[derive(Debug, Clone)]
 pub struct ECH0222 {
-    pub path: PathBuf,
+    pub data: String,
 }
 
 impl VerifierDataToTypeTrait for ECH0222 {
@@ -42,32 +37,29 @@ impl VerifierDataToTypeTrait for ECH0222 {
 }
 
 impl VerifierDataDecode for ECH0222 {
-    fn stream_xml(p: &Path) -> Result<Self, DataStructureError> {
+    fn decode_xml<'a>(doc: &'a Document<'a>) -> Result<Self, DataStructureError> {
         Ok(ECH0222 {
-            path: p.to_path_buf(),
+            data: doc.input_text().to_string(),
         })
     }
 }
 
-impl<'a> VerifiySignatureTrait<'a> for ECH0222 {
-    fn get_hashable(&'a self) -> Result<HashableMessage<'a>, DataStructureError> {
-        let hashable = XMLFileHashable::new(&self.path, &SchemaKind::Ech0222, "eCH-0222:extension");
-        let hash = hashable
-            .recursive_hash()
-            .map_err(|e| DataStructureErrorImpl::HashXML { source: e })?;
-        Ok(HashableMessage::Hashed(hash))
-    }
-
-    fn get_context_data(&self) -> Vec<HashableMessage<'a>> {
-        vec![HashableMessage::from("eCH 0222")]
-    }
-
+impl<'a> VerifiyXMLSignatureTrait<'a> for ECH0222 {
     fn get_certificate_authority(&self) -> Option<CertificateAuthority> {
         Some(CertificateAuthority::SdmTally)
     }
 
-    fn get_signature(&self) -> ByteArray {
-        todo!()
+    fn get_data_str(&self) -> &str {
+        &self.data
+    }
+}
+
+impl<'a> VerifiySignatureTrait<'a> for ECH0222 {
+    fn verifiy_signature(
+        &'a self,
+        keystore: &crate::direct_trust::Keystore,
+    ) -> Result<bool, crate::direct_trust::VerifySignatureError> {
+        self.verifiy_xml_signature(keystore)
     }
 }
 

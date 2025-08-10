@@ -17,17 +17,14 @@
 mod election;
 mod vote;
 
-use super::super::{
-    xml::{hashable::XMLFileHashable, xml_read_to_end_into_buffer, SchemaKind},
-    DataStructureError, VerifierDataDecode,
-};
+use super::super::{xml::xml_read_to_end_into_buffer, DataStructureError, VerifierDataDecode};
 use crate::{
     data_structures::{
         common_types::Signature,
         xml::{impl_iterator_for_tag_many_iter, TagManyIter, TagManyWithIterator},
         DataStructureErrorImpl, VerifierDataToTypeTrait, VerifierDataType,
     },
-    direct_trust::{CertificateAuthority, VerifiySignatureTrait},
+    direct_trust::{CertificateAuthority, VerifiySignatureTrait, VerifiyXMLSignatureTrait},
 };
 use chrono::NaiveDate;
 pub use election::{Candidate, Election, ElectionInformation, List, WriteInCandidate};
@@ -36,14 +33,14 @@ use quick_xml::{
     events::{BytesEnd, BytesStart, Event},
     Reader,
 };
-use rust_ev_system_library::rust_ev_crypto_primitives::prelude::{
-    ByteArray, HashableMessage, RecursiveHashTrait, VerifyDomainTrait,
-};
+use roxmltree::Document;
+use rust_ev_system_library::rust_ev_crypto_primitives::prelude::VerifyDomainTrait;
 use serde::Deserialize;
 use std::{
     fs::File,
     io::{BufRead, BufReader},
     path::{Path, PathBuf},
+    sync::Arc,
 };
 use tracing::error;
 pub use vote::{Answer, StandardQuestion, Vote};
@@ -62,7 +59,7 @@ const CONTEST_DATE_TAG: &str = "contestDate";
 
 #[derive(Clone, Debug)]
 pub struct ElectionEventConfiguration {
-    pub path: PathBuf,
+    pub data: Arc<String>,
     pub header: ConfigHeader,
     pub contest: Contest,
     pub authorizations: TagManyWithIterator<Authorization>,
@@ -85,7 +82,7 @@ pub struct ConfigHeader {
 
 #[derive(Clone, Debug)]
 pub struct Contest {
-    file_path: PathBuf,
+    data: Arc<String>,
     position_in_buffer: usize,
     pub votes: TagManyWithIterator<VoteInformation>,
     pub election_groups: TagManyWithIterator<ElectionGroupBallot>,
@@ -153,12 +150,9 @@ impl ElectionEventConfiguration {
 impl VerifyDomainTrait<String> for ElectionEventConfiguration {}
 
 impl VerifierDataDecode for ElectionEventConfiguration {
-    fn stream_xml(p: &Path) -> Result<Self, DataStructureError> {
-        let mut reader =
-            Reader::from_file(p).map_err(|e| DataStructureErrorImpl::ParseQuickXML {
-                msg: format!("Error creating xml reader for file {}", p.to_str().unwrap()),
-                source: e,
-            })?;
+    fn decode_xml<'a>(doc: &'a Document<'a>) -> Result<Self, DataStructureError> {
+        let data = Arc::new(doc.input_text().to_string());
+        let mut reader = Reader::from_str(data.as_str());
         let reader_config_mut = reader.config_mut();
         reader_config_mut.trim_text(true);
 
@@ -190,7 +184,7 @@ impl VerifierDataDecode for ElectionEventConfiguration {
                         config_header = Some(ConfigHeader::read_header_from_reader(&mut reader)?);
                     }
                     if e == BytesStart::new(CONTEST_TAG) {
-                        contest = Some(Contest::new(p, reader.buffer_position() as usize));
+                        contest = Some(Contest::new(&data, reader.buffer_position() as usize));
                         let mut buffer = vec![];
                         xml_read_to_end_into_buffer(&mut reader, CONTEST_TAG, &mut buffer)
                             .map_err(|e| DataStructureErrorImpl::ParseQuickXML {
@@ -200,7 +194,7 @@ impl VerifierDataDecode for ElectionEventConfiguration {
                     }
                     if e == BytesStart::new(AUTHORIZATIONS_TAG) {
                         authorizations = Some(TagManyWithIterator::<Authorization>::new(
-                            p,
+                            &data,
                             reader.buffer_position() as usize,
                             AUTHORIZATION_TAG,
                             AUTHORIZATIONS_TAG,
@@ -214,7 +208,7 @@ impl VerifierDataDecode for ElectionEventConfiguration {
                     }
                     if e == BytesStart::new(REGISTER_TAG) {
                         register = Some(TagManyWithIterator::<Voter>::new(
-                            p,
+                            &data,
                             reader.buffer_position() as usize,
                             VOTER_TAG,
                             REGISTER_TAG,
@@ -246,7 +240,7 @@ impl VerifierDataDecode for ElectionEventConfiguration {
             buf.clear();
         }
         Ok(Self {
-            path: p.to_path_buf(),
+            data,
             header: config_header.ok_or(DataStructureErrorImpl::XMLDataError(
                 "Header not found".to_string(),
             ))?,
@@ -285,18 +279,18 @@ impl ConfigHeader {
 }
 
 impl Contest {
-    pub fn new(path: &Path, position_in_buffer: usize) -> Self {
+    pub fn new(data: &Arc<String>, position_in_buffer: usize) -> Self {
         Self {
-            file_path: path.to_path_buf(),
+            data: data.clone(),
             position_in_buffer,
             votes: TagManyWithIterator::<VoteInformation>::new(
-                path,
+                &data,
                 position_in_buffer,
                 VOTE_INFORMATION_TAG,
                 CONTEST_TAG,
             ),
             election_groups: TagManyWithIterator::<ElectionGroupBallot>::new(
-                path,
+                &data,
                 position_in_buffer,
                 ELECTION_GROUP_BALLOT_TAG,
                 CONTEST_TAG,
@@ -304,16 +298,8 @@ impl Contest {
         }
     }
 
-    fn reader(&self) -> Result<Reader<BufReader<File>>, DataStructureError> {
-        let mut reader = Reader::from_file(&self.file_path).map_err(|e| {
-            DataStructureErrorImpl::ParseQuickXML {
-                msg: format!(
-                    "Error creating xml reader for file {}",
-                    self.file_path.to_str().unwrap()
-                ),
-                source: e,
-            }
-        })?;
+    fn reader(&self) -> Result<Reader<&[u8]>, DataStructureError> {
+        let mut reader = Reader::from_str(&self.data);
         reader.stream().consume(self.position_in_buffer);
         Ok(reader)
     }
@@ -482,25 +468,22 @@ impl Voter {
     }
 }
 
-impl VerifiySignatureTrait<'_> for ElectionEventConfiguration {
-    fn get_hashable(&self) -> Result<HashableMessage, DataStructureError> {
-        let hashable = XMLFileHashable::new(&self.path, &SchemaKind::Config, "signature");
-        let hash = hashable
-            .recursive_hash()
-            .map_err(|e| DataStructureErrorImpl::HashXML { source: e })?;
-        Ok(HashableMessage::Hashed(hash))
-    }
-
-    fn get_context_data(&self) -> Vec<HashableMessage> {
-        vec![HashableMessage::from("configuration")]
-    }
-
+impl VerifiyXMLSignatureTrait<'_> for ElectionEventConfiguration {
     fn get_certificate_authority(&self) -> Option<CertificateAuthority> {
         Some(CertificateAuthority::Canton)
     }
 
-    fn get_signature(&self) -> ByteArray {
-        self.signature.get_signature()
+    fn get_data_str(&self) -> &str {
+        &self.data
+    }
+}
+
+impl VerifiySignatureTrait<'_> for ElectionEventConfiguration {
+    fn verifiy_signature(
+        &'_ self,
+        keystore: &crate::direct_trust::Keystore,
+    ) -> Result<bool, crate::direct_trust::VerifySignatureError> {
+        self.verifiy_xml_signature(keystore)
     }
 }
 

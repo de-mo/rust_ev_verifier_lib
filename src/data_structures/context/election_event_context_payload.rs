@@ -22,10 +22,11 @@ use super::super::{
 use crate::{
     config::VerifierConfig,
     data_structures::{verifiy_domain_length_unique_id, VerifierDataType},
+    direct_trust::VerifiySignatureTrait,
 };
 use crate::{
     data_structures::VerifierDataToTypeTrait,
-    direct_trust::{CertificateAuthority, VerifiySignatureTrait},
+    direct_trust::{CertificateAuthority, VerifiyJSONSignatureTrait},
 };
 use chrono::NaiveDate;
 use chrono::NaiveDateTime;
@@ -360,7 +361,7 @@ impl<'a> From<&'a ElectionEventContextPayload> for HashableMessage<'a> {
     }
 }
 
-impl<'a> VerifiySignatureTrait<'a> for ElectionEventContextPayload {
+impl<'a> VerifiyJSONSignatureTrait<'a> for ElectionEventContextPayload {
     fn get_hashable(&'a self) -> Result<HashableMessage<'a>, DataStructureError> {
         Ok(HashableMessage::from(self))
     }
@@ -378,6 +379,15 @@ impl<'a> VerifiySignatureTrait<'a> for ElectionEventContextPayload {
 
     fn get_signature(&self) -> ByteArray {
         self.signature.get_signature()
+    }
+}
+
+impl<'a> VerifiySignatureTrait<'a> for ElectionEventContextPayload {
+    fn verifiy_signature(
+        &'a self,
+        keystore: &crate::direct_trust::Keystore,
+    ) -> Result<bool, crate::direct_trust::VerifySignatureError> {
+        self.verifiy_json_signature(keystore)
     }
 }
 

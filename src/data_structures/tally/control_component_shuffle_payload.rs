@@ -19,15 +19,16 @@ use super::VerifierTallyDataType;
 use super::{
     super::{
         common_types::{EncryptionParametersDef, Signature},
-        deserialize_seq_ciphertext, implement_trait_verifier_data_json_decode, DataStructureError,DataStructureErrorImpl,
-        VerifierDataDecode,
+        deserialize_seq_ciphertext, implement_trait_verifier_data_json_decode, DataStructureError,
+        DataStructureErrorImpl, VerifierDataDecode,
     },
     verifiable_shuffle::verifiy_domain_for_verifiable_shuffle,
 };
 use crate::data_structures::{VerifierDataToTypeTrait, VerifierDataType};
+use crate::direct_trust::VerifiySignatureTrait;
 use crate::{
     data_structures::common_types::DecryptionProof,
-    direct_trust::{CertificateAuthority, VerifiySignatureTrait},
+    direct_trust::{CertificateAuthority, VerifiyJSONSignatureTrait},
 };
 use rust_ev_system_library::rust_ev_crypto_primitives::prelude::DomainVerifications;
 use rust_ev_system_library::rust_ev_crypto_primitives::prelude::{
@@ -109,7 +110,7 @@ impl<'a> From<&'a VerifiableDecryptions> for HashableMessage<'a> {
     }
 }
 
-impl<'a> VerifiySignatureTrait<'a> for ControlComponentShufflePayload {
+impl<'a> VerifiyJSONSignatureTrait<'a> for ControlComponentShufflePayload {
     fn get_hashable(&'a self) -> Result<HashableMessage<'a>, DataStructureError> {
         Ok(HashableMessage::from(self))
     }
@@ -129,6 +130,15 @@ impl<'a> VerifiySignatureTrait<'a> for ControlComponentShufflePayload {
 
     fn get_signature(&self) -> ByteArray {
         self.signature.get_signature()
+    }
+}
+
+impl<'a> VerifiySignatureTrait<'a> for ControlComponentShufflePayload {
+    fn verifiy_signature(
+        &'a self,
+        keystore: &crate::direct_trust::Keystore,
+    ) -> Result<bool, crate::direct_trust::VerifySignatureError> {
+        self.verifiy_json_signature(keystore)
     }
 }
 

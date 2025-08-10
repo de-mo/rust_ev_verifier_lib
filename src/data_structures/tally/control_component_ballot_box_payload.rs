@@ -17,7 +17,8 @@
 use super::{
     super::{
         common_types::{CiphertextDef, EncryptionParametersDef, Signature},
-        implement_trait_verifier_data_json_decode, DataStructureError, VerifierDataDecode,DataStructureErrorImpl
+        implement_trait_verifier_data_json_decode, DataStructureError, DataStructureErrorImpl,
+        VerifierDataDecode,
     },
     VerifierTallyDataType,
 };
@@ -26,7 +27,9 @@ use crate::{
         common_types::{DecryptionProof, SchnorrProof},
         VerifierDataToTypeTrait, VerifierDataType,
     },
-    direct_trust::{CertificateAuthority, VerifiySignatureTrait},
+    direct_trust::{
+        CertificateAuthority, VerifiyJSONSignatureTrait, VerifiySignatureTrait,
+    },
 };
 use rust_ev_system_library::rust_ev_crypto_primitives::prelude::{
     elgamal::{Ciphertext, EncryptionParameters},
@@ -121,7 +124,7 @@ impl<'a> From<&'a ContextIds> for HashableMessage<'a> {
     }
 }
 
-impl<'a> VerifiySignatureTrait<'a> for ControlComponentBallotBoxPayload {
+impl<'a> VerifiyJSONSignatureTrait<'a> for ControlComponentBallotBoxPayload {
     fn get_hashable(&'a self) -> Result<HashableMessage<'a>, DataStructureError> {
         Ok(HashableMessage::from(self))
     }
@@ -141,6 +144,15 @@ impl<'a> VerifiySignatureTrait<'a> for ControlComponentBallotBoxPayload {
 
     fn get_signature(&self) -> ByteArray {
         self.signature.get_signature()
+    }
+}
+
+impl<'a> VerifiySignatureTrait<'a> for ControlComponentBallotBoxPayload {
+    fn verifiy_signature(
+        &'a self,
+        keystore: &crate::direct_trust::Keystore,
+    ) -> Result<bool, crate::direct_trust::VerifySignatureError> {
+        self.verifiy_json_signature(keystore)
     }
 }
 

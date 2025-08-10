@@ -17,11 +17,11 @@
 use super::super::{
     common_types::{EncryptionParametersDef, SchnorrProof, Signature},
     deserialize_seq_string_base64_to_seq_integer, implement_trait_verifier_data_json_decode,
-    DataStructureError, VerifierDataDecode,DataStructureErrorImpl
+    DataStructureError, DataStructureErrorImpl, VerifierDataDecode,
 };
 use crate::{
     data_structures::{VerifierDataToTypeTrait, VerifierDataType},
-    direct_trust::{CertificateAuthority, VerifiySignatureTrait},
+    direct_trust::{CertificateAuthority, VerifiyJSONSignatureTrait, VerifiySignatureTrait},
 };
 use rust_ev_system_library::rust_ev_crypto_primitives::prelude::{
     elgamal::EncryptionParameters, ByteArray, HashableMessage, Integer, VerifyDomainTrait,
@@ -58,7 +58,7 @@ impl<'a> From<&'a ControlComponentPublicKeysPayload> for HashableMessage<'a> {
     }
 }
 
-impl<'a> VerifiySignatureTrait<'a> for ControlComponentPublicKeysPayload {
+impl<'a> VerifiyJSONSignatureTrait<'a> for ControlComponentPublicKeysPayload {
     fn get_hashable(&'a self) -> Result<HashableMessage<'a>, DataStructureError> {
         Ok(HashableMessage::from(self))
     }
@@ -77,6 +77,15 @@ impl<'a> VerifiySignatureTrait<'a> for ControlComponentPublicKeysPayload {
 
     fn get_signature(&self) -> ByteArray {
         self.signature.get_signature()
+    }
+}
+
+impl<'a> VerifiySignatureTrait<'a> for ControlComponentPublicKeysPayload {
+    fn verifiy_signature(
+        &'a self,
+        keystore: &crate::direct_trust::Keystore,
+    ) -> Result<bool, crate::direct_trust::VerifySignatureError> {
+        self.verifiy_json_signature(keystore)
     }
 }
 

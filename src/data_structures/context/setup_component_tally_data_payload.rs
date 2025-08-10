@@ -17,11 +17,14 @@
 use super::super::{
     common_types::{EncryptionParametersDef, Signature},
     deserialize_seq_seq_string_base64_to_seq_seq_integer,
-    implement_trait_verifier_data_json_decode, DataStructureError, VerifierDataDecode,DataStructureErrorImpl
+    implement_trait_verifier_data_json_decode, DataStructureError, DataStructureErrorImpl,
+    VerifierDataDecode,
 };
 use crate::{
     data_structures::{VerifierDataToTypeTrait, VerifierDataType},
-    direct_trust::{CertificateAuthority, VerifiySignatureTrait},
+    direct_trust::{
+        CertificateAuthority, VerifiyJSONSignatureTrait, VerifiySignatureTrait,
+    },
 };
 use rust_ev_system_library::rust_ev_crypto_primitives::prelude::Integer;
 use rust_ev_system_library::rust_ev_crypto_primitives::prelude::{
@@ -67,7 +70,7 @@ impl<'a> From<&'a SetupComponentTallyDataPayload> for HashableMessage<'a> {
     }
 }
 
-impl<'a> VerifiySignatureTrait<'a> for SetupComponentTallyDataPayload {
+impl<'a> VerifiyJSONSignatureTrait<'a> for SetupComponentTallyDataPayload {
     fn get_hashable(&'a self) -> Result<HashableMessage<'a>, DataStructureError> {
         Ok(HashableMessage::from(self))
     }
@@ -86,6 +89,15 @@ impl<'a> VerifiySignatureTrait<'a> for SetupComponentTallyDataPayload {
 
     fn get_signature(&self) -> ByteArray {
         self.signature.get_signature()
+    }
+}
+
+impl<'a> VerifiySignatureTrait<'a> for SetupComponentTallyDataPayload {
+    fn verifiy_signature(
+        &'a self,
+        keystore: &crate::direct_trust::Keystore,
+    ) -> Result<bool, crate::direct_trust::VerifySignatureError> {
+        self.verifiy_json_signature(keystore)
     }
 }
 

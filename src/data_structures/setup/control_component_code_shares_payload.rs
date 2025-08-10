@@ -18,13 +18,16 @@ use super::{
     super::{
         common_types::{CiphertextDef, EncryptionParametersDef, SchnorrProof, Signature},
         deserialize_seq_string_base64_to_seq_integer, implement_trait_verifier_data_json_decode,
-        DataStructureError, VerifierDataDecode,DataStructureErrorImpl
+        DataStructureError, DataStructureErrorImpl, VerifierDataDecode,
     },
     VerifierSetupDataType,
 };
 use crate::{
     data_structures::{VerifierDataToTypeTrait, VerifierDataType},
-    direct_trust::{CertificateAuthority, Keystore, VerifiySignatureTrait, VerifySignatureError},
+    direct_trust::{
+        CertificateAuthority, Keystore, VerifiyJSONSignatureTrait, VerifiySignatureTrait,
+        VerifySignatureError,
+    },
 };
 use rust_ev_system_library::rust_ev_crypto_primitives::prelude::{elgamal::Ciphertext, Integer};
 use rust_ev_system_library::rust_ev_crypto_primitives::prelude::{
@@ -157,7 +160,7 @@ impl<'a> From<&'a ControlComponentCodeShare> for HashableMessage<'a> {
     }
 }
 
-impl<'a> VerifiySignatureTrait<'a> for ControlComponentCodeSharesPayloadInner {
+impl<'a> VerifiyJSONSignatureTrait<'a> for ControlComponentCodeSharesPayloadInner {
     fn get_hashable(&'a self) -> Result<HashableMessage<'a>, DataStructureError> {
         Ok(HashableMessage::from(self))
     }
@@ -180,7 +183,16 @@ impl<'a> VerifiySignatureTrait<'a> for ControlComponentCodeSharesPayloadInner {
     }
 }
 
-impl<'a> VerifiySignatureTrait<'a> for ControlComponentCodeSharesPayload {
+impl<'a> VerifiySignatureTrait<'a> for ControlComponentCodeSharesPayloadInner {
+    fn verifiy_signature(
+        &'a self,
+        keystore: &crate::direct_trust::Keystore,
+    ) -> Result<bool, crate::direct_trust::VerifySignatureError> {
+        self.verifiy_json_signature(keystore)
+    }
+}
+
+impl<'a> VerifiyJSONSignatureTrait<'a> for ControlComponentCodeSharesPayload {
     fn get_hashable(&'a self) -> Result<HashableMessage<'a>, DataStructureError> {
         unimplemented!()
     }
@@ -195,6 +207,15 @@ impl<'a> VerifiySignatureTrait<'a> for ControlComponentCodeSharesPayload {
 
     fn get_signature(&self) -> ByteArray {
         unimplemented!()
+    }
+}
+
+impl<'a> VerifiySignatureTrait<'a> for ControlComponentCodeSharesPayload {
+    fn verifiy_signature(
+        &'a self,
+        keystore: &crate::direct_trust::Keystore,
+    ) -> Result<bool, crate::direct_trust::VerifySignatureError> {
+        self.verifiy_json_signature(keystore)
     }
 
     fn verify_signatures(&'a self, keystore: &Keystore) -> Vec<Result<bool, VerifySignatureError>> {

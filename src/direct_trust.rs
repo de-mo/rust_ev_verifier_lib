@@ -15,18 +15,23 @@
 // <https://www.gnu.org/licenses/>.
 
 use crate::data_structures::DataStructureError;
-use rust_ev_system_library::rust_ev_crypto_primitives::prelude::{
-    basic_crypto_functions::BasisCryptoError,
-    direct_trust::{DirectTrustError as BasisDirectTrustError, Keystore as BasisKeystore},
-    signature::{sign, verify_signature, SignatureError},
-    ByteArray, HashableMessage,
+use rust_ev_system_library::{
+    chanel_security::xml::{verify_xml_signature, XMLSignatureError},
+    rust_ev_crypto_primitives::prelude::{
+        basic_crypto_functions::{BasisCryptoError, PublicKey},
+        direct_trust::{
+            DirectTrustCertificate, DirectTrustError as BasisDirectTrustError,
+            Keystore as BasisKeystore,
+        },
+        signature::{sign, verify_signature, SignatureError},
+        ByteArray, HashableMessage,
+    },
 };
 use std::{
     collections::HashMap,
-    fmt::Display,
     path::{Path, PathBuf},
-    slice::Iter,
 };
+use strum::{AsRefStr, EnumIter, EnumString, IntoEnumIterator};
 use thiserror::Error;
 
 pub struct Keystore(pub(crate) BasisKeystore);
@@ -52,6 +57,11 @@ enum DirectTrustErrorImpl {
     PublicCertificate {
         ca: String,
         source: Box<BasisDirectTrustError>,
+    },
+    #[error("Error getting the public key for CA {ca}")]
+    PublicKey {
+        ca: String,
+        source: BasisCryptoError,
     },
     #[error("Error calculating fingerprint of public certificate for CA {ca}")]
     FingerPrint {
@@ -87,22 +97,37 @@ enum VerifySignatureErrorImpl {
         msg: String,
         source: Box<SignatureError>,
     },
+    #[error("Signature error in {msg}")]
+    XMLSignatureError {
+        msg: String,
+        source: Box<XMLSignatureError>,
+    },
     #[error("Error getting hashable in {function}")]
     GetHashable {
         function: &'static str,
         source: Box<DataStructureError>,
     },
+    #[error("Error getting the public_key for {ca}")]
+    DirectTrust {
+        ca: String,
+        source: Box<DirectTrustError>,
+    },
 }
 
 /// List of valide Certificate authorities
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, AsRefStr, EnumString, EnumIter)]
+#[strum(serialize_all = "snake_case")]
 pub enum CertificateAuthority {
     Canton,
     SdmConfig,
     SdmTally,
+    #[strum(serialize = "control_component_1")]
     ControlComponent1,
+    #[strum(serialize = "control_component_2")]
     ControlComponent2,
+    #[strum(serialize = "control_component_3")]
     ControlComponent3,
+    #[strum(serialize = "control_component_4")]
     ControlComponent4,
 }
 
@@ -116,22 +141,9 @@ impl CertificateAuthority {
             _ => None,
         }
     }
-
-    pub fn iter() -> Iter<'static, CertificateAuthority> {
-        static AUTHORITIES: [CertificateAuthority; 7] = [
-            CertificateAuthority::Canton,
-            CertificateAuthority::SdmConfig,
-            CertificateAuthority::SdmTally,
-            CertificateAuthority::ControlComponent1,
-            CertificateAuthority::ControlComponent2,
-            CertificateAuthority::ControlComponent3,
-            CertificateAuthority::ControlComponent4,
-        ];
-        AUTHORITIES.iter()
-    }
 }
 
-impl Display for CertificateAuthority {
+/*impl Display for CertificateAuthority {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
@@ -147,7 +159,7 @@ impl Display for CertificateAuthority {
             }
         )
     }
-}
+}*/
 
 fn find_unique_file_with_extension(
     path: &Path,
@@ -214,26 +226,67 @@ impl Keystore {
     ) -> Result<HashMap<CertificateAuthority, ByteArray>, DirectTrustError> {
         let mut res = HashMap::new();
         for ca in CertificateAuthority::iter() {
-            res.insert(*ca, self.fingerprint(*ca)?);
+            res.insert(ca, self.fingerprint(ca)?);
         }
         Ok(res)
     }
 
     pub fn fingerprint(&self, ca: CertificateAuthority) -> Result<ByteArray, DirectTrustError> {
         self.0
-            .public_certificate(&ca.to_string())
+            .public_certificate(ca.as_ref())
             .map_err(|e| DirectTrustErrorImpl::PublicCertificate {
-                ca: ca.to_string(),
+                ca: ca.as_ref().to_string(),
                 source: Box::new(e),
             })
             .map_err(DirectTrustError::from)?
             .signing_certificate()
             .digest()
             .map_err(|e| DirectTrustErrorImpl::FingerPrint {
-                ca: ca.to_string(),
+                ca: ca.as_ref().to_string(),
                 source: e,
             })
             .map_err(DirectTrustError::from)
+    }
+
+    pub fn public_certificate(
+        &self,
+        ca: CertificateAuthority,
+    ) -> Result<DirectTrustCertificate, DirectTrustError> {
+        self.0
+            .public_certificate(ca.as_ref())
+            .map_err(|e| DirectTrustErrorImpl::PublicCertificate {
+                ca: ca.as_ref().to_string(),
+                source: Box::new(e),
+            })
+            .map_err(DirectTrustError)
+    }
+
+    pub fn public_key(&self, ca: CertificateAuthority) -> Result<PublicKey, DirectTrustError> {
+        self.public_certificate(ca)?
+            .signing_certificate()
+            .public_key()
+            .map_err(|e| DirectTrustErrorImpl::PublicKey {
+                ca: ca.as_ref().to_string(),
+                source: e,
+            })
+            .map_err(DirectTrustError)
+    }
+}
+
+/// Trait that must be implemented for each object implementing a signature to be verified (or a subtrait)
+pub trait VerifiySignatureTrait<'a>
+where
+    Self: 'a,
+{
+    /// Verfiy the signature according to the specifications of Verifier
+    fn verifiy_signature(&'a self, keystore: &Keystore) -> Result<bool, VerifySignatureError>;
+
+    /// Verify signatures of an array element
+    ///
+    /// Per default return an array of one element containing the result of the element verified
+    /// The method must be rewritten for a array of elements
+    fn verify_signatures(&'a self, keystore: &Keystore) -> Vec<Result<bool, VerifySignatureError>> {
+        vec![self.verifiy_signature(keystore)]
     }
 }
 
@@ -244,7 +297,7 @@ impl Keystore {
 /// - [VerifiySignatureTrait::get_context_data] Get the context data as [HashableMessage] for the object, according to the specifications
 /// - [VerifiySignatureTrait::get_certificate_authority] Certificate Authority of the certificate to fin the certificate in the keystore
 /// - [VerifiySignatureTrait::get_signature] Get the signature of the object
-pub trait VerifiySignatureTrait<'a>
+pub trait VerifiyJSONSignatureTrait<'a>
 where
     Self: 'a,
 {
@@ -269,7 +322,7 @@ where
     }
 
     /// Verfiy the signature according to the specifications of Verifier
-    fn verifiy_signature(&'a self, keystore: &Keystore) -> Result<bool, VerifySignatureError> {
+    fn verifiy_json_signature(&'a self, keystore: &Keystore) -> Result<bool, VerifySignatureError> {
         let ca = match self.get_certificate_authority() {
             Some(ca) => ca,
             None => return Err(VerifySignatureError::from(VerifySignatureErrorImpl::NoCA)),
@@ -282,7 +335,7 @@ where
                 })?;
         verify_signature(
             &keystore.0,
-            &ca.to_string(),
+            ca.as_ref(),
             &hashable_message,
             &self.get_context_hashable(),
             &self.get_signature(),
@@ -311,52 +364,138 @@ where
             })
             .map_err(VerifySignatureError::from)
     }
+}
 
-    /// Verify signatures of an array element
-    ///
-    /// Per default return an array of one element containing the result of the element verified
-    /// The method must be rewritten for a array of elements
-    fn verify_signatures(&'a self, keystore: &Keystore) -> Vec<Result<bool, VerifySignatureError>> {
-        vec![self.verifiy_signature(keystore)]
+/// Trait that must be implemented for each object implementing a signature to be verified
+///
+/// The following function are to be implemented for the object to make it running:
+/// - [VerifiySignatureTrait::get_certificate_authority] Certificate Authority of the certificate to fin the certificate in the keystore
+/// - [VerifiySignatureTrait::get_data_str] Data as [&str]
+pub trait VerifiyXMLSignatureTrait<'a>
+where
+    Self: 'a,
+{
+    /// Get the Certificate Authority to the specifications
+    fn get_certificate_authority(&self) -> Option<CertificateAuthority>;
+
+    /// Get payload to str
+    fn get_data_str(&self) -> &str;
+
+    /// Verfiy the signature according to the specifications of Verifier
+    fn verifiy_xml_signature(&'a self, keystore: &Keystore) -> Result<bool, VerifySignatureError> {
+        let ca = match self.get_certificate_authority() {
+            Some(ca) => ca,
+            None => return Err(VerifySignatureError::from(VerifySignatureErrorImpl::NoCA)),
+        };
+        let public_key =
+            keystore
+                .public_key(ca)
+                .map_err(|e| VerifySignatureErrorImpl::DirectTrust {
+                    ca: ca.as_ref().to_string(),
+                    source: Box::new(e),
+                })?;
+        Ok(verify_xml_signature(self.get_data_str(), &public_key)
+            .map_err(|e| VerifySignatureErrorImpl::XMLSignatureError {
+                msg: "Error verifying the signature".to_string(),
+                source: Box::new(e),
+            })?
+            .is_ok())
     }
 }
 
 #[cfg(test)]
 mod test {
-    use crate::config::test::CONFIG_TEST;
+    use std::str::FromStr;
 
     use super::*;
+    use crate::config::test::CONFIG_TEST;
+
+    #[test]
+    fn test_as_ref() {
+        assert_eq!(CertificateAuthority::Canton.as_ref(), "canton");
+        assert_eq!(CertificateAuthority::SdmConfig.as_ref(), "sdm_config");
+        assert_eq!(CertificateAuthority::SdmTally.as_ref(), "sdm_tally");
+        assert_eq!(
+            CertificateAuthority::ControlComponent1.as_ref(),
+            "control_component_1"
+        );
+        assert_eq!(
+            CertificateAuthority::ControlComponent2.as_ref(),
+            "control_component_2"
+        );
+        assert_eq!(
+            CertificateAuthority::ControlComponent3.as_ref(),
+            "control_component_3"
+        );
+        assert_eq!(
+            CertificateAuthority::ControlComponent4.as_ref(),
+            "control_component_4"
+        );
+    }
+
+    #[test]
+    fn test_from_str() {
+        assert_eq!(
+            CertificateAuthority::from_str("canton").unwrap(),
+            CertificateAuthority::Canton
+        );
+        assert_eq!(
+            CertificateAuthority::from_str("sdm_config").unwrap(),
+            CertificateAuthority::SdmConfig
+        );
+        assert_eq!(
+            CertificateAuthority::from_str("sdm_tally").unwrap(),
+            CertificateAuthority::SdmTally
+        );
+        assert_eq!(
+            CertificateAuthority::from_str("control_component_1").unwrap(),
+            CertificateAuthority::ControlComponent1
+        );
+        assert_eq!(
+            CertificateAuthority::from_str("control_component_2").unwrap(),
+            CertificateAuthority::ControlComponent2
+        );
+        assert_eq!(
+            CertificateAuthority::from_str("control_component_3").unwrap(),
+            CertificateAuthority::ControlComponent3
+        );
+        assert_eq!(
+            CertificateAuthority::from_str("control_component_4").unwrap(),
+            CertificateAuthority::ControlComponent4
+        );
+        assert!(CertificateAuthority::from_str("toto").is_err(),);
+    }
 
     #[test]
     fn test_create() {
         let dt = CONFIG_TEST.keystore().unwrap();
         assert!(dt
             .0
-            .public_certificate(&CertificateAuthority::Canton.to_string())
+            .public_certificate(CertificateAuthority::Canton.as_ref())
             .is_ok());
         assert!(dt
             .0
-            .public_certificate(&CertificateAuthority::SdmConfig.to_string())
+            .public_certificate(CertificateAuthority::SdmConfig.as_ref())
             .is_ok());
         assert!(dt
             .0
-            .public_certificate(&CertificateAuthority::SdmTally.to_string())
+            .public_certificate(CertificateAuthority::SdmTally.as_ref())
             .is_ok());
         assert!(dt
             .0
-            .public_certificate(&CertificateAuthority::ControlComponent1.to_string())
+            .public_certificate(CertificateAuthority::ControlComponent1.as_ref())
             .is_ok());
         assert!(dt
             .0
-            .public_certificate(&CertificateAuthority::ControlComponent2.to_string())
+            .public_certificate(CertificateAuthority::ControlComponent2.as_ref())
             .is_ok());
         assert!(dt
             .0
-            .public_certificate(&CertificateAuthority::ControlComponent3.to_string())
+            .public_certificate(CertificateAuthority::ControlComponent3.as_ref())
             .is_ok());
         assert!(dt
             .0
-            .public_certificate(&CertificateAuthority::ControlComponent4.to_string())
+            .public_certificate(CertificateAuthority::ControlComponent4.as_ref())
             .is_ok());
     }
 }

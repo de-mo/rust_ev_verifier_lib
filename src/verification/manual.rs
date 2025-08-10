@@ -149,7 +149,7 @@ impl<D: VerificationDirectoryTrait> ManualVerificationsForAllPeriod<D> {
             .fingerprints()
             .map_err(|e| VerificationErrorImpl::FingerprintsNewAll { source: e })?
             .iter()
-            .map(|(k, v)| (k.to_string(), v.base16_encode().unwrap()))
+            .map(|(k, v)| (k.as_ref().to_string(), v.base16_encode().unwrap()))
             .collect::<HashMap<_, _>>();
         let config_dir = directory.context();
         let ee_config = config_dir.election_event_configuration().map_err(|e| {
