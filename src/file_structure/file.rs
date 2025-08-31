@@ -17,7 +17,6 @@
 use super::{FileReadMode, FileStructureError, FileStructureErrorImpl, FileType, GetFileNameTrait};
 use crate::data_structures::{VerifierDataDecode, VerifierDataToTypeTrait, VerifierDataType};
 use glob::glob;
-use roxmltree::Document;
 use std::{
     path::{Path, PathBuf},
     sync::{Arc, OnceLock},
@@ -127,21 +126,13 @@ impl<D: VerifierDataDecode + VerifierDataToTypeTrait> File<D> {
                             source: Box::new(e),
                         })
                         .map_err(FileStructureError::from),
-                    FileType::Xml => {
-                        let doc = Document::parse(&s).map_err(|e| {
-                            FileStructureErrorImpl::ParseRoXML {
-                                path: self.path(),
-                                source: e,
-                            }
-                        })?;
-                        D::decode_xml(&doc)
-                            .map_err(|e| FileStructureErrorImpl::ReadDataStructure {
-                                msg: "Decoding xml",
-                                path: self.path(),
-                                source: Box::new(e),
-                            })
-                            .map_err(FileStructureError::from)
-                    }
+                    FileType::Xml => D::decode_xml(s)
+                        .map_err(|e| FileStructureErrorImpl::ReadDataStructure {
+                            msg: "Decoding xml",
+                            path: self.path(),
+                            source: Box::new(e),
+                        })
+                        .map_err(FileStructureError::from),
                 }
             }
             FileReadMode::Streaming => match file_type {

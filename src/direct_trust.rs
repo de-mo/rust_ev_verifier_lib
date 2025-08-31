@@ -30,6 +30,8 @@ use rust_ev_system_library::{
 use std::{
     collections::HashMap,
     path::{Path, PathBuf},
+    rc::Rc,
+    sync::Arc,
 };
 use strum::{AsRefStr, EnumIter, EnumString, IntoEnumIterator};
 use thiserror::Error;
@@ -92,6 +94,8 @@ pub struct VerifySignatureError(#[from] VerifySignatureErrorImpl);
 enum VerifySignatureErrorImpl {
     #[error("No certificate authority given")]
     NoCA,
+    #[error("The raw string was already parsed an does not exist. Please verify signature without parsing the XML")]
+    XMLAlreadyParsed,
     #[error("Signature error in {msg}")]
     SignatureError {
         msg: String,
@@ -379,7 +383,7 @@ where
     fn get_certificate_authority(&self) -> Option<CertificateAuthority>;
 
     /// Get payload to str
-    fn get_data_str(&self) -> &str;
+    fn get_data_str(&self) -> Option<Arc<String>>;
 
     /// Verfiy the signature according to the specifications of Verifier
     fn verifiy_xml_signature(&'a self, keystore: &Keystore) -> Result<bool, VerifySignatureError> {
@@ -394,12 +398,17 @@ where
                     ca: ca.as_ref().to_string(),
                     source: Box::new(e),
                 })?;
-        Ok(verify_xml_signature(self.get_data_str(), &public_key)
-            .map_err(|e| VerifySignatureErrorImpl::XMLSignatureError {
-                msg: "Error verifying the signature".to_string(),
-                source: Box::new(e),
-            })?
-            .is_ok())
+        Ok(verify_xml_signature(
+            self.get_data_str()
+                .ok_or(VerifySignatureErrorImpl::XMLAlreadyParsed)?
+                .as_str(),
+            &public_key,
+        )
+        .map_err(|e| VerifySignatureErrorImpl::XMLSignatureError {
+            msg: "Error verifying the signature".to_string(),
+            source: Box::new(e),
+        })?
+        .is_ok())
     }
 }
 

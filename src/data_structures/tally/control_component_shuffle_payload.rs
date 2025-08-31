@@ -36,6 +36,7 @@ use rust_ev_system_library::rust_ev_crypto_primitives::prelude::{
     ByteArray, HashableMessage, VerifyDomainTrait,
 };
 use serde::Deserialize;
+use std::sync::Arc;
 
 #[derive(Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]

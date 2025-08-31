@@ -14,7 +14,7 @@
 // a copy of the GNU General Public License along with this program. If not, see
 // <https://www.gnu.org/licenses/>.
 
-use roxmltree::Document;
+use std::{rc::Rc, sync::Arc};
 
 use super::{
     super::{DataStructureError, VerifierDataDecode},
@@ -27,7 +27,7 @@ use crate::{
 
 #[derive(Debug, Clone)]
 pub struct ECH0222 {
-    pub data: String,
+    pub data: Arc<String>,
 }
 
 impl VerifierDataToTypeTrait for ECH0222 {
@@ -37,10 +37,8 @@ impl VerifierDataToTypeTrait for ECH0222 {
 }
 
 impl VerifierDataDecode for ECH0222 {
-    fn decode_xml<'a>(doc: &'a Document<'a>) -> Result<Self, DataStructureError> {
-        Ok(ECH0222 {
-            data: doc.input_text().to_string(),
-        })
+    fn decode_xml<'a>(s: String) -> Result<Self, DataStructureError> {
+        Ok(ECH0222 { data: Arc::new(s) })
     }
 }
 
@@ -49,8 +47,8 @@ impl<'a> VerifiyXMLSignatureTrait<'a> for ECH0222 {
         Some(CertificateAuthority::SdmTally)
     }
 
-    fn get_data_str(&self) -> &str {
-        &self.data
+    fn get_data_str(&self) -> Option<Arc<String>> {
+        Some(self.data.clone())
     }
 }
 

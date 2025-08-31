@@ -157,8 +157,10 @@ impl<D: VerificationDirectoryTrait> ManualVerificationsForAllPeriod<D> {
                 source: Box::new(e),
             }
         })?;
-        let manual_inputs = ManuelVerificationInputFromConfiguration::try_from(ee_config.as_ref())
-            .map_err(|e| VerificationErrorImpl::VerifInputsNewAll { source: e })?;
+        let manual_inputs = ManuelVerificationInputFromConfiguration::try_from(
+            ee_config.as_ref().unwrap_data().as_ref(),
+        )
+        .map_err(|e| VerificationErrorImpl::VerifInputsNewAll { source: e })?;
         Ok(Self {
             verification_directory: directory.clone(),
             direct_trust_certificate_fingerprints: fingerprints,

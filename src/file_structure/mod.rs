@@ -250,7 +250,7 @@ impl From<&VerifierContextDataType> for FileReadMode {
             VerifierContextDataType::SetupComponentPublicKeysPayload => FileReadMode::Memory,
             VerifierContextDataType::ControlComponentPublicKeysPayload => FileReadMode::Memory,
             VerifierContextDataType::SetupComponentTallyDataPayload => FileReadMode::Memory,
-            VerifierContextDataType::ElectionEventConfiguration => FileReadMode::Streaming,
+            VerifierContextDataType::ElectionEventConfiguration => FileReadMode::Memory,
         }
     }
 }

@@ -53,6 +53,7 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
             return;
         }
     };
+    let ee_configuration_data = ee_configuration.unwrap_data();
 
     // Verification 1
     result.append_with_context(
@@ -62,7 +63,10 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
 
     // Verifications 2 and 3
     result.append_with_context(
-        &verification_2_3_same_than_xml(&ee_c_paylod.election_event_context, &ee_configuration),
+        &verification_2_3_same_than_xml(
+            &ee_c_paylod.election_event_context,
+            ee_configuration_data.as_ref(),
+        ),
         "Verification 2 and 3 (consistent to xml)",
     );
 }

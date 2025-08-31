@@ -40,15 +40,7 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
         .election_event_context
         .verification_card_set_contexts;
     let total_voter = match context_dir.election_event_configuration() {
-        Ok(o) => match o.register.iter() {
-            Ok(it) => it.count(),
-            Err(e) => {
-                result.push(
-                    VerificationEvent::new_error_from_error(&e).add_context("Error iterating over the voters"),
-                );
-                return;
-            }
-        },
+        Ok(o) => o.unwrap_data().register.len(),
         Err(e) => {
             result.push(
                 VerificationEvent::new_error_from_error(&e)

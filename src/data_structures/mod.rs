@@ -41,45 +41,31 @@ pub use self::{
 use crate::config::VerifierConfig;
 use chrono::NaiveDateTime;
 use common_types::CiphertextDef;
-use quick_xml::{DeError as QuickXmDeError, Error as QuickXmlError};
-use roxmltree::Document;
+use roxmltree::Error as RoXmlTreeError;
 use rust_ev_system_library::rust_ev_crypto_primitives::prelude::{elgamal::Ciphertext, Integer};
 use rust_ev_system_library::rust_ev_crypto_primitives::prelude::{ByteArray, DecodeTrait, Hexa};
 use serde::{
     de::{Deserialize as DeDeserialize, Deserializer, Error as SerdeError},
     Deserialize,
 };
-use std::path::Path;
+use std::{path::Path, sync::Arc};
 use thiserror::Error;
-use xml::XMLError;
 
-#[derive(Error, Debug)]
+#[derive(Error, Debug, Clone)]
 #[error(transparent)]
 pub struct DataStructureError(#[from] DataStructureErrorImpl);
 
-#[derive(Error, Debug)]
+#[derive(Error, Debug, Clone)]
 enum DataStructureErrorImpl {
     #[error("Not implemented: {0}")]
     NotImplemented(&'static str),
     #[error("Error parsing json {msg}")]
     ParseJSON {
         msg: String,
-        source: serde_json::Error,
+        source: Arc<serde_json::Error>,
     },
     #[error("Error parsing xml {msg} -> caused by: {source}")]
-    ParseQuickXML { msg: String, source: QuickXmlError },
-    #[error("Error parsing xml {msg} -> caused by: {source}")]
-    ParseQuickXMLDE { msg: String, source: QuickXmDeError },
-    #[error("Data error {0}")]
-    XMLDataError(String),
-    #[error("XMLError hashing")]
-    HashXML { source: XMLError },
-    /*
-    #[error("IO error {msg} -> caused by: {source}")]
-    IO { msg: String, source: std::io::Error },
-    #[error("Error parsing xml {msg} -> caused by: {source}")]
     ParseRoXML { msg: String, source: RoXmlTreeError },
-     */
 }
 
 /// The type VerifierDataType implement an option between
@@ -110,7 +96,7 @@ pub trait VerifierDataDecode: Sized {
     /// # Return
     /// The decoded data or [DataStructureError] if something wrong, e.g. if it is not allowed, or if an error
     /// occured during the decoding
-    fn decode_xml<'a>(_: &'a Document<'a>) -> Result<Self, DataStructureError> {
+    fn decode_xml(_: String) -> Result<Self, DataStructureError> {
         Err(DataStructureError::from(
             DataStructureErrorImpl::NotImplemented("decode_xml"),
         ))
@@ -147,7 +133,7 @@ macro_rules! implement_trait_verifier_data_json_decode {
                 serde_json::from_str(s)
                     .map_err(|e| DataStructureErrorImpl::ParseJSON {
                         msg: format!("Cannot deserialize json"),
-                        source: e,
+                        source: Arc::new(e),
                     })
                     .map_err(DataStructureError::from)
             }

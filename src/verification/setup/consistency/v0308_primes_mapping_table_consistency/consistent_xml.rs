@@ -20,8 +20,8 @@ use crate::{
     data_structures::{
         context::{
             election_event_configuration::{
-                Answer, Candidate, Election, ElectionInformation, List, StandardQuestion, Vote,
-                WriteInCandidate,
+                Answer, Candidate, Election, ElectionEventConfigurationData, ElectionInformation,
+                List, StandardQuestion, Vote,
             },
             election_event_context_payload::ElectionEventContext,
         },
@@ -33,7 +33,7 @@ use std::{collections::HashMap, slice::Iter};
 
 pub fn verification_2_3_same_than_xml(
     ee_context: &ElectionEventContext,
-    ee_config: &ElectionEventConfiguration,
+    ee_config: &ElectionEventConfigurationData,
 ) -> VerificationResult {
     let mut result = VerificationResult::new();
     for vcs_context in &ee_context.verification_card_set_contexts {
@@ -135,13 +135,12 @@ macro_rules! generate_text_4_languages {
 
 fn generate_all_p_table_elements(
     vcs_alias: &str,
-    ee_config: &ElectionEventConfiguration,
+    ee_config: &ElectionEventConfigurationData,
 ) -> Result<Vec<PTableElementWithoutEncoding>, String> {
     let auth_id = vcs_alias.chars().skip(4).collect::<String>();
     let auth = match ee_config
         .authorizations
         .iter()
-        .map_err(|e| format!("Error getting authorization {}: {}", &auth_id, e))?
         .find(|a| a.authorization_identification == auth_id)
     {
         Some(a) => a,
@@ -153,7 +152,6 @@ fn generate_all_p_table_elements(
             .contest
             .votes
             .iter()
-            .map_err(|e| format!("Error iterating votes: {e}"))?
             .filter(|v| v.has_authorization(&auth))
             .flat_map(|v| generate_p_table_for_vote(&v.vote))
             .collect(),
@@ -163,10 +161,9 @@ fn generate_all_p_table_elements(
             .contest
             .election_groups
             .iter()
-            .map_err(|e| format!("Error iterating election groups: {e}"))?
             .filter(|v| v.has_authorization(&auth))
             .flat_map(|eg| {
-                eg.election_information
+                eg.election_informations
                     .iter()
                     .flat_map(generate_p_table_for_election_information)
                     .collect::<Vec<_>>()
@@ -204,7 +201,7 @@ fn generate_p_table_element_for_answer(
 
 fn generate_p_table_for_question(question: &StandardQuestion) -> Vec<PTableElementWithoutEncoding> {
     question
-        .answer
+        .answers
         .iter()
         .map(|answer| generate_p_table_element_for_answer(answer, question))
         .collect()
@@ -212,21 +209,21 @@ fn generate_p_table_for_question(question: &StandardQuestion) -> Vec<PTableEleme
 
 fn generate_p_table_for_vote(vote: &Vote) -> Vec<PTableElementWithoutEncoding> {
     let mut res = vec![];
-    for ballot in vote.ballot.iter() {
+    for ballot in vote.ballots.iter() {
         if let Some(standard_ballot) = &ballot.standard_ballot {
             res.append(&mut generate_p_table_for_question(standard_ballot));
         }
         if let Some(variant_ballot) = &ballot.variant_ballot {
             res.append(
                 &mut variant_ballot
-                    .standard_question
+                    .standard_questions
                     .iter()
                     .flat_map(generate_p_table_for_question)
                     .collect(),
             );
             res.append(
                 &mut variant_ballot
-                    .tie_break_question
+                    .tie_break_questions
                     .iter()
                     .flat_map(generate_p_table_for_question)
                     .collect(),
@@ -244,7 +241,7 @@ fn generate_p_table_for_election_information(
     if election_info.election.type_of_election == 1 {
         res.append(
             &mut election_info
-                .list
+                .lists
                 .iter()
                 .map(|l| generate_p_table_element_for_list(l, &election_info.election))
                 .collect::<Vec<_>>(),
@@ -253,21 +250,21 @@ fn generate_p_table_for_election_information(
     // candidates
     res.append(
         &mut election_info
-            .candidate
+            .candidates
             .iter()
             .flat_map(|c| generate_p_table_element_for_candidate(c, &election_info.election))
             .collect::<Vec<_>>(),
     );
     // write in candidates
-    if let Some(write_in_candidates) = &election_info.write_in_candidate {
+    /*if let Some(write_in_candidates) = &election_info.write_in_candidate {
         res.append(&mut generate_p_table_element_for_write_in_candidate(
             write_in_candidates.as_slice(),
             &election_info.election,
         ));
-    }
+    }*/
     // Empty positions
     res.append(&mut generate_p_table_element_for_blank_position_candidate(
-        &mut election_info.list.iter(),
+        &mut election_info.lists.iter(),
         &election_info.election,
     ));
     res
@@ -311,7 +308,11 @@ fn generate_p_table_element_for_candidate(
             semantic_information: [
                 "NON_BLANK",
                 &candidate.family_name,
-                &candidate.first_name,
+                candidate
+                    .first_name
+                    .as_ref()
+                    .map(|s| s.as_str())
+                    .unwrap_or(""),
                 &candidate.call_name,
                 &candidate.date_of_birth,
             ]
@@ -321,7 +322,7 @@ fn generate_p_table_element_for_candidate(
         .collect()
 }
 
-fn generate_p_table_element_for_write_in_candidate(
+/*fn generate_p_table_element_for_write_in_candidate(
     candidates: &[WriteInCandidate],
     election: &Election,
 ) -> Vec<PTableElementWithoutEncoding> {
@@ -340,7 +341,7 @@ fn generate_p_table_element_for_write_in_candidate(
             correctness_information: format!("C|{}", election.election_identification),
         })
         .collect()
-}
+}*/
 
 fn generate_p_table_element_for_blank_position_candidate(
     it_lists: &mut Iter<'_, List>,
@@ -349,7 +350,7 @@ fn generate_p_table_element_for_blank_position_candidate(
     it_lists
         .filter(|l| l.list_empty)
         .flat_map(|l| {
-            l.candidate_position
+            l.candidate_positions
                 .iter()
                 .map(|c| PTableElementWithoutEncoding {
                     actual_voting_option: format!(
