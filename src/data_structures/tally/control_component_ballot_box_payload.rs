@@ -27,9 +27,7 @@ use crate::{
         common_types::{DecryptionProof, SchnorrProof},
         VerifierDataToTypeTrait, VerifierDataType,
     },
-    direct_trust::{
-        CertificateAuthority, VerifiyJSONSignatureTrait, VerifiySignatureTrait,
-    },
+    direct_trust::{CertificateAuthority, VerifiyJSONSignatureTrait, VerifiySignatureTrait},
 };
 use rust_ev_system_library::rust_ev_crypto_primitives::prelude::{
     elgamal::{Ciphertext, EncryptionParameters},
@@ -143,8 +141,8 @@ impl<'a> VerifiyJSONSignatureTrait<'a> for ControlComponentBallotBoxPayload {
         CertificateAuthority::get_ca_cc(&self.node_id)
     }
 
-    fn get_signature(&self) -> ByteArray {
-        self.signature.get_signature()
+    fn get_signature(&self) -> Option<ByteArray> {
+        Some(self.signature.get_signature())
     }
 }
 
@@ -167,7 +165,7 @@ mod test {
         *,
     };
     use crate::config::test::{
-        test_ballot_box_one_vote_path, test_ballot_box_zero_vote_path, CONFIG_TEST,
+        get_keystore, test_ballot_box_one_vote_path, test_ballot_box_zero_vote_path,
     };
     use std::fs;
 
@@ -184,7 +182,7 @@ mod test {
         )
         .unwrap();
         let data = ControlComponentBallotBoxPayload::decode_json(&json).unwrap();
-        let ks = CONFIG_TEST.keystore().unwrap();
+        let ks = get_keystore();
         let sign_validate_res = data.verify_signatures(&ks);
         for r in sign_validate_res {
             assert!(r.is_ok());

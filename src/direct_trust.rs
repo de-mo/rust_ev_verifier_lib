@@ -30,7 +30,6 @@ use rust_ev_system_library::{
 use std::{
     collections::HashMap,
     path::{Path, PathBuf},
-    rc::Rc,
     sync::Arc,
 };
 use strum::{AsRefStr, EnumIter, EnumString, IntoEnumIterator};
@@ -94,6 +93,8 @@ pub struct VerifySignatureError(#[from] VerifySignatureErrorImpl);
 enum VerifySignatureErrorImpl {
     #[error("No certificate authority given")]
     NoCA,
+    #[error("No signature found")]
+    SignatureNotFound,
     #[error("The raw string was already parsed an does not exist. Please verify signature without parsing the XML")]
     XMLAlreadyParsed,
     #[error("Signature error in {msg}")]
@@ -315,7 +316,7 @@ where
     fn get_certificate_authority(&self) -> Option<CertificateAuthority>;
 
     /// Get the signature of the object
-    fn get_signature(&self) -> ByteArray;
+    fn get_signature(&self) -> Option<ByteArray>;
 
     /// Get the context data of the object according to the context data
     fn get_context_hashable(&'a self) -> HashableMessage<'a> {
@@ -340,9 +341,12 @@ where
         verify_signature(
             &keystore.0,
             ca.as_ref(),
+            //HashableMessage::from(&d),
             &hashable_message,
             &self.get_context_hashable(),
-            &self.get_signature(),
+            &self.get_signature().ok_or(VerifySignatureError::from(
+                VerifySignatureErrorImpl::SignatureNotFound,
+            ))?,
         )
         .map_err(|e| VerifySignatureErrorImpl::SignatureError {
             msg: "Error verifying the signature".to_string(),

@@ -52,7 +52,7 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
     if total_voter
         != vcs_contexts
             .iter()
-            .map(|e| e.number_of_voting_cards)
+            .map(|e| e.number_of_eligible_voters)
             .sum::<usize>()
     {
         result.push(VerificationEvent::new_failure(&format!(

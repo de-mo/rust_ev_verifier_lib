@@ -21,7 +21,6 @@
 pub mod common_types;
 pub mod context;
 pub mod dataset;
-pub mod setup;
 pub mod tally;
 mod xml;
 
@@ -31,7 +30,6 @@ pub use self::{
         election_event_context_payload::ElectionEventContextPayload, VerifierContextDataType,
     },
     dataset::DatasetType,
-    setup::VerifierSetupDataType,
     tally::{
         control_component_ballot_box_payload::ControlComponentBallotBoxPayload,
         control_component_shuffle_payload::ControlComponentShufflePayload,
@@ -48,7 +46,7 @@ use serde::{
     de::{Deserialize as DeDeserialize, Deserializer, Error as SerdeError},
     Deserialize,
 };
-use std::{path::Path, sync::Arc};
+use std::{borrow::Cow, path::Path, sync::Arc};
 use thiserror::Error;
 
 #[derive(Error, Debug, Clone)]
@@ -69,9 +67,8 @@ enum DataStructureErrorImpl {
 }
 
 /// The type VerifierDataType implement an option between
-/// [VerifierContextDataType], [VerifierSetupDataType] and [VerifierTallyDataType]
-pub type VerifierDataType =
-    DatasetType<VerifierContextDataType, VerifierSetupDataType, VerifierTallyDataType>;
+/// [VerifierContextDataType] and [VerifierTallyDataType]
+pub type VerifierDataType = DatasetType<VerifierContextDataType, VerifierTallyDataType>;
 
 /// Trait to add the funcitonality to get the [VerifierDataType] from the verifier data
 pub trait VerifierDataToTypeTrait {
@@ -256,11 +253,12 @@ fn deserialize_string_base64_to_integer<'de, D>(deserializer: D) -> Result<Integ
 where
     D: Deserializer<'de>,
 {
-    let buf = String::deserialize(deserializer)?;
+    #[derive(Deserialize)]
+    struct Wrapper<'a>(#[serde(borrow)] Cow<'a, str>);
 
-    ByteArray::base64_decode(&buf)
-        .map_err(|e| SerdeError::custom(e.to_string()))
-        .map(|e| e.into_integer())
+    let buf: Wrapper = Deserialize::deserialize(deserializer)?;
+
+    Integer::base64_decode(&buf.0).map_err(|e| SerdeError::custom(e.to_string()))
 }
 
 fn deserialize_option_string_base64_to_option_integer<'de, D>(
@@ -269,9 +267,12 @@ fn deserialize_option_string_base64_to_option_integer<'de, D>(
 where
     D: Deserializer<'de>,
 {
-    let buf = Option::<String>::deserialize(deserializer)?;
+    #[derive(Deserialize)]
+    struct Wrapper<'a>(#[serde(borrow)] Option<Cow<'a, str>>);
 
-    match buf {
+    let buf: Wrapper = Deserialize::deserialize(deserializer)?;
+
+    match buf.0 {
         Some(buf) => ByteArray::base64_decode(&buf)
             .map_err(|e| SerdeError::custom(e.to_string()))
             .map(|e| Some(e.into_integer())),
@@ -341,10 +342,13 @@ where
         where
             A: serde::de::SeqAccess<'de>,
         {
+            #[derive(Deserialize)]
+            struct Wrapper<'a>(#[serde(borrow)] Cow<'a, str>);
+
             let mut vec = <Self::Value>::new();
 
-            while let Some(v) = (seq.next_element())? {
-                let r_b = ByteArray::base64_decode(v).map_err(A::Error::custom)?;
+            while let Some(wrapper) = seq.next_element::<Wrapper>()? {
+                let r_b = ByteArray::base64_decode(&wrapper.0).map_err(A::Error::custom)?;
                 vec.push(r_b);
             }
             Ok(vec)
@@ -372,10 +376,13 @@ where
         where
             A: serde::de::SeqAccess<'de>,
         {
+            #[derive(Deserialize)]
+            struct Wrapper<'a>(#[serde(borrow)] Cow<'a, str>);
+
             let mut vec = <Self::Value>::new();
 
-            while let Some(v) = (seq.next_element())? {
-                let r_b = ByteArray::base64_decode(v).map_err(A::Error::custom)?;
+            while let Some(wrapper) = seq.next_element::<Wrapper>()? {
+                let r_b = ByteArray::base64_decode(&wrapper.0).map_err(A::Error::custom)?;
                 vec.push(r_b.into_integer());
             }
             Ok(vec)
@@ -483,6 +490,12 @@ fn verifiy_domain_length_unique_id(uuid: &str, name: &str) -> Vec<String> {
 
 #[cfg(test)]
 pub(super) mod test {
+
+    use rust_ev_system_library::rust_ev_crypto_primitives::prelude::{HashableMessage, Integer};
+    use serde::de::DeserializeOwned;
+    use serde_json::Value;
+    use std::path::Path;
+
     /// Macro testing the data structure (read data, signature and verify domain)
     ///
     /// # Parameters
@@ -573,7 +586,7 @@ pub(super) mod test {
             #[test]
             fn verify_signature() {
                 let data = get_data_res().unwrap();
-                let ks = CONFIG_TEST.keystore().unwrap();
+                let ks = get_keystore();
                 let sign_validate_res = data.verify_signatures(&ks);
                 for r in sign_validate_res {
                     if !r.is_ok() {
@@ -596,7 +609,7 @@ pub(super) mod test {
                 #[test]
                 fn [<verify_signature_ $suffix>]() {
                     let data = [<get_data_res_ $suffix>]().unwrap();
-                    let ks = CONFIG_TEST.keystore().unwrap();
+                    let ks = get_keystore();
                     let sign_validate_res = data.verify_signatures(&ks);
                     for r in sign_validate_res {
                         if !r.is_ok() {
@@ -632,4 +645,91 @@ pub(super) mod test {
         };
     }
     pub(super) use test_data_structure_verify_domain;
+
+    pub fn json_to_hashable_message<'a>(value: &'a Value) -> HashableMessage<'a> {
+        match value {
+            v if v.is_array() => HashableMessage::from(
+                value
+                    .as_array()
+                    .unwrap()
+                    .iter()
+                    .map(|e| json_to_hashable_message(e))
+                    .collect::<Vec<_>>(),
+            ),
+            v if v.is_boolean() => HashableMessage::from(value.as_bool().unwrap()),
+            v if v.is_number() => {
+                HashableMessage::from(Integer::from_str_radix(&value.to_string(), 10).unwrap())
+            }
+            v if v.is_string() => HashableMessage::from(value.as_str().unwrap()),
+            _ => panic!("Not possible"),
+        }
+    }
+
+    #[derive(Debug, Clone)]
+    pub struct OutputVerifySignature {
+        pub h: Value,
+        pub d: String,
+    }
+    #[derive(Debug, Clone)]
+    pub struct TestDataStructureVerifySignature<T>
+    where
+        T: DeserializeOwned,
+    {
+        pub description: String,
+        pub context: T,
+        pub output: OutputVerifySignature,
+    }
+
+    pub fn json_to_testdata<T>(v: &Value) -> TestDataStructureVerifySignature<T>
+    where
+        T: DeserializeOwned,
+    {
+        TestDataStructureVerifySignature {
+            description: v["description"].as_str().unwrap().to_string(),
+            context: serde_json::from_value::<T>(v["input"].clone()).unwrap(),
+            output: OutputVerifySignature {
+                h: v["output"]["h"].clone(),
+                d: v["output"]["d"].as_str().unwrap().to_string(),
+            },
+        }
+    }
+
+    pub fn file_to_test_cases(path: &Path) -> Value {
+        serde_json::from_str(&std::fs::read_to_string(path).unwrap()).unwrap()
+    }
+
+    macro_rules! test_hash_json {
+        ($t: ident, $p: literal) => {
+            #[test]
+            fn test_hash_json() {
+                let path = test_resources_path().join("test_data").join($p);
+                for tc in file_to_test_cases(&path).as_array().unwrap().iter() {
+                    let test_data = json_to_testdata::<$t>(tc);
+                    let hash_context = HashableMessage::from(&test_data.context);
+                    let h = json_to_hashable_message(&test_data.output.h);
+                    let comp = hash_context.compare_to(&h, None);
+                    assert!(
+                        comp.is_ok(),
+                        "{}: {}",
+                        test_data.description,
+                        comp.unwrap_err()
+                    );
+                    let hashed = hash_context.recursive_hash();
+                    assert!(
+                        hashed.is_ok(),
+                        "{}: {}",
+                        test_data.description,
+                        hashed.unwrap_err()
+                    );
+                    assert_eq!(
+                        hashed.unwrap().base64_encode().unwrap(),
+                        test_data.output.d,
+                        "{}",
+                        test_data.description
+                    )
+                }
+            }
+        };
+    }
+    pub(super) use test_hash_json;
 }

@@ -45,26 +45,17 @@ impl ExtractDataSetResults {
     pub fn extract_datasets(
         period: VerificationPeriod,
         context_zip_file: &Path,
-        setup_zip_file: Option<&Path>,
         tally_zip_file: Option<&Path>,
         password: &str,
         config: &'static VerifierConfig,
     ) -> Result<Self, RunnerError> {
-        Self::extract_datasets_impl(
-            period,
-            context_zip_file,
-            setup_zip_file,
-            tally_zip_file,
-            password,
-            config,
-        )
-        .map_err(RunnerError::from)
+        Self::extract_datasets_impl(period, context_zip_file, tally_zip_file, password, config)
+            .map_err(RunnerError::from)
     }
 
     fn extract_datasets_impl(
         period: VerificationPeriod,
         context_zip_file: &Path,
-        setup_zip_file: Option<&Path>,
         tally_zip_file: Option<&Path>,
         password: &str,
         config: &'static VerifierConfig,
@@ -72,29 +63,7 @@ impl ExtractDataSetResults {
         let dataset_root_path = config.create_dataset_dir_path();
         let mut hm = HashMap::new();
         match period {
-            VerificationPeriod::Setup => {
-                if setup_zip_file.is_none() {
-                    return Err(RunnerErrorImpl::ExtractFileMissing { period: "setup" });
-                } else {
-                    let md = DatasetMetadata::extract_dataset_kind_with_inputs(
-                        DatasetTypeKind::Setup,
-                        setup_zip_file.unwrap(),
-                        password,
-                        &dataset_root_path,
-                        &config.zip_temp_dir_path(),
-                    )
-                    .map_err(|e| RunnerErrorImpl::ExtractError {
-                        name: "setup",
-                        source: Box::new(e),
-                    })?;
-                    info!(
-                        "Setup extracted by {} (fingerprint: {}",
-                        md.extracted_dir_path().to_str().unwrap(),
-                        md.fingerprint_str()
-                    );
-                    hm.insert(DatasetTypeKind::Setup, md);
-                }
-            }
+            VerificationPeriod::Setup => {}
             VerificationPeriod::Tally => {
                 if tally_zip_file.is_none() {
                     return Err(RunnerErrorImpl::ExtractFileMissing { period: "tally" });

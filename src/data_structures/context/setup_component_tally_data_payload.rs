@@ -22,9 +22,7 @@ use super::super::{
 };
 use crate::{
     data_structures::{VerifierDataToTypeTrait, VerifierDataType},
-    direct_trust::{
-        CertificateAuthority, VerifiyJSONSignatureTrait, VerifiySignatureTrait,
-    },
+    direct_trust::{CertificateAuthority, VerifiyJSONSignatureTrait, VerifiySignatureTrait},
 };
 use rust_ev_system_library::rust_ev_crypto_primitives::prelude::Integer;
 use rust_ev_system_library::rust_ev_crypto_primitives::prelude::{
@@ -36,15 +34,15 @@ use std::sync::Arc;
 #[derive(Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct SetupComponentTallyDataPayload {
-    pub election_event_id: String,
-    pub verification_card_set_id: String,
-    pub ballot_box_default_title: String,
     #[serde(with = "EncryptionParametersDef")]
     pub encryption_group: EncryptionParameters,
+    pub election_event_id: String,
+    pub verification_card_set_id: String,
     pub verification_card_ids: Vec<String>,
+    pub ballot_box_default_title: String,
     #[serde(deserialize_with = "deserialize_seq_seq_string_base64_to_seq_seq_integer")]
     pub verification_card_public_keys: Vec<Vec<Integer>>,
-    pub signature: Signature,
+    pub signature: Option<Signature>,
 }
 
 impl VerifierDataToTypeTrait for SetupComponentTallyDataPayload {
@@ -59,15 +57,14 @@ impl VerifyDomainTrait<String> for SetupComponentTallyDataPayload {}
 
 impl<'a> From<&'a SetupComponentTallyDataPayload> for HashableMessage<'a> {
     fn from(value: &'a SetupComponentTallyDataPayload) -> Self {
-        let elts = vec![
+        Self::from(vec![
+            Self::from(&value.encryption_group),
             Self::from(&value.election_event_id),
             Self::from(&value.verification_card_set_id),
-            Self::from(&value.ballot_box_default_title),
-            Self::from(&value.encryption_group),
             Self::from(value.verification_card_ids.as_slice()),
+            Self::from(&value.ballot_box_default_title),
             Self::from(value.verification_card_public_keys.as_slice()),
-        ];
-        Self::from(elts)
+        ])
     }
 }
 
@@ -88,8 +85,8 @@ impl<'a> VerifiyJSONSignatureTrait<'a> for SetupComponentTallyDataPayload {
         Some(CertificateAuthority::SdmConfig)
     }
 
-    fn get_signature(&self) -> ByteArray {
-        self.signature.get_signature()
+    fn get_signature(&self) -> Option<ByteArray> {
+        self.signature.as_ref().map(|s| s.get_signature())
     }
 }
 
@@ -106,17 +103,28 @@ impl<'a> VerifiySignatureTrait<'a> for SetupComponentTallyDataPayload {
 mod test {
     use super::{
         super::super::test::{
-            test_data_structure, test_data_structure_read_data_set,
-            test_data_structure_verify_domain, test_data_structure_verify_signature,
+            file_to_test_cases, json_to_hashable_message, json_to_testdata, test_data_structure,
+            test_data_structure_read_data_set, test_data_structure_verify_domain,
+            test_data_structure_verify_signature, test_hash_json,
         },
         *,
     };
-    use crate::config::test::{test_context_verification_card_set_path, CONFIG_TEST};
+    use crate::config::test::{
+        get_keystore, test_context_verification_card_set_path, test_resources_path,
+    };
+    use rust_ev_system_library::rust_ev_crypto_primitives::prelude::{
+        EncodeTrait, RecursiveHashTrait,
+    };
     use std::fs;
 
     test_data_structure!(
         SetupComponentTallyDataPayload,
         "setupComponentTallyDataPayload.json",
         test_context_verification_card_set_path
+    );
+
+    test_hash_json!(
+        SetupComponentTallyDataPayload,
+        "verify-signature-setup-component-tally-data.json"
     );
 }

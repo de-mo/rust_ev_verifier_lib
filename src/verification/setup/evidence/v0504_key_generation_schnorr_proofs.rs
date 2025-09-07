@@ -52,7 +52,7 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
     };
 
     let get_hash_election_event_context =
-        GetHashElectionEventContextContext::from(&ee_context.election_event_context);
+        GetHashElectionEventContextContext::from(ee_context.as_ref());
 
     // Prepare inputs
     let pk_ccr = setup_cc_ppk_payload

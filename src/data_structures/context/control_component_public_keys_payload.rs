@@ -36,7 +36,7 @@ pub struct ControlComponentPublicKeysPayload {
     pub encryption_group: EncryptionParameters,
     pub election_event_id: String,
     pub control_component_public_keys: ControlComponentPublicKeys,
-    pub signature: Signature,
+    pub signature: Option<Signature>,
 }
 
 impl VerifierDataToTypeTrait for ControlComponentPublicKeysPayload {
@@ -76,8 +76,8 @@ impl<'a> VerifiyJSONSignatureTrait<'a> for ControlComponentPublicKeysPayload {
         CertificateAuthority::get_ca_cc(&self.control_component_public_keys.node_id)
     }
 
-    fn get_signature(&self) -> ByteArray {
-        self.signature.get_signature()
+    fn get_signature(&self) -> Option<ByteArray> {
+        self.signature.as_ref().map(|s| s.get_signature())
     }
 }
 
@@ -125,17 +125,26 @@ impl<'a> From<&'a ControlComponentPublicKeys> for HashableMessage<'a> {
 mod test {
     use super::{
         super::super::test::{
-            test_data_structure, test_data_structure_read_data_set,
-            test_data_structure_verify_domain, test_data_structure_verify_signature,
+            file_to_test_cases, json_to_hashable_message, json_to_testdata, test_data_structure,
+            test_data_structure_read_data_set, test_data_structure_verify_domain,
+            test_data_structure_verify_signature, test_hash_json,
         },
         *,
     };
-    use crate::config::test::{test_datasets_context_path, CONFIG_TEST};
+    use crate::config::test::{get_keystore, test_datasets_context_path, test_resources_path};
+    use rust_ev_system_library::rust_ev_crypto_primitives::prelude::{
+        EncodeTrait, RecursiveHashTrait,
+    };
     use std::fs;
 
     test_data_structure!(
         ControlComponentPublicKeysPayload,
         "controlComponentPublicKeysPayload.1.json",
         test_datasets_context_path
+    );
+
+    test_hash_json!(
+        ControlComponentPublicKeysPayload,
+        "verify-signature-control-component-public-keys.json"
     );
 }

@@ -274,7 +274,7 @@ fn verify_for_ballotbox<B: BBDirectoryTrait, S: ContextVCSDirectoryTrait>(
             ee_id: &ee_context_payload.election_event_context.election_event_id,
             vcs_id: &vcs_context.verification_card_set_id,
             bb_id: &bb_id,
-            upper_n_upper_e: vcs_context.number_of_voters(),
+            upper_n_upper_e: vcs_context.number_of_eligible_voters,
             p_table: &vcs_context.primes_mapping_table.p_table,
             el_pk: &setup_pk.election_public_key,
             ccm_el_pk: &ccm_el_pk,

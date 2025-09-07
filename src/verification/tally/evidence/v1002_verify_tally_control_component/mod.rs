@@ -110,7 +110,7 @@ fn verify_for_ballotbox<B: BBDirectoryTrait>(
         eg: &ee_context_payload.encryption_group,
         ee_id: &ee_context_payload.election_event_context.election_event_id,
         bb_id: &bb_id,
-        _upper_n_upper_e: vcs.number_of_voters(),
+        _upper_n_upper_e: vcs.number_of_eligible_voters,
         p_table: &vcs.primes_mapping_table.p_table,
         eb_pk,
     };

@@ -26,21 +26,15 @@ use strum::{AsRefStr, EnumString};
     derive(Hash, AsRefStr, EnumString),
     strum(serialize_all = "lowercase")
 )]
-pub enum DatasetType<C, S, T> {
+pub enum DatasetType<C, T> {
     Context(C),
-    Setup(S),
     Tally(T),
 }
 
-impl<C: Clone, S: Clone, T: Clone> DatasetType<C, S, T> {
+impl<C: Clone, T: Clone> DatasetType<C, T> {
     /// Is context
     pub fn is_context(&self) -> bool {
         matches!(self, DatasetType::Context(_))
-    }
-
-    /// Is setup
-    pub fn is_setup(&self) -> bool {
-        matches!(self, DatasetType::Setup(_))
     }
 
     /// Is tally
@@ -56,18 +50,6 @@ impl<C: Clone, S: Clone, T: Clone> DatasetType<C, S, T> {
             DatasetType::Context(s) => s,
             _ => {
                 panic!("called `unwrap_context()` on a wrong variant")
-            }
-        }
-    }
-
-    /// Unwrap setup and give a reference to S
-    ///
-    /// panic if type is not setup
-    pub fn unwrap_setup(&self) -> &S {
-        match self {
-            DatasetType::Setup(s) => s,
-            _ => {
-                panic!("called `unwrap_setup()` on a wrong variant")
             }
         }
     }

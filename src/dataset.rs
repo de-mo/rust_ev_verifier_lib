@@ -31,6 +31,7 @@ use std::{
 };
 use thiserror::Error;
 use tracing::{instrument, trace};
+use zip::result::ZipError;
 
 #[derive(Error, Debug)]
 #[error(transparent)]
@@ -63,11 +64,10 @@ enum DatasetErrorImpl {
         msg: &'static str,
         source: std::io::Error,
     },
+    #[error("Error new zipArchive {file}")]
+    NewZipArchive { file: PathBuf, source: ZipError },
     #[error("Error extracting {file}")]
-    Extract {
-        file: PathBuf,
-        source: zip_extract::ZipExtractError,
-    },
+    Extract { file: PathBuf, source: ZipError },
     #[error("process_dataset_operations: Error crreating EncryptedZipReader")]
     ProcessNewEncryptedZipReader { source: Box<DatasetError> },
     #[error("process_dataset_operations: Error unzipping")]
@@ -348,12 +348,17 @@ impl EncryptedZipReader {
             msg: "Opening temp zip file {}",
             source: e,
         })?;
-        zip_extract::extract(&f, &self.target_dir, true).map_err(|e| {
-            DatasetErrorImpl::Extract {
+        let buf_reader = std::io::BufReader::new(f);
+        zip::ZipArchive::new(buf_reader)
+            .map_err(|e| DatasetErrorImpl::NewZipArchive {
                 file: self.temp_zip.to_path_buf(),
                 source: e,
-            }
-        })?;
+            })?
+            .extract(&self.target_dir)
+            .map_err(|e| DatasetErrorImpl::Extract {
+                file: self.temp_zip.to_path_buf(),
+                source: e,
+            })?;
         Ok(self.target_dir.to_owned())
     }
 

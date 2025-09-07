@@ -129,8 +129,8 @@ impl<'a> VerifiyJSONSignatureTrait<'a> for ControlComponentShufflePayload {
         CertificateAuthority::get_ca_cc(&self.node_id)
     }
 
-    fn get_signature(&self) -> ByteArray {
-        self.signature.get_signature()
+    fn get_signature(&self) -> Option<ByteArray> {
+        Some(self.signature.get_signature())
     }
 }
 
@@ -153,8 +153,8 @@ mod test {
         *,
     };
     use crate::config::test::{
-        test_ballot_box_many_votes_path, test_ballot_box_one_vote_path,
-        test_ballot_box_zero_vote_path, CONFIG_TEST,
+        get_keystore, test_ballot_box_many_votes_path, test_ballot_box_one_vote_path,
+        test_ballot_box_zero_vote_path,
     };
     use paste::paste;
     use std::fs;

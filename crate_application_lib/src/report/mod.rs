@@ -166,12 +166,12 @@ impl ReportInformationTrait for ReportData<'_> {
             .dataset_metadata(&DatasetTypeKind::Context)
             .unwrap();
         let dataset_period_info = match period {
-            VerificationPeriod::Setup => extracted_information
-                .dataset_metadata(&DatasetTypeKind::Setup)
-                .unwrap(),
-            VerificationPeriod::Tally => extracted_information
-                .dataset_metadata(&DatasetTypeKind::Tally)
-                .unwrap(),
+            VerificationPeriod::Setup => None,
+            VerificationPeriod::Tally => Some(
+                extracted_information
+                    .dataset_metadata(&DatasetTypeKind::Tally)
+                    .unwrap(),
+            ),
         };
         let mut running_information =
             ReportOutputBlock::new(ReportOutputBlockTitle::RunningInformation);
@@ -184,14 +184,16 @@ impl ReportInformationTrait for ReportData<'_> {
             "Context Dataset Fingerprint",
             context_dataset_info.fingerprint_str().as_str(),
         )));
-        running_information.push(ReportOutputEntry::from((
-            format!("{} Dataset", period).as_str(),
-            dataset_period_info.source_path().to_str().unwrap(),
-        )));
-        running_information.push(ReportOutputEntry::from((
-            format!("{} Dataset Fingerprint", period).as_str(),
-            dataset_period_info.fingerprint_str().as_str(),
-        )));
+        if let Some(info) = dataset_period_info {
+            running_information.push(ReportOutputEntry::from((
+                format!("{} Dataset", period).as_str(),
+                info.source_path().to_str().unwrap(),
+            )));
+            running_information.push(ReportOutputEntry::from((
+                format!("{} Dataset Fingerprint", period).as_str(),
+                info.fingerprint_str().as_str(),
+            )));
+        };
         running_information.push(ReportOutputEntry::from((
             "Verification directory",
             self.run_information.run_directory().to_str().unwrap(),

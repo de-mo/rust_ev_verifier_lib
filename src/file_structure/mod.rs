@@ -30,12 +30,11 @@ pub use self::{
 };
 use crate::{
     data_structures::{
-        context::VerifierContextDataType, setup::VerifierSetupDataType,
-        tally::VerifierTallyDataType, DataStructureError, VerifierDataType,
+        context::VerifierContextDataType, tally::VerifierTallyDataType, DataStructureError,
+        VerifierDataType,
     },
     verification::VerificationPeriod,
 };
-use roxmltree::Error as RoXmlTreeError;
 use std::path::{Path, PathBuf};
 use tally_directory::TallyDirectory;
 use thiserror::Error;
@@ -63,11 +62,6 @@ enum FileStructureErrorImpl {
         path: PathBuf,
         source: Box<DataStructureError>,
     },
-    #[error("Error with {path}: Cannot parse content of xml file")]
-    ParseRoXML {
-        path: PathBuf,
-        source: RoXmlTreeError,
-    },
     #[error("Path is not a directory {0}")]
     PathIsNotDir(PathBuf),
     #[cfg(test)]
@@ -94,6 +88,7 @@ enum FileType {
 enum FileReadMode {
     /// The data will be loaded in memory each time
     Memory,
+    #[allow(dead_code)]
     /// The data will be streamed
     Streaming,
     /// The data will be loaded once in memory an be chached
@@ -267,36 +262,6 @@ impl From<&VerifierContextDataType> for FileType {
     }
 }
 
-impl GetFileNameTrait for VerifierSetupDataType {
-    fn get_raw_file_name(&self) -> String {
-        let s = match self {
-            Self::SetupComponentVerificationDataPayload => {
-                "setupComponentVerificationDataPayload.{}.json"
-            }
-            Self::ControlComponentCodeSharesPayload => "controlComponentCodeSharesPayload.{}.json",
-        };
-        s.to_string()
-    }
-}
-
-impl From<&VerifierSetupDataType> for FileReadMode {
-    fn from(value: &VerifierSetupDataType) -> Self {
-        match value {
-            VerifierSetupDataType::SetupComponentVerificationDataPayload => FileReadMode::Memory,
-            VerifierSetupDataType::ControlComponentCodeSharesPayload => FileReadMode::Memory,
-        }
-    }
-}
-
-impl From<&VerifierSetupDataType> for FileType {
-    fn from(value: &VerifierSetupDataType) -> Self {
-        match value {
-            VerifierSetupDataType::SetupComponentVerificationDataPayload => FileType::Json,
-            VerifierSetupDataType::ControlComponentCodeSharesPayload => FileType::Json,
-        }
-    }
-}
-
 impl GetFileNameTrait for VerifierTallyDataType {
     fn get_raw_file_name(&self) -> String {
         let s = match self {
@@ -338,7 +303,6 @@ impl GetFileNameTrait for VerifierDataType {
     fn get_raw_file_name(&self) -> String {
         match self {
             VerifierDataType::Context(t) => t.get_raw_file_name(),
-            VerifierDataType::Setup(t) => t.get_raw_file_name(),
             VerifierDataType::Tally(t) => t.get_raw_file_name(),
         }
     }
@@ -348,7 +312,6 @@ impl From<&VerifierDataType> for FileReadMode {
     fn from(value: &VerifierDataType) -> Self {
         match value {
             VerifierDataType::Context(t) => FileReadMode::from(t),
-            VerifierDataType::Setup(t) => FileReadMode::from(t),
             VerifierDataType::Tally(t) => FileReadMode::from(t),
         }
     }
@@ -358,7 +321,6 @@ impl From<&VerifierDataType> for FileType {
     fn from(value: &VerifierDataType) -> Self {
         match value {
             VerifierDataType::Context(t) => FileType::from(t),
-            VerifierDataType::Setup(t) => FileType::from(t),
             VerifierDataType::Tally(t) => FileType::from(t),
         }
     }
@@ -369,7 +331,7 @@ mod test {
     use super::*;
     use crate::config::test::{
         test_ballot_box_one_vote_path, test_context_verification_card_set_path,
-        test_datasets_context_path, test_setup_verification_card_set_path,
+        test_datasets_context_path,
     };
 
     #[test]
@@ -432,26 +394,6 @@ mod test {
             .join(
                 VerifierDataType::Context(
                     VerifierContextDataType::ControlComponentPublicKeysPayload
-                )
-                .get_file_name(Some(1))
-            )
-            .exists());
-    }
-
-    #[test]
-    fn test_setup_groups_exist() {
-        let path2 = test_setup_verification_card_set_path();
-        println!("{path2:?}");
-        assert!(path2
-            .join(
-                VerifierDataType::Setup(VerifierSetupDataType::ControlComponentCodeSharesPayload)
-                    .get_file_name(Some(1))
-            )
-            .exists());
-        assert!(path2
-            .join(
-                VerifierDataType::Setup(
-                    VerifierSetupDataType::SetupComponentVerificationDataPayload
                 )
                 .get_file_name(Some(1))
             )
