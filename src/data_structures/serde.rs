@@ -34,9 +34,23 @@ pub fn deserialize_string_hex_to_integer<'de, D>(deserializer: D) -> Result<Inte
 where
     D: Deserializer<'de>,
 {
-    let buf = String::deserialize(deserializer)?;
+    struct Visitor;
 
-    Integer::from_hexa_string(&buf).map_err(|e| SerdeError::custom(e.to_string()))
+    impl<'de> ::serde::de::Visitor<'de> for Visitor {
+        type Value = Integer;
+
+        fn expecting(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+            write!(f, "a sequence of string")
+        }
+
+        fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
+        where
+            E: SerdeError,
+        {
+            Integer::from_hexa_string(v).map_err(|e| SerdeError::custom(e.to_string()))
+        }
+    }
+    deserializer.deserialize_str(Visitor)
 }
 
 pub fn deserialize_string_base64_to_integer<'de, D>(deserializer: D) -> Result<Integer, D::Error>
@@ -70,16 +84,28 @@ where
     }
 }
 
-pub fn deserialize_string_string_to_datetime<'de, D>(
-    deserializer: D,
-) -> Result<NaiveDateTime, D::Error>
+pub fn deserialize_string_to_datetime<'de, D>(deserializer: D) -> Result<NaiveDateTime, D::Error>
 where
     D: Deserializer<'de>,
 {
-    let buf = String::deserialize(deserializer)?;
+    struct Visitor;
 
-    NaiveDateTime::parse_from_str(&buf, "%Y-%m-%dT%H:%M:%S")
-        .map_err(|e| SerdeError::custom(e.to_string()))
+    impl<'de> ::serde::de::Visitor<'de> for Visitor {
+        type Value = NaiveDateTime;
+
+        fn expecting(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+            write!(f, "a sequence of string")
+        }
+
+        fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
+        where
+            E: SerdeError,
+        {
+            NaiveDateTime::parse_from_str(v, "%Y-%m-%dT%H:%M:%S")
+                .map_err(|e| SerdeError::custom(e.to_string()))
+        }
+    }
+    deserializer.deserialize_str(Visitor)
 }
 
 #[allow(dead_code)]
@@ -214,12 +240,15 @@ where
         where
             A: serde::de::SeqAccess<'de>,
         {
+            #[derive(Deserialize)]
+            struct Wrapper<'a>(#[serde(borrow)] Vec<Cow<'a, str>>);
+
             let mut vec = <Self::Value>::new();
 
-            while let Some(v) = (seq.next_element::<Vec<String>>())? {
+            while let Some(v) = (seq.next_element::<Wrapper>())? {
                 let mut inner_vec = Vec::new();
-                for x in v {
-                    let r_b = Integer::from_hexa_string(&x).map_err(A::Error::custom)?;
+                for x in v.0.iter() {
+                    let r_b = Integer::from_hexa_string(x).map_err(A::Error::custom)?;
                     inner_vec.push(r_b);
                 }
                 vec.push(inner_vec.to_owned());
@@ -249,12 +278,15 @@ where
         where
             A: serde::de::SeqAccess<'de>,
         {
+            #[derive(Deserialize)]
+            struct Wrapper<'a>(#[serde(borrow)] Vec<Cow<'a, str>>);
+
             let mut vec = <Self::Value>::new();
 
-            while let Some(v) = (seq.next_element::<Vec<String>>())? {
-                let mut inner_vec = Vec::new();
-                for x in v {
-                    let r_b = ByteArray::base64_decode(&x).map_err(A::Error::custom)?;
+            while let Some(v) = (seq.next_element::<Wrapper>())? {
+                let mut inner_vec: Vec<Integer> = Vec::new();
+                for x in v.0.iter() {
+                    let r_b = ByteArray::base64_decode(x).map_err(A::Error::custom)?;
                     inner_vec.push(r_b.into_integer());
                 }
                 vec.push(inner_vec.to_owned());

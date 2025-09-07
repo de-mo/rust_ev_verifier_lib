@@ -16,8 +16,8 @@
 
 use super::super::{
     common_types::{EncryptionParametersDef, Signature},
-    deserialize_string_string_to_datetime, implement_trait_verifier_data_json_decode,
-    DataStructureError, DataStructureErrorImpl, VerifierDataDecode,
+    deserialize_string_to_datetime, implement_trait_verifier_data_json_decode, DataStructureError,
+    DataStructureErrorImpl, VerifierDataDecode,
 };
 use crate::{
     config::VerifierConfig,
@@ -70,9 +70,9 @@ pub struct ElectionEventContext {
     pub election_event_alias: String,
     pub election_event_description: String,
     pub verification_card_set_contexts: Vec<VerificationCardSetContext>,
-    #[serde(deserialize_with = "deserialize_string_string_to_datetime")]
+    #[serde(deserialize_with = "deserialize_string_to_datetime")]
     pub start_time: NaiveDateTime,
-    #[serde(deserialize_with = "deserialize_string_string_to_datetime")]
+    #[serde(deserialize_with = "deserialize_string_to_datetime")]
     pub finish_time: NaiveDateTime,
     pub maximum_number_of_voting_options: usize,
     pub maximum_number_of_selections: usize,
@@ -87,9 +87,9 @@ pub struct VerificationCardSetContext {
     pub verification_card_set_alias: String,
     pub verification_card_set_description: String,
     pub ballot_box_id: String,
-    #[serde(deserialize_with = "deserialize_string_string_to_datetime")]
+    #[serde(deserialize_with = "deserialize_string_to_datetime")]
     pub ballot_box_start_time: NaiveDateTime,
-    #[serde(deserialize_with = "deserialize_string_string_to_datetime")]
+    #[serde(deserialize_with = "deserialize_string_to_datetime")]
     pub ballot_box_finish_time: NaiveDateTime,
     pub test_ballot_box: bool,
     pub number_of_eligible_voters: usize,
