@@ -102,7 +102,7 @@ impl VerificationMetaDataList {
         self.iter().find(|&e| e.id == id)
     }
 
-    pub fn iter(&self) -> std::slice::Iter<VerificationMetaData> {
+    pub fn iter(&'_ self) -> std::slice::Iter<'_, VerificationMetaData> {
         self.0.iter()
     }
 

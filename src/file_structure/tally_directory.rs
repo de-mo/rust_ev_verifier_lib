@@ -76,6 +76,7 @@ pub trait TallyDirectoryTrait: CompletnessTestTrait + Send + Sync {
 /// The trait is used as parameter of the verification functions to allow mock of
 /// test (negative tests)
 pub trait BBDirectoryTrait: CompletnessTestTrait + Send + Sync {
+    #[allow(dead_code)]
     fn tally_component_votes_payload_file(&self) -> &File<TallyComponentVotesPayload>;
     fn tally_component_shuffle_payload_file(&self) -> &File<TallyComponentShufflePayload>;
     fn control_component_ballot_box_payload_group(

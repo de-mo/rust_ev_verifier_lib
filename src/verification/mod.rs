@@ -200,6 +200,7 @@ impl VerificationPeriod {
     }
 }
 
+#[allow(dead_code)]
 pub(super) fn verification_unimplemented<D: VerificationDirectoryTrait>(
     _dir: &D,
     _config: &'static VerifierConfig,
