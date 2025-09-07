@@ -50,15 +50,17 @@ pub fn check_verification_dir(period: &VerificationPeriod, path: &Path) -> Resul
             path
         ));
     };
-    let dir_name = match period {
-        VerificationPeriod::Setup => VerifierConfig::setup_dir_name(),
-        VerificationPeriod::Tally => VerifierConfig::tally_dir_name(),
-    };
-    if !path.join(dir_name).is_dir() {
-        return Err(format!(
-            "Directory {dir_name} does not exist in directory {path:?}"
-        ));
-    };
+    match period {
+        VerificationPeriod::Setup => {}
+        VerificationPeriod::Tally => {
+            let dir_name = VerifierConfig::tally_dir_name();
+            if !path.join(dir_name).is_dir() {
+                return Err(format!(
+                    "Directory {dir_name} does not exist in directory {path:?}"
+                ));
+            }
+        }
+    }
     Ok(())
 }
 

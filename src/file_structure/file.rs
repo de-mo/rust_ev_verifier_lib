@@ -222,7 +222,7 @@ mod test {
         assert_eq!(f.location(), location);
         assert_eq!(
             f.path(),
-            location.join("eCH-0222_v4-0_NE_20231124_TT05.xml")
+            location.join("eCH-0222_v3-0_NE_20231124_TT05.xml")
         );
     }
 
