@@ -54,6 +54,7 @@ pub struct MockBBDirectory {
 pub struct MockTallyDirectory {
     dir: TallyDirectory,
     bb_directories: Vec<MockBBDirectory>,
+    mocked_ech_0222: Option<Box<MockedDataType<ECH0222>>>,
 }
 
 impl_completness_test_trait_for_tally_bb!(MockBBDirectory);
@@ -70,6 +71,7 @@ impl MockTallyDirectory {
         MockTallyDirectory {
             dir: tally_dir,
             bb_directories: bb_dirs,
+            mocked_ech_0222: None,
         }
     }
 }
@@ -80,6 +82,8 @@ impl TallyDirectoryTrait for MockTallyDirectory {
     fn ech_0222_file(&self) -> &File<ECH0222> {
         self.dir.ech_0222_file()
     }
+
+    impl_trait_get_method_for_mocked_data!(ech_0222, ECH0222);
 
     fn bb_directories(&self) -> &[Self::BBDirType] {
         &self.bb_directories

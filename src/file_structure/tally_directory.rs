@@ -59,6 +59,7 @@ pub trait TallyDirectoryTrait: CompletnessTestTrait + Send + Sync {
     type BBDirType: BBDirectoryTrait;
 
     fn ech_0222_file(&self) -> &File<ECH0222>;
+    fn ech_0222(&self) -> Result<Arc<ECH0222>, FileStructureError>;
     fn bb_directories(&self) -> &[Self::BBDirType];
 
     /// Collect the names of the ballot box directories
@@ -115,6 +116,11 @@ impl TallyDirectoryTrait for TallyDirectory {
     fn ech_0222_file(&self) -> &File<ECH0222> {
         &self.ech_0222_file
     }
+
+    fn ech_0222(&self) -> Result<Arc<ECH0222>, FileStructureError> {
+        self.ech_0222_file.decode_verifier_data()
+    }
+
     fn bb_directories(&self) -> &[BBDirectory] {
         &self.bb_directories
     }

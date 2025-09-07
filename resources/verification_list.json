@@ -241,23 +241,7 @@
     },
     {
         "id": "07.05",
-        "name": "VerifySignatureTallyComponentDecrypt",
-        "algorithm": "",
-        "period": "tally",
-        "category": "authenticity",
-        "description": ""
-    },
-    {
-        "id": "07.06",
         "name": "VerifySignatureTallyComponentEch0222",
-        "algorithm": "",
-        "period": "tally",
-        "category": "authenticity",
-        "description": ""
-    },
-    {
-        "id": "07.07",
-        "name": "VerifySignatureTallyComponentEch0110",
         "algorithm": "",
         "period": "tally",
         "category": "authenticity",

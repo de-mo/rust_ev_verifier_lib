@@ -25,8 +25,7 @@ use crate::{
     },
     verification::{
         meta_data::VerificationMetaDataList, result::VerificationResult,
-        verification_unimplemented, verify_signature_for_object, VerificationError,
-        VerificationErrorImpl,
+        verify_signature_for_object, VerificationError, VerificationErrorImpl,
     },
 };
 
@@ -81,35 +80,13 @@ pub fn get_verifications<'a>(
         })?,
         Verification::new(
             "07.05",
-            "VerifySignatureTallyComponentDecrypt",
-            verification_unimplemented,
-            metadata_list,
-            config,
-        )
-        .map_err(|e| VerificationErrorImpl::GetVerification {
-            name: "VerifySignatureTallyComponentDecrypt",
-            source: Box::new(e),
-        })?,
-        Verification::new(
-            "07.06",
             "VerifySignatureTallyComponentEch0222",
-            verification_unimplemented,
+            fn_0705_verify_signature_ech0222,
             metadata_list,
             config,
         )
         .map_err(|e| VerificationErrorImpl::GetVerification {
             name: "VerifySignatureTallyComponentEch0222",
-            source: Box::new(e),
-        })?,
-        Verification::new(
-            "07.07",
-            "VerifySignatureTallyComponentEch0110",
-            verification_unimplemented,
-            metadata_list,
-            config,
-        )
-        .map_err(|e| VerificationErrorImpl::GetVerification {
-            name: "VerifySignatureTallyComponentEch0110",
             source: Box::new(e),
         })?,
     ]))
@@ -211,6 +188,23 @@ fn fn_0704_verify_signature_tally_component_votes<D: VerificationDirectoryTrait>
     }
 }
 
+fn fn_0705_verify_signature_ech0222<D: VerificationDirectoryTrait>(
+    dir: &D,
+    config: &'static VerifierConfig,
+    result: &mut VerificationResult,
+) {
+    let tally_dir = dir.unwrap_tally();
+    match tally_dir.ech_0222() {
+        Ok(d) => result.append_with_context(
+            &verify_signature_for_object(d.as_ref(), config),
+            "ech_0222.xml",
+        ),
+        Err(e) => {
+            result.push(VerificationEvent::new_error_from_error(&e).add_context("ech_0222.xml"))
+        }
+    }
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
@@ -269,6 +263,22 @@ mod test {
         let dir = get_verifier_dir();
         let mut result = VerificationResult::new();
         fn_0704_verify_signature_tally_component_votes(&dir, &CONFIG_TEST, &mut result);
+        if !result.is_ok() {
+            for e in result.errors() {
+                println!("{e:?}");
+            }
+            for f in result.failures() {
+                println!("{f:?}");
+            }
+        }
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_0705() {
+        let dir = get_verifier_dir();
+        let mut result = VerificationResult::new();
+        fn_0705_verify_signature_ech0222(&dir, &CONFIG_TEST, &mut result);
         if !result.is_ok() {
             for e in result.errors() {
                 println!("{e:?}");
