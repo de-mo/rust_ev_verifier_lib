@@ -130,10 +130,18 @@ impl Ballot {
 impl StandardQuestion {
     pub fn from_node(node: &Node) -> Self {
         let mut children = node.element_children();
-        let question_identification = children.next().unwrap().text().unwrap().to_string();
-        children.next(); // questionNumber
-        children.next(); // answerType
-        let ballot_question = BallotQuestion::from_node(&children.next().unwrap());
+        let question_identification = node
+            .first_element_child()
+            .unwrap()
+            .text()
+            .unwrap()
+            .to_string();
+        let ballot_question = node
+            .element_children()
+            .find(|n| n.has_tag_name("ballotQuestion"))
+            .map(|n| BallotQuestion::from_node(&n))
+            .unwrap();
+        BallotQuestion::from_node(&children.next().unwrap());
         let answers = node
             .element_children()
             .filter(|n| n.has_tag_name("answer"))
@@ -204,11 +212,11 @@ impl Answer {
             answer_position,
             hidden_answer: node
                 .element_children()
-                .find(|n| n.has_attribute("hiddenAnswer"))
+                .find(|n| n.has_tag_name("hiddenAnswer"))
                 .map(|n| n.text().unwrap() == "true"),
             answer_info: node
                 .element_children()
-                .filter(|n| n.has_attribute("answerInfo"))
+                .filter(|n| n.has_tag_name("answerInfo"))
                 .map(|n| AnswerInfo::from_node(&n))
                 .collect::<Vec<_>>(),
         }
@@ -226,7 +234,7 @@ impl AnswerInfo {
                 .to_string(),
             answer: node
                 .element_children()
-                .find(|n| n.has_attribute("answer"))
+                .find(|n| n.has_tag_name("answer"))
                 .unwrap()
                 .text()
                 .unwrap()

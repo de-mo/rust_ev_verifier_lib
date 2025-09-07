@@ -23,7 +23,8 @@ pub struct ElectionInformation {
     pub election: Election,
     pub candidates: Vec<Candidate>,
     pub lists: Vec<List>,
-    pub write_in_positions: Vec<usize>,
+    pub write_in_positions: Vec<WriteInPosition>,
+    pub empty_list: EmptyList,
 }
 
 #[derive(Debug, Clone)]
@@ -49,7 +50,6 @@ pub struct Candidate {
 pub struct List {
     pub list_identification: String,
     pub list_description: ListDescription,
-    pub list_empty: bool,
     pub candidate_positions: Vec<CandidatePosition>,
 }
 
@@ -70,16 +70,35 @@ pub struct CandidatePosition {
     pub position_on_list: usize,
 }
 
+#[derive(Debug, Clone)]
+pub struct WriteInPosition {
+    pub write_in_position_identification: String,
+    pub position: usize,
+}
+
+#[derive(Debug, Clone)]
+pub struct EmptyList {
+    pub list_identification: String,
+    pub list_description: ListDescription,
+    pub empty_positions: Vec<EmptyPosition>,
+}
+
+#[derive(Debug, Clone)]
+pub struct EmptyPosition {
+    pub empty_position_identification: String,
+    pub position_on_list: usize,
+}
+
 impl ElectionInformation {
     pub fn from_node(node: &Node) -> Self {
         let mut lists = node
             .element_children()
-            .filter(|n| n.has_attribute("list"))
+            .filter(|n| n.has_tag_name("list"))
             .map(|n| List::from_node(&n))
             .collect::<Vec<_>>();
         if let Some(l) = node
             .element_children()
-            .find(|n| n.has_attribute("emptyList"))
+            .find(|n| n.has_tag_name("emptyList"))
             .map(|n| List::from_node(&n))
         {
             lists.push(l)
@@ -91,14 +110,23 @@ impl ElectionInformation {
                 .unwrap(),
             candidates: node
                 .element_children()
-                .filter(|n| n.has_attribute("candidate"))
+                .filter(|n| n.has_tag_name("candidate"))
                 .map(|n| Candidate::from_node(&n))
                 .collect::<Vec<_>>(),
-            lists,
+            lists: node
+                .element_children()
+                .filter(|n| n.has_tag_name("list"))
+                .map(|n| List::from_node(&n))
+                .collect::<Vec<_>>(),
+            empty_list: node
+                .element_children()
+                .find(|n| n.has_tag_name("emptyList"))
+                .map(|n| EmptyList::from_node(&n))
+                .unwrap(),
             write_in_positions: node
                 .element_children()
-                .filter(|n| n.has_attribute("writeInPosition"))
-                .map(|n| n.text().unwrap().parse::<usize>().unwrap())
+                .filter(|n| n.has_tag_name("writeInPosition"))
+                .map(|n| WriteInPosition::from_node(&n))
                 .collect::<Vec<_>>(),
         }
     }
@@ -164,26 +192,26 @@ impl Candidate {
         Self {
             candidate_identification: node
                 .element_children()
-                .find(|n| n.has_attribute("candidateIdentification"))
+                .find(|n| n.has_tag_name("candidateIdentification"))
                 .map(|n| n.text().unwrap().to_string())
                 .unwrap(),
             family_name: node
                 .element_children()
-                .find(|n| n.has_attribute("familyName"))
+                .find(|n| n.has_tag_name("familyName"))
                 .map(|n| n.text().unwrap().to_string())
                 .unwrap(),
             first_name: node
                 .element_children()
-                .find(|n| n.has_attribute("firstName"))
+                .find(|n| n.has_tag_name("firstName"))
                 .map(|n| n.text().unwrap().to_string()),
             call_name: node
                 .element_children()
-                .find(|n| n.has_attribute("callName"))
+                .find(|n| n.has_tag_name("callName"))
                 .map(|n| n.text().unwrap().to_string())
                 .unwrap(),
             date_of_birth: node
                 .element_children()
-                .find(|n| n.has_attribute("dateOfBirth"))
+                .find(|n| n.has_tag_name("dateOfBirth"))
                 .map(|n| n.text().unwrap().to_string())
                 .unwrap(),
         }
@@ -199,14 +227,12 @@ impl List {
             .next()
             .map(|n| ListDescription::from_node(&n))
             .unwrap();
-        let list_empty = node.has_tag_name("emptyList");
         Self {
             list_identification,
             list_description,
-            list_empty,
             candidate_positions: node
                 .element_children()
-                .filter(|n| n.has_attribute("candidatePosition"))
+                .filter(|n| n.has_tag_name("candidatePosition"))
                 .map(|n| CandidatePosition::from_node(&n))
                 .collect::<Vec<_>>(),
         }
@@ -249,6 +275,63 @@ impl CandidatePosition {
             .unwrap();
         Self {
             candidate_list_identification,
+            position_on_list,
+        }
+    }
+}
+
+impl WriteInPosition {
+    pub fn from_node(node: &Node) -> Self {
+        let mut children = node.element_children();
+        let write_in_position_identification = children.next().unwrap().text().unwrap().to_string();
+        let position = children
+            .next()
+            .unwrap()
+            .text()
+            .unwrap()
+            .parse::<usize>()
+            .unwrap();
+        Self {
+            write_in_position_identification,
+            position,
+        }
+    }
+}
+
+impl EmptyList {
+    pub fn from_node(node: &Node) -> Self {
+        let mut children = node.element_children();
+        let list_identification = children.next().unwrap().text().unwrap().to_string();
+        children.next(); // listIndentureNumber
+        let list_description = children
+            .next()
+            .map(|n| ListDescription::from_node(&n))
+            .unwrap();
+        Self {
+            list_identification,
+            list_description,
+            empty_positions: node
+                .element_children()
+                .filter(|n| n.has_tag_name("emptyPosition"))
+                .map(|n| EmptyPosition::from_node(&n))
+                .collect::<Vec<_>>(),
+        }
+    }
+}
+
+impl EmptyPosition {
+    pub fn from_node(node: &Node) -> Self {
+        let mut children = node.element_children();
+        let empty_position_identification = children.next().unwrap().text().unwrap().to_string();
+        let position_on_list = children
+            .next()
+            .unwrap()
+            .text()
+            .unwrap()
+            .parse::<usize>()
+            .unwrap();
+        Self {
+            empty_position_identification,
             position_on_list,
         }
     }

@@ -17,19 +17,16 @@
 use rust_ev_system_library::preliminaries::PTableElement;
 
 use crate::{
-    data_structures::{
-        context::{
-            election_event_configuration::{
-                Answer, Candidate, Election, ElectionEventConfigurationData, ElectionInformation,
-                List, StandardQuestion, Vote,
-            },
-            election_event_context_payload::ElectionEventContext,
+    data_structures::context::{
+        election_event_configuration::{
+            Answer, Candidate, Election, ElectionEventConfigurationData, ElectionInformation,
+            EmptyList, List, StandardQuestion, Vote, WriteInPosition,
         },
-        ElectionEventConfiguration,
+        election_event_context_payload::ElectionEventContext,
     },
     verification::{VerificationEvent, VerificationResult},
 };
-use std::{collections::HashMap, slice::Iter};
+use std::collections::HashMap;
 
 pub fn verification_2_3_same_than_xml(
     ee_context: &ElectionEventContext,
@@ -152,7 +149,7 @@ fn generate_all_p_table_elements(
             .contest
             .votes
             .iter()
-            .filter(|v| v.has_authorization(&auth))
+            .filter(|v| v.has_authorization(auth))
             .flat_map(|v| generate_p_table_for_vote(&v.vote))
             .collect(),
     );
@@ -161,7 +158,7 @@ fn generate_all_p_table_elements(
             .contest
             .election_groups
             .iter()
-            .filter(|v| v.has_authorization(&auth))
+            .filter(|v| v.has_authorization(auth))
             .flat_map(|eg| {
                 eg.election_informations
                     .iter()
@@ -246,6 +243,10 @@ fn generate_p_table_for_election_information(
                 .map(|l| generate_p_table_element_for_list(l, &election_info.election))
                 .collect::<Vec<_>>(),
         );
+        res.push(generate_p_table_element_for_empty_list(
+            &election_info.empty_list,
+            &election_info.election,
+        ));
     }
     // candidates
     res.append(
@@ -255,16 +256,14 @@ fn generate_p_table_for_election_information(
             .flat_map(|c| generate_p_table_element_for_candidate(c, &election_info.election))
             .collect::<Vec<_>>(),
     );
-    // write in candidates
-    /*if let Some(write_in_candidates) = &election_info.write_in_candidate {
-        res.append(&mut generate_p_table_element_for_write_in_candidate(
-            write_in_candidates.as_slice(),
-            &election_info.election,
-        ));
-    }*/
+    // write in positions
+    res.append(&mut generate_p_table_element_for_write_in_position(
+        election_info.write_in_positions.as_slice(),
+        &election_info.election,
+    ));
     // Empty positions
     res.append(&mut generate_p_table_element_for_blank_position_candidate(
-        &mut election_info.lists.iter(),
+        &election_info.empty_list,
         &election_info.election,
     ));
     res
@@ -280,10 +279,29 @@ fn generate_p_table_element_for_list(
             election.election_identification, list.list_identification
         ),
         semantic_information: [
-            match list.list_empty {
-                true => "BLANK",
-                _ => "NON_BLANK",
-            },
+            "NON_BLANK",
+            generate_text_4_languages!(
+                list.list_description.list_description_info.as_slice(),
+                language,
+                list_description
+            ),
+        ]
+        .join("|"),
+        correctness_information: format!("L|{}", election.election_identification),
+    }
+}
+
+fn generate_p_table_element_for_empty_list(
+    list: &EmptyList,
+    election: &Election,
+) -> PTableElementWithoutEncoding {
+    PTableElementWithoutEncoding {
+        actual_voting_option: format!(
+            "{}|{}",
+            election.election_identification, list.list_identification
+        ),
+        semantic_information: [
+            "BLANK",
             generate_text_4_languages!(
                 list.list_description.list_description_info.as_slice(),
                 language,
@@ -308,11 +326,6 @@ fn generate_p_table_element_for_candidate(
             semantic_information: [
                 "NON_BLANK",
                 &candidate.family_name,
-                candidate
-                    .first_name
-                    .as_ref()
-                    .map(|s| s.as_str())
-                    .unwrap_or(""),
                 &candidate.call_name,
                 &candidate.date_of_birth,
             ]
@@ -322,8 +335,8 @@ fn generate_p_table_element_for_candidate(
         .collect()
 }
 
-/*fn generate_p_table_element_for_write_in_candidate(
-    candidates: &[WriteInCandidate],
+fn generate_p_table_element_for_write_in_position(
+    candidates: &[WriteInPosition],
     election: &Election,
 ) -> Vec<PTableElementWithoutEncoding> {
     candidates
@@ -331,7 +344,7 @@ fn generate_p_table_element_for_candidate(
         .map(|c| PTableElementWithoutEncoding {
             actual_voting_option: format!(
                 "{}|{}",
-                election.election_identification, c.write_in_candidate_identification
+                election.election_identification, c.write_in_position_identification
             ),
             semantic_information: [
                 "WRITE_IN",
@@ -341,30 +354,26 @@ fn generate_p_table_element_for_candidate(
             correctness_information: format!("C|{}", election.election_identification),
         })
         .collect()
-}*/
+}
 
 fn generate_p_table_element_for_blank_position_candidate(
-    it_lists: &mut Iter<'_, List>,
+    empty_list: &EmptyList,
     election: &Election,
 ) -> Vec<PTableElementWithoutEncoding> {
-    it_lists
-        .filter(|l| l.list_empty)
-        .flat_map(|l| {
-            l.candidate_positions
-                .iter()
-                .map(|c| PTableElementWithoutEncoding {
-                    actual_voting_option: format!(
-                        "{}|{}",
-                        election.election_identification, c.candidate_list_identification
-                    ),
-                    semantic_information: [
-                        "BLANK",
-                        format!("EMPTY_CANDIDATE_POSITION-{}", c.position_on_list).as_str(),
-                    ]
-                    .join("|"),
-                    correctness_information: format!("C|{}", election.election_identification),
-                })
-                .collect::<Vec<_>>()
+    empty_list
+        .empty_positions
+        .iter()
+        .map(|c| PTableElementWithoutEncoding {
+            actual_voting_option: format!(
+                "{}|{}",
+                election.election_identification, c.empty_position_identification
+            ),
+            semantic_information: [
+                "BLANK",
+                format!("EMPTY_CANDIDATE_POSITION-{}", c.position_on_list).as_str(),
+            ]
+            .join("|"),
+            correctness_information: format!("C|{}", election.election_identification),
         })
-        .collect()
+        .collect::<Vec<_>>()
 }

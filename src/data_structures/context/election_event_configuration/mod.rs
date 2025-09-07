@@ -26,7 +26,7 @@ use crate::{
     direct_trust::{CertificateAuthority, VerifiySignatureTrait, VerifiyXMLSignatureTrait},
 };
 use chrono::NaiveDate;
-pub use election::{Candidate, Election, ElectionInformation, List};
+pub use election::{Candidate, Election, ElectionInformation, EmptyList, List, WriteInPosition};
 use roxmltree::{Document, Node};
 use rust_ev_system_library::rust_ev_crypto_primitives::prelude::VerifyDomainTrait;
 use std::sync::Arc;
