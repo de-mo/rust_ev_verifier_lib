@@ -476,7 +476,7 @@ impl<D: VerificationDirectoryTrait> ManualVerificationsTally<D> {
                     bb_id: bb_id.clone(),
                     source: Box::new(e),
                 })?
-                .votes
+                .decrypted_votes
                 .len();
             match vcs_context.test_ballot_box {
                 true => number_of_productive_used_voting_cards += nb_used_vc,

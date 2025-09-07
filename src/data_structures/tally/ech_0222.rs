@@ -14,20 +14,32 @@
 // a copy of the GNU General Public License along with this program. If not, see
 // <https://www.gnu.org/licenses/>.
 
-use std::{rc::Rc, sync::Arc};
-
 use super::{
     super::{DataStructureError, VerifierDataDecode},
     VerifierTallyDataType,
 };
 use crate::{
-    data_structures::{VerifierDataToTypeTrait, VerifierDataType},
+    data_structures::{xml::XMLData, VerifierDataToTypeTrait, VerifierDataType},
     direct_trust::{CertificateAuthority, VerifiySignatureTrait, VerifiyXMLSignatureTrait},
 };
+use std::sync::Arc;
 
 #[derive(Debug, Clone)]
 pub struct ECH0222 {
-    pub data: Arc<String>,
+    inner: XMLData<ECH0222Data, DataStructureError>,
+}
+
+#[derive(Debug, Clone)]
+pub struct ECH0222Data {}
+
+impl ECH0222 {
+    pub fn get_data(&self) -> Result<Arc<ECH0222Data>, DataStructureError> {
+        self.inner.get_data()
+    }
+
+    pub fn unwrap_data(&self) -> Arc<ECH0222Data> {
+        self.get_data().unwrap()
+    }
 }
 
 impl VerifierDataToTypeTrait for ECH0222 {
@@ -36,9 +48,15 @@ impl VerifierDataToTypeTrait for ECH0222 {
     }
 }
 
+fn decode_xml(_s: &str) -> Result<ECH0222Data, DataStructureError> {
+    Ok(ECH0222Data {})
+}
+
 impl VerifierDataDecode for ECH0222 {
     fn decode_xml<'a>(s: String) -> Result<Self, DataStructureError> {
-        Ok(ECH0222 { data: Arc::new(s) })
+        Ok(Self {
+            inner: XMLData::new(s.as_str(), decode_xml),
+        })
     }
 }
 
@@ -48,7 +66,7 @@ impl<'a> VerifiyXMLSignatureTrait<'a> for ECH0222 {
     }
 
     fn get_data_str(&self) -> Option<Arc<String>> {
-        Some(self.data.clone())
+        self.inner.get_raw()
     }
 }
 
@@ -64,14 +82,34 @@ impl<'a> VerifiySignatureTrait<'a> for ECH0222 {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::config::test::test_datasets_tally_path;
+    use crate::config::test::{get_keystore, test_datasets_tally_path};
+    use std::fs;
 
+    fn get_data_res() -> Result<ECH0222, DataStructureError> {
+        ECH0222::decode_xml(
+            fs::read_to_string(
+                test_datasets_tally_path().join("eCH-0222_v3-0_NE_20231124_TT05.xml"),
+            )
+            .unwrap(),
+        )
+    }
     #[test]
     fn read_data_set() {
-        let path = test_datasets_tally_path()
-            .join("tally")
-            .join("eCH-0222_v1-0_NE_20231124_TT05.xml");
-        let ech_0222 = ECH0222::stream_xml(&path);
-        assert!(ech_0222.is_ok())
+        let data_res = get_data_res();
+        assert!(data_res.is_ok(), "{:?}", data_res.unwrap_err());
+    }
+
+    #[test]
+    fn verify_signature() {
+        let data = get_data_res().unwrap();
+        let ks = get_keystore();
+        let sign_validate_res = data.verify_signatures(&ks);
+        for r in sign_validate_res {
+            if r.is_err() {
+                println!("error validating signature: {:?}", r.as_ref().unwrap_err())
+            }
+            assert!(r.is_ok());
+            assert!(r.unwrap())
+        }
     }
 }

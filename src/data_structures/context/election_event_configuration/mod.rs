@@ -414,7 +414,7 @@ mod test {
     use std::fs;
 
     use super::*;
-    use crate::config::test::test_datasets_context_path;
+    use crate::config::test::{get_keystore, test_datasets_context_path};
 
     fn get_data_res() -> Result<ElectionEventConfiguration, DataStructureError> {
         ElectionEventConfiguration::decode_xml(
@@ -432,7 +432,18 @@ mod test {
     }
 
     #[test]
-    fn verify_signature() {}
+    fn verify_signature() {
+        let data = get_data_res().unwrap();
+        let ks = get_keystore();
+        let sign_validate_res = data.verify_signatures(&ks);
+        for r in sign_validate_res {
+            if r.is_err() {
+                println!("error validating signature: {:?}", r.as_ref().unwrap_err())
+            }
+            assert!(r.is_ok());
+            assert!(r.unwrap())
+        }
+    }
 
     #[test]
     fn test_voters() {

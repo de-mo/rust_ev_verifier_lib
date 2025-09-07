@@ -43,7 +43,7 @@ pub struct TallyComponentShufflePayload {
     pub ballot_box_id: String,
     pub verifiable_shuffle: VerifiableShuffle,
     pub verifiable_plaintext_decryption: VerifiablePlaintextDecryption,
-    pub signature: Signature,
+    pub signature: Option<Signature>,
 }
 
 impl VerifierDataToTypeTrait for TallyComponentShufflePayload {
@@ -85,9 +85,16 @@ impl<'a> From<&'a TallyComponentShufflePayload> for HashableMessage<'a> {
             Self::from(&value.election_event_id),
             Self::from(&value.ballot_box_id),
             Self::from(&value.verifiable_shuffle),
+            Self::from(&value.verifiable_plaintext_decryption),
+        ])
+    }
+}
+
+impl<'a> From<&'a VerifiablePlaintextDecryption> for HashableMessage<'a> {
+    fn from(value: &'a VerifiablePlaintextDecryption) -> Self {
+        Self::from(vec![
             Self::from(
                 value
-                    .verifiable_plaintext_decryption
                     .decrypted_votes
                     .iter()
                     .map(|v| HashableMessage::from(v.message.as_slice()))
@@ -95,7 +102,6 @@ impl<'a> From<&'a TallyComponentShufflePayload> for HashableMessage<'a> {
             ),
             Self::from(
                 value
-                    .verifiable_plaintext_decryption
                     .decryption_proofs
                     .iter()
                     .map(HashableMessage::from)
@@ -124,7 +130,7 @@ impl<'a> VerifiyJSONSignatureTrait<'a> for TallyComponentShufflePayload {
     }
 
     fn get_signature(&self) -> Option<ByteArray> {
-        Some(self.signature.get_signature())
+        self.signature.as_ref().map(|s| s.get_signature())
     }
 }
 
@@ -141,16 +147,20 @@ impl<'a> VerifiySignatureTrait<'a> for TallyComponentShufflePayload {
 mod test_one {
     use super::{
         super::super::test::{
-            test_data_structure, test_data_structure_read_data_set,
-            test_data_structure_verify_domain, test_data_structure_verify_signature,
+            file_to_test_cases, json_to_hashable_message, json_to_testdata, test_data_structure,
+            test_data_structure_read_data_set, test_data_structure_verify_domain,
+            test_data_structure_verify_signature, test_hash_json,
         },
         *,
     };
     use crate::config::test::{
         get_keystore, test_ballot_box_many_votes_path, test_ballot_box_one_vote_path,
-        test_ballot_box_zero_vote_path,
+        test_ballot_box_zero_vote_path, test_resources_path,
     };
     use paste::paste;
+    use rust_ev_system_library::rust_ev_crypto_primitives::prelude::{
+        EncodeTrait, RecursiveHashTrait,
+    };
     use std::fs;
 
     test_data_structure!(
@@ -172,6 +182,11 @@ mod test_one {
         TallyComponentShufflePayload,
         "tallyComponentShufflePayload.json",
         test_ballot_box_many_votes_path
+    );
+
+    test_hash_json!(
+        TallyComponentShufflePayload,
+        "verify-signature-tally-component-shuffle.json"
     );
 
     #[test]

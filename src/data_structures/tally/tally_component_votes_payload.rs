@@ -36,14 +36,16 @@ use std::sync::Arc;
 #[serde(rename_all = "camelCase")]
 pub struct TallyComponentVotesPayload {
     pub election_event_id: String,
-    pub ballot_id: String,
     pub ballot_box_id: String,
     #[serde(with = "EncryptionParametersDef")]
     pub encryption_group: EncryptionParameters,
-    pub votes: Vec<Vec<usize>>,
-    pub actual_selected_voting_options: Vec<Vec<String>>,
-    pub decoded_write_in_votes: Vec<Vec<String>>,
-    pub signature: Signature,
+    #[serde(alias = "votes")]
+    pub decrypted_votes: Vec<Vec<usize>>,
+    #[serde(alias = "actualSelectedVotingOptions")]
+    pub decoded_votes: Vec<Vec<String>>,
+    #[serde(alias = "decodedWriteInVotes")]
+    pub decoded_write_ins: Vec<Vec<String>>,
+    pub signature: Option<Signature>,
 }
 
 impl VerifierDataToTypeTrait for TallyComponentVotesPayload {
@@ -58,22 +60,14 @@ impl VerifyDomainTrait<String> for TallyComponentVotesPayload {}
 
 impl<'a> From<&'a TallyComponentVotesPayload> for HashableMessage<'a> {
     fn from(value: &'a TallyComponentVotesPayload) -> Self {
-        let mut res = vec![
-            Self::from(&value.election_event_id),
-            Self::from(&value.ballot_id),
-            Self::from(&value.ballot_box_id),
+        Self::from(vec![
             Self::from(&value.encryption_group),
-        ];
-        if !value.votes.is_empty() {
-            res.push(Self::from(value.votes.as_slice()))
-        };
-        if !value.actual_selected_voting_options.is_empty() {
-            res.push(Self::from(value.actual_selected_voting_options.as_slice()))
-        }
-        if !value.decoded_write_in_votes.is_empty() {
-            res.push(Self::from(value.decoded_write_in_votes.as_slice()))
-        }
-        Self::from(res)
+            Self::from(&value.election_event_id),
+            Self::from(&value.ballot_box_id),
+            Self::from(value.decrypted_votes.as_slice()),
+            Self::from(value.decoded_votes.as_slice()),
+            Self::from(value.decoded_write_ins.as_slice()),
+        ])
     }
 }
 
@@ -95,7 +89,7 @@ impl<'a> VerifiyJSONSignatureTrait<'a> for TallyComponentVotesPayload {
     }
 
     fn get_signature(&self) -> Option<ByteArray> {
-        Some(self.signature.get_signature())
+        self.signature.as_ref().map(|s| s.get_signature())
     }
 }
 
@@ -112,13 +106,18 @@ impl<'a> VerifiySignatureTrait<'a> for TallyComponentVotesPayload {
 mod test {
     use super::{
         super::super::test::{
-            test_data_structure, test_data_structure_read_data_set,
-            test_data_structure_verify_domain, test_data_structure_verify_signature,
+            file_to_test_cases, json_to_hashable_message, json_to_testdata, test_data_structure,
+            test_data_structure_read_data_set, test_data_structure_verify_domain,
+            test_data_structure_verify_signature, test_hash_json,
         },
         *,
     };
     use crate::config::test::{
         get_keystore, test_ballot_box_one_vote_path, test_ballot_box_zero_vote_path,
+        test_resources_path,
+    };
+    use rust_ev_system_library::rust_ev_crypto_primitives::prelude::{
+        EncodeTrait, RecursiveHashTrait,
     };
     use std::fs;
 
@@ -126,6 +125,11 @@ mod test {
         TallyComponentVotesPayload,
         "tallyComponentVotesPayload.json",
         test_ballot_box_one_vote_path
+    );
+
+    test_hash_json!(
+        TallyComponentVotesPayload,
+        "verify-signature-tally-component-votes.json"
     );
 
     #[test]

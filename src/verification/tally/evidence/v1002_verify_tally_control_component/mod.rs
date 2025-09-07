@@ -183,9 +183,9 @@ fn verify_for_ballotbox<B: BBDirectoryTrait>(
         pi_dec_5: &tally_shuffle_payload
             .verifiable_plaintext_decryption
             .decryption_proofs,
-        upper_l_votes: &tally_votes_payload.votes,
-        upper_l_decoded_votes: &tally_votes_payload.actual_selected_voting_options,
-        upper_l_write_ins: &tally_votes_payload.decoded_write_in_votes,
+        upper_l_votes: &tally_votes_payload.decrypted_votes,
+        upper_l_decoded_votes: &tally_votes_payload.decoded_votes,
+        upper_l_write_ins: &tally_votes_payload.decoded_write_ins,
     };
 
     // VerifyTallyFiles is missing
