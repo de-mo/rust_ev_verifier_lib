@@ -56,10 +56,7 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::config::test::{
-        get_test_verifier_mock_setup_dir as get_mock_verifier_dir,
-        get_test_verifier_setup_dir as get_verifier_dir, CONFIG_TEST,
-    };
+    use crate::config::test::{get_test_verifier_setup_dir as get_verifier_dir, CONFIG_TEST};
 
     #[test]
     fn test_ok() {

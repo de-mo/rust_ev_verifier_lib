@@ -32,7 +32,7 @@ pub use extract::*;
 pub use run_information::RunInformation;
 pub use runner::{
     no_action_after_fn, no_action_after_runner_fn, no_action_before_fn, no_action_before_runner_fn,
-    RunParallel, Runner, RunnerInformation, VerificationRunInformation,
+    RunParallel, RunSequential, Runner, RunnerInformation, VerificationRunInformation,
 };
 use rust_ev_verifier_lib::{
     dataset::DatasetError,
