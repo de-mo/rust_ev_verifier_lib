@@ -15,15 +15,15 @@
 // <https://www.gnu.org/licenses/>.
 
 use super::{
-    meta_data::VerificationMetaDataList, VerficationsWithErrorAndFailuresType, VerificationError,
-    VerificationErrorImpl, VerificationPeriod, VerificationStatus,
+    VerficationsWithErrorAndFailuresType, VerificationError, VerificationErrorImpl,
+    VerificationPeriod, VerificationStatus, meta_data::VerificationMetaDataList,
 };
 use crate::{
     config::VerifierConfig,
     data_structures::context::election_event_configuration::ManuelVerificationInputFromConfiguration,
     file_structure::{
-        tally_directory::BBDirectoryTrait, ContextDirectoryTrait, TallyDirectoryTrait,
-        VerificationDirectoryTrait,
+        ContextDirectoryTrait, TallyDirectoryTrait, VerificationDirectoryTrait,
+        tally_directory::BBDirectoryTrait,
     },
 };
 use chrono::NaiveDate;
@@ -114,6 +114,7 @@ pub struct ManualVerificationsSetup<D: VerificationDirectoryTrait> {
 /// Data for the manual verifications on the tally
 pub struct ManualVerificationsTally<D: VerificationDirectoryTrait> {
     manual_verifications_all_periods: ManualVerificationsForAllPeriod<D>,
+    ech_0222_fingerprint: String,
     number_of_test_used_voting_cards: usize,
     number_of_productive_used_voting_cards: usize,
     verifications_result: VerificationsResult,
@@ -455,6 +456,11 @@ impl<D: VerificationDirectoryTrait> ManualVerificationsTally<D> {
                 source: Box::new(e),
             }
         })?;
+        let ech_0222_fingerprint = tally_dir.ech_0222_file().fingerprint().map_err(|e| {
+            VerificationErrorImpl::ECH0222 {
+                source: Box::new(e),
+            }
+        })?;
         let mut number_of_productive_used_voting_cards = 0;
         let mut number_of_test_used_voting_cards = 0;
         for vcs_context in ee_context
@@ -490,6 +496,7 @@ impl<D: VerificationDirectoryTrait> ManualVerificationsTally<D> {
             .map_err(|e| VerificationErrorImpl::NewAllInNewTally {
                 source: Box::new(e),
             })?,
+            ech_0222_fingerprint,
             number_of_productive_used_voting_cards,
             number_of_test_used_voting_cards,
             verifications_result: VerificationsResult::new(
@@ -519,6 +526,10 @@ impl<D: VerificationDirectoryTrait> ManualVerificationInformationTrait
         let mut res = self
             .manual_verifications_all_periods
             .information_to_key_value();
+        res.push((
+            "Fingerprint of file eCH-0222".to_string(),
+            self.ech_0222_fingerprint.clone(),
+        ));
         res.push((
             "Number of productive voting cards used".to_string(),
             self.number_of_productive_used_voting_cards.to_string(),
