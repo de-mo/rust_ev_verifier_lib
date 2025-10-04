@@ -392,6 +392,7 @@ mod test {
     }
 
     #[test]
+    #[ignore = "Test done in test_unzip. Avoid parallel test with error"]
     fn test_decrypt_zip() {
         let path = test_datasets_context_zip_path();
         let mut zip_reader = EncryptedZipReader::new(
