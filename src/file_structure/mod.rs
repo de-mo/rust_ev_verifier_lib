@@ -30,11 +30,12 @@ pub use self::{
 };
 use crate::{
     data_structures::{
-        context::VerifierContextDataType, tally::VerifierTallyDataType, DataStructureError,
-        VerifierDataType,
+        DataStructureError, VerifierDataType, context::VerifierContextDataType,
+        tally::VerifierTallyDataType,
     },
     verification::VerificationPeriod,
 };
+use rust_ev_system_library::rust_ev_crypto_primitives::prelude::basic_crypto_functions::BasisCryptoError;
 use std::path::{Path, PathBuf};
 use tally_directory::TallyDirectory;
 use thiserror::Error;
@@ -64,6 +65,11 @@ enum FileStructureErrorImpl {
     },
     #[error("Path is not a directory {0}")]
     PathIsNotDir(PathBuf),
+    #[error("Error calculating fingerprint of {path}")]
+    Fingerprint {
+        path: PathBuf,
+        source: BasisCryptoError,
+    },
     #[cfg(test)]
     #[error("Mock error: {0}")]
     Mock(String),
@@ -337,54 +343,65 @@ mod test {
     #[test]
     fn test_context_files_exist() {
         let path = test_datasets_context_path();
-        assert!(path
-            .join(
+        assert!(
+            path.join(
                 VerifierDataType::Context(VerifierContextDataType::ElectionEventContextPayload)
                     .get_file_name(None)
             )
-            .exists());
-        assert!(path
-            .join(
+            .exists()
+        );
+        assert!(
+            path.join(
                 VerifierDataType::Context(VerifierContextDataType::SetupComponentPublicKeysPayload)
                     .get_file_name(None)
             )
-            .exists());
+            .exists()
+        );
         let path2 = test_context_verification_card_set_path();
-        assert!(path2
-            .join(
-                VerifierDataType::Context(VerifierContextDataType::SetupComponentTallyDataPayload)
+        assert!(
+            path2
+                .join(
+                    VerifierDataType::Context(
+                        VerifierContextDataType::SetupComponentTallyDataPayload
+                    )
                     .get_file_name(None)
-            )
-            .exists());
+                )
+                .exists()
+        );
     }
 
     #[test]
     fn test_tally_files_exist() {
         let path2 = test_ballot_box_one_vote_path();
-        assert!(path2
-            .join(
-                VerifierDataType::Tally(VerifierTallyDataType::TallyComponentVotesPayload)
-                    .get_file_name(None)
-            )
-            .exists());
-        assert!(path2
-            .join(
-                VerifierDataType::Tally(VerifierTallyDataType::TallyComponentShufflePayload)
-                    .get_file_name(None)
-            )
-            .exists());
+        assert!(
+            path2
+                .join(
+                    VerifierDataType::Tally(VerifierTallyDataType::TallyComponentVotesPayload)
+                        .get_file_name(None)
+                )
+                .exists()
+        );
+        assert!(
+            path2
+                .join(
+                    VerifierDataType::Tally(VerifierTallyDataType::TallyComponentShufflePayload)
+                        .get_file_name(None)
+                )
+                .exists()
+        );
     }
 
     #[test]
     fn test_context_groups_exist() {
         let path = test_datasets_context_path();
-        assert!(path
-            .join(
+        assert!(
+            path.join(
                 VerifierDataType::Context(
                     VerifierContextDataType::ControlComponentPublicKeysPayload
                 )
                 .get_file_name(Some(1))
             )
-            .exists());
+            .exists()
+        );
     }
 }

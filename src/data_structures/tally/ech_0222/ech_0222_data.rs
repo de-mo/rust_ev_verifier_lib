@@ -17,8 +17,8 @@
 use roxmltree::Node;
 
 use super::{
-    election::ElectionGroupBallotRawData, votations::VoteRawData, ECH0222CalculatedError,
-    ECH0222Difference, ECh0222differencesTrait,
+    ECH0222CalculatedError, ECH0222Difference, ECh0222differencesTrait,
+    election::ElectionGroupBallotRawData, votations::VoteRawData,
 };
 use crate::{
     data_structures::{
@@ -94,7 +94,7 @@ impl ECH0222Data {
             let tally_votes = bb.tally_component_votes_payload().map_err(|e| {
                 ECH0222CalculatedErrorImpl::TallyVoteMissing {
                     bb_id: bb.name().to_string(),
-                    source: e,
+                    source: Box::new(e),
                 }
             })?;
             raw_data.append_ballot_box(

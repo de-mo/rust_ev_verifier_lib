@@ -15,7 +15,7 @@
 // <https://www.gnu.org/licenses/>.
 
 //! Trait implementing group of files with the same structure (in particular for the files from the control components)
-use super::{file::File, FileStructureError, GetFileNameTrait};
+use super::{FileStructureError, GetFileNameTrait, file::File};
 use crate::data_structures::{VerifierDataDecode, VerifierDataToTypeTrait, VerifierDataType};
 use std::{
     fs,
@@ -173,7 +173,9 @@ impl<D: VerifierDataDecode + VerifierDataToTypeTrait + Clone> FileGroup<D> {
 
     /// Get the paths of the files
     pub fn get_paths(&self) -> Vec<PathBuf> {
-        self.iter_file().map(|(_, f)| f.path()).collect()
+        self.iter_file()
+            .map(|(_, f)| f.path().to_path_buf())
+            .collect()
     }
 
     /// Get all the valid numbers of the files

@@ -17,6 +17,9 @@
 use super::{FileReadMode, FileStructureError, FileStructureErrorImpl, FileType, GetFileNameTrait};
 use crate::data_structures::{VerifierDataDecode, VerifierDataToTypeTrait, VerifierDataType};
 use glob::glob;
+use rust_ev_system_library::rust_ev_crypto_primitives::prelude::{
+    EncodeTrait, basic_crypto_functions::sha256_stream,
+};
 use std::{
     path::{Path, PathBuf},
     sync::{Arc, OnceLock},
@@ -65,8 +68,8 @@ impl<D: VerifierDataDecode + VerifierDataToTypeTrait> File<D> {
     }
 
     /// Location of the file
-    pub fn location(&self) -> PathBuf {
-        self.path.parent().unwrap().to_path_buf()
+    pub fn location(&self) -> &Path {
+        self.path.parent().unwrap()
     }
 
     /// Does the file exist
@@ -75,13 +78,32 @@ impl<D: VerifierDataDecode + VerifierDataToTypeTrait> File<D> {
     }
 
     /// Path of the file
-    pub fn path(&self) -> PathBuf {
-        self.path.to_path_buf()
+    pub fn path(&self) -> &Path {
+        &self.path
     }
 
     /// Path of the file as string
     pub fn path_to_str(&self) -> &str {
         self.path.to_str().unwrap()
+    }
+
+    pub fn fingerprint(&self) -> Result<String, FileStructureError> {
+        self.fingerprint_impl().map_err(FileStructureError::from)
+    }
+
+    fn fingerprint_impl(&self) -> Result<String, FileStructureErrorImpl> {
+        let f = std::fs::File::open(self.path()).map_err(|e| FileStructureErrorImpl::IO {
+            path: self.path().to_path_buf(),
+            source: e,
+        })?;
+        let mut reader = std::io::BufReader::new(f);
+        Ok(sha256_stream(&mut reader)
+            .map_err(|e| FileStructureErrorImpl::Fingerprint {
+                path: self.path().to_path_buf(),
+                source: e,
+            })?
+            .base16_encode()
+            .unwrap())
     }
 
     /// Decode the verifier data containing the the file
@@ -93,7 +115,7 @@ impl<D: VerifierDataDecode + VerifierDataToTypeTrait> File<D> {
         }
         if !self.exists() {
             return Err(FileStructureError::from(
-                FileStructureErrorImpl::PathNotFile(self.path()),
+                FileStructureErrorImpl::PathNotFile(self.path().to_path_buf()),
             ));
         }
         let res = self.read_data().map(Arc::new).map_err(|e| {
@@ -114,7 +136,7 @@ impl<D: VerifierDataDecode + VerifierDataToTypeTrait> File<D> {
             FileReadMode::Memory | FileReadMode::Cache => {
                 let s = std::fs::read_to_string(self.path()).map_err(|e| {
                     FileStructureErrorImpl::IO {
-                        path: self.path(),
+                        path: self.path().to_path_buf(),
                         source: e,
                     }
                 })?;
@@ -122,31 +144,31 @@ impl<D: VerifierDataDecode + VerifierDataToTypeTrait> File<D> {
                     FileType::Json => D::decode_json(s.as_str())
                         .map_err(|e| FileStructureErrorImpl::ReadDataStructure {
                             msg: "Decoding json",
-                            path: self.path(),
+                            path: self.path().to_path_buf(),
                             source: Box::new(e),
                         })
                         .map_err(FileStructureError::from),
                     FileType::Xml => D::decode_xml(s)
                         .map_err(|e| FileStructureErrorImpl::ReadDataStructure {
                             msg: "Decoding xml",
-                            path: self.path(),
+                            path: self.path().to_path_buf(),
                             source: Box::new(e),
                         })
                         .map_err(FileStructureError::from),
                 }
             }
             FileReadMode::Streaming => match file_type {
-                FileType::Json => D::stream_json(self.path().as_path())
+                FileType::Json => D::stream_json(self.path())
                     .map_err(|e| FileStructureErrorImpl::ReadDataStructure {
                         msg: "Streaming json",
-                        path: self.path(),
+                        path: self.path().to_path_buf(),
                         source: Box::new(e),
                     })
                     .map_err(FileStructureError::from),
-                FileType::Xml => D::stream_xml(self.path().as_path())
+                FileType::Xml => D::stream_xml(self.path())
                     .map_err(|e| FileStructureErrorImpl::ReadDataStructure {
                         msg: "Streaming xml",
-                        path: self.path(),
+                        path: self.path().to_path_buf(),
                         source: Box::new(e),
                     })
                     .map_err(FileStructureError::from),
@@ -159,9 +181,9 @@ impl<D: VerifierDataDecode + VerifierDataToTypeTrait> File<D> {
 mod test {
     use super::*;
     use crate::config::test::{test_datasets_context_path, test_datasets_tally_path};
+    use crate::data_structures::ElectionEventContextPayload;
     use crate::data_structures::context::control_component_public_keys_payload::ControlComponentPublicKeysPayload;
     use crate::data_structures::tally::ech_0222::ECH0222;
-    use crate::data_structures::ElectionEventContextPayload;
 
     #[test]
     fn test_file() {
@@ -173,21 +195,6 @@ mod test {
         let data = f.decode_verifier_data();
         assert!(data.is_ok())
     }
-
-    /*#[test]
-    fn test_file_macro() {
-        let location = test_datasets_context_path();
-        let f = create_file!(
-            &location,
-            Context,
-            VerifierContextDataType::ElectionEventContextPayload
-        );
-        assert!(f.exists());
-        assert_eq!(f.location(), location);
-        assert_eq!(f.path(), location.join("electionEventContextPayload.json"));
-        let data = f.decode_verifier_data::<ElectionEventContextPayload>();
-        assert!(data.is_ok())
-    }*/
 
     #[test]
     fn test_file_not_exist() {
@@ -240,22 +247,15 @@ mod test {
         assert!(data.is_err());
     }
 
-    /*#[test]
-    fn test_file_with_nb_macro() {
-        let location = test_datasets_context_path();
-        let f = create_file!(
-            &location,
-            Context,
-            VerifierContextDataType::ControlComponentPublicKeysPayload,
-            2
-        );
-        assert!(f.exists());
-        assert_eq!(f.location(), location);
+    #[test]
+    fn test_fingerprint() {
+        let location = test_datasets_tally_path();
+        let f = File::<ECH0222>::new(&location, None);
+        let fp_res = f.fingerprint();
+        assert!(fp_res.is_ok(), "{}", fp_res.unwrap_err());
         assert_eq!(
-            f.path(),
-            location.join("controlComponentPublicKeysPayload.2.json")
-        );
-        let data = f.decode_verifier_data::<ControlComponentPublicKeysPayload>();
-        assert!(data.is_ok());
-    }*/
+            fp_res.unwrap(),
+            "a4f56522d1a3d4b8bcb8c4cb340220897bb14139d5400cd48c821431d269e83c".to_uppercase()
+        )
+    }
 }

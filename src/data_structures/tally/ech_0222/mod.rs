@@ -28,7 +28,7 @@ use super::{
 };
 use crate::{
     data_structures::{
-        xml::XMLData, DataStructureErrorImpl, VerifierDataToTypeTrait, VerifierDataType,
+        DataStructureErrorImpl, VerifierDataToTypeTrait, VerifierDataType, xml::XMLData,
     },
     direct_trust::{CertificateAuthority, VerifiySignatureTrait, VerifiyXMLSignatureTrait},
     file_structure::FileStructureError,
@@ -54,7 +54,7 @@ pub enum ECH0222CalculatedErrorImpl {
     #[error("Error getting tally_component_votes_payload for ballot box {bb_id}: {source}")]
     TallyVoteMissing {
         bb_id: String,
-        source: FileStructureError,
+        source: Box<FileStructureError>,
     },
     #[error("Unexpected list id {0} in {1}")]
     UnexpectedList(String, &'static str),
