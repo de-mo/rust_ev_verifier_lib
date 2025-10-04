@@ -43,6 +43,13 @@ pub trait ManualVerificationInformationTrait {
     /// - The second element of the tuple is the fingerprint
     fn dt_fingerprints_to_key_value(&self) -> Vec<(String, String)>;
 
+    /// Get the fingerprints of other relevant files
+    ///
+    /// Return a [Vec] of a tuples:
+    /// - The first element is the name of the file
+    /// - The second element of the tuple is the fingerprint
+    fn other_fingerprints_to_key_value(&self) -> Vec<(String, String)>;
+
     /// Get the verification directory path as string
     fn verification_directory_path(&self) -> String;
 
@@ -231,6 +238,10 @@ impl<D: VerificationDirectoryTrait> ManualVerificationInformationTrait
 
     fn verification_directory_path(&self) -> String {
         self.verification_directory.path_to_string()
+    }
+
+    fn other_fingerprints_to_key_value(&self) -> Vec<(String, String)> {
+        vec![]
     }
 }
 
@@ -426,6 +437,10 @@ impl<D: VerificationDirectoryTrait> ManualVerificationInformationTrait
     fn verification_errors_and_failures(&self) -> VerificationErrorsFailureInformationType {
         self.verifications_result.verification_errors_and_failures()
     }
+
+    fn other_fingerprints_to_key_value(&self) -> Vec<(String, String)> {
+        vec![]
+    }
 }
 
 impl<D: VerificationDirectoryTrait> ManualVerificationsTally<D> {
@@ -527,10 +542,6 @@ impl<D: VerificationDirectoryTrait> ManualVerificationInformationTrait
             .manual_verifications_all_periods
             .information_to_key_value();
         res.push((
-            "Fingerprint of file eCH-0222".to_string(),
-            self.ech_0222_fingerprint.clone(),
-        ));
-        res.push((
             "Number of productive voting cards used".to_string(),
             self.number_of_productive_used_voting_cards.to_string(),
         ));
@@ -548,6 +559,10 @@ impl<D: VerificationDirectoryTrait> ManualVerificationInformationTrait
 
     fn verification_errors_and_failures(&self) -> VerificationErrorsFailureInformationType {
         self.verifications_result.verification_errors_and_failures()
+    }
+
+    fn other_fingerprints_to_key_value(&self) -> Vec<(String, String)> {
+        vec![("eCH-0222".to_string(), self.ech_0222_fingerprint.clone())]
     }
 }
 
@@ -643,6 +658,13 @@ impl<D: VerificationDirectoryTrait> ManualVerificationInformationTrait for Manua
         match self {
             ManualVerifications::Setup(s) => s.verification_errors_and_failures(),
             ManualVerifications::Tally(t) => t.verification_errors_and_failures(),
+        }
+    }
+
+    fn other_fingerprints_to_key_value(&self) -> Vec<(String, String)> {
+        match self {
+            ManualVerifications::Setup(s) => s.other_fingerprints_to_key_value(),
+            ManualVerifications::Tally(t) => t.other_fingerprints_to_key_value(),
         }
     }
 }

@@ -17,15 +17,15 @@
 use crate::RunnerErrorImpl;
 
 use super::{
-    runner::VerificationRunInformation, ExtractDataSetResults, RunnerError, RunnerInformation,
+    ExtractDataSetResults, RunnerError, RunnerInformation, runner::VerificationRunInformation,
 };
 use rust_ev_verifier_lib::{
+    VerifierConfig,
     file_structure::VerificationDirectory,
     verification::{
-        get_verifications_setup, get_verifications_tally, ManualVerifications,
-        VerificationMetaDataList, VerificationPeriod, VerificationStatus,
+        ManualVerifications, VerificationMetaDataList, VerificationPeriod, VerificationStatus,
+        get_verifications_setup, get_verifications_tally,
     },
-    VerifierConfig,
 };
 use std::{collections::HashMap, path::Path, sync::Arc, time::SystemTime};
 

@@ -20,16 +20,16 @@ mod report_output;
 pub use report_config::{ReportConfig, ReportConfigBuilder};
 pub use report_output::ReportOutput;
 
-use super::{run_information::RunInformation, RunnerError};
+use super::{RunnerError, run_information::RunInformation};
 use report_output::{OutputToString, ReportOutputBlock, ReportOutputBlockTitle, ReportOutputEntry};
 use rust_ev_verifier_lib::{
+    DatasetTypeKind,
     file_structure::{VerificationDirectory, VerificationDirectoryTrait},
     verification::{ManualVerificationInformationTrait, ManualVerifications, VerificationPeriod},
-    DatasetTypeKind,
 };
 use std::fmt::Display;
 use thiserror::Error;
-use tracing::{debug, error, info, trace, warn, Level};
+use tracing::{Level, debug, error, info, trace, warn};
 
 #[derive(Error, Debug)]
 #[error(transparent)]
@@ -113,6 +113,10 @@ impl<D: VerificationDirectoryTrait> ReportInformationTrait for ManualVerificatio
             ReportOutputBlock::new_with_tuples(
                 ReportOutputBlockTitle::Fingerprints,
                 &self.dt_fingerprints_to_key_value(),
+            ),
+            ReportOutputBlock::new_with_tuples(
+                ReportOutputBlockTitle::OtherFingerprints,
+                &self.other_fingerprints_to_key_value(),
             ),
             ReportOutputBlock::new_with_tuples(
                 ReportOutputBlockTitle::Information,

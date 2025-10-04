@@ -21,6 +21,8 @@ use std::iter::once;
 pub enum ReportOutputBlockTitle {
     #[strum(to_string = "Fingerprints")]
     Fingerprints,
+    #[strum(to_string = "Other fingerprints")]
+    OtherFingerprints,
     #[strum(to_string = "Information")]
     Information,
     #[strum(to_string = "Verification results")]
