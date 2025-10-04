@@ -14,53 +14,63 @@
 // a copy of the GNU General Public License along with this program. If not, see
 // <https://www.gnu.org/licenses/>.
 
-use std::collections::{HashMap, HashSet};
-
 use super::super::super::result::{VerificationEvent, VerificationResult};
 use crate::{
     config::VerifierConfig,
+    data_structures::context::{
+        election_event_context_payload::ElectionEventContext,
+        setup_component_tally_data_payload::SetupComponentTallyDataPayload,
+    },
     file_structure::{
         context_directory::{ContextDirectoryTrait, ContextVCSDirectoryTrait},
         VerificationDirectoryTrait,
     },
 };
+use std::collections::HashSet;
 
-fn verify_ids_same(vc_ids: &[String], expected: &[String]) -> VerificationResult {
+fn verrify_card_ids_context_vcs(
+    ee_context_payload: &ElectionEventContext,
+    setup_component_public_keys_payload: &SetupComponentTallyDataPayload,
+    unique_set: &mut HashSet<String>,
+) -> VerificationResult {
     let mut res = VerificationResult::new();
-    if vc_ids != expected {
-        res.push(VerificationEvent::new_failure(&format!(
-            "The voting card ids [{}] are not equal to the expected list of voting card ids [{}]",
-            vc_ids.join(","),
-            expected.join(",")
-        )))
-    }
-    res
-}
-
-fn verrify_card_ids_context_vcs<V: ContextVCSDirectoryTrait>(
-    vcs_dir: &V,
-) -> (Vec<String>, VerificationResult) {
-    let mut res = VerificationResult::new();
-    let payload = match vcs_dir.setup_component_tally_data_payload() {
-        Ok(p) => p,
-        Err(e) => {
-            res.push(
-                VerificationEvent::new_error_from_error(&e)
-                    .add_context("Cannot read payload for setup_component_tally_data_payload"),
-            );
-            return (vec![], res);
+    match ee_context_payload
+        .verification_card_set_contexts
+        .iter()
+        .find(|vcs| {
+            vcs.verification_card_set_id
+                == setup_component_public_keys_payload.verification_card_set_id
+        }) {
+        Some(c) => {
+            if c.number_of_eligible_voters
+                != setup_component_public_keys_payload
+                    .verification_card_ids
+                    .len()
+            {
+                res.push(VerificationEvent::new_failure(&format!(
+                "The vcnumber of voting card ids {} is not the same that the number of elligible voters {}",
+                setup_component_public_keys_payload.verification_card_ids.len(), c.number_of_eligible_voters)));
+            }
+        }
+        None => {
+            res.push(VerificationEvent::new_error(&format!(
+                "voting card set context with id {} not found in election event context",
+                &setup_component_public_keys_payload.verification_card_set_id
+            )));
         }
     };
-    let vc_ids = &payload.verification_card_ids;
-    let mut uniq = HashSet::new();
-    let no_duplicate = vc_ids.iter().all(move |x| uniq.insert(x));
-    if !no_duplicate {
-        res.push(VerificationEvent::new_failure(&format!(
-            "The list of vc_ids [{}] are not unique in setup_component_tally_data_payload",
-            vc_ids.join(",")
-        )));
+    for vc_id in setup_component_public_keys_payload
+        .verification_card_ids
+        .iter()
+    {
+        if !unique_set.insert(vc_id.clone()) {
+            res.push(VerificationEvent::new_failure(&format!(
+                "The vc_id {} is not unique",
+                vc_id
+            )));
+        }
     }
-    (vc_ids.clone(), res)
+    res
 }
 
 pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
@@ -70,12 +80,40 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
 ) {
     let context_dir = dir.context();
 
-    let mut hm_vc_ids = HashMap::new();
+    let ee_context_payload = match context_dir.election_event_context_payload() {
+        Ok(o) => o,
+        Err(e) => {
+            result.push(
+                VerificationEvent::new_error_from_error(&e)
+                    .add_context("Cannot extract election_event_context_payload"),
+            );
+            return;
+        }
+    };
+
+    let mut uniq = HashSet::new();
 
     for vcs_dir in context_dir.vcs_directories().iter() {
-        let (vc_ids, res) = verrify_card_ids_context_vcs(vcs_dir);
-        result.append_with_context(&res, format!("context vcs directory {}", vcs_dir.name()));
-        hm_vc_ids.insert(vcs_dir.name(), vc_ids);
+        match vcs_dir.setup_component_tally_data_payload() {
+            Ok(p) => {
+                result.append_with_context(
+                    &verrify_card_ids_context_vcs(
+                        &ee_context_payload.election_event_context,
+                        p.as_ref(),
+                        &mut uniq,
+                    ),
+                    format!("context vcs directory {}", vcs_dir.name()),
+                );
+            }
+            Err(e) => {
+                result.push(
+                    VerificationEvent::new_error_from_error(&e).add_context(format!(
+                        "Cannot read payload for {}/setup_component_tally_data_payload",
+                        vcs_dir.name()
+                    )),
+                );
+            }
+        };
     }
 }
 
