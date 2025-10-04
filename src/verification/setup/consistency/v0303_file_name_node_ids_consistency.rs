@@ -17,23 +17,8 @@
 use super::super::super::result::{VerificationEvent, VerificationResult};
 use crate::{
     config::VerifierConfig,
-    data_structures::{VerifierDataDecode, VerifierDataToTypeTrait},
-    file_structure::{
-        context_directory::ContextDirectoryTrait, file::File, VerificationDirectoryTrait,
-    },
+    file_structure::{context_directory::ContextDirectoryTrait, VerificationDirectoryTrait},
 };
-
-fn test_file_exists<D: VerifierDataDecode + VerifierDataToTypeTrait>(
-    file: &File<D>,
-    result: &mut VerificationResult,
-) {
-    if !file.exists() {
-        result.push(VerificationEvent::new_failure(&format!(
-            "File {} does not exist",
-            file.path_to_str()
-        )))
-    }
-}
 
 pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
     dir: &D,
@@ -41,40 +26,54 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
     result: &mut VerificationResult,
 ) {
     let context_dir = dir.context();
-    test_file_exists(context_dir.election_event_context_payload_file(), result);
-    test_file_exists(
-        context_dir.setup_component_public_keys_payload_file(),
-        result,
-    );
-    let mut cc_group_numbers = context_dir
-        .control_component_public_keys_payload_group()
-        .get_numbers()
-        .clone();
-    cc_group_numbers.sort();
-    if cc_group_numbers != vec![1, 2, 3, 4] {
-        result.push(VerificationEvent::new_failure(&format!(
-            "controlComponentPublicKeysPayload must have file from 1 to 4. But actually: {:?}",
-            cc_group_numbers
-        )))
-    }
-    for (_, f) in context_dir
+
+    for (i, file) in context_dir
         .control_component_public_keys_payload_group()
         .iter_file()
     {
-        test_file_exists(&f, result);
+        match file.decode_verifier_data() {
+            Ok(payload) => {
+                let node_id = payload.control_component_public_keys.node_id;
+                let calculated_path = file
+                    .location()
+                    .join(format!("controlComponentPublicKeysPayload.{node_id}.json"));
+                if calculated_path != file.path() {
+                    result.push(VerificationEvent::new_failure(&format!(
+                        "The fie has the path {}. Expected: {}",
+                        file.path_to_str(),
+                        calculated_path.as_os_str().to_str().unwrap()
+                    )))
+                }
+            }
+            Err(e) => result.push(VerificationEvent::new_error(&format!(
+                "Cannot open conntrolComponentPubllicKeysPayload.{}.json: {}",
+                i, e
+            ))),
+        }
     }
 }
 
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::config::test::{get_test_verifier_setup_dir as get_verifier_dir, CONFIG_TEST};
+    use crate::config::test::{
+        get_test_verifier_mock_setup_dir as get_mock_verifier_dir,
+        get_test_verifier_setup_dir as get_verifier_dir, CONFIG_TEST,
+    };
 
     #[test]
     fn test_ok() {
         let dir = get_verifier_dir();
         let mut result = VerificationResult::new();
         fn_verification(&dir, &CONFIG_TEST, &mut result);
+        if !result.is_ok() {
+            for e in result.errors() {
+                println!("{}", e);
+            }
+            for f in result.failures() {
+                println!("{}", f);
+            }
+        }
         assert!(result.is_ok());
     }
 }

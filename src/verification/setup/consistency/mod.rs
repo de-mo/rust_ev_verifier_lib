@@ -15,19 +15,19 @@
 // <https://www.gnu.org/licenses/>.
 
 mod v0301_encryption_group_consistency;
-mod v0302_setup_file_names_consistency;
-mod v0303_ccr_choice_return_codes_pk_consistency;
-mod v0304_ccm_election_pk_consistency;
-mod v0305_ccm_and_ccr_schnorr_proofs_consistency;
-mod v0306_choice_return_codes_public_key_consistency;
-mod v0307_election_pk_consistency;
-mod v0308_primes_mapping_table_consistency;
-mod v0309_election_event_id_consistency;
-mod v0310_verification_card_set_ids_consistency;
-mod v0311_file_name_verification_card_set_ids_consistency;
-mod v0312_verification_card_ids_consistency;
-mod v0313_total_voters_consistency;
-mod v0314_verify_node_ids_consistency;
+mod v0302_verify_node_ids_consistency;
+mod v0303_file_name_node_ids_consistency;
+mod v0304_election_event_id_consistency;
+mod v0305_verification_card_set_ids_consistency;
+mod v0306_file_name_verification_card_set_ids_consistency;
+mod v0307_verification_card_ids_consistency;
+mod v0308_ccr_choice_return_codes_pk_consistency;
+mod v0309_ccm_election_pk_consistency;
+mod v0310_ccm_and_ccr_schnorr_proofs_consistency;
+mod v0311_choice_return_codes_public_key_consistency;
+mod v0312_election_pk_consistency;
+mod v0313_primes_mapping_table_consistency;
+mod v0314_total_voters_consistency;
 
 use super::super::{
     meta_data::VerificationMetaDataList, suite::VerificationList, verifications::Verification,
@@ -55,85 +55,30 @@ pub fn get_verifications<'a>(
         })?,
         Verification::new(
             "03.02",
-            "VerifySetupFileNamesConsistency",
-            v0302_setup_file_names_consistency::fn_verification,
+            "VerifyNodeIdsConsistency",
+            v0302_verify_node_ids_consistency::fn_verification,
             metadata_list,
             config,
         )
         .map_err(|e| VerificationErrorImpl::GetVerification {
-            name: "VerifySetupFileNamesConsistency",
+            name: "VerifyNodeIdsConsistency",
             source: Box::new(e),
         })?,
         Verification::new(
             "03.03",
-            "VerifyCCRChoiceReturnCodesPublicKeyConsistency",
-            v0303_ccr_choice_return_codes_pk_consistency::fn_verification,
+            "VerifyFileNameNodeIdsConsistency",
+            v0303_file_name_node_ids_consistency::fn_verification,
             metadata_list,
             config,
         )
         .map_err(|e| VerificationErrorImpl::GetVerification {
-            name: "VerifyCCRChoiceReturnCodesPublicKeyConsistency",
+            name: "VerifyFileNameNodeIdsConsistency",
             source: Box::new(e),
         })?,
         Verification::new(
             "03.04",
-            "VerifyCCMElectionPublicKeyConsistency",
-            v0304_ccm_election_pk_consistency::fn_verification,
-            metadata_list,
-            config,
-        )
-        .map_err(|e| VerificationErrorImpl::GetVerification {
-            name: "VerifyCCMElectionPublicKeyConsistency",
-            source: Box::new(e),
-        })?,
-        Verification::new(
-            "03.05",
-            "VerifyCCMAndCCRSchnorrProofsConsistency",
-            v0305_ccm_and_ccr_schnorr_proofs_consistency::fn_verification,
-            metadata_list,
-            config,
-        )
-        .map_err(|e| VerificationErrorImpl::GetVerification {
-            name: "VerifyCCMAndCCRSchnorrProofsConsistency",
-            source: Box::new(e),
-        })?,
-        Verification::new(
-            "03.06",
-            "VerifyChoiceReturnCodesPublicKeyConsistency",
-            v0306_choice_return_codes_public_key_consistency::fn_verification,
-            metadata_list,
-            config,
-        )
-        .map_err(|e| VerificationErrorImpl::GetVerification {
-            name: "VerifyChoiceReturnCodesPublicKeyConsistency",
-            source: Box::new(e),
-        })?,
-        Verification::new(
-            "03.07",
-            "VerifyElectionPublicKeyConsistency",
-            v0307_election_pk_consistency::fn_verification,
-            metadata_list,
-            config,
-        )
-        .map_err(|e| VerificationErrorImpl::GetVerification {
-            name: "VerifyElectionPublicKeyConsistency",
-            source: Box::new(e),
-        })?,
-        Verification::new(
-            "03.08",
-            "VerifyPrimesMappingTableConsistency",
-            v0308_primes_mapping_table_consistency::fn_verification,
-            metadata_list,
-            config,
-        )
-        .map_err(|e| VerificationErrorImpl::GetVerification {
-            name: "VerifyPrimesMappingTableConsistency",
-            source: Box::new(e),
-        })?,
-        Verification::new(
-            "03.09",
             "VerifyElectionEventIdConsistency",
-            v0309_election_event_id_consistency::fn_verification,
+            v0304_election_event_id_consistency::fn_verification,
             metadata_list,
             config,
         )
@@ -142,9 +87,9 @@ pub fn get_verifications<'a>(
             source: Box::new(e),
         })?,
         Verification::new(
-            "03.10",
+            "03.05",
             "VerifyVerificationCardSetIdsConsistency",
-            v0310_verification_card_set_ids_consistency::fn_verification,
+            v0305_verification_card_set_ids_consistency::fn_verification,
             metadata_list,
             config,
         )
@@ -153,9 +98,9 @@ pub fn get_verifications<'a>(
             source: Box::new(e),
         })?,
         Verification::new(
-            "03.11",
+            "03.06",
             "VerifyFileNameVerificationCardSetIdsConsistency",
-            v0311_file_name_verification_card_set_ids_consistency::fn_verification,
+            v0306_file_name_verification_card_set_ids_consistency::fn_verification,
             metadata_list,
             config,
         )
@@ -164,9 +109,9 @@ pub fn get_verifications<'a>(
             source: Box::new(e),
         })?,
         Verification::new(
-            "03.12",
+            "03.07",
             "VerifyVerificationCardIdsConsistency",
-            v0312_verification_card_ids_consistency::fn_verification,
+            v0307_verification_card_ids_consistency::fn_verification,
             metadata_list,
             config,
         )
@@ -175,25 +120,80 @@ pub fn get_verifications<'a>(
             source: Box::new(e),
         })?,
         Verification::new(
+            "03.08",
+            "VerifyCCRChoiceReturnCodesPublicKeyConsistency",
+            v0308_ccr_choice_return_codes_pk_consistency::fn_verification,
+            metadata_list,
+            config,
+        )
+        .map_err(|e| VerificationErrorImpl::GetVerification {
+            name: "VerifyCCRChoiceReturnCodesPublicKeyConsistency",
+            source: Box::new(e),
+        })?,
+        Verification::new(
+            "03.09",
+            "VerifyCCMElectionPublicKeyConsistency",
+            v0309_ccm_election_pk_consistency::fn_verification,
+            metadata_list,
+            config,
+        )
+        .map_err(|e| VerificationErrorImpl::GetVerification {
+            name: "VerifyCCMElectionPublicKeyConsistency",
+            source: Box::new(e),
+        })?,
+        Verification::new(
+            "03.10",
+            "VerifyCCMAndCCRSchnorrProofsConsistency",
+            v0310_ccm_and_ccr_schnorr_proofs_consistency::fn_verification,
+            metadata_list,
+            config,
+        )
+        .map_err(|e| VerificationErrorImpl::GetVerification {
+            name: "VerifyCCMAndCCRSchnorrProofsConsistency",
+            source: Box::new(e),
+        })?,
+        Verification::new(
+            "03.11",
+            "VerifyChoiceReturnCodesPublicKeyConsistency",
+            v0311_choice_return_codes_public_key_consistency::fn_verification,
+            metadata_list,
+            config,
+        )
+        .map_err(|e| VerificationErrorImpl::GetVerification {
+            name: "VerifyChoiceReturnCodesPublicKeyConsistency",
+            source: Box::new(e),
+        })?,
+        Verification::new(
+            "03.12",
+            "VerifyElectionPublicKeyConsistency",
+            v0312_election_pk_consistency::fn_verification,
+            metadata_list,
+            config,
+        )
+        .map_err(|e| VerificationErrorImpl::GetVerification {
+            name: "VerifyElectionPublicKeyConsistency",
+            source: Box::new(e),
+        })?,
+        Verification::new(
             "03.13",
+            "VerifyPrimesMappingTableConsistency",
+            v0313_primes_mapping_table_consistency::fn_verification,
+            metadata_list,
+            config,
+        )
+        .map_err(|e| VerificationErrorImpl::GetVerification {
+            name: "VerifyPrimesMappingTableConsistency",
+            source: Box::new(e),
+        })?,
+        Verification::new(
+            "03.14",
             "VerifyTotalVotersConsistency",
-            v0313_total_voters_consistency::fn_verification,
+            v0314_total_voters_consistency::fn_verification,
             metadata_list,
             config,
         )
         .map_err(|e| VerificationErrorImpl::GetVerification {
             name: "VerifyTotalVotersConsistency",
-            source: Box::new(e),
-        })?,
-        Verification::new(
-            "03.14",
-            "VerifyNodeIdsConsistency",
-            v0314_verify_node_ids_consistency::fn_verification,
-            metadata_list,
-            config,
-        )
-        .map_err(|e| VerificationErrorImpl::GetVerification {
-            name: "VerifyNodeIdsConsistency",
             source: Box::new(e),
         })?,
     ]))

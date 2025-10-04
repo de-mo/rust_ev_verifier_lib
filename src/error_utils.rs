@@ -31,11 +31,11 @@ impl<'a, 'b> Iterator for ErrorChain<'a, 'b> {
 
 #[derive(Debug, Clone)]
 pub struct Report<'a> {
-    inner: &'a (dyn std::error::Error),
+    inner: &'a dyn std::error::Error,
 }
 
 impl<'a> Report<'a> {
-    pub fn new(error: &'a (dyn std::error::Error)) -> Self {
+    pub fn new(error: &'a dyn std::error::Error) -> Self {
         Self { inner: error }
     }
 }
