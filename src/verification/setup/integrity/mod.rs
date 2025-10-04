@@ -145,7 +145,6 @@ mod test {
         let dir = get_verifier_dir();
         let mut result = VerificationResult::new();
         fn_0401_verify_setup_integrity(&dir, &CONFIG_TEST, &mut result);
-        println!("{result:?}");
         assert!(result.is_ok());
     }
 }

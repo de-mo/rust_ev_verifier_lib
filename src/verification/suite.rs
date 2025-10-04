@@ -163,7 +163,7 @@ mod test {
             let err = r_verifs.as_ref().err().unwrap();
             println!("{err:?}")
         }
-        assert!(r_verifs.is_ok());
+        assert!(r_verifs.is_ok(), "{:?}", r_verifs.as_ref().err());
         let verifs = r_verifs.unwrap();
         let setup: Vec<VerificationMetaData> = metadata_list
             .iter()

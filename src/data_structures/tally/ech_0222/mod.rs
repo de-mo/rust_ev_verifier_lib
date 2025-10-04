@@ -210,7 +210,6 @@ mod test {
         assert!(data_res.is_ok(), "{:?}", data_res.unwrap_err());
         let data_res = data_res.unwrap().get_data();
         assert!(data_res.is_ok(), "{:?}", data_res.unwrap_err());
-        println!("{:#?}", data_res.unwrap());
     }
 
     #[test]
@@ -219,10 +218,11 @@ mod test {
         let ks = get_keystore();
         let sign_validate_res = data.verify_signatures(&ks);
         for r in sign_validate_res {
-            if r.is_err() {
-                println!("error validating signature: {:?}", r.as_ref().unwrap_err())
-            }
-            assert!(r.is_ok());
+            assert!(
+                r.is_ok(),
+                "error validating signature: {:?}",
+                r.as_ref().unwrap_err()
+            );
             assert!(r.unwrap())
         }
     }

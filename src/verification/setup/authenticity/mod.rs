@@ -230,7 +230,6 @@ mod test {
         let dir = get_verifier_dir();
         let mut result = VerificationResult::new();
         fn_0202_verify_signature_setup_component_public_keys(&dir, &CONFIG_TEST, &mut result);
-        println!("{result:?}");
         assert!(result.is_ok());
     }
 

@@ -367,18 +367,6 @@ mod test {
                     .get_file_name(None)
             )
             .exists());
-        println!(
-            "{:?}",
-            VerifierDataType::Tally(VerifierTallyDataType::TallyComponentShufflePayload)
-                .get_file_name(None)
-        );
-        println!(
-            "{:?}",
-            path2.join(
-                VerifierDataType::Tally(VerifierTallyDataType::TallyComponentShufflePayload)
-                    .get_file_name(None)
-            )
-        );
         assert!(path2
             .join(
                 VerifierDataType::Tally(VerifierTallyDataType::TallyComponentShufflePayload)
