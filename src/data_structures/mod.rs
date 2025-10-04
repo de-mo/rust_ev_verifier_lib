@@ -27,7 +27,6 @@ mod xml;
 
 pub use self::{
     context::{
-        election_event_configuration::ElectionEventConfiguration,
         election_event_context_payload::ElectionEventContextPayload, VerifierContextDataType,
     },
     dataset::DatasetType,
@@ -316,10 +315,7 @@ pub(super) mod test {
             #[test]
             fn read_data_set() {
                 let data_res = get_data_res();
-                if data_res.is_err() {
-                    println!("{:?}", data_res.as_ref().unwrap_err());
-                }
-                assert!(data_res.is_ok())
+                assert!(data_res.is_ok(), "{:?}", data_res.as_ref().unwrap_err())
             }
         };
         ($suffix: ident) => {
@@ -327,10 +323,7 @@ pub(super) mod test {
                 #[test]
                 fn [<read_data_set_ $suffix>]() {
                     let data_res = [<get_data_res_ $suffix>]();
-                    if data_res.is_err() {
-                        println!("{:?}", data_res.as_ref().unwrap_err());
-                    }
-                    assert!(data_res.is_ok())
+                    assert!(data_res.is_ok(), "{:?}", data_res.as_ref().unwrap_err())
                 }
             }
         };
@@ -350,10 +343,11 @@ pub(super) mod test {
                 let ks = get_keystore();
                 let sign_validate_res = data.verify_signatures(&ks);
                 for r in sign_validate_res {
-                    if !r.is_ok() {
-                        println!("error validating signature: {:?}", r.as_ref().unwrap_err())
-                    }
-                    assert!(r.is_ok());
+                    assert!(
+                        r.is_ok(),
+                        "error validating signature: {:?}",
+                        r.as_ref().unwrap_err()
+                    );
                     assert!(r.unwrap())
                 }
             }
@@ -373,10 +367,7 @@ pub(super) mod test {
                     let ks = get_keystore();
                     let sign_validate_res = data.verify_signatures(&ks);
                     for r in sign_validate_res {
-                        if !r.is_ok() {
-                            println!("error validating signature: {:?}", r.as_ref().unwrap_err())
-                        }
-                        assert!(r.is_ok());
+                        assert!(r.is_ok(), "error validating signature: {:?}", r.as_ref().unwrap_err());
                         assert!(r.unwrap())
                     }
                 }

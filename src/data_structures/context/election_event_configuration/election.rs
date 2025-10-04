@@ -44,6 +44,7 @@ pub struct Candidate {
     pub first_name: Option<String>,
     pub call_name: String,
     pub date_of_birth: String,
+    pub reference_on_position: String,
 }
 
 #[derive(Debug, Clone)]
@@ -68,6 +69,8 @@ pub struct ListDescriptionInfo {
 pub struct CandidatePosition {
     pub candidate_list_identification: String,
     pub position_on_list: usize,
+    pub candidate_reference_on_position: String,
+    pub candidate_identification: String,
 }
 
 #[derive(Debug, Clone)]
@@ -89,8 +92,30 @@ pub struct EmptyPosition {
     pub position_on_list: usize,
 }
 
+/// Enum defining the type of the id in an election
+///
+/// - [TypeOfIdInElection::List] : The id is a list
+/// - [TypeOfIdInElection::Candidate] : The id is a candidate
+/// - [TypeOfIdInElection::EmptyPosition] : The id is an empty position in the empty list
+/// - [TypeOfIdInElection::WriteInPosition] : The id is a write-in position
+pub enum TypeOfIdInElection<'a> {
+    List {
+        id: &'a str,
+    },
+    Candidate {
+        id: &'a str,
+        candidate_reference_on_position: &'a str,
+    },
+    EmptyPosition {
+        id: &'a str,
+    },
+    WriteInPosition {
+        id: &'a str,
+    },
+}
+
 impl ElectionInformation {
-    pub fn from_node(node: &Node) -> Self {
+    pub(super) fn from_node(node: &Node) -> Self {
         let mut lists = node
             .element_children()
             .filter(|n| n.has_tag_name("list"))
@@ -130,10 +155,115 @@ impl ElectionInformation {
                 .collect::<Vec<_>>(),
         }
     }
+
+    /// Collect of the ids of the write-in positions in the election group
+    pub fn write_in_position_ids(&self) -> Vec<&str> {
+        self.write_in_positions
+            .iter()
+            .map(|wp| wp.write_in_position_identification.as_str())
+            .collect()
+    }
+
+    /// Test if the given id corresponds to a list, incl empty list
+    pub fn is_list(&self, id: &str) -> bool {
+        if self.empty_list.list_identification == id {
+            return true;
+        }
+        self.lists.iter().any(|l| l.list_identification == id)
+    }
+
+    /// Calculate [TypeOfIdInElection] of the id
+    ///
+    /// `accumulation_pos` corresponds to the position of the candidate in a pre-accumulated list
+    ///
+    /// Return `None` if the id was not found in [ElectionInformation]
+    pub fn type_of_id<'a>(
+        &'a self,
+        id: &str,
+        accumulation_pos: Option<usize>,
+    ) -> Option<TypeOfIdInElection<'a>> {
+        if self.empty_list.list_identification == id {
+            return Some(TypeOfIdInElection::List {
+                id: self.empty_list.list_identification.as_str(),
+            });
+        }
+        if self.is_list(id) {
+            return Some(TypeOfIdInElection::List {
+                id: self.election.election_identification.as_str(),
+            });
+        }
+        if let Some(id) = self
+            .empty_list
+            .empty_positions
+            .iter()
+            .find(|ep| ep.empty_position_identification == id)
+            .map(|ep| &ep.empty_position_identification)
+        {
+            return Some(TypeOfIdInElection::EmptyPosition { id });
+        }
+        if let Some(id) = self
+            .write_in_positions
+            .iter()
+            .find(|ep| ep.write_in_position_identification == id)
+            .map(|ep| &ep.write_in_position_identification)
+        {
+            return Some(TypeOfIdInElection::WriteInPosition { id });
+        }
+        let candidate_position = self.lists.iter().find_map(|l| {
+            l.candidate_positions
+                .iter()
+                .filter(|cp| cp.candidate_identification == id)
+                .nth(accumulation_pos.unwrap_or(0))
+        });
+        match candidate_position {
+            Some(cp) => Some(TypeOfIdInElection::Candidate {
+                id: cp.candidate_identification.as_str(),
+                candidate_reference_on_position: cp.candidate_reference_on_position.as_str(),
+            }),
+            None => self
+                .candidates
+                .iter()
+                .find(|c| c.candidate_identification == id)
+                .map(|c| TypeOfIdInElection::Candidate {
+                    id: &c.candidate_identification,
+                    candidate_reference_on_position: &c.reference_on_position,
+                }),
+        }
+    }
+
+    /// Calculate if the given list of candidates correspond exactly to the candidates of the list
+    pub fn is_unchanged_list(&self, list_id: &str, candidate_ids: &[&str]) -> Option<bool> {
+        if list_id == self.empty_list.list_identification {
+            return Some(candidate_ids.is_empty());
+        }
+        self.lists
+            .iter()
+            .find(|l| l.list_identification == list_id)
+            .map(|l| {
+                if candidate_ids.len() != l.candidate_positions.len() {
+                    return false;
+                }
+                let candidates_id_sorted = {
+                    let mut v = candidate_ids.to_vec();
+                    v.sort();
+                    v
+                };
+                let list_candidates_id_sorted = {
+                    let mut v = l
+                        .candidate_positions
+                        .iter()
+                        .map(|cp| cp.candidate_identification.as_str())
+                        .collect::<Vec<_>>();
+                    v.sort();
+                    v
+                };
+                candidates_id_sorted == list_candidates_id_sorted
+            })
+    }
 }
 
 impl Election {
-    pub fn from_node(node: &Node) -> Self {
+    fn from_node(node: &Node) -> Self {
         let mut children = node.element_children();
         let election_identification = children.next().unwrap().text().unwrap().to_string();
         let type_of_election = children
@@ -188,7 +318,7 @@ impl Election {
 }
 
 impl Candidate {
-    pub fn from_node(node: &Node) -> Self {
+    fn from_node(node: &Node) -> Self {
         Self {
             candidate_identification: node
                 .element_children()
@@ -214,12 +344,17 @@ impl Candidate {
                 .find(|n| n.has_tag_name("dateOfBirth"))
                 .map(|n| n.text().unwrap().to_string())
                 .unwrap(),
+            reference_on_position: node
+                .element_children()
+                .find(|n| n.has_tag_name("referenceOnPosition"))
+                .map(|n| n.text().unwrap().to_string())
+                .unwrap(),
         }
     }
 }
 
 impl List {
-    pub fn from_node(node: &Node) -> Self {
+    fn from_node(node: &Node) -> Self {
         let mut children = node.element_children();
         let list_identification = children.next().unwrap().text().unwrap().to_string();
         children.next(); // listIndentureNumber
@@ -240,7 +375,7 @@ impl List {
 }
 
 impl ListDescription {
-    pub fn from_node(node: &Node) -> Self {
+    fn from_node(node: &Node) -> Self {
         Self {
             list_description_info: node
                 .element_children()
@@ -251,7 +386,7 @@ impl ListDescription {
 }
 
 impl ListDescriptionInfo {
-    pub fn from_node(node: &Node) -> Self {
+    fn from_node(node: &Node) -> Self {
         let mut children = node.element_children();
         let language = children.next().unwrap().text().unwrap().to_string();
         children.next(); // listDescriptionShort
@@ -263,7 +398,7 @@ impl ListDescriptionInfo {
     }
 }
 impl CandidatePosition {
-    pub fn from_node(node: &Node) -> Self {
+    fn from_node(node: &Node) -> Self {
         let mut children = node.element_children();
         let candidate_list_identification = children.next().unwrap().text().unwrap().to_string();
         let position_on_list = children
@@ -273,15 +408,19 @@ impl CandidatePosition {
             .unwrap()
             .parse::<usize>()
             .unwrap();
+        let candidate_reference_on_position = children.next().unwrap().text().unwrap().to_string();
+        let candidate_identification = children.next().unwrap().text().unwrap().to_string();
         Self {
             candidate_list_identification,
             position_on_list,
+            candidate_reference_on_position,
+            candidate_identification,
         }
     }
 }
 
 impl WriteInPosition {
-    pub fn from_node(node: &Node) -> Self {
+    fn from_node(node: &Node) -> Self {
         let mut children = node.element_children();
         let write_in_position_identification = children.next().unwrap().text().unwrap().to_string();
         let position = children
@@ -299,7 +438,7 @@ impl WriteInPosition {
 }
 
 impl EmptyList {
-    pub fn from_node(node: &Node) -> Self {
+    fn from_node(node: &Node) -> Self {
         let mut children = node.element_children();
         let list_identification = children.next().unwrap().text().unwrap().to_string();
         children.next(); // listIndentureNumber
@@ -320,7 +459,7 @@ impl EmptyList {
 }
 
 impl EmptyPosition {
-    pub fn from_node(node: &Node) -> Self {
+    fn from_node(node: &Node) -> Self {
         let mut children = node.element_children();
         let empty_position_identification = children.next().unwrap().text().unwrap().to_string();
         let position_on_list = children

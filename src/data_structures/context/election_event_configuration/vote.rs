@@ -27,11 +27,16 @@ pub struct Vote {
 }
 
 #[derive(Debug, Clone)]
+pub enum StandardOrVariantBallot {
+    StandardBallot(StandardQuestion),
+    VariantBallot(VariantBallot),
+}
+
+#[derive(Debug, Clone)]
 pub struct Ballot {
     pub ballot_identification: String,
     pub ballot_position: usize,
-    pub standard_ballot: Option<StandardQuestion>,
-    pub variant_ballot: Option<VariantBallot>,
+    pub standard_or_variant_ballot: StandardOrVariantBallot,
 }
 
 #[derive(Debug, Clone)]
@@ -73,7 +78,7 @@ pub struct AnswerInfo {
 }
 
 impl Vote {
-    pub fn from_node(node: &Node) -> Self {
+    pub(super) fn from_node(node: &Node) -> Self {
         let mut children = node.element_children();
         let vote_identification = children.next().unwrap().text().unwrap().to_string();
         let domain_of_influence = children.next().unwrap().text().unwrap().to_string();
@@ -97,10 +102,46 @@ impl Vote {
             ballots,
         }
     }
+
+    /// Find the ballot question with the given question id
+    ///
+    /// Return `None` if not found
+    pub fn find_ballot_question_with_question_identification(
+        &self,
+        question_identification: &str,
+    ) -> Option<(&Ballot, &StandardQuestion)> {
+        self.ballots
+            .iter()
+            .find_map(|b| -> Option<(&Ballot, &StandardQuestion)> {
+                match b
+                    .standard_or_variant_ballot
+                    .questions()
+                    .into_iter()
+                    .find(|q| q.question_identification.as_str() == question_identification)
+                {
+                    Some(q) => Some((b, q)),
+                    None => None,
+                }
+            })
+    }
+}
+
+impl StandardOrVariantBallot {
+    /// List of questions in the [StandardOrVariantBallot]
+    pub fn questions(&self) -> Vec<&StandardQuestion> {
+        match self {
+            StandardOrVariantBallot::StandardBallot(standard_question) => vec![standard_question],
+            StandardOrVariantBallot::VariantBallot(variant_ballot) => variant_ballot
+                .standard_questions
+                .iter()
+                .chain(variant_ballot.tie_break_questions.iter())
+                .collect(),
+        }
+    }
 }
 
 impl Ballot {
-    pub fn from_node(node: &Node) -> Self {
+    fn from_node(node: &Node) -> Self {
         let mut children = node.element_children();
         let ballot_identification = children.next().unwrap().text().unwrap().to_string();
         let ballot_position = children
@@ -121,14 +162,21 @@ impl Ballot {
         Self {
             ballot_identification,
             ballot_position,
-            standard_ballot,
-            variant_ballot,
+            standard_or_variant_ballot: match standard_ballot {
+                Some(b) => StandardOrVariantBallot::StandardBallot(b),
+                None => StandardOrVariantBallot::VariantBallot(variant_ballot.unwrap()),
+            },
         }
+    }
+
+    /// List of questions in the ballot
+    pub fn questions(&self) -> Vec<&StandardQuestion> {
+        self.standard_or_variant_ballot.questions()
     }
 }
 
 impl StandardQuestion {
-    pub fn from_node(node: &Node) -> Self {
+    fn from_node(node: &Node) -> Self {
         let mut children = node.element_children();
         let question_identification = node
             .first_element_child()
@@ -156,7 +204,7 @@ impl StandardQuestion {
 }
 
 impl VariantBallot {
-    pub fn from_node(node: &Node) -> Self {
+    fn from_node(node: &Node) -> Self {
         Self {
             standard_questions: node
                 .element_children()
@@ -173,7 +221,7 @@ impl VariantBallot {
 }
 
 impl BallotQuestion {
-    pub fn from_node(node: &Node) -> Self {
+    fn from_node(node: &Node) -> Self {
         Self {
             ballot_question_info: node
                 .element_children()
@@ -184,7 +232,7 @@ impl BallotQuestion {
 }
 
 impl BallotQuestionInfo {
-    pub fn from_node(node: &Node) -> Self {
+    fn from_node(node: &Node) -> Self {
         let mut children = node.element_children();
         let language = children.next().unwrap().text().unwrap().to_string();
         children.next(); // ballotQuestionTitle
@@ -197,7 +245,7 @@ impl BallotQuestionInfo {
 }
 
 impl Answer {
-    pub fn from_node(node: &Node) -> Self {
+    fn from_node(node: &Node) -> Self {
         let mut children = node.element_children();
         let answer_identification = children.next().unwrap().text().unwrap().to_string();
         let answer_position = children
@@ -224,7 +272,7 @@ impl Answer {
 }
 
 impl AnswerInfo {
-    pub fn from_node(node: &Node) -> Self {
+    fn from_node(node: &Node) -> Self {
         Self {
             language: node
                 .first_element_child()

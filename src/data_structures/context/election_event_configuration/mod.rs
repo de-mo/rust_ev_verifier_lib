@@ -26,11 +26,13 @@ use crate::{
     direct_trust::{CertificateAuthority, VerifiySignatureTrait, VerifiyXMLSignatureTrait},
 };
 use chrono::NaiveDate;
-pub use election::{Candidate, Election, ElectionInformation, EmptyList, List, WriteInPosition};
+pub use election::{
+    Candidate, Election, ElectionInformation, EmptyList, List, TypeOfIdInElection, WriteInPosition,
+};
 use roxmltree::{Document, Node};
 use rust_ev_system_library::rust_ev_crypto_primitives::prelude::VerifyDomainTrait;
 use std::sync::Arc;
-pub use vote::{Answer, StandardQuestion, Vote};
+pub use vote::*;
 
 #[derive(Clone, Debug)]
 pub struct ElectionEventConfigurationData {
@@ -82,11 +84,17 @@ pub struct Authorization {
 #[derive(Debug, Clone)]
 pub struct AuthorizationObject {
     pub domain_of_influence: DomainOfInfluence,
+    pub counting_circle: CountingCircle,
 }
 
 #[derive(Debug, Clone)]
 pub struct DomainOfInfluence {
     pub domain_of_influence_identification: String,
+}
+
+#[derive(Debug, Clone)]
+pub struct CountingCircle {
+    pub counting_circle_identification: String,
 }
 
 #[derive(Debug, Clone)]
@@ -103,10 +111,14 @@ pub struct ElectionGroupBallot {
 }
 
 impl ElectionEventConfiguration {
+    /// Get the data behind the electionEventConfiguration
     pub fn get_data(&self) -> Result<Arc<ElectionEventConfigurationData>, DataStructureError> {
         self.inner.get_data()
     }
 
+    /// Unwrap the data behind the electionEventConfiguration
+    ///
+    /// Panic if the data cannot be created
     pub fn unwrap_data(&self) -> Arc<ElectionEventConfigurationData> {
         self.get_data().unwrap()
     }
@@ -210,6 +222,7 @@ impl Contest {
         }
     }
 
+    /// Calculate the number of election in the [Contest]
     pub fn number_of_elections(&self) -> Result<usize, DataStructureError> {
         Ok(self
             .election_groups
@@ -218,7 +231,10 @@ impl Contest {
             .sum())
     }
 
-    pub fn number_of_votes_and_ballots(&self) -> Result<(usize, usize), DataStructureError> {
+    /// Calculate the number of votations and ballots in the [Contest]
+    ///
+    /// Return a tuple with the number of votations and the number of ballots
+    pub fn number_of_votations_and_ballots(&self) -> Result<(usize, usize), DataStructureError> {
         let mut number_of_votes = 0;
         let mut number_of_ballots = 0;
         self.votes.iter().for_each(|vote| {
@@ -236,6 +252,7 @@ impl VoteInformation {
         }
     }
 
+    /// Validate if the votation has the given [Authorization] based on the domain of influence
     pub fn has_authorization(&self, auth: &Authorization) -> bool {
         auth.authorization_object.iter().any(|a| {
             self.vote.domain_of_influence
@@ -270,19 +287,29 @@ impl ElectionGroupBallot {
         }
     }
 
+    /// Validate if the election group has the given [Authorization] based on the domain of influence
     pub fn has_authorization(&self, auth: &Authorization) -> bool {
         auth.authorization_object.iter().any(|a| {
             self.domain_of_influence == a.domain_of_influence.domain_of_influence_identification
         })
     }
 
+    /// Calculate the number of election in the election group
     pub fn number_of_elections(&self) -> usize {
         self.election_informations.len()
+    }
+
+    /// Collect of the ids of the write-in positions in the election group
+    pub fn write_in_position_ids(&self) -> Vec<&str> {
+        self.election_informations
+            .iter()
+            .flat_map(|el| el.write_in_position_ids())
+            .collect()
     }
 }
 
 impl Authorization {
-    pub fn from_node(node: &Node) -> Self {
+    fn from_node(node: &Node) -> Self {
         let mut children = node.element_children();
         Self {
             authorization_identification: children.next().unwrap().text().unwrap().to_string(),
@@ -295,18 +322,39 @@ impl Authorization {
                 .collect::<Vec<_>>(),
         }
     }
+
+    /// Get the counting circle id behind the authorization
+    pub fn counting_circle_id(&self) -> &str {
+        &self.authorization_object[0]
+            .counting_circle
+            .counting_circle_identification
+    }
+
+    /// Get the domain of influence ids behind the authorization
+    pub fn domain_of_influence_ids(&self) -> Vec<&str> {
+        self.authorization_object
+            .iter()
+            .map(|auth| {
+                auth.domain_of_influence
+                    .domain_of_influence_identification
+                    .as_str()
+            })
+            .collect()
+    }
 }
 
 impl AuthorizationObject {
-    pub fn from_node(node: &Node) -> Self {
+    fn from_node(node: &Node) -> Self {
+        let doi_node = node.first_element_child().unwrap();
         Self {
-            domain_of_influence: DomainOfInfluence::from_node(&node.first_element_child().unwrap()),
+            domain_of_influence: DomainOfInfluence::from_node(&doi_node),
+            counting_circle: CountingCircle::from_node(&doi_node.next_sibling_element().unwrap()),
         }
     }
 }
 
 impl DomainOfInfluence {
-    pub fn from_node(node: &Node) -> Self {
+    fn from_node(node: &Node) -> Self {
         Self {
             domain_of_influence_identification: node
                 .first_element_child()
@@ -318,8 +366,21 @@ impl DomainOfInfluence {
     }
 }
 
+impl CountingCircle {
+    fn from_node(node: &Node) -> Self {
+        Self {
+            counting_circle_identification: node
+                .first_element_child()
+                .unwrap()
+                .text()
+                .unwrap()
+                .to_string(),
+        }
+    }
+}
+
 impl Voter {
-    pub fn from_node(node: &Node) -> Self {
+    fn from_node(node: &Node) -> Self {
         let mut children = node.element_children();
         Self {
             voter_identification: children.next().unwrap().text().unwrap().to_string(),
@@ -327,10 +388,8 @@ impl Voter {
         }
     }
 
-    pub fn is_test_voter(
-        &self,
-        test_authorization_ids: &[&str],
-    ) -> Result<bool, DataStructureError> {
+    /// Test if the voter is a test voter
+    fn is_test_voter(&self, test_authorization_ids: &[&str]) -> Result<bool, DataStructureError> {
         Ok(test_authorization_ids.contains(&self.authorization.as_str()))
     }
 }
@@ -370,7 +429,8 @@ pub(crate) struct ManuelVerificationInputFromConfiguration {
 impl TryFrom<&ElectionEventConfigurationData> for ManuelVerificationInputFromConfiguration {
     type Error = DataStructureError;
     fn try_from(value: &ElectionEventConfigurationData) -> Result<Self, Self::Error> {
-        let (number_of_votes, number_of_ballots) = value.contest.number_of_votes_and_ballots()?;
+        let (number_of_votes, number_of_ballots) =
+            value.contest.number_of_votations_and_ballots()?;
         let number_of_productive_ballot_boxes = value
             .authorizations
             .iter()
@@ -437,10 +497,11 @@ mod test {
         let ks = get_keystore();
         let sign_validate_res = data.verify_signatures(&ks);
         for r in sign_validate_res {
-            if r.is_err() {
-                println!("error validating signature: {:?}", r.as_ref().unwrap_err())
-            }
-            assert!(r.is_ok());
+            assert!(
+                r.is_ok(),
+                "error validating signature: {:?}",
+                r.as_ref().unwrap_err()
+            );
             assert!(r.unwrap())
         }
     }
