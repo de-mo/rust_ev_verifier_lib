@@ -23,10 +23,11 @@ use crate::{
     data_structures::{
         context::{
             control_component_public_keys_payload::ControlComponentPublicKeysPayload,
+            election_event_configuration::ElectionEventConfiguration,
             setup_component_public_keys_payload::SetupComponentPublicKeysPayload,
             setup_component_tally_data_payload::SetupComponentTallyDataPayload,
         },
-        ElectionEventConfiguration, ElectionEventContextPayload,
+        ElectionEventContextPayload,
     },
     file_structure::{
         context_directory::{

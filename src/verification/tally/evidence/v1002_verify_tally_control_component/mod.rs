@@ -14,6 +14,7 @@
 // a copy of the GNU General Public License along with this program. If not, see
 // <https://www.gnu.org/licenses/>.
 
+mod verify_ech0222;
 mod verify_process_plaintexts;
 mod verify_tally_control_component_ballot_box;
 
@@ -86,6 +87,59 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
                 res
             }),
     );
+
+    {
+        let ee_configuration = match context_dir.election_event_configuration() {
+            Ok(p) => p,
+            Err(e) => {
+                result.push(
+                    VerificationEvent::new_error_from_error(&e)
+                        .add_context("election_event_configuration cannot be read"),
+                );
+                return;
+            }
+        };
+
+        let ee_configuration_data = match ee_configuration.get_data() {
+            Ok(d) => d,
+            Err(e) => {
+                result.push(
+                    VerificationEvent::new_error_from_error(&e)
+                        .add_context("election_event_configuration data cannot be parsed"),
+                );
+                return;
+            }
+        };
+
+        let ech_0222 = match tally_dir.ech_0222() {
+            Ok(p) => p,
+            Err(e) => {
+                result.push(
+                    VerificationEvent::new_error_from_error(&e)
+                        .add_context("ech_0222_payload cannot be read"),
+                );
+                return;
+            }
+        };
+
+        let ech_0222_data = match ech_0222.get_data() {
+            Ok(d) => d,
+            Err(e) => {
+                result.push(
+                    VerificationEvent::new_error_from_error(&e)
+                        .add_context("ech_0222_payload data cannot be parsed"),
+                );
+                return;
+            }
+        };
+
+        result.append(&mut verify_ech0222::verify_ech0222(
+            &ee_context_payload.election_event_context,
+            &ee_configuration_data,
+            ech_0222_data.as_ref(),
+            tally_dir.bb_directories(),
+        ));
+    };
 }
 
 fn verify_for_ballotbox<B: BBDirectoryTrait>(
@@ -187,8 +241,6 @@ fn verify_for_ballotbox<B: BBDirectoryTrait>(
         upper_l_decoded_votes: &tally_votes_payload.decoded_votes,
         upper_l_write_ins: &tally_votes_payload.decoded_write_ins,
     };
-
-    // VerifyTallyFiles is missing
 
     verify_tally_control_component_ballot_box(&context_42, &input_42)
         .clone_add_context("VerifyTallyControlComponentBallotBox")

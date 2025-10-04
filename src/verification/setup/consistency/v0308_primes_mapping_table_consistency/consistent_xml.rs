@@ -20,7 +20,7 @@ use crate::{
     data_structures::context::{
         election_event_configuration::{
             Answer, Candidate, Election, ElectionEventConfigurationData, ElectionInformation,
-            EmptyList, List, StandardQuestion, Vote, WriteInPosition,
+            EmptyList, List, StandardOrVariantBallot, StandardQuestion, Vote, WriteInPosition,
         },
         election_event_context_payload::ElectionEventContext,
     },
@@ -207,25 +207,27 @@ fn generate_p_table_for_question(question: &StandardQuestion) -> Vec<PTableEleme
 fn generate_p_table_for_vote(vote: &Vote) -> Vec<PTableElementWithoutEncoding> {
     let mut res = vec![];
     for ballot in vote.ballots.iter() {
-        if let Some(standard_ballot) = &ballot.standard_ballot {
-            res.append(&mut generate_p_table_for_question(standard_ballot));
-        }
-        if let Some(variant_ballot) = &ballot.variant_ballot {
-            res.append(
-                &mut variant_ballot
-                    .standard_questions
-                    .iter()
-                    .flat_map(generate_p_table_for_question)
-                    .collect(),
-            );
-            res.append(
-                &mut variant_ballot
-                    .tie_break_questions
-                    .iter()
-                    .flat_map(generate_p_table_for_question)
-                    .collect(),
-            );
-        }
+        match &ballot.standard_or_variant_ballot {
+            StandardOrVariantBallot::StandardBallot(standard_question) => {
+                res.append(&mut generate_p_table_for_question(standard_question));
+            }
+            StandardOrVariantBallot::VariantBallot(variant_ballot) => {
+                res.append(
+                    &mut variant_ballot
+                        .standard_questions
+                        .iter()
+                        .flat_map(generate_p_table_for_question)
+                        .collect(),
+                );
+                res.append(
+                    &mut variant_ballot
+                        .tie_break_questions
+                        .iter()
+                        .flat_map(generate_p_table_for_question)
+                        .collect(),
+                );
+            }
+        };
     }
     res
 }
