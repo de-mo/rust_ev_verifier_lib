@@ -275,12 +275,9 @@ impl ElectionRawData {
                         .as_slice(),
                 )
                 .unwrap_or(false),
-            None => {
-                let all_empty = ballot_positions
-                    .iter()
-                    .all(|bp| matches!(&bp.0, CandidateOrIsEmpty::IsEmpty(_)));
-                all_empty
-            }
+            None => ballot_positions
+                .iter()
+                .all(|bp| matches!(&bp.0, CandidateOrIsEmpty::IsEmpty(_))),
         };
         Ok(Self {
             election_identification: election_information
