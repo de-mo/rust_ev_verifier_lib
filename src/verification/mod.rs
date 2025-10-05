@@ -1,3 +1,19 @@
+// Copyright © 2025 Denis Morel
+//
+// This program is free software: you can redistribute it and/or modify it under
+// the terms of the GNU General Public License as published by the Free
+// Software Foundation, either version 3 of the License, or (at your option) any
+// later version.
+//
+// This program is distributed in the hope that it will be useful, but WITHOUT
+// ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+// FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+// details.
+//
+// You should have received a copy of the GNU General Public License and
+// a copy of the GNU General Public License along with this program. If not, see
+// <https://www.gnu.org/licenses/>.
+
 //! Module implementing all the verifications
 
 mod manual;
@@ -97,29 +113,89 @@ impl Display for VerificationPeriod {
     }
 }
 
-// Enum representing the verification errors
 #[derive(Error, Debug)]
-pub enum VerificationError {
-    #[error("Error parsing json {msg} -> caused by: {source}")]
-    ParseJSON {
-        msg: String,
-        source: serde_json::Error,
+#[error(transparent)]
+/// Error during the verification process
+pub struct VerificationError(#[from] VerificationErrorImpl);
+
+#[derive(Error, Debug)]
+enum VerificationErrorImpl {
+    #[error("Error loading metadata")]
+    LoadMetadata { source: serde_json::Error },
+    #[error("Error loading metadata for period {period}")]
+    LoadMetadataPeriod {
+        period: VerificationPeriod,
+        source: Box<VerificationError>,
     },
-    #[error(transparent)]
-    DirectTrust(DirectTrustError),
-    #[error(transparent)]
-    ConfigError(VerifierConfigError),
-    #[error(transparent)]
-    DataStructure(DataStructureError),
-    #[error("metadata for verification id {0} not found")]
-    MetadataNotFound(String),
-    #[error("{msg} -> caused by: {source}")]
-    FileStructureError {
-        msg: String,
+    #[error("Error getting the keystore creating the manual verifications for all periods")]
+    KeystoreNewAll { source: VerifierConfigError },
+    #[error(
+        "Error getting the fingerprints of the certificate creating the manual verifications for all periods"
+    )]
+    FingerprintsNewAll { source: DirectTrustError },
+    #[error(
+        "Error getting the election event context creating the manual verifications for all periods"
+    )]
+    EEContextNewAll { source: Box<FileStructureError> },
+    #[error("Error getting the election event context creating the manual verifications for tally")]
+    EEContextNewTally { source: Box<FileStructureError> },
+    #[error("Ballot box {bb_id} not found in the directories")]
+    BBNotFoundNewTally { bb_id: String },
+    #[error(
+        "Error reading {bb_id}/tally_component_votes_payload creating the manual verifications for tally"
+    )]
+    BBVotesNewTally {
+        bb_id: String,
         source: Box<FileStructureError>,
     },
-    #[error("{0}")]
-    Generic(String),
+    #[error(
+        "Error creating the manual verifications for all period creating the manual verifications for tally"
+    )]
+    NewAllInNewTally { source: Box<VerificationError> },
+    #[error(
+        "Error creating the manual verifications for all period creating the manual verifications for setup"
+    )]
+    NewAllInNewSetup { source: Box<VerificationError> },
+    #[error("Error collecting metadata creating the manual verifications")]
+    MetadataNew { source: Box<VerificationError> },
+    #[error("Error creating manual verifications for {period} creating the manual verifications")]
+    NewManual {
+        period: VerificationPeriod,
+        source: Box<VerificationError>,
+    },
+    #[error(
+        "Error creating the inputs for the manual verifications from the election event context (creating verifications for all periods)"
+    )]
+    VerifInputsNewAll { source: DataStructureError },
+    #[error(
+        "Metadata for verification {id} not found in the list of metadata (creating the verification"
+    )]
+    MetadataNotFound { id: String },
+    #[error(
+        "name {name} for verification id {id} doesn't match with give name {input_name} (creating the verification)"
+    )]
+    NameMismatch {
+        name: String,
+        id: String,
+        input_name: String,
+    },
+    #[error("Error creating verification {name}")]
+    GetVerification {
+        name: &'static str,
+        source: Box<VerificationError>,
+    },
+    #[error("Error creating verifications for categroy {category}")]
+    GetCategory {
+        category: &'static str,
+        source: Box<VerificationError>,
+    },
+    #[error("Error creating verifications for period {period}")]
+    GetPeriod {
+        period: VerificationPeriod,
+        source: Box<VerificationError>,
+    },
+    #[error("Error calculating the fingerprint of ech-0222 file")]
+    ECH0222 { source: Box<FileStructureError> },
 }
 
 impl VerificationPeriod {
@@ -134,6 +210,7 @@ impl VerificationPeriod {
     }
 }
 
+#[allow(dead_code)]
 pub(super) fn verification_unimplemented<D: VerificationDirectoryTrait>(
     _dir: &D,
     _config: &'static VerifierConfig,
@@ -144,7 +221,7 @@ pub(super) fn verification_unimplemented<D: VerificationDirectoryTrait>(
     ));
 }
 
-/// Verify the signatue for a given object implementing [VerifiySignatureTrait]
+/// Verify the signatue for a given object implementing [VerifiySignatureSkeletonTrait]
 fn verify_signature_for_object<'a, T>(
     obj: &'a T,
     config: &'static VerifierConfig,
@@ -156,7 +233,9 @@ where
     let ks = match config.keystore() {
         Ok(ks) => ks,
         Err(e) => {
-            result.push(VerificationEvent::new_error(&e).add_context("Cannot read keystore"));
+            result.push(
+                VerificationEvent::new_error_from_error(&e).add_context("Cannot read keystore"),
+            );
             return result;
         }
     };
@@ -170,7 +249,7 @@ where
             }
             Err(e) => {
                 result.push(
-                    VerificationEvent::new_failure(e).add_context(format!("at position {}", i)),
+                    VerificationEvent::new_failure(e).add_context(format!("at position {i}")),
                 );
             }
         }

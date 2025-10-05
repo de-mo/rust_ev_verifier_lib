@@ -1,3 +1,19 @@
+// Copyright © 2025 Denis Morel
+//
+// This program is free software: you can redistribute it and/or modify it under
+// the terms of the GNU General Public License as published by the Free
+// Software Foundation, either version 3 of the License, or (at your option) any
+// later version.
+//
+// This program is distributed in the hope that it will be useful, but WITHOUT
+// ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+// FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+// details.
+//
+// You should have received a copy of the GNU General Public License and
+// a copy of the GNU General Public License along with this program. If not, see
+// <https://www.gnu.org/licenses/>.
+
 mod verify_online_control_components_ballot_box;
 
 use crate::{
@@ -30,7 +46,7 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
         Ok(p) => p,
         Err(e) => {
             result.push(
-                VerificationEvent::new_error(&e)
+                VerificationEvent::new_error_from_error(&e)
                     .add_context("election_event_context_payload cannot be read"),
             );
             return;
@@ -41,7 +57,7 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
         Ok(p) => p,
         Err(e) => {
             result.push(
-                VerificationEvent::new_error(&e)
+                VerificationEvent::new_error_from_error(&e)
                     .add_context("setup_component_public_keys_payload cannot be read"),
             );
             return;
@@ -90,7 +106,7 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
         .iter()
         .fold(VerificationResult::new(), |acc, (name, result)| {
             let mut res = acc.clone();
-            res.append_with_context(result, format!("Ballot box {}", name));
+            res.append_with_context(result, format!("Ballot box {name}"));
             res
         }));
 }
@@ -109,8 +125,7 @@ fn verify_for_ballotbox<B: BBDirectoryTrait, S: ContextVCSDirectoryTrait>(
         Some(vcs) => vcs,
         None => {
             return VerificationResult::from(&VerificationEvent::new_error(&format!(
-                "No verification card set found for ballot box {}",
-                bb_id
+                "No verification card set found for ballot box {bb_id}"
             )))
         }
     };
@@ -133,18 +148,16 @@ fn verify_for_ballotbox<B: BBDirectoryTrait, S: ContextVCSDirectoryTrait>(
         Some((_, p)) => match p {
             Ok(p) => p,
             Err(e) => {
-                return VerificationResult::from(&VerificationEvent::new_error(&e).add_context(
-                    format!(
-                        "{}/control_component_ballot_box_payload_iter_1 cannot be read",
-                        bb_id
-                    ),
-                ));
+                return VerificationResult::from(
+                    &VerificationEvent::new_error_from_error(&e).add_context(format!(
+                        "{bb_id}/control_component_ballot_box_payload_iter_1 cannot be read"
+                    )),
+                );
             }
         },
         None => {
             return VerificationResult::from(&VerificationEvent::new_error(&format!(
-                "{}/control_component_ballot_box_payload_iter_1 not found",
-                bb_id
+                "{bb_id}/control_component_ballot_box_payload_iter_1 not found"
             )));
         }
     };
@@ -194,10 +207,11 @@ fn verify_for_ballotbox<B: BBDirectoryTrait, S: ContextVCSDirectoryTrait>(
         .control_component_shuffle_payload_iter()
         .map(|(j, payload)| match payload {
             Ok(p) => Ok((p.node_id, p)),
-            Err(e) => Err(VerificationEvent::new_error(&e).add_context(format!(
-                "control_component_shuffle_payload_{} cannot be read",
-                j
-            ))),
+            Err(e) => Err(
+                VerificationEvent::new_error_from_error(&e).add_context(format!(
+                    "control_component_shuffle_payload_{j} cannot be read"
+                )),
+            ),
         })
         .collect::<Result<Vec<_>, _>>()
     {
@@ -219,7 +233,8 @@ fn verify_for_ballotbox<B: BBDirectoryTrait, S: ContextVCSDirectoryTrait>(
         Ok(v) => v,
         Err(e) => {
             return VerificationResult::from(
-                &VerificationEvent::new_error(&e).add_context("Error creating Shuffle Argument"),
+                &VerificationEvent::new_error_from_error(&e)
+                    .add_context("Error creating Shuffle Argument"),
             )
         }
     };
@@ -236,7 +251,7 @@ fn verify_for_ballotbox<B: BBDirectoryTrait, S: ContextVCSDirectoryTrait>(
         Ok(p) => p,
         Err(e) => {
             return VerificationResult::from(
-                &VerificationEvent::new_error(&e)
+                &VerificationEvent::new_error_from_error(&e)
                     .add_context("setup_component_tally_data_payload cannot be read"),
             )
         }
@@ -259,7 +274,7 @@ fn verify_for_ballotbox<B: BBDirectoryTrait, S: ContextVCSDirectoryTrait>(
             ee_id: &ee_context_payload.election_event_context.election_event_id,
             vcs_id: &vcs_context.verification_card_set_id,
             bb_id: &bb_id,
-            upper_n_upper_e: vcs_context.number_of_voters(),
+            upper_n_upper_e: vcs_context.number_of_eligible_voters,
             p_table: &vcs_context.primes_mapping_table.p_table,
             el_pk: &setup_pk.election_public_key,
             ccm_el_pk: &ccm_el_pk,
@@ -299,10 +314,10 @@ mod test {
         fn_verification(&dir, &CONFIG_TEST, &mut result);
         if !result.is_ok() {
             for r in result.errors_to_string() {
-                println!("{:?}", r)
+                println!("{r:?}")
             }
             for r in result.failures_to_string() {
-                println!("{:?}", r)
+                println!("{r:?}")
             }
         }
         assert!(result.is_ok());

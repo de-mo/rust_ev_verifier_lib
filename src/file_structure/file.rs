@@ -1,7 +1,25 @@
-use super::{FileReadMode, FileStructureError, FileType, GetFileNameTrait};
+// Copyright © 2025 Denis Morel
+//
+// This program is free software: you can redistribute it and/or modify it under
+// the terms of the GNU General Public License as published by the Free
+// Software Foundation, either version 3 of the License, or (at your option) any
+// later version.
+//
+// This program is distributed in the hope that it will be useful, but WITHOUT
+// ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+// FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+// details.
+//
+// You should have received a copy of the GNU General Public License and
+// a copy of the GNU General Public License along with this program. If not, see
+// <https://www.gnu.org/licenses/>.
+
+use super::{FileReadMode, FileStructureError, FileStructureErrorImpl, FileType, GetFileNameTrait};
 use crate::data_structures::{VerifierDataDecode, VerifierDataToTypeTrait, VerifierDataType};
 use glob::glob;
-use roxmltree::Document;
+use rust_ev_system_library::rust_ev_crypto_primitives::prelude::{
+    EncodeTrait, basic_crypto_functions::sha256_stream,
+};
 use std::{
     path::{Path, PathBuf},
     sync::{Arc, OnceLock},
@@ -50,8 +68,8 @@ impl<D: VerifierDataDecode + VerifierDataToTypeTrait> File<D> {
     }
 
     /// Location of the file
-    pub fn location(&self) -> PathBuf {
-        self.path.parent().unwrap().to_path_buf()
+    pub fn location(&self) -> &Path {
+        self.path.parent().unwrap()
     }
 
     /// Does the file exist
@@ -60,13 +78,32 @@ impl<D: VerifierDataDecode + VerifierDataToTypeTrait> File<D> {
     }
 
     /// Path of the file
-    pub fn path(&self) -> PathBuf {
-        self.path.to_path_buf()
+    pub fn path(&self) -> &Path {
+        &self.path
     }
 
     /// Path of the file as string
     pub fn path_to_str(&self) -> &str {
         self.path.to_str().unwrap()
+    }
+
+    pub fn fingerprint(&self) -> Result<String, FileStructureError> {
+        self.fingerprint_impl().map_err(FileStructureError::from)
+    }
+
+    fn fingerprint_impl(&self) -> Result<String, FileStructureErrorImpl> {
+        let f = std::fs::File::open(self.path()).map_err(|e| FileStructureErrorImpl::IO {
+            path: self.path().to_path_buf(),
+            source: e,
+        })?;
+        let mut reader = std::io::BufReader::new(f);
+        Ok(sha256_stream(&mut reader)
+            .map_err(|e| FileStructureErrorImpl::Fingerprint {
+                path: self.path().to_path_buf(),
+                source: e,
+            })?
+            .base16_encode()
+            .unwrap())
     }
 
     /// Decode the verifier data containing the the file
@@ -77,9 +114,15 @@ impl<D: VerifierDataDecode + VerifierDataToTypeTrait> File<D> {
             return Ok(cache.clone());
         }
         if !self.exists() {
-            return Err(FileStructureError::PathNotFile(self.path()));
+            return Err(FileStructureError::from(
+                FileStructureErrorImpl::PathNotFile(self.path().to_path_buf()),
+            ));
         }
-        let res = self.read_data().map(Arc::new)?;
+        let res = self.read_data().map(Arc::new).map_err(|e| {
+            FileStructureErrorImpl::ReadDataDecoding {
+                source: Box::new(e),
+            }
+        })?;
         if FileReadMode::from(&Self::data_type()) == FileReadMode::Cache {
             self.cache.get_or_init(|| res.clone());
         }
@@ -91,47 +134,44 @@ impl<D: VerifierDataDecode + VerifierDataToTypeTrait> File<D> {
         let mode = FileReadMode::from(&Self::data_type());
         match mode {
             FileReadMode::Memory | FileReadMode::Cache => {
-                let s =
-                    std::fs::read_to_string(self.path()).map_err(|e| FileStructureError::IO {
-                        path: self.path(),
+                let s = std::fs::read_to_string(self.path()).map_err(|e| {
+                    FileStructureErrorImpl::IO {
+                        path: self.path().to_path_buf(),
                         source: e,
-                    })?;
-                match file_type {
-                    FileType::Json => D::decode_json(s.as_str()).map_err(|e| {
-                        FileStructureError::ReadDataStructure {
-                            path: self.path(),
-                            source: e,
-                        }
-                    }),
-                    FileType::Xml => {
-                        let doc =
-                            Document::parse(&s).map_err(|e| FileStructureError::ParseRoXML {
-                                msg: format!(
-                                    "Cannot parse content of xml file {}",
-                                    self.path_to_str()
-                                ),
-                                source: e,
-                            })?;
-                        D::decode_xml(&doc).map_err(|e| FileStructureError::ReadDataStructure {
-                            path: self.path(),
-                            source: e,
-                        })
                     }
+                })?;
+                match file_type {
+                    FileType::Json => D::decode_json(s.as_str())
+                        .map_err(|e| FileStructureErrorImpl::ReadDataStructure {
+                            msg: "Decoding json",
+                            path: self.path().to_path_buf(),
+                            source: Box::new(e),
+                        })
+                        .map_err(FileStructureError::from),
+                    FileType::Xml => D::decode_xml(s)
+                        .map_err(|e| FileStructureErrorImpl::ReadDataStructure {
+                            msg: "Decoding xml",
+                            path: self.path().to_path_buf(),
+                            source: Box::new(e),
+                        })
+                        .map_err(FileStructureError::from),
                 }
             }
             FileReadMode::Streaming => match file_type {
-                FileType::Json => D::stream_json(self.path().as_path()).map_err(|e| {
-                    FileStructureError::ReadDataStructure {
-                        path: self.path(),
-                        source: e,
-                    }
-                }),
-                FileType::Xml => D::stream_xml(self.path().as_path()).map_err(|e| {
-                    FileStructureError::ReadDataStructure {
-                        path: self.path(),
-                        source: e,
-                    }
-                }),
+                FileType::Json => D::stream_json(self.path())
+                    .map_err(|e| FileStructureErrorImpl::ReadDataStructure {
+                        msg: "Streaming json",
+                        path: self.path().to_path_buf(),
+                        source: Box::new(e),
+                    })
+                    .map_err(FileStructureError::from),
+                FileType::Xml => D::stream_xml(self.path())
+                    .map_err(|e| FileStructureErrorImpl::ReadDataStructure {
+                        msg: "Streaming xml",
+                        path: self.path().to_path_buf(),
+                        source: Box::new(e),
+                    })
+                    .map_err(FileStructureError::from),
             },
         }
     }
@@ -141,9 +181,9 @@ impl<D: VerifierDataDecode + VerifierDataToTypeTrait> File<D> {
 mod test {
     use super::*;
     use crate::config::test::{test_datasets_context_path, test_datasets_tally_path};
-    use crate::data_structures::context::control_component_public_keys_payload::ControlComponentPublicKeysPayload;
-    use crate::data_structures::tally::ech_0110::ECH0110;
     use crate::data_structures::ElectionEventContextPayload;
+    use crate::data_structures::context::control_component_public_keys_payload::ControlComponentPublicKeysPayload;
+    use crate::data_structures::tally::ech_0222::ECH0222;
 
     #[test]
     fn test_file() {
@@ -155,21 +195,6 @@ mod test {
         let data = f.decode_verifier_data();
         assert!(data.is_ok())
     }
-
-    /*#[test]
-    fn test_file_macro() {
-        let location = test_datasets_context_path();
-        let f = create_file!(
-            &location,
-            Context,
-            VerifierContextDataType::ElectionEventContextPayload
-        );
-        assert!(f.exists());
-        assert_eq!(f.location(), location);
-        assert_eq!(f.path(), location.join("electionEventContextPayload.json"));
-        let data = f.decode_verifier_data::<ElectionEventContextPayload>();
-        assert!(data.is_ok())
-    }*/
 
     #[test]
     fn test_file_not_exist() {
@@ -199,12 +224,12 @@ mod test {
     #[test]
     fn test_file_with_astrerix() {
         let location = test_datasets_tally_path();
-        let f = File::<ECH0110>::new(&location, None);
+        let f = File::<ECH0222>::new(&location, None);
         assert!(f.exists());
         assert_eq!(f.location(), location);
         assert_eq!(
             f.path(),
-            location.join("eCH-0110_v4-0_NE_20231124_TT05.xml")
+            location.join("eCH-0222_v3-0_NE_20231124_TT05.xml")
         );
     }
 
@@ -222,22 +247,15 @@ mod test {
         assert!(data.is_err());
     }
 
-    /*#[test]
-    fn test_file_with_nb_macro() {
-        let location = test_datasets_context_path();
-        let f = create_file!(
-            &location,
-            Context,
-            VerifierContextDataType::ControlComponentPublicKeysPayload,
-            2
-        );
-        assert!(f.exists());
-        assert_eq!(f.location(), location);
+    #[test]
+    fn test_fingerprint() {
+        let location = test_datasets_tally_path();
+        let f = File::<ECH0222>::new(&location, None);
+        let fp_res = f.fingerprint();
+        assert!(fp_res.is_ok(), "{}", fp_res.unwrap_err());
         assert_eq!(
-            f.path(),
-            location.join("controlComponentPublicKeysPayload.2.json")
-        );
-        let data = f.decode_verifier_data::<ControlComponentPublicKeysPayload>();
-        assert!(data.is_ok());
-    }*/
+            fp_res.unwrap(),
+            "a4f56522d1a3d4b8bcb8c4cb340220897bb14139d5400cd48c821431d269e83c".to_uppercase()
+        )
+    }
 }

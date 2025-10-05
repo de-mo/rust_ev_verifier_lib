@@ -1,3 +1,20 @@
+// Copyright © 2025 Denis Morel
+//
+// This program is free software: you can redistribute it and/or modify it under
+// the terms of the GNU General Public License as published by the Free
+// Software Foundation, either version 3 of the License, or (at your option) any
+// later version.
+//
+// This program is distributed in the hope that it will be useful, but WITHOUT
+// ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+// FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+// details.
+//
+// You should have received a copy of the GNU General Public License and
+// a copy of the GNU General Public License along with this program. If not, see
+// <https://www.gnu.org/licenses/>.
+
+mod verify_ech0222;
 mod verify_process_plaintexts;
 mod verify_tally_control_component_ballot_box;
 
@@ -11,7 +28,9 @@ use crate::{
     VerifierConfig,
 };
 use rayon::prelude::*;
-use rust_ev_system_library::rust_ev_crypto_primitives::prelude::{mix_net::ShuffleArgument, Integer};
+use rust_ev_system_library::rust_ev_crypto_primitives::prelude::{
+    mix_net::ShuffleArgument, Integer,
+};
 use verify_tally_control_component_ballot_box::{
     verify_tally_control_component_ballot_box, ContextAlgorithm42, InputsAlgorithm42,
 };
@@ -28,7 +47,7 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
         Ok(p) => p,
         Err(e) => {
             result.push(
-                VerificationEvent::new_error(&e)
+                VerificationEvent::new_error_from_error(&e)
                     .add_context("election_event_context_payload cannot be read"),
             );
             return;
@@ -39,7 +58,7 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
         Ok(p) => p,
         Err(e) => {
             result.push(
-                VerificationEvent::new_error(&e)
+                VerificationEvent::new_error_from_error(&e)
                     .add_context("setup_component_public_keys_payload cannot be read"),
             );
             return;
@@ -64,10 +83,63 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
             .iter()
             .fold(VerificationResult::new(), |acc, (name, result)| {
                 let mut res = acc.clone();
-                res.append_with_context(result, format!("Ballot box {}", name));
+                res.append_with_context(result, format!("Ballot box {name}"));
                 res
             }),
     );
+
+    {
+        let ee_configuration = match context_dir.election_event_configuration() {
+            Ok(p) => p,
+            Err(e) => {
+                result.push(
+                    VerificationEvent::new_error_from_error(&e)
+                        .add_context("election_event_configuration cannot be read"),
+                );
+                return;
+            }
+        };
+
+        let ee_configuration_data = match ee_configuration.get_data() {
+            Ok(d) => d,
+            Err(e) => {
+                result.push(
+                    VerificationEvent::new_error_from_error(&e)
+                        .add_context("election_event_configuration data cannot be parsed"),
+                );
+                return;
+            }
+        };
+
+        let ech_0222 = match tally_dir.ech_0222() {
+            Ok(p) => p,
+            Err(e) => {
+                result.push(
+                    VerificationEvent::new_error_from_error(&e)
+                        .add_context("ech_0222_payload cannot be read"),
+                );
+                return;
+            }
+        };
+
+        let ech_0222_data = match ech_0222.get_data() {
+            Ok(d) => d,
+            Err(e) => {
+                result.push(
+                    VerificationEvent::new_error_from_error(&e)
+                        .add_context("ech_0222_payload data cannot be parsed"),
+                );
+                return;
+            }
+        };
+
+        result.append(&mut verify_ech0222::verify_ech0222(
+            &ee_context_payload.election_event_context,
+            &ee_configuration_data,
+            ech_0222_data.as_ref(),
+            tally_dir.bb_directories(),
+        ));
+    };
 }
 
 fn verify_for_ballotbox<B: BBDirectoryTrait>(
@@ -83,8 +155,7 @@ fn verify_for_ballotbox<B: BBDirectoryTrait>(
         Some(vcs) => vcs,
         None => {
             return VerificationResult::from(&VerificationEvent::new_error(&format!(
-                "No verification card set found for ballot box {}",
-                bb_id
+                "No verification card set found for ballot box {bb_id}"
             )))
         }
     };
@@ -93,7 +164,7 @@ fn verify_for_ballotbox<B: BBDirectoryTrait>(
         eg: &ee_context_payload.encryption_group,
         ee_id: &ee_context_payload.election_event_context.election_event_id,
         bb_id: &bb_id,
-        _upper_n_upper_e: vcs.number_of_voters(),
+        _upper_n_upper_e: vcs.number_of_eligible_voters,
         p_table: &vcs.primes_mapping_table.p_table,
         eb_pk,
     };
@@ -105,18 +176,16 @@ fn verify_for_ballotbox<B: BBDirectoryTrait>(
         Some((_, p)) => match p {
             Ok(p) => p,
             Err(e) => {
-                return VerificationResult::from(&VerificationEvent::new_error(&e).add_context(
-                    format!(
-                        "{}/control_component_shuffle_payload_4 cannot be read",
-                        bb_id
-                    ),
-                ));
+                return VerificationResult::from(
+                    &VerificationEvent::new_error_from_error(&e).add_context(format!(
+                        "{bb_id}/control_component_shuffle_payload_4 cannot be read"
+                    )),
+                );
             }
         },
         None => {
             return VerificationResult::from(&VerificationEvent::new_error(&format!(
-                "{}/tally_component_shuffle_payload_4 not found",
-                bb_id
+                "{bb_id}/tally_component_shuffle_payload_4 not found",
             )));
         }
     };
@@ -124,26 +193,30 @@ fn verify_for_ballotbox<B: BBDirectoryTrait>(
     let tally_shuffle_payload = match tally_dir.tally_component_shuffle_payload() {
         Ok(p) => p,
         Err(e) => {
-            return VerificationResult::from(&VerificationEvent::new_error(&e).add_context(
-                format!("{}/tally_component_shuffle_payload cannot be read", bb_id),
-            ));
+            return VerificationResult::from(
+                &VerificationEvent::new_error_from_error(&e).add_context(format!(
+                    "{bb_id}/tally_component_shuffle_payload cannot be read"
+                )),
+            );
         }
     };
 
     let tally_votes_payload = match tally_dir.tally_component_votes_payload() {
         Ok(p) => p,
         Err(e) => {
-            return VerificationResult::from(&VerificationEvent::new_error(&e).add_context(
-                format!("{}/tally_component_votes_payload cannot be read", bb_id),
-            ));
+            return VerificationResult::from(
+                &VerificationEvent::new_error_from_error(&e).add_context(format!(
+                    "{bb_id}/tally_component_votes_payload cannot be read"
+                )),
+            );
         }
     };
     let pi_mix_5 =
         match ShuffleArgument::try_from(&tally_shuffle_payload.verifiable_shuffle.shuffle_argument)
         {
             Ok(a) => a,
-            Err(e) => return VerificationResult::from(&VerificationEvent::new_error(&e).add_context(
-                format!("Error converting shuffle argument for {}/tally_component_shuffle_payload cannot be read", bb_id),
+            Err(e) => return VerificationResult::from(&VerificationEvent::new_error_from_error(&e).add_context(
+                format!("Error converting shuffle argument for {bb_id}/tally_component_shuffle_payload cannot be read", ),
             )),
         };
 
@@ -164,12 +237,10 @@ fn verify_for_ballotbox<B: BBDirectoryTrait>(
         pi_dec_5: &tally_shuffle_payload
             .verifiable_plaintext_decryption
             .decryption_proofs,
-        upper_l_votes: &tally_votes_payload.votes,
-        upper_l_decoded_votes: &tally_votes_payload.actual_selected_voting_options,
-        upper_l_write_ins: &tally_votes_payload.decoded_write_in_votes,
+        upper_l_votes: &tally_votes_payload.decrypted_votes,
+        upper_l_decoded_votes: &tally_votes_payload.decoded_votes,
+        upper_l_write_ins: &tally_votes_payload.decoded_write_ins,
     };
-
-    // VerifyTallyFiles is missing
 
     verify_tally_control_component_ballot_box(&context_42, &input_42)
         .clone_add_context("VerifyTallyControlComponentBallotBox")
@@ -187,10 +258,10 @@ mod test {
         fn_verification(&dir, &CONFIG_TEST, &mut result);
         if !result.is_ok() {
             for r in result.errors_to_string() {
-                println!("{:?}", r)
+                println!("{r:?}")
             }
             for r in result.failures_to_string() {
-                println!("{:?}", r)
+                println!("{r:?}")
             }
         }
         assert!(result.is_ok());

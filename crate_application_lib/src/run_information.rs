@@ -1,13 +1,31 @@
+// Copyright © 2025 Denis Morel
+//
+// This program is free software: you can redistribute it and/or modify it under
+// the terms of the GNU General Public License as published by the Free
+// Software Foundation, either version 3 of the License, or (at your option) any
+// later version.
+//
+// This program is distributed in the hope that it will be useful, but WITHOUT
+// ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+// FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+// details.
+//
+// You should have received a copy of the GNU General Public License and
+// a copy of the GNU General Public License along with this program. If not, see
+// <https://www.gnu.org/licenses/>.
+
+use crate::RunnerErrorImpl;
+
 use super::{
-    runner::VerificationRunInformation, ExtractDataSetResults, RunnerError, RunnerInformation,
+    ExtractDataSetResults, RunnerError, RunnerInformation, runner::VerificationRunInformation,
 };
 use rust_ev_verifier_lib::{
+    VerifierConfig,
     file_structure::VerificationDirectory,
     verification::{
-        get_verifications_setup, get_verifications_tally, ManualVerifications,
-        VerificationMetaDataList, VerificationPeriod, VerificationStatus,
+        ManualVerifications, VerificationMetaDataList, VerificationPeriod, VerificationStatus,
+        get_verifications_setup, get_verifications_tally,
     },
-    VerifierConfig,
 };
 use std::{collections::HashMap, path::Path, sync::Arc, time::SystemTime};
 
@@ -36,7 +54,7 @@ impl RunInformation {
             verifications_status: HashMap::default(),
             excluded_verifications: vec![],
             verifications_with_errors_and_failures: HashMap::default(),
-            runner_information: RunnerInformation::default(),
+            runner_information: RunnerInformation::new(config),
         }
     }
 
@@ -53,18 +71,18 @@ impl RunInformation {
         let all_verifs = match verification_period {
             VerificationPeriod::Setup => {
                 get_verifications_setup(verification_metadata, self.config).map_err(|e| {
-                    RunnerError::RunInformationError(format!(
-                        "Collecting verifications setup: {}",
-                        e
-                    ))
+                    RunnerErrorImpl::CollectVerifications {
+                        period: verification_period,
+                        source: Box::new(e),
+                    }
                 })?
             }
             VerificationPeriod::Tally => {
                 get_verifications_tally(verification_metadata, self.config).map_err(|e| {
-                    RunnerError::RunInformationError(format!(
-                        "Collecting verifications setup: {}",
-                        e
-                    ))
+                    RunnerErrorImpl::CollectVerifications {
+                        period: verification_period,
+                        source: Box::new(e),
+                    }
                 })?
             }
         };
@@ -223,8 +241,8 @@ impl TryFrom<&RunInformation> for ManualVerifications<VerificationDirectory> {
 
     fn try_from(value: &RunInformation) -> Result<Self, Self::Error> {
         if !value.is_prepared() {
-            return Err(RunnerError::RunInformationError(
-                "The run information must be prepared".to_string(),
+            return Err(RunnerError::from(
+                RunnerErrorImpl::ManualRunInformationNotPrepared,
             ));
         }
         let dir = VerificationDirectory::new(
@@ -239,11 +257,9 @@ impl TryFrom<&RunInformation> for ManualVerifications<VerificationDirectory> {
             value.verifications_with_errors_and_failures(),
             &value.excluded_verifications,
         )
-        .map_err(|e| {
-            RunnerError::RunInformationError(format!(
-                "Error creating the manual verifications: {}",
-                e
-            ))
+        .map_err(|e| RunnerErrorImpl::Manual {
+            source: Box::new(e),
         })
+        .map_err(RunnerError::from)
     }
 }

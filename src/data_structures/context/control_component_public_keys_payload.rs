@@ -1,16 +1,33 @@
+// Copyright © 2025 Denis Morel
+//
+// This program is free software: you can redistribute it and/or modify it under
+// the terms of the GNU General Public License as published by the Free
+// Software Foundation, either version 3 of the License, or (at your option) any
+// later version.
+//
+// This program is distributed in the hope that it will be useful, but WITHOUT
+// ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+// FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+// details.
+//
+// You should have received a copy of the GNU General Public License and
+// a copy of the GNU General Public License along with this program. If not, see
+// <https://www.gnu.org/licenses/>.
+
 use super::super::{
     common_types::{EncryptionParametersDef, SchnorrProof, Signature},
     deserialize_seq_string_base64_to_seq_integer, implement_trait_verifier_data_json_decode,
-    DataStructureError, VerifierDataDecode,
+    DataStructureError, DataStructureErrorImpl, VerifierDataDecode,
 };
 use crate::{
     data_structures::{VerifierDataToTypeTrait, VerifierDataType},
-    direct_trust::{CertificateAuthority, VerifiySignatureTrait, VerifySignatureError},
+    direct_trust::{CertificateAuthority, VerifiyJSONSignatureTrait, VerifiySignatureTrait},
 };
 use rust_ev_system_library::rust_ev_crypto_primitives::prelude::{
     elgamal::EncryptionParameters, ByteArray, HashableMessage, Integer, VerifyDomainTrait,
 };
 use serde::Deserialize;
+use std::sync::Arc;
 
 #[derive(Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -19,7 +36,7 @@ pub struct ControlComponentPublicKeysPayload {
     pub encryption_group: EncryptionParameters,
     pub election_event_id: String,
     pub control_component_public_keys: ControlComponentPublicKeys,
-    pub signature: Signature,
+    pub signature: Option<Signature>,
 }
 
 impl VerifierDataToTypeTrait for ControlComponentPublicKeysPayload {
@@ -42,8 +59,8 @@ impl<'a> From<&'a ControlComponentPublicKeysPayload> for HashableMessage<'a> {
     }
 }
 
-impl<'a> VerifiySignatureTrait<'a> for ControlComponentPublicKeysPayload {
-    fn get_hashable(&'a self) -> Result<HashableMessage<'a>, Box<VerifySignatureError>> {
+impl<'a> VerifiyJSONSignatureTrait<'a> for ControlComponentPublicKeysPayload {
+    fn get_hashable(&'a self) -> Result<HashableMessage<'a>, DataStructureError> {
         Ok(HashableMessage::from(self))
     }
 
@@ -59,8 +76,17 @@ impl<'a> VerifiySignatureTrait<'a> for ControlComponentPublicKeysPayload {
         CertificateAuthority::get_ca_cc(&self.control_component_public_keys.node_id)
     }
 
-    fn get_signature(&self) -> ByteArray {
-        self.signature.get_signature()
+    fn get_signature(&self) -> Option<ByteArray> {
+        self.signature.as_ref().map(|s| s.get_signature())
+    }
+}
+
+impl<'a> VerifiySignatureTrait<'a> for ControlComponentPublicKeysPayload {
+    fn verifiy_signature(
+        &'a self,
+        keystore: &crate::direct_trust::Keystore,
+    ) -> Result<bool, crate::direct_trust::VerifySignatureError> {
+        self.verifiy_json_signature(keystore)
     }
 }
 
@@ -99,17 +125,26 @@ impl<'a> From<&'a ControlComponentPublicKeys> for HashableMessage<'a> {
 mod test {
     use super::{
         super::super::test::{
-            test_data_structure, test_data_structure_read_data_set,
-            test_data_structure_verify_domain, test_data_structure_verify_signature,
+            file_to_test_cases, json_to_hashable_message, json_to_testdata, test_data_structure,
+            test_data_structure_read_data_set, test_data_structure_verify_domain,
+            test_data_structure_verify_signature, test_hash_json,
         },
         *,
     };
-    use crate::config::test::{test_datasets_context_path, CONFIG_TEST};
+    use crate::config::test::{get_keystore, test_datasets_context_path, test_resources_path};
+    use rust_ev_system_library::rust_ev_crypto_primitives::prelude::{
+        EncodeTrait, RecursiveHashTrait,
+    };
     use std::fs;
 
     test_data_structure!(
         ControlComponentPublicKeysPayload,
         "controlComponentPublicKeysPayload.1.json",
         test_datasets_context_path
+    );
+
+    test_hash_json!(
+        ControlComponentPublicKeysPayload,
+        "verify-signature-control-component-public-keys.json"
     );
 }

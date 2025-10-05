@@ -1,11 +1,28 @@
+// Copyright © 2025 Denis Morel
+//
+// This program is free software: you can redistribute it and/or modify it under
+// the terms of the GNU General Public License as published by the Free
+// Software Foundation, either version 3 of the License, or (at your option) any
+// later version.
+//
+// This program is distributed in the hope that it will be useful, but WITHOUT
+// ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+// FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+// details.
+//
+// You should have received a copy of the GNU General Public License and
+// a copy of the GNU General Public License along with this program. If not, see
+// <https://www.gnu.org/licenses/>.
+
 //! Module containing the contstants and the way to access them
 
-use thiserror::Error;
+use crate::direct_trust::DirectTrustError;
 
 use super::consts;
-use super::direct_trust::{DirectTrustError, Keystore};
+use super::direct_trust::Keystore;
 use super::resources::VERIFICATION_LIST;
 use std::path::{Path, PathBuf};
+use thiserror::Error;
 
 // Directory structure
 const CONTEXT_DIR_NAME: &str = "context";
@@ -25,12 +42,16 @@ const ZIP_TEMP_DIR_NAME: &str = "decrypted_zip";
 const DEFAULT_TXT_REPORT_TAB_SIZE: u8 = 2;
 const DEFAULT_REPORT_FORMAT_DATE_TIME: &str = "%d.%m.%Y %H:%M:%S.%3f";
 
-// Enum representing the configuration error
 #[derive(Error, Debug)]
-pub enum VerifierConfigError {
+#[error(transparent)]
+/// Error with the configuration of Verifier
+pub struct VerifierConfigError(#[from] VerifierConfigErrorImpl);
+
+#[derive(Error, Debug)]
+enum VerifierConfigErrorImpl {
     #[error("Variable {0} not found in .env")]
     Env(String),
-    #[error(transparent)]
+    #[error("Error reading the keystore")]
     DirectTrust(#[from] DirectTrustError),
 }
 
@@ -182,7 +203,9 @@ impl VerifierConfig {
 
     /// Get the keystore
     pub fn keystore(&self) -> Result<Keystore, VerifierConfigError> {
-        Ok(Keystore::try_from(self.direct_trust_dir_path().as_path())?)
+        Keystore::try_from(self.direct_trust_dir_path().as_path())
+            .map_err(VerifierConfigErrorImpl::from)
+            .map_err(VerifierConfigError::from)
     }
 
     /// Get tab size for text reports
@@ -210,9 +233,11 @@ impl VerifierConfig {
 
     /// Get the password to decrypt the zip files
     pub fn decrypt_password(&self) -> Result<String, VerifierConfigError> {
-        dotenvy::var(consts::ENV_VERIFIER_DATASET_PASSWORD).map_err(|_| {
-            VerifierConfigError::Env(consts::ENV_VERIFIER_DATASET_PASSWORD.to_string())
-        })
+        dotenvy::var(consts::ENV_VERIFIER_DATASET_PASSWORD)
+            .map_err(|_| {
+                VerifierConfigErrorImpl::Env(consts::ENV_VERIFIER_DATASET_PASSWORD.to_string())
+            })
+            .map_err(VerifierConfigError::from)
     }
 }
 
@@ -224,32 +249,32 @@ pub(crate) mod test {
         direct_trust::CertificateAuthority,
         file_structure::{mock::MockVerificationDirectory, VerificationDirectory},
         verification::VerificationPeriod,
+        Report,
     };
     use lazy_static::lazy_static;
     use rust_ev_system_library::rust_ev_crypto_primitives::prelude::direct_trust::Keystore as BasisKeystore;
 
-    const CANTON_KEYSTORE_FILE_NAME: &str = "signing_keystore_canton.p12";
-    const CANTON_KEYSTORE_PASSWORD_FILE_NAME: &str = "signing_pw_canton.txt";
-    const CC1_KEYSTORE_FILE_NAME: &str = "signing_keystore_control_component_1.p12";
-    const CC1_KEYSTORE_PASSWORD_FILE_NAME: &str = "signing_pw_control_component_1.txt";
-    const CC2_KEYSTORE_FILE_NAME: &str = "signing_keystore_control_component_2.p12";
-    const CC2_KEYSTORE_PASSWORD_FILE_NAME: &str = "signing_pw_control_component_2.txt";
-    const CC3_KEYSTORE_FILE_NAME: &str = "signing_keystore_control_component_3.p12";
-    const CC3_KEYSTORE_PASSWORD_FILE_NAME: &str = "signing_pw_control_component_3.txt";
-    const CC4_KEYSTORE_FILE_NAME: &str = "signing_keystore_control_component_3.p12";
-    const CC4_KEYSTORE_PASSWORD_FILE_NAME: &str = "signing_pw_control_component_4.txt";
-    const SETUP_KEYSTORE_FILE_NAME: &str = "signing_keystore_sdm_config.p12";
-    const SETUP_KEYSTORE_PASSWORD_FILE_NAME: &str = "signing_pw_sdm_config.txt";
-    const TALLY_KEYSTORE_FILE_NAME: &str = "signing_keystore_sdm_tally.p12";
-    const TALLY_KEYSTORE_PASSWORD_FILE_NAME: &str = "signing_pw_sdm_tally.txt";
+    const CANTON_KEYSTORE_FILE_NAME: &str = "local_direct_trust_keystore_canton.p12";
+    const CANTON_KEYSTORE_PASSWORD_FILE_NAME: &str = "local_direct_trust_pw_canton.txt";
+    const CC1_KEYSTORE_FILE_NAME: &str = "local_direct_trust_keystore_control_component_1.p12";
+    const CC1_KEYSTORE_PASSWORD_FILE_NAME: &str = "local_direct_trust_pw_control_component_1.txt";
+    const CC2_KEYSTORE_FILE_NAME: &str = "local_direct_trust_keystore_control_component_2.p12";
+    const CC2_KEYSTORE_PASSWORD_FILE_NAME: &str = "local_direct_trust_pw_control_component_2.txt";
+    const CC3_KEYSTORE_FILE_NAME: &str = "local_direct_trust_keystore_control_component_3.p12";
+    const CC3_KEYSTORE_PASSWORD_FILE_NAME: &str = "local_direct_trust_pw_control_component_3.txt";
+    const CC4_KEYSTORE_FILE_NAME: &str = "local_direct_trust_keystore_control_component_3.p12";
+    const CC4_KEYSTORE_PASSWORD_FILE_NAME: &str = "local_direct_trust_pw_control_component_4.txt";
+    const SETUP_KEYSTORE_FILE_NAME: &str = "local_direct_trust_keystore_sdm_config.p12";
+    const SETUP_KEYSTORE_PASSWORD_FILE_NAME: &str = "local_direct_trust_pw_sdm_config.txt";
+    const TALLY_KEYSTORE_FILE_NAME: &str = "local_direct_trust_keystore_sdm_tally.p12";
+    const TALLY_KEYSTORE_PASSWORD_FILE_NAME: &str = "local_direct_trust_pw_sdm_tally.txt";
 
     const TEST_TEMP_DIR_NAME: &str = "test_temp_dir";
-    const BB_ID_ONE_VOTE: &str = "A6733AB3D38BC47B964FB2DF09404877";
-    const BB_ID_ZERO_VOTE: &str = "80DEAF0E396ACC1183EFD4E8A0BCD172";
-    const BB_ID_MANY_VOTES: &str = "2705DAB8C622B8DD4EE6A0D490A914B4";
-    const CONTEXT_ZIP_FILENAME: &str = "Dataset-context-NE_20231124_TT05-20241016_1513.zip";
-    const SETUP_ZIP_FILENAME: &str = "Dataset-setup-NE_20231124_TT05-20241016_1513.zip";
-    const TALLY_ZIP_FILENAME: &str = "Dataset-tally-NE_20231124_TT05-20241016_1707.zip";
+    const BB_ID_ONE_VOTE: &str = "A1294A24715FF21B338AE787D3133BF8";
+    const BB_ID_ZERO_VOTE: &str = "EC4904FDF96874D200E5A92C193E82DF";
+    const BB_ID_MANY_VOTES: &str = "B254D890D50083B12B9447D0E5992234";
+    const CONTEXT_ZIP_FILENAME: &str = "Context_Post_E2E_DEV_2025-08-02.zip";
+    const TALLY_ZIP_FILENAME: &str = "Tally_Post_E2E_DEV_2025-08-02.zip";
     const TEST_DECRYPT_ZIP_PASSWORD: &str = "LongPassword_Encryption1";
 
     lazy_static! {
@@ -278,10 +303,6 @@ pub(crate) mod test {
 
     pub(crate) fn test_datasets_context_zip_path() -> PathBuf {
         test_datasets_path().join(CONTEXT_ZIP_FILENAME)
-    }
-
-    pub(crate) fn test_datasets_setup_zip_path() -> PathBuf {
-        test_datasets_path().join(SETUP_ZIP_FILENAME)
     }
 
     pub(crate) fn test_datasets_tally_zip_path() -> PathBuf {
@@ -359,14 +380,20 @@ pub(crate) mod test {
         MockVerificationDirectory::new(&VerificationPeriod::Setup, &test_datasets_path())
     }
 
+    pub(crate) fn get_verifier_direct_trust_path() -> PathBuf {
+        test_resources_path().join("direct-trust")
+    }
+
+    pub(crate) fn get_keystore() -> Keystore {
+        Keystore::try_from(get_verifier_direct_trust_path().as_path()).unwrap()
+    }
+
     pub(crate) fn get_test_signing_direct_trust_path() -> PathBuf {
         test_resources_path().join("signing_keystore")
     }
 
     /// Get the signing keystore
-    pub fn signing_keystore(
-        authority: CertificateAuthority,
-    ) -> Result<BasisKeystore, DirectTrustError> {
+    pub fn signing_keystore(authority: CertificateAuthority) -> Result<BasisKeystore, String> {
         let (ks_name, pwd_name) = match authority {
             CertificateAuthority::Canton => (
                 CANTON_KEYSTORE_FILE_NAME,
@@ -391,14 +418,9 @@ pub(crate) mod test {
                 (CC4_KEYSTORE_FILE_NAME, CC4_KEYSTORE_PASSWORD_FILE_NAME)
             }
         };
-        BasisKeystore::from_pkcs12(
-            &get_test_signing_direct_trust_path().join(ks_name),
-            &get_test_signing_direct_trust_path().join(pwd_name),
-        )
-        .map_err(|e| DirectTrustError::Keystore {
-            msg: "Problem reading the keystore for test signing".to_string(),
-            source: e,
-        })
+        let path = get_test_signing_direct_trust_path().join(ks_name);
+        BasisKeystore::from_pkcs12(&path, &get_test_signing_direct_trust_path().join(pwd_name))
+            .map_err(|e| Report::new(&e).to_string())
     }
 
     pub(crate) fn test_resources_path() -> PathBuf {

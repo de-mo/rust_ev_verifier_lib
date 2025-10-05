@@ -1,9 +1,25 @@
+// Copyright © 2025 Denis Morel
+//
+// This program is free software: you can redistribute it and/or modify it under
+// the terms of the GNU General Public License as published by the Free
+// Software Foundation, either version 3 of the License, or (at your option) any
+// later version.
+//
+// This program is distributed in the hope that it will be useful, but WITHOUT
+// ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+// FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+// details.
+//
+// You should have received a copy of the GNU General Public License and
+// a copy of the GNU General Public License along with this program. If not, see
+// <https://www.gnu.org/licenses/>.
+
 //! Module to implement the context directory
 
 use super::{
     file::{create_file, File},
     file_group::{FileGroup, FileGroupDataIter, FileGroupFileIter},
-    CompletnessTestTrait, FileStructureError,
+    CompletnessTestTrait, FileStructureError, FileStructureErrorImpl,
 };
 use crate::{
     config::VerifierConfig,
@@ -139,7 +155,7 @@ macro_rules! impl_completness_test_trait_for_context {
         impl CompletnessTestTrait for $t {
             fn test_completness(&self) -> Result<Vec<String>, FileStructureError> {
                 if !self.location().is_dir() {
-                    return Err(FileStructureError::PathIsNotDir(self.location().to_path_buf()))
+                    return Err(FileStructureError::from(FileStructureErrorImpl::PathIsNotDir(self.location().to_path_buf())))
                 }
                 let mut missings = vec![];
                 if !self.election_event_context_payload_file().exists() {
@@ -243,8 +259,8 @@ macro_rules! impl_completness_test_trait_for_context_vcs {
         impl CompletnessTestTrait for $t {
             fn test_completness(&self) -> Result<Vec<String>, FileStructureError> {
                 if !self.location().is_dir() {
-                    return Err(FileStructureError::PathIsNotDir(
-                        self.location().to_path_buf(),
+                    return Err(FileStructureError::from(
+                        FileStructureErrorImpl::PathIsNotDir(self.location().to_path_buf()),
                     ));
                 }
                 let mut missings = vec![];

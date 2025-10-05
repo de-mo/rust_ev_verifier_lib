@@ -1,3 +1,19 @@
+// Copyright © 2025 Denis Morel
+//
+// This program is free software: you can redistribute it and/or modify it under
+// the terms of the GNU General Public License as published by the Free
+// Software Foundation, either version 3 of the License, or (at your option) any
+// later version.
+//
+// This program is distributed in the hope that it will be useful, but WITHOUT
+// ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+// FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+// details.
+//
+// You should have received a copy of the GNU General Public License and
+// a copy of the GNU General Public License along with this program. If not, see
+// <https://www.gnu.org/licenses/>.
+
 use super::super::{
     result::VerificationEvent, suite::VerificationList, verifications::Verification,
 };
@@ -9,7 +25,7 @@ use crate::{
     },
     verification::{
         meta_data::VerificationMetaDataList, result::VerificationResult,
-        verification_unimplemented, verify_signature_for_object, VerificationError,
+        verify_signature_for_object, VerificationError, VerificationErrorImpl,
     },
 };
 
@@ -24,49 +40,55 @@ pub fn get_verifications<'a>(
             fn_0701_verify_signature_control_component_ballot_box,
             metadata_list,
             config,
-        )?,
+        )
+        .map_err(|e| VerificationErrorImpl::GetVerification {
+            name: "VerifySignatureControlComponentBallotBox",
+            source: Box::new(e),
+        })?,
         Verification::new(
             "07.02",
             "VerifySignatureControlComponentShuffle",
             fn_0702_verify_verify_signature_control_component_shuffle,
             metadata_list,
             config,
-        )?,
+        )
+        .map_err(|e| VerificationErrorImpl::GetVerification {
+            name: "VerifySignatureControlComponentShuffle",
+            source: Box::new(e),
+        })?,
         Verification::new(
             "07.03",
             "VerifySignatureTallyComponentShuffle",
             fn_0703_verify_signature_tally_component_shuffle,
             metadata_list,
             config,
-        )?,
+        )
+        .map_err(|e| VerificationErrorImpl::GetVerification {
+            name: "VerifySignatureTallyComponentShuffle",
+            source: Box::new(e),
+        })?,
         Verification::new(
             "07.04",
             "VerifySignatureTallyComponentVotes",
             fn_0704_verify_signature_tally_component_votes,
             metadata_list,
             config,
-        )?,
+        )
+        .map_err(|e| VerificationErrorImpl::GetVerification {
+            name: "VerifySignatureTallyComponentVotes",
+            source: Box::new(e),
+        })?,
         Verification::new(
             "07.05",
-            "VerifySignatureTallyComponentDecrypt",
-            verification_unimplemented,
-            metadata_list,
-            config,
-        )?,
-        Verification::new(
-            "07.06",
             "VerifySignatureTallyComponentEch0222",
-            verification_unimplemented,
+            fn_0705_verify_signature_ech0222,
             metadata_list,
             config,
-        )?,
-        Verification::new(
-            "07.07",
-            "VerifySignatureTallyComponentEch0110",
-            verification_unimplemented,
-            metadata_list,
-            config,
-        )?,
+        )
+        .map_err(|e| VerificationErrorImpl::GetVerification {
+            name: "VerifySignatureTallyComponentEch0222",
+            source: Box::new(e),
+        })?,
     ]))
 }
 
@@ -87,11 +109,13 @@ fn fn_0701_verify_signature_control_component_ballot_box<D: VerificationDirector
                         i
                     ),
                 ),
-                Err(e) => result.push(VerificationEvent::new_error(&e).add_context(format!(
-                    "{}/control_component_ballot_box_payload_{}.json",
-                    bb_d.name(),
-                    i
-                ))),
+                Err(e) => result.push(VerificationEvent::new_error_from_error(&e).add_context(
+                    format!(
+                        "{}/control_component_ballot_box_payload_{}.json",
+                        bb_d.name(),
+                        i
+                    ),
+                )),
             }
         }
     }
@@ -114,11 +138,13 @@ fn fn_0702_verify_verify_signature_control_component_shuffle<D: VerificationDire
                         i
                     ),
                 ),
-                Err(e) => result.push(VerificationEvent::new_error(&e).add_context(format!(
-                    "{}/control_component_shuffle_payload_{}.json",
-                    bb_d.name(),
-                    i
-                ))),
+                Err(e) => result.push(VerificationEvent::new_error_from_error(&e).add_context(
+                    format!(
+                        "{}/control_component_shuffle_payload_{}.json",
+                        bb_d.name(),
+                        i
+                    ),
+                )),
             }
         }
     }
@@ -136,10 +162,9 @@ fn fn_0703_verify_signature_tally_component_shuffle<D: VerificationDirectoryTrai
                 &verify_signature_for_object(d.as_ref(), config),
                 format!("{}/tally_component_shuffle_payload.json", bb_d.name(),),
             ),
-            Err(e) => result.push(VerificationEvent::new_error(&e).add_context(format!(
-                "{}/tally_component_shuffle_payload.json",
-                bb_d.name(),
-            ))),
+            Err(e) => result.push(VerificationEvent::new_error_from_error(&e).add_context(
+                format!("{}/tally_component_shuffle_payload.json", bb_d.name(),),
+            )),
         }
     }
 }
@@ -156,10 +181,26 @@ fn fn_0704_verify_signature_tally_component_votes<D: VerificationDirectoryTrait>
                 &verify_signature_for_object(d.as_ref(), config),
                 format!("{}/tally_component_votes_payload.json", bb_d.name(),),
             ),
-            Err(e) => result.push(VerificationEvent::new_error(&e).add_context(format!(
-                "{}/tally_component_votes_payload.json",
-                bb_d.name(),
-            ))),
+            Err(e) => result.push(VerificationEvent::new_error_from_error(&e).add_context(
+                format!("{}/tally_component_votes_payload.json", bb_d.name(),),
+            )),
+        }
+    }
+}
+
+fn fn_0705_verify_signature_ech0222<D: VerificationDirectoryTrait>(
+    dir: &D,
+    config: &'static VerifierConfig,
+    result: &mut VerificationResult,
+) {
+    let tally_dir = dir.unwrap_tally();
+    match tally_dir.ech_0222() {
+        Ok(d) => result.append_with_context(
+            &verify_signature_for_object(d.as_ref(), config),
+            "ech_0222.xml",
+        ),
+        Err(e) => {
+            result.push(VerificationEvent::new_error_from_error(&e).add_context("ech_0222.xml"))
         }
     }
 }
@@ -176,10 +217,10 @@ mod test {
         fn_0701_verify_signature_control_component_ballot_box(&dir, &CONFIG_TEST, &mut result);
         if !result.is_ok() {
             for e in result.errors() {
-                println!("{:?}", e);
+                println!("{e:?}");
             }
             for f in result.failures() {
-                println!("{:?}", f);
+                println!("{f:?}");
             }
         }
         assert!(result.is_ok());
@@ -192,10 +233,10 @@ mod test {
         fn_0702_verify_verify_signature_control_component_shuffle(&dir, &CONFIG_TEST, &mut result);
         if !result.is_ok() {
             for e in result.errors() {
-                println!("{:?}", e);
+                println!("{e:?}");
             }
             for f in result.failures() {
-                println!("{:?}", f);
+                println!("{f:?}");
             }
         }
         assert!(result.is_ok());
@@ -208,10 +249,10 @@ mod test {
         fn_0703_verify_signature_tally_component_shuffle(&dir, &CONFIG_TEST, &mut result);
         if !result.is_ok() {
             for e in result.errors() {
-                println!("{:?}", e);
+                println!("{e:?}");
             }
             for f in result.failures() {
-                println!("{:?}", f);
+                println!("{f:?}");
             }
         }
         assert!(result.is_ok());
@@ -224,10 +265,26 @@ mod test {
         fn_0704_verify_signature_tally_component_votes(&dir, &CONFIG_TEST, &mut result);
         if !result.is_ok() {
             for e in result.errors() {
-                println!("{:?}", e);
+                println!("{e:?}");
             }
             for f in result.failures() {
-                println!("{:?}", f);
+                println!("{f:?}");
+            }
+        }
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_0705() {
+        let dir = get_verifier_dir();
+        let mut result = VerificationResult::new();
+        fn_0705_verify_signature_ech0222(&dir, &CONFIG_TEST, &mut result);
+        if !result.is_ok() {
+            for e in result.errors() {
+                println!("{e:?}");
+            }
+            for f in result.failures() {
+                println!("{f:?}");
             }
         }
         assert!(result.is_ok());

@@ -1,3 +1,19 @@
+// Copyright © 2025 Denis Morel
+//
+// This program is free software: you can redistribute it and/or modify it under
+// the terms of the GNU General Public License as published by the Free
+// Software Foundation, either version 3 of the License, or (at your option) any
+// later version.
+//
+// This program is distributed in the hope that it will be useful, but WITHOUT
+// ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+// FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+// details.
+//
+// You should have received a copy of the GNU General Public License and
+// a copy of the GNU General Public License along with this program. If not, see
+// <https://www.gnu.org/licenses/>.
+
 use super::super::super::result::{VerificationEvent, VerificationResult};
 use crate::{
     config::VerifierConfig,
@@ -14,20 +30,19 @@ pub(super) fn fn_0502_verify_small_prime_group_members<D: VerificationDirectoryT
         Ok(eg) => eg,
         Err(e) => {
             result.push(
-                VerificationEvent::new_error(&e)
+                VerificationEvent::new_error_from_error(&e)
                     .add_context("election_event_context_payload cannot be read"),
             );
             return;
         }
     };
-    let primes = match eg
-        .encryption_group
-        .get_small_prime_group_members(VerifierConfig::maximum_number_of_supported_voting_options_n_sup())
-    {
+    let primes = match eg.encryption_group.get_small_prime_group_members(
+        VerifierConfig::maximum_number_of_supported_voting_options_n_sup(),
+    ) {
         Ok(p) => p,
         Err(e) => {
             result.push(
-                VerificationEvent::new_error(&e)
+                VerificationEvent::new_error_from_error(&e)
                     .add_context("Error getting small prime group members"),
             );
             return;
@@ -69,10 +84,10 @@ mod test {
         fn_0502_verify_small_prime_group_members(&dir, &CONFIG_TEST, &mut result);
         if !result.is_ok() {
             for e in result.errors() {
-                println!("{:?}", e);
+                println!("{e:?}");
             }
             for f in result.failures() {
-                println!("{:?}", f);
+                println!("{f:?}");
             }
         }
         assert!(result.is_ok());

@@ -1,3 +1,19 @@
+// Copyright © 2025 Denis Morel
+//
+// This program is free software: you can redistribute it and/or modify it under
+// the terms of the GNU General Public License as published by the Free
+// Software Foundation, either version 3 of the License, or (at your option) any
+// later version.
+//
+// This program is distributed in the hope that it will be useful, but WITHOUT
+// ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+// FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+// details.
+//
+// You should have received a copy of the GNU General Public License and
+// a copy of the GNU General Public License along with this program. If not, see
+// <https://www.gnu.org/licenses/>.
+
 use crate::{
     file_structure::{CompletnessTestTrait, VerificationDirectory, VerificationDirectoryTrait},
     verification::{VerificationMetaDataList, VerificationPeriod},
@@ -18,14 +34,14 @@ pub fn start_check(config: &'static VerifierConfig) -> Result<(), String> {
     }
     config
         .keystore()
-        .map_err(|e| format!("Cannot read keystore: {}", e))?;
+        .map_err(|e| format!("Cannot read keystore: {e}"))?;
     Ok(())
 }
 
 /// Check that the verification directory correct ist
 pub fn check_verification_dir(period: &VerificationPeriod, path: &Path) -> Result<(), String> {
     if !path.is_dir() {
-        return Err(format!("Given directory {:?} does not exist", path));
+        return Err(format!("Given directory {path:?} does not exist"));
     };
     if !path.join(VerifierConfig::context_dir_name()).is_dir() {
         return Err(format!(
@@ -34,16 +50,17 @@ pub fn check_verification_dir(period: &VerificationPeriod, path: &Path) -> Resul
             path
         ));
     };
-    let dir_name = match period {
-        VerificationPeriod::Setup => VerifierConfig::setup_dir_name(),
-        VerificationPeriod::Tally => VerifierConfig::tally_dir_name(),
-    };
-    if !path.join(dir_name).is_dir() {
-        return Err(format!(
-            "Directory {} does not exist in directory {:?}",
-            dir_name, path
-        ));
-    };
+    match period {
+        VerificationPeriod::Setup => {}
+        VerificationPeriod::Tally => {
+            let dir_name = VerifierConfig::tally_dir_name();
+            if !path.join(dir_name).is_dir() {
+                return Err(format!(
+                    "Directory {dir_name} does not exist in directory {path:?}"
+                ));
+            }
+        }
+    }
     Ok(())
 }
 
@@ -63,10 +80,7 @@ pub fn check_complete(
         ));
     }
     let complete = match period {
-        VerificationPeriod::Setup => dir
-            .unwrap_setup()
-            .test_completness()
-            .map_err(|e| e.to_string())?,
+        VerificationPeriod::Setup => vec![],
         VerificationPeriod::Tally => dir
             .unwrap_tally()
             .test_completness()

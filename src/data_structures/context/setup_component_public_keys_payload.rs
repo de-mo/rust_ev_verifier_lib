@@ -1,20 +1,37 @@
+// Copyright © 2025 Denis Morel
+//
+// This program is free software: you can redistribute it and/or modify it under
+// the terms of the GNU General Public License as published by the Free
+// Software Foundation, either version 3 of the License, or (at your option) any
+// later version.
+//
+// This program is distributed in the hope that it will be useful, but WITHOUT
+// ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+// FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+// details.
+//
+// You should have received a copy of the GNU General Public License and
+// a copy of the GNU General Public License along with this program. If not, see
+// <https://www.gnu.org/licenses/>.
+
 use super::{
     super::{
         common_types::{EncryptionParametersDef, SchnorrProof, Signature},
         deserialize_seq_string_base64_to_seq_integer, implement_trait_verifier_data_json_decode,
-        DataStructureError, VerifierDataDecode,
+        DataStructureError, DataStructureErrorImpl, VerifierDataDecode,
     },
     control_component_public_keys_payload::ControlComponentPublicKeys,
 };
 use crate::{
     data_structures::{VerifierDataToTypeTrait, VerifierDataType},
-    direct_trust::{CertificateAuthority, VerifiySignatureTrait, VerifySignatureError},
+    direct_trust::{CertificateAuthority, VerifiyJSONSignatureTrait, VerifiySignatureTrait},
 };
 use rust_ev_system_library::rust_ev_crypto_primitives::prelude::Integer;
 use rust_ev_system_library::rust_ev_crypto_primitives::prelude::{
     elgamal::EncryptionParameters, ByteArray, HashableMessage, VerifyDomainTrait,
 };
 use serde::Deserialize;
+use std::sync::Arc;
 
 #[derive(Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -23,7 +40,7 @@ pub struct SetupComponentPublicKeysPayload {
     pub encryption_group: EncryptionParameters,
     pub election_event_id: String,
     pub setup_component_public_keys: SetupComponentPublicKeys,
-    pub signature: Signature,
+    pub signature: Option<Signature>,
 }
 
 impl VerifierDataToTypeTrait for SetupComponentPublicKeysPayload {
@@ -46,8 +63,8 @@ impl<'a> From<&'a SetupComponentPublicKeysPayload> for HashableMessage<'a> {
     }
 }
 
-impl<'a> VerifiySignatureTrait<'a> for SetupComponentPublicKeysPayload {
-    fn get_hashable(&'a self) -> Result<HashableMessage<'a>, Box<VerifySignatureError>> {
+impl<'a> VerifiyJSONSignatureTrait<'a> for SetupComponentPublicKeysPayload {
+    fn get_hashable(&'a self) -> Result<HashableMessage<'a>, DataStructureError> {
         Ok(HashableMessage::from(self))
     }
 
@@ -62,9 +79,17 @@ impl<'a> VerifiySignatureTrait<'a> for SetupComponentPublicKeysPayload {
     fn get_certificate_authority(&self) -> Option<CertificateAuthority> {
         Some(CertificateAuthority::SdmConfig)
     }
+    fn get_signature(&self) -> Option<ByteArray> {
+        self.signature.as_ref().map(|s| s.get_signature())
+    }
+}
 
-    fn get_signature(&self) -> ByteArray {
-        self.signature.get_signature()
+impl<'a> VerifiySignatureTrait<'a> for SetupComponentPublicKeysPayload {
+    fn verifiy_signature(
+        &'a self,
+        keystore: &crate::direct_trust::Keystore,
+    ) -> Result<bool, crate::direct_trust::VerifySignatureError> {
+        self.verifiy_json_signature(keystore)
     }
 }
 
@@ -107,18 +132,22 @@ impl<'a> From<&'a SetupComponentPublicKeys> for HashableMessage<'a> {
 
 #[cfg(test)]
 mod test {
-    use rust_ev_system_library::rust_ev_crypto_primitives::prelude::EncodeTrait;
-
     use super::{
         super::super::test::{
-            test_data_structure, test_data_structure_read_data_set,
-            test_data_structure_verify_domain, test_data_structure_verify_signature,
+            file_to_test_cases, json_to_hashable_message, json_to_testdata, test_data_structure,
+            test_data_structure_read_data_set, test_data_structure_verify_domain,
+            test_data_structure_verify_signature, test_hash_json,
         },
         *,
     };
     use crate::{
-        config::test::{signing_keystore, test_datasets_context_path, CONFIG_TEST},
+        config::test::{
+            get_keystore, signing_keystore, test_datasets_context_path, test_resources_path,
+        },
         direct_trust::Keystore,
+    };
+    use rust_ev_system_library::rust_ev_crypto_primitives::prelude::{
+        EncodeTrait, RecursiveHashTrait,
     };
     use std::fs;
 
@@ -128,16 +157,23 @@ mod test {
         test_datasets_context_path
     );
 
+    test_hash_json!(
+        SetupComponentPublicKeysPayload,
+        "verify-signature-setup-component-public-keys.json"
+    );
+
     #[test]
     fn test_sign() {
         let mut payload = get_data_res().unwrap();
-        let signature = payload
+        let new_signature = payload
             .sign(&Keystore(
                 signing_keystore(payload.get_certificate_authority().unwrap()).unwrap(),
             ))
             .unwrap();
-        payload.signature.signature_contents = ByteArray::base64_encode(&signature).unwrap();
-        let verif_res = payload.verifiy_signature(&CONFIG_TEST.keystore().unwrap());
+        let mut signature_mut = payload.signature.as_ref().unwrap().clone();
+        signature_mut.signature_contents = ByteArray::base64_encode(&new_signature).unwrap();
+        payload.signature = Some(signature_mut);
+        let verif_res = payload.verifiy_signature(&get_keystore());
         assert!(verif_res.is_ok());
         assert!(verif_res.unwrap());
     }

@@ -1,17 +1,34 @@
+// Copyright © 2025 Denis Morel
+//
+// This program is free software: you can redistribute it and/or modify it under
+// the terms of the GNU General Public License as published by the Free
+// Software Foundation, either version 3 of the License, or (at your option) any
+// later version.
+//
+// This program is distributed in the hope that it will be useful, but WITHOUT
+// ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+// FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+// details.
+//
+// You should have received a copy of the GNU General Public License and
+// a copy of the GNU General Public License along with this program. If not, see
+// <https://www.gnu.org/licenses/>.
+
 use super::verifiable_shuffle::VerifiableShuffle;
 use super::VerifierTallyDataType;
 use super::{
     super::{
         common_types::{EncryptionParametersDef, Signature},
         deserialize_seq_ciphertext, implement_trait_verifier_data_json_decode, DataStructureError,
-        VerifierDataDecode,
+        DataStructureErrorImpl, VerifierDataDecode,
     },
     verifiable_shuffle::verifiy_domain_for_verifiable_shuffle,
 };
 use crate::data_structures::{VerifierDataToTypeTrait, VerifierDataType};
+use crate::direct_trust::VerifiySignatureTrait;
 use crate::{
     data_structures::common_types::DecryptionProof,
-    direct_trust::{CertificateAuthority, VerifiySignatureTrait, VerifySignatureError},
+    direct_trust::{CertificateAuthority, VerifiyJSONSignatureTrait},
 };
 use rust_ev_system_library::rust_ev_crypto_primitives::prelude::DomainVerifications;
 use rust_ev_system_library::rust_ev_crypto_primitives::prelude::{
@@ -19,6 +36,7 @@ use rust_ev_system_library::rust_ev_crypto_primitives::prelude::{
     ByteArray, HashableMessage, VerifyDomainTrait,
 };
 use serde::Deserialize;
+use std::sync::Arc;
 
 #[derive(Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -30,7 +48,7 @@ pub struct ControlComponentShufflePayload {
     pub node_id: usize,
     pub verifiable_shuffle: VerifiableShuffle,
     pub verifiable_decryptions: VerifiableDecryptions,
-    pub signature: Signature,
+    pub signature: Option<Signature>,
 }
 
 impl VerifierDataToTypeTrait for ControlComponentShufflePayload {
@@ -93,8 +111,8 @@ impl<'a> From<&'a VerifiableDecryptions> for HashableMessage<'a> {
     }
 }
 
-impl<'a> VerifiySignatureTrait<'a> for ControlComponentShufflePayload {
-    fn get_hashable(&'a self) -> Result<HashableMessage<'a>, Box<VerifySignatureError>> {
+impl<'a> VerifiyJSONSignatureTrait<'a> for ControlComponentShufflePayload {
+    fn get_hashable(&'a self) -> Result<HashableMessage<'a>, DataStructureError> {
         Ok(HashableMessage::from(self))
     }
 
@@ -111,8 +129,17 @@ impl<'a> VerifiySignatureTrait<'a> for ControlComponentShufflePayload {
         CertificateAuthority::get_ca_cc(&self.node_id)
     }
 
-    fn get_signature(&self) -> ByteArray {
-        self.signature.get_signature()
+    fn get_signature(&self) -> Option<ByteArray> {
+        self.signature.as_ref().map(|s| s.get_signature())
+    }
+}
+
+impl<'a> VerifiySignatureTrait<'a> for ControlComponentShufflePayload {
+    fn verifiy_signature(
+        &'a self,
+        keystore: &crate::direct_trust::Keystore,
+    ) -> Result<bool, crate::direct_trust::VerifySignatureError> {
+        self.verifiy_json_signature(keystore)
     }
 }
 
@@ -120,16 +147,20 @@ impl<'a> VerifiySignatureTrait<'a> for ControlComponentShufflePayload {
 mod test {
     use super::{
         super::super::test::{
-            test_data_structure, test_data_structure_read_data_set,
-            test_data_structure_verify_domain, test_data_structure_verify_signature,
+            file_to_test_cases, json_to_hashable_message, json_to_testdata, test_data_structure,
+            test_data_structure_read_data_set, test_data_structure_verify_domain,
+            test_data_structure_verify_signature, test_hash_json,
         },
         *,
     };
     use crate::config::test::{
-        test_ballot_box_many_votes_path, test_ballot_box_one_vote_path,
-        test_ballot_box_zero_vote_path, CONFIG_TEST,
+        get_keystore, test_ballot_box_many_votes_path, test_ballot_box_one_vote_path,
+        test_ballot_box_zero_vote_path, test_resources_path,
     };
     use paste::paste;
+    use rust_ev_system_library::rust_ev_crypto_primitives::prelude::{
+        EncodeTrait, RecursiveHashTrait,
+    };
     use std::fs;
 
     test_data_structure!(
@@ -151,5 +182,10 @@ mod test {
         ControlComponentShufflePayload,
         "controlComponentShufflePayload_1.json",
         test_ballot_box_zero_vote_path
+    );
+
+    test_hash_json!(
+        ControlComponentShufflePayload,
+        "verify-signature-control-component-shuffle.json"
     );
 }

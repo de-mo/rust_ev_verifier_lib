@@ -57,102 +57,6 @@
     },
     {
         "id": "03.02",
-        "name": "VerifySetupFileNamesConsistency",
-        "algorithm": "",
-        "period": "setup",
-        "category": "consistency",
-        "description": ""
-    },
-    {
-        "id": "03.03",
-        "name": "VerifyCCRChoiceReturnCodesPublicKeyConsistency",
-        "algorithm": "",
-        "period": "setup",
-        "category": "consistency",
-        "description": ""
-    },
-    {
-        "id": "03.04",
-        "name": "VerifyCCMElectionPublicKeyConsistency",
-        "algorithm": "",
-        "period": "setup",
-        "category": "consistency",
-        "description": ""
-    },
-    {
-        "id": "03.05",
-        "name": "VerifyCCMAndCCRSchnorrProofsConsistency",
-        "algorithm": "",
-        "period": "setup",
-        "category": "consistency",
-        "description": ""
-    },
-    {
-        "id": "03.06",
-        "name": "VerifyChoiceReturnCodesPublicKeyConsistency",
-        "algorithm": "",
-        "period": "setup",
-        "category": "consistency",
-        "description": ""
-    },
-    {
-        "id": "03.07",
-        "name": "VerifyElectionPublicKeyConsistency",
-        "algorithm": "",
-        "period": "setup",
-        "category": "consistency",
-        "description": ""
-    },
-    {
-        "id": "03.08",
-        "name": "VerifyPrimesMappingTableConsistency",
-        "algorithm": "",
-        "period": "setup",
-        "category": "consistency",
-        "description": ""
-    },
-    {
-        "id": "03.09",
-        "name": "VerifyElectionEventIdConsistency",
-        "algorithm": "",
-        "period": "setup",
-        "category": "consistency",
-        "description": ""
-    },
-    {
-        "id": "03.10",
-        "name": "VerifyVerificationCardSetIdsConsistency",
-        "algorithm": "",
-        "period": "setup",
-        "category": "consistency",
-        "description": ""
-    },
-    {
-        "id": "03.11",
-        "name": "VerifyFileNameVerificationCardSetIdsConsistency",
-        "algorithm": "",
-        "period": "setup",
-        "category": "consistency",
-        "description": ""
-    },
-    {
-        "id": "03.12",
-        "name": "VerifyVerificationCardIdsConsistency",
-        "algorithm": "",
-        "period": "setup",
-        "category": "consistency",
-        "description": ""
-    },
-    {
-        "id": "03.13",
-        "name": "VerifyTotalVotersConsistency",
-        "algorithm": "",
-        "period": "setup",
-        "category": "consistency",
-        "description": ""
-    },
-    {
-        "id": "03.14",
         "name": "VerifyNodeIdsConsistency",
         "algorithm": "",
         "period": "setup",
@@ -160,8 +64,96 @@
         "description": ""
     },
     {
-        "id": "03.15",
-        "name": "VerifyChunkConsistency",
+        "id": "03.03",
+        "name": "VerifyFileNameNodeIdsConsistency",
+        "algorithm": "",
+        "period": "setup",
+        "category": "consistency",
+        "description": ""
+    },
+    {
+        "id": "03.04",
+        "name": "VerifyElectionEventIdConsistency",
+        "algorithm": "",
+        "period": "setup",
+        "category": "consistency",
+        "description": ""
+    },
+    {
+        "id": "03.05",
+        "name": "VerifyVerificationCardSetIdsConsistency",
+        "algorithm": "",
+        "period": "setup",
+        "category": "consistency",
+        "description": ""
+    },
+    {
+        "id": "03.06",
+        "name": "VerifyFileNameVerificationCardSetIdsConsistency",
+        "algorithm": "",
+        "period": "setup",
+        "category": "consistency",
+        "description": ""
+    },
+    {
+        "id": "03.07",
+        "name": "VerifyVerificationCardIdsConsistency",
+        "algorithm": "",
+        "period": "setup",
+        "category": "consistency",
+        "description": ""
+    },
+    {
+        "id": "03.08",
+        "name": "VerifyCCRChoiceReturnCodesPublicKeyConsistency",
+        "algorithm": "",
+        "period": "setup",
+        "category": "consistency",
+        "description": ""
+    },
+    {
+        "id": "03.09",
+        "name": "VerifyCCMElectionPublicKeyConsistency",
+        "algorithm": "",
+        "period": "setup",
+        "category": "consistency",
+        "description": ""
+    },
+    {
+        "id": "03.10",
+        "name": "VerifyCCMAndCCRSchnorrProofsConsistency",
+        "algorithm": "",
+        "period": "setup",
+        "category": "consistency",
+        "description": ""
+    },
+    {
+        "id": "03.11",
+        "name": "VerifyChoiceReturnCodesPublicKeyConsistency",
+        "algorithm": "",
+        "period": "setup",
+        "category": "consistency",
+        "description": ""
+    },
+    {
+        "id": "03.12",
+        "name": "VerifyElectionPublicKeyConsistency",
+        "algorithm": "",
+        "period": "setup",
+        "category": "consistency",
+        "description": ""
+    },
+    {
+        "id": "03.13",
+        "name": "VerifyPrimesMappingTableConsistency",
+        "algorithm": "",
+        "period": "setup",
+        "category": "consistency",
+        "description": ""
+    },
+    {
+        "id": "03.14",
+        "name": "VerifyTotalVotersConsistency",
         "algorithm": "",
         "period": "setup",
         "category": "consistency",
@@ -202,14 +194,6 @@
     {
         "id": "05.04",
         "name": "VerifySchnorrProofs",
-        "algorithm": "",
-        "period": "setup",
-        "category": "evidence",
-        "description": ""
-    },
-    {
-        "id": "05.21",
-        "name": "VerifySignatureVerificationDataAndCodeProofs",
         "algorithm": "",
         "period": "setup",
         "category": "evidence",
@@ -257,14 +241,6 @@
     },
     {
         "id": "07.05",
-        "name": "VerifySignatureTallyComponentDecrypt",
-        "algorithm": "",
-        "period": "tally",
-        "category": "authenticity",
-        "description": ""
-    },
-    {
-        "id": "07.06",
         "name": "VerifySignatureTallyComponentEch0222",
         "algorithm": "",
         "period": "tally",
@@ -272,16 +248,8 @@
         "description": ""
     },
     {
-        "id": "07.07",
-        "name": "VerifySignatureTallyComponentEch0110",
-        "algorithm": "",
-        "period": "tally",
-        "category": "authenticity",
-        "description": ""
-    },
-    {
         "id": "08.01",
-        "name": "VerifyConfirmedEncryptedVotesConsistency",
+        "name": "VerifyEncryptionGroupConsistency",
         "algorithm": "",
         "period": "tally",
         "category": "consistency",
@@ -289,7 +257,7 @@
     },
     {
         "id": "08.02",
-        "name": "VerifyCiphertextsConsistency",
+        "name": "VerifyNodeIdsConsistency",
         "algorithm": "",
         "period": "tally",
         "category": "consistency",
@@ -297,7 +265,7 @@
     },
     {
         "id": "08.03",
-        "name": "VerifyPlaintextsConsistency",
+        "name": "VerifyFileNameNodeIdsConsistency",
         "algorithm": "",
         "period": "tally",
         "category": "consistency",
@@ -305,7 +273,7 @@
     },
     {
         "id": "08.04",
-        "name": "VerifyVerificationCardIdsConsistency",
+        "name": "VerifyElectionEventIdConsistency",
         "algorithm": "",
         "period": "tally",
         "category": "consistency",
@@ -329,7 +297,7 @@
     },
     {
         "id": "08.07",
-        "name": "VerifyNumberConfirmedEncryptedVotesConsistency",
+        "name": "VerifyVerificationCardIdsConsistency",
         "algorithm": "",
         "period": "tally",
         "category": "consistency",
@@ -337,7 +305,7 @@
     },
     {
         "id": "08.08",
-        "name": "VerifyElectionEventIdConsistency",
+        "name": "VerifyConfirmedEncryptedVotesConsistency",
         "algorithm": "",
         "period": "tally",
         "category": "consistency",
@@ -345,7 +313,7 @@
     },
     {
         "id": "08.09",
-        "name": "VerifyNodeIdsConsistency",
+        "name": "VerifyCiphertextsConsistency",
         "algorithm": "",
         "period": "tally",
         "category": "consistency",
@@ -353,7 +321,7 @@
     },
     {
         "id": "08.10",
-        "name": "VerifyFileNameNodeIdsConsistency",
+        "name": "VerifyPlaintextsConsistency",
         "algorithm": "",
         "period": "tally",
         "category": "consistency",
@@ -361,7 +329,7 @@
     },
     {
         "id": "08.11",
-        "name": "VerifyEncryptionGroupConsistency",
+        "name": "VerifyNumberConfirmedEncryptedVotesConsistency",
         "algorithm": "",
         "period": "tally",
         "category": "consistency",

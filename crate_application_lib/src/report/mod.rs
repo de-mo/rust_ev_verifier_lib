@@ -1,30 +1,51 @@
+// Copyright © 2025 Denis Morel
+//
+// This program is free software: you can redistribute it and/or modify it under
+// the terms of the GNU General Public License as published by the Free
+// Software Foundation, either version 3 of the License, or (at your option) any
+// later version.
+//
+// This program is distributed in the hope that it will be useful, but WITHOUT
+// ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+// FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+// details.
+//
+// You should have received a copy of the GNU General Public License and
+// a copy of the GNU General Public License along with this program. If not, see
+// <https://www.gnu.org/licenses/>.
+
 mod report_config;
 mod report_output;
 
 pub use report_config::{ReportConfig, ReportConfigBuilder};
 pub use report_output::ReportOutput;
 
-use super::{run_information::RunInformation, RunnerError};
-use chrono::{DateTime, Local};
+use super::{RunnerError, run_information::RunInformation};
 use report_output::{OutputToString, ReportOutputBlock, ReportOutputBlockTitle, ReportOutputEntry};
 use rust_ev_verifier_lib::{
+    DatasetTypeKind,
     file_structure::{VerificationDirectory, VerificationDirectoryTrait},
     verification::{ManualVerificationInformationTrait, ManualVerifications, VerificationPeriod},
-    DatasetTypeKind,
 };
 use std::fmt::Display;
 use thiserror::Error;
-use tracing::{debug, error, info, trace, warn, Level};
+use tracing::{Level, debug, error, info, trace, warn};
 
-// Enum representing the datza structure errors
 #[derive(Error, Debug)]
-pub enum ReportError {
-    #[error("IO error {msg} -> caused by: {source}")]
-    IO { msg: String, source: std::io::Error },
+#[error(transparent)]
+/// Error related to the report
+pub struct ReportError(#[from] ReportErrorImpl);
+
+#[derive(Error, Debug)]
+enum ReportErrorImpl {
     #[error("Error transforming to title, key, value: {0}")]
-    ToTitleKeyValue(String),
-    #[error(transparent)]
-    RunnerError(#[from] RunnerError),
+    ToTitleKeyValue(&'static str),
+    #[error("Error transforming output to string")]
+    OutpuToString { source: Box<ReportError> },
+    #[error("Error getting the output")]
+    ToOutput { source: Box<ReportError> },
+    #[error("Error getting the manual verifications from the inputs")]
+    Manual { source: Box<RunnerError> },
 }
 
 /// Trait to collect the report information
@@ -36,7 +57,12 @@ pub trait ReportInformationTrait {
     ///
     /// Take the verifier configuration as input for the tab size
     fn info_to_string(&self, tab_size: u8) -> Result<String, ReportError> {
-        self.to_report_output()?.output_to_string(tab_size)
+        Ok(self
+            .to_report_output()
+            .map_err(|e| ReportErrorImpl::OutpuToString {
+                source: Box::new(e),
+            })?
+            .output_to_string(tab_size))
     }
 }
 
@@ -89,6 +115,10 @@ impl<D: VerificationDirectoryTrait> ReportInformationTrait for ManualVerificatio
                 &self.dt_fingerprints_to_key_value(),
             ),
             ReportOutputBlock::new_with_tuples(
+                ReportOutputBlockTitle::OtherFingerprints,
+                &self.other_fingerprints_to_key_value(),
+            ),
+            ReportOutputBlock::new_with_tuples(
                 ReportOutputBlockTitle::Information,
                 &self.information_to_key_value(),
             ),
@@ -130,9 +160,9 @@ impl<D: VerificationDirectoryTrait> ReportInformationTrait for ManualVerificatio
 impl ReportInformationTrait for ReportData<'_> {
     fn to_report_output(&self) -> Result<ReportOutput, ReportError> {
         if !self.run_information.is_prepared() {
-            return Err(ReportError::ToTitleKeyValue(
-                "The run information used is not prepared".to_string(),
-            ));
+            return Err(ReportError::from(ReportErrorImpl::ToTitleKeyValue(
+                "The run information used is not prepared",
+            )));
         }
         let period = self.run_information.verification_period().unwrap();
         let extracted_information = self.run_information.extracted_dataset_result().unwrap();
@@ -140,22 +170,12 @@ impl ReportInformationTrait for ReportData<'_> {
             .dataset_metadata(&DatasetTypeKind::Context)
             .unwrap();
         let dataset_period_info = match period {
-            VerificationPeriod::Setup => extracted_information
-                .dataset_metadata(&DatasetTypeKind::Setup)
-                .unwrap(),
-            VerificationPeriod::Tally => extracted_information
-                .dataset_metadata(&DatasetTypeKind::Tally)
-                .unwrap(),
-        };
-        let start_time_opt = self.run_information.runner_information().start_time;
-        let duration_opt = self.run_information.runner_information().duration;
-        let stop_time_str = match start_time_opt.is_some() && duration_opt.is_some() {
-            true => std::convert::Into::<DateTime<Local>>::into(
-                start_time_opt.unwrap() + duration_opt.unwrap(),
-            )
-            .format(self.report_configuration.fromat_date())
-            .to_string(),
-            false => "Not finished".to_string(),
+            VerificationPeriod::Setup => None,
+            VerificationPeriod::Tally => Some(
+                extracted_information
+                    .dataset_metadata(&DatasetTypeKind::Tally)
+                    .unwrap(),
+            ),
         };
         let mut running_information =
             ReportOutputBlock::new(ReportOutputBlockTitle::RunningInformation);
@@ -168,53 +188,41 @@ impl ReportInformationTrait for ReportData<'_> {
             "Context Dataset Fingerprint",
             context_dataset_info.fingerprint_str().as_str(),
         )));
-        running_information.push(ReportOutputEntry::from((
-            format!("{} Dataset", period).as_str(),
-            dataset_period_info.source_path().to_str().unwrap(),
-        )));
-        running_information.push(ReportOutputEntry::from((
-            format!("{} Dataset Fingerprint", period).as_str(),
-            dataset_period_info.fingerprint_str().as_str(),
-        )));
+        if let Some(info) = dataset_period_info {
+            running_information.push(ReportOutputEntry::from((
+                format!("{} Dataset", period).as_str(),
+                info.source_path().to_str().unwrap(),
+            )));
+            running_information.push(ReportOutputEntry::from((
+                format!("{} Dataset Fingerprint", period).as_str(),
+                info.fingerprint_str().as_str(),
+            )));
+        };
         running_information.push(ReportOutputEntry::from((
             "Verification directory",
             self.run_information.run_directory().to_str().unwrap(),
         )));
-        let start_time_string = match start_time_opt {
-            Some(t) => std::convert::Into::<DateTime<Local>>::into(t)
-                .format(self.report_configuration.fromat_date())
-                .to_string(),
-            None => "Not started".to_string(),
-        };
         running_information.push(ReportOutputEntry::from((
             "Start Time",
-            start_time_string.as_str(),
+            self.run_information
+                .runner_information()
+                .start_time_to_string()
+                .unwrap_or_else(|| "Not started".to_string())
+                .as_str(),
         )));
         running_information.push(ReportOutputEntry::from((
             "Stop Time",
-            stop_time_str.as_str(),
+            self.run_information
+                .runner_information()
+                .start_time_to_string()
+                .unwrap_or_else(|| "Not finished".to_string())
+                .as_str(),
         )));
-        let duration_string = match duration_opt {
-            Some(d) => {
-                let mut s = d.as_secs();
-                let res;
-                if s < 60 {
-                    res = format!("{s}s");
-                } else {
-                    let mut m = s / 60;
-                    s %= 60;
-                    if m < 60 {
-                        res = format!("{m}m {s}s");
-                    } else {
-                        let h = m / 60;
-                        m %= 60;
-                        res = format!("{h}h {m}m {s}s")
-                    }
-                }
-                res
-            }
-            None => "Not finished".to_string(),
-        };
+        let duration_string = self
+            .run_information
+            .runner_information()
+            .duration_as_secs_to_string()
+            .unwrap_or_else(|| "Not finished".to_string());
         running_information.push(ReportOutputEntry::from((
             "Duration",
             duration_string.as_str(),
@@ -222,8 +230,14 @@ impl ReportInformationTrait for ReportData<'_> {
         let mut res = ReportOutput::new();
         res.push(running_information);
         res.append(
-            &mut ManualVerifications::<VerificationDirectory>::try_from(self.run_information)?
-                .to_report_output()?,
+            &mut ManualVerifications::<VerificationDirectory>::try_from(self.run_information)
+                .map_err(|e| ReportErrorImpl::Manual {
+                    source: Box::new(e),
+                })?
+                .to_report_output()
+                .map_err(|e| ReportErrorImpl::ToOutput {
+                    source: Box::new(e),
+                })?,
         );
         Ok(res)
     }

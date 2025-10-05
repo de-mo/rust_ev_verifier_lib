@@ -1,9 +1,25 @@
+// Copyright © 2025 Denis Morel
+//
+// This program is free software: you can redistribute it and/or modify it under
+// the terms of the GNU General Public License as published by the Free
+// Software Foundation, either version 3 of the License, or (at your option) any
+// later version.
+//
+// This program is distributed in the hope that it will be useful, but WITHOUT
+// ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+// FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+// details.
+//
+// You should have received a copy of the GNU General Public License and
+// a copy of the GNU General Public License along with this program. If not, see
+// <https://www.gnu.org/licenses/>.
+
 //! Module implementing the suite of verifications
 
 use super::{
     meta_data::VerificationMetaDataList, setup::get_verifications as get_verifications_setup,
     tally::get_verifications as get_verifications_tally, verifications::Verification,
-    VerificationCategory, VerificationError, VerificationPeriod,
+    VerificationCategory, VerificationError, VerificationErrorImpl, VerificationPeriod,
 };
 use crate::{config::VerifierConfig, file_structure::VerificationDirectory};
 
@@ -28,11 +44,20 @@ impl<'a> VerificationSuite<'a> {
         exclusion: &[String],
         config: &'static VerifierConfig,
     ) -> Result<VerificationSuite<'a>, VerificationError> {
-        let all_verifs = match period {
-            VerificationPeriod::Setup => get_verifications_setup(metadata_list, config)?,
+        let all_verifs =
+            match period {
+                VerificationPeriod::Setup => get_verifications_setup(metadata_list, config)
+                    .map_err(|e| VerificationErrorImpl::GetPeriod {
+                        period: VerificationPeriod::Setup,
+                        source: Box::new(e),
+                    })?,
 
-            VerificationPeriod::Tally => get_verifications_tally(metadata_list, config)?,
-        };
+                VerificationPeriod::Tally => get_verifications_tally(metadata_list, config)
+                    .map_err(|e| VerificationErrorImpl::GetPeriod {
+                        period: VerificationPeriod::Tally,
+                        source: Box::new(e),
+                    })?,
+            };
         let all_ids: Vec<String> = all_verifs.0.iter().map(|v| v.id().to_string()).collect();
         let verifs = all_verifs
             .0
@@ -136,9 +161,9 @@ mod test {
         );
         if r_verifs.is_err() {
             let err = r_verifs.as_ref().err().unwrap();
-            println!("{:?}", err)
+            println!("{err:?}")
         }
-        assert!(r_verifs.is_ok());
+        assert!(r_verifs.is_ok(), "{:?}", r_verifs.as_ref().err());
         let verifs = r_verifs.unwrap();
         let setup: Vec<VerificationMetaData> = metadata_list
             .iter()
@@ -163,7 +188,7 @@ mod test {
         );
         if r_verifs.is_err() {
             let err = r_verifs.as_ref().err().unwrap();
-            println!("{:?}", err)
+            println!("{err:?}")
         }
         assert!(r_verifs.is_ok());
         let verifs = r_verifs.unwrap();

@@ -1,3 +1,19 @@
+// Copyright © 2025 Denis Morel
+//
+// This program is free software: you can redistribute it and/or modify it under
+// the terms of the GNU General Public License as published by the Free
+// Software Foundation, either version 3 of the License, or (at your option) any
+// later version.
+//
+// This program is distributed in the hope that it will be useful, but WITHOUT
+// ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+// FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+// details.
+//
+// You should have received a copy of the GNU General Public License and
+// a copy of the GNU General Public License along with this program. If not, see
+// <https://www.gnu.org/licenses/>.
+
 //! Module implementing [SetupOrTally]
 
 use enum_kinds::EnumKind;
@@ -10,21 +26,15 @@ use strum::{AsRefStr, EnumString};
     derive(Hash, AsRefStr, EnumString),
     strum(serialize_all = "lowercase")
 )]
-pub enum DatasetType<C, S, T> {
+pub enum DatasetType<C, T> {
     Context(C),
-    Setup(S),
     Tally(T),
 }
 
-impl<C: Clone, S: Clone, T: Clone> DatasetType<C, S, T> {
+impl<C: Clone, T: Clone> DatasetType<C, T> {
     /// Is context
     pub fn is_context(&self) -> bool {
         matches!(self, DatasetType::Context(_))
-    }
-
-    /// Is setup
-    pub fn is_setup(&self) -> bool {
-        matches!(self, DatasetType::Setup(_))
     }
 
     /// Is tally
@@ -40,18 +50,6 @@ impl<C: Clone, S: Clone, T: Clone> DatasetType<C, S, T> {
             DatasetType::Context(s) => s,
             _ => {
                 panic!("called `unwrap_context()` on a wrong variant")
-            }
-        }
-    }
-
-    /// Unwrap setup and give a reference to S
-    ///
-    /// panic if type is not setup
-    pub fn unwrap_setup(&self) -> &S {
-        match self {
-            DatasetType::Setup(s) => s,
-            _ => {
-                panic!("called `unwrap_setup()` on a wrong variant")
             }
         }
     }

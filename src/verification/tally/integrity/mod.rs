@@ -1,3 +1,19 @@
+// Copyright © 2025 Denis Morel
+//
+// This program is free software: you can redistribute it and/or modify it under
+// the terms of the GNU General Public License as published by the Free
+// Software Foundation, either version 3 of the License, or (at your option) any
+// later version.
+//
+// This program is distributed in the hope that it will be useful, but WITHOUT
+// ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+// FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+// details.
+//
+// You should have received a copy of the GNU General Public License and
+// a copy of the GNU General Public License along with this program. If not, see
+// <https://www.gnu.org/licenses/>.
+
 use super::super::{
     result::{VerificationEvent, VerificationResult},
     suite::VerificationList,
@@ -9,7 +25,7 @@ use crate::{
         tally_directory::{BBDirectoryTrait, TallyDirectoryTrait},
         VerificationDirectoryTrait,
     },
-    verification::{meta_data::VerificationMetaDataList, VerificationError},
+    verification::{meta_data::VerificationMetaDataList, VerificationError, VerificationErrorImpl},
 };
 use rust_ev_system_library::rust_ev_crypto_primitives::prelude::VerifyDomainTrait;
 
@@ -23,7 +39,10 @@ pub fn get_verifications<'a>(
         fn_0901_verify_tally_integrity,
         metadata_list,
         config,
-    )?]))
+    ).map_err(|e| VerificationErrorImpl::GetVerification {
+            name: "VerifyTallyIntegrity",
+            source: Box::new(e),
+        })?]))
 }
 
 fn validate_bb_dir<B: BBDirectoryTrait>(dir: &B, result: &mut VerificationResult) {

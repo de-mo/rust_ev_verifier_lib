@@ -1,21 +1,38 @@
+// Copyright © 2025 Denis Morel
+//
+// This program is free software: you can redistribute it and/or modify it under
+// the terms of the GNU General Public License as published by the Free
+// Software Foundation, either version 3 of the License, or (at your option) any
+// later version.
+//
+// This program is distributed in the hope that it will be useful, but WITHOUT
+// ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+// FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+// details.
+//
+// You should have received a copy of the GNU General Public License and
+// a copy of the GNU General Public License along with this program. If not, see
+// <https://www.gnu.org/licenses/>.
+
 use super::{
     super::{
         common_types::{EncryptionParametersDef, Signature},
         deserialize_seq_string_base64_to_seq_integer, implement_trait_verifier_data_json_decode,
-        DataStructureError, VerifierDataDecode,
+        DataStructureError, DataStructureErrorImpl, VerifierDataDecode,
     },
     verifiable_shuffle::{verifiy_domain_for_verifiable_shuffle, VerifiableShuffle},
     VerifierTallyDataType,
 };
 use crate::{
     data_structures::{common_types::DecryptionProof, VerifierDataToTypeTrait, VerifierDataType},
-    direct_trust::{CertificateAuthority, VerifiySignatureTrait, VerifySignatureError},
+    direct_trust::{CertificateAuthority, VerifiyJSONSignatureTrait, VerifiySignatureTrait},
 };
 use rust_ev_system_library::rust_ev_crypto_primitives::prelude::{
     elgamal::EncryptionParameters, ByteArray, DomainVerifications, HashableMessage, Integer,
     VerifyDomainTrait,
 };
 use serde::Deserialize;
+use std::sync::Arc;
 
 #[derive(Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -26,7 +43,7 @@ pub struct TallyComponentShufflePayload {
     pub ballot_box_id: String,
     pub verifiable_shuffle: VerifiableShuffle,
     pub verifiable_plaintext_decryption: VerifiablePlaintextDecryption,
-    pub signature: Signature,
+    pub signature: Option<Signature>,
 }
 
 impl VerifierDataToTypeTrait for TallyComponentShufflePayload {
@@ -68,9 +85,16 @@ impl<'a> From<&'a TallyComponentShufflePayload> for HashableMessage<'a> {
             Self::from(&value.election_event_id),
             Self::from(&value.ballot_box_id),
             Self::from(&value.verifiable_shuffle),
+            Self::from(&value.verifiable_plaintext_decryption),
+        ])
+    }
+}
+
+impl<'a> From<&'a VerifiablePlaintextDecryption> for HashableMessage<'a> {
+    fn from(value: &'a VerifiablePlaintextDecryption) -> Self {
+        Self::from(vec![
             Self::from(
                 value
-                    .verifiable_plaintext_decryption
                     .decrypted_votes
                     .iter()
                     .map(|v| HashableMessage::from(v.message.as_slice()))
@@ -78,7 +102,6 @@ impl<'a> From<&'a TallyComponentShufflePayload> for HashableMessage<'a> {
             ),
             Self::from(
                 value
-                    .verifiable_plaintext_decryption
                     .decryption_proofs
                     .iter()
                     .map(HashableMessage::from)
@@ -88,8 +111,8 @@ impl<'a> From<&'a TallyComponentShufflePayload> for HashableMessage<'a> {
     }
 }
 
-impl<'a> VerifiySignatureTrait<'a> for TallyComponentShufflePayload {
-    fn get_hashable(&'a self) -> Result<HashableMessage<'a>, Box<VerifySignatureError>> {
+impl<'a> VerifiyJSONSignatureTrait<'a> for TallyComponentShufflePayload {
+    fn get_hashable(&'a self) -> Result<HashableMessage<'a>, DataStructureError> {
         Ok(HashableMessage::from(self))
     }
 
@@ -106,8 +129,17 @@ impl<'a> VerifiySignatureTrait<'a> for TallyComponentShufflePayload {
         Some(CertificateAuthority::SdmTally)
     }
 
-    fn get_signature(&self) -> ByteArray {
-        self.signature.get_signature()
+    fn get_signature(&self) -> Option<ByteArray> {
+        self.signature.as_ref().map(|s| s.get_signature())
+    }
+}
+
+impl<'a> VerifiySignatureTrait<'a> for TallyComponentShufflePayload {
+    fn verifiy_signature(
+        &'a self,
+        keystore: &crate::direct_trust::Keystore,
+    ) -> Result<bool, crate::direct_trust::VerifySignatureError> {
+        self.verifiy_json_signature(keystore)
     }
 }
 
@@ -115,16 +147,20 @@ impl<'a> VerifiySignatureTrait<'a> for TallyComponentShufflePayload {
 mod test_one {
     use super::{
         super::super::test::{
-            test_data_structure, test_data_structure_read_data_set,
-            test_data_structure_verify_domain, test_data_structure_verify_signature,
+            file_to_test_cases, json_to_hashable_message, json_to_testdata, test_data_structure,
+            test_data_structure_read_data_set, test_data_structure_verify_domain,
+            test_data_structure_verify_signature, test_hash_json,
         },
         *,
     };
     use crate::config::test::{
-        test_ballot_box_many_votes_path, test_ballot_box_one_vote_path,
-        test_ballot_box_zero_vote_path, CONFIG_TEST,
+        get_keystore, test_ballot_box_many_votes_path, test_ballot_box_one_vote_path,
+        test_ballot_box_zero_vote_path, test_resources_path,
     };
     use paste::paste;
+    use rust_ev_system_library::rust_ev_crypto_primitives::prelude::{
+        EncodeTrait, RecursiveHashTrait,
+    };
     use std::fs;
 
     test_data_structure!(
@@ -146,6 +182,11 @@ mod test_one {
         TallyComponentShufflePayload,
         "tallyComponentShufflePayload.json",
         test_ballot_box_many_votes_path
+    );
+
+    test_hash_json!(
+        TallyComponentShufflePayload,
+        "verify-signature-tally-component-shuffle.json"
     );
 
     #[test]

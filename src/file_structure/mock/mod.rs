@@ -1,3 +1,19 @@
+// Copyright © 2025 Denis Morel
+//
+// This program is free software: you can redistribute it and/or modify it under
+// the terms of the GNU General Public License as published by the Free
+// Software Foundation, either version 3 of the License, or (at your option) any
+// later version.
+//
+// This program is distributed in the hope that it will be useful, but WITHOUT
+// ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+// FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+// details.
+//
+// You should have received a copy of the GNU General Public License and
+// a copy of the GNU General Public License along with this program. If not, see
+// <https://www.gnu.org/licenses/>.
+
 //! Module defining mocking structure for [VerificationDirectory]
 //!
 //! Example of usage:
@@ -15,38 +31,30 @@
 //! ```
 
 mod context_directory_data;
-mod setup_directory_data;
 mod tally_directory_data;
 
 use super::VerificationDirectoryTrait;
-use super::{file_group::FileGroupFileIter, ContextDirectoryTrait, FileStructureError};
+use super::{
+    file_group::FileGroupFileIter, ContextDirectoryTrait, FileStructureError,
+    FileStructureErrorImpl,
+};
 use crate::{
     data_structures::{VerifierDataDecode, VerifierDataToTypeTrait},
     verification::VerificationPeriod,
 };
 pub(crate) use context_directory_data::MockContextDirectory;
-pub(crate) use setup_directory_data::MockSetupDirectory;
 use std::{collections::HashMap, path::Path, sync::Arc};
 pub(crate) use tally_directory_data::MockTallyDirectory;
 
 /// Mock for [VerificationDirectory]
 pub(crate) struct MockVerificationDirectory {
     context: MockContextDirectory,
-    setup: Option<MockSetupDirectory>,
     tally: Option<MockTallyDirectory>,
 }
 
 impl VerificationDirectoryTrait for MockVerificationDirectory {
     type ContextDirType = MockContextDirectory;
-    type SetupDirType = MockSetupDirectory;
     type TallyDirType = MockTallyDirectory;
-
-    fn unwrap_setup(&self) -> &MockSetupDirectory {
-        match &self.setup {
-            Some(t) => t,
-            None => panic!("called `unwrap_setup()` on a `Tally` value"),
-        }
-    }
 
     fn unwrap_tally(&self) -> &MockTallyDirectory {
         match &self.tally {
@@ -71,12 +79,10 @@ impl MockVerificationDirectory {
         match period {
             VerificationPeriod::Setup => MockVerificationDirectory {
                 context,
-                setup: Some(MockSetupDirectory::new(location)),
                 tally: None,
             },
             VerificationPeriod::Tally => MockVerificationDirectory {
                 context,
-                setup: None,
                 tally: Some(MockTallyDirectory::new(location)),
             },
         }
@@ -85,15 +91,6 @@ impl MockVerificationDirectory {
     /// Context mut
     pub fn context_mut(&mut self) -> &mut MockContextDirectory {
         &mut self.context
-    }
-
-    /// Unwrap [MockSetupDirectory] as mutable
-    #[allow(dead_code)]
-    pub fn unwrap_setup_mut(&mut self) -> &mut MockSetupDirectory {
-        match &mut self.setup {
-            Some(t) => t,
-            None => panic!("called `unwrap_tally()` on a `Setup` value"),
-        }
     }
 
     /// Unwrap [TallyDirectory] as mutable
@@ -193,8 +190,8 @@ macro_rules! impl_trait_get_method_for_mocked_data {
                     None => self.dir.$data_name(),
                     Some(e) => match e.as_ref() {
                         MockedDataType::Data(d) => Ok(Arc::new(d.clone())),
-                        MockedDataType::Error(e) => Err(FileStructureError::Mock(e.to_string())),
-                        MockedDataType::Deleted => Err(FileStructureError::Mock("Something wrong. Data cannot be deleted".to_string()))
+                        MockedDataType::Error(e) => Err(FileStructureError::from(FileStructureErrorImpl::Mock(e.to_string()))),
+                        MockedDataType::Deleted => Err(FileStructureError::from(FileStructureErrorImpl::Mock("Something wrong. Data cannot be deleted".to_string())))
                     }
                 }
             }
@@ -350,7 +347,9 @@ where
         match &self.element_type {
             MockedDataType::Data(d) => Some(Ok(d.clone())),
             MockedDataType::Deleted => None,
-            MockedDataType::Error(e) => Some(Err(FileStructureError::Mock(e.to_string()))),
+            MockedDataType::Error(e) => Some(Err(FileStructureError::from(
+                FileStructureErrorImpl::Mock(e.to_string()),
+            ))),
         }
     }
 }

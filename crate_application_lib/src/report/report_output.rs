@@ -1,4 +1,19 @@
-use super::ReportError;
+// Copyright © 2025 Denis Morel
+//
+// This program is free software: you can redistribute it and/or modify it under
+// the terms of the GNU General Public License as published by the Free
+// Software Foundation, either version 3 of the License, or (at your option) any
+// later version.
+//
+// This program is distributed in the hope that it will be useful, but WITHOUT
+// ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+// FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+// details.
+//
+// You should have received a copy of the GNU General Public License and
+// a copy of the GNU General Public License along with this program. If not, see
+// <https://www.gnu.org/licenses/>.
+
 use std::iter::once;
 
 /// Enum with the title types
@@ -6,6 +21,8 @@ use std::iter::once;
 pub enum ReportOutputBlockTitle {
     #[strum(to_string = "Fingerprints")]
     Fingerprints,
+    #[strum(to_string = "Other fingerprints")]
+    OtherFingerprints,
     #[strum(to_string = "Information")]
     Information,
     #[strum(to_string = "Verification results")]
@@ -23,7 +40,7 @@ pub trait OutputToString {
     /// Transform the output to a multiline string.
     ///
     /// Take the verifier configuration as input for the tab size
-    fn output_to_string(&self, tab_size: u8) -> Result<String, ReportError>;
+    fn output_to_string(&self, tab_size: u8) -> String;
 }
 
 /// Structure to store an output entry
@@ -45,9 +62,9 @@ pub struct ReportOutputBlock {
 }
 
 impl OutputToString for ReportOutputBlock {
-    fn output_to_string(&self, tab_size: u8) -> Result<String, ReportError> {
+    fn output_to_string(&self, tab_size: u8) -> String {
         let max_key_length = self.max_key_length();
-        Ok(once(self.title.to_string())
+        once(self.title.to_string())
             .chain(self.entries.iter().map(|e| match e {
                 ReportOutputEntry::KeyValue((k, v)) => format!(
                     "{}{}:{} {}",
@@ -59,7 +76,7 @@ impl OutputToString for ReportOutputBlock {
                 ReportOutputEntry::OnlyValue(v) => v.clone(),
             }))
             .collect::<Vec<_>>()
-            .join("\n"))
+            .join("\n")
     }
 }
 
@@ -171,12 +188,11 @@ impl ReportOutput {
 }
 
 impl OutputToString for ReportOutput {
-    fn output_to_string(&self, tab_size: u8) -> Result<String, ReportError> {
-        Ok(self
-            .blocks
+    fn output_to_string(&self, tab_size: u8) -> String {
+        self.blocks
             .iter()
             .map(|b| b.output_to_string(tab_size))
-            .collect::<Result<Vec<_>, _>>()?
-            .join("\n\n"))
+            .collect::<Vec<_>>()
+            .join("\n\n")
     }
 }

@@ -1,3 +1,19 @@
+// Copyright © 2025 Denis Morel
+//
+// This program is free software: you can redistribute it and/or modify it under
+// the terms of the GNU General Public License as published by the Free
+// Software Foundation, either version 3 of the License, or (at your option) any
+// later version.
+//
+// This program is distributed in the hope that it will be useful, but WITHOUT
+// ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+// FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+// details.
+//
+// You should have received a copy of the GNU General Public License and
+// a copy of the GNU General Public License along with this program. If not, see
+// <https://www.gnu.org/licenses/>.
+
 use super::{
     impl_mock_methods_for_mocked_data, impl_mock_methods_for_mocked_group,
     impl_trait_get_method_for_mocked_data, impl_trait_get_method_for_mocked_group,
@@ -5,10 +21,7 @@ use super::{
 };
 use crate::{
     data_structures::{
-        tally::{
-            e_voting_decrypt::EVotingDecrypt, ech_0110::ECH0110, ech_0222::ECH0222,
-            tally_component_votes_payload::TallyComponentVotesPayload,
-        },
+        tally::{ech_0222::ECH0222, tally_component_votes_payload::TallyComponentVotesPayload},
         ControlComponentBallotBoxPayload, ControlComponentShufflePayload,
         TallyComponentShufflePayload,
     },
@@ -19,7 +32,7 @@ use crate::{
             impl_completness_test_trait_for_tally, impl_completness_test_trait_for_tally_bb,
             BBDirectory, BBDirectoryTrait, TallyDirectory,
         },
-        CompletnessTestTrait, FileStructureError, TallyDirectoryTrait,
+        CompletnessTestTrait, FileStructureError, FileStructureErrorImpl, TallyDirectoryTrait,
     },
 };
 use paste::paste;
@@ -41,6 +54,7 @@ pub struct MockBBDirectory {
 pub struct MockTallyDirectory {
     dir: TallyDirectory,
     bb_directories: Vec<MockBBDirectory>,
+    mocked_ech_0222: Option<Box<MockedDataType<ECH0222>>>,
 }
 
 impl_completness_test_trait_for_tally_bb!(MockBBDirectory);
@@ -57,6 +71,7 @@ impl MockTallyDirectory {
         MockTallyDirectory {
             dir: tally_dir,
             bb_directories: bb_dirs,
+            mocked_ech_0222: None,
         }
     }
 }
@@ -64,17 +79,11 @@ impl MockTallyDirectory {
 impl TallyDirectoryTrait for MockTallyDirectory {
     type BBDirType = MockBBDirectory;
 
-    fn e_voting_decrypt_file(&self) -> &File<EVotingDecrypt> {
-        self.dir.e_voting_decrypt_file()
-    }
-
-    fn ech_0110_file(&self) -> &File<ECH0110> {
-        self.dir.ech_0110_file()
-    }
-
     fn ech_0222_file(&self) -> &File<ECH0222> {
         self.dir.ech_0222_file()
     }
+
+    impl_trait_get_method_for_mocked_data!(ech_0222, ECH0222);
 
     fn bb_directories(&self) -> &[Self::BBDirType] {
         &self.bb_directories

@@ -1,3 +1,19 @@
+// Copyright © 2025 Denis Morel
+//
+// This program is free software: you can redistribute it and/or modify it under
+// the terms of the GNU General Public License as published by the Free
+// Software Foundation, either version 3 of the License, or (at your option) any
+// later version.
+//
+// This program is distributed in the hope that it will be useful, but WITHOUT
+// ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+// FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+// details.
+//
+// You should have received a copy of the GNU General Public License and
+// a copy of the GNU General Public License along with this program. If not, see
+// <https://www.gnu.org/licenses/>.
+
 //! Module to define the structure of the data and to read the data from the files into these structures
 //!
 //! The module is separate in two module: [setup] and [tally]
@@ -5,17 +21,15 @@
 pub mod common_types;
 pub mod context;
 pub mod dataset;
-pub mod setup;
+mod serde;
 pub mod tally;
 mod xml;
 
 pub use self::{
     context::{
-        election_event_configuration::ElectionEventConfiguration,
         election_event_context_payload::ElectionEventContextPayload, VerifierContextDataType,
     },
     dataset::DatasetType,
-    setup::VerifierSetupDataType,
     tally::{
         control_component_ballot_box_payload::ControlComponentBallotBoxPayload,
         control_component_shuffle_payload::ControlComponentShufflePayload,
@@ -23,46 +37,32 @@ pub use self::{
     },
 };
 use crate::config::VerifierConfig;
-use chrono::NaiveDateTime;
-use common_types::CiphertextDef;
-use quick_xml::{DeError as QuickXmDeError, Error as QuickXmlError};
-use roxmltree::{Document, Error as RoXmlTreeError};
-use rust_ev_system_library::rust_ev_crypto_primitives::prelude::{elgamal::Ciphertext, Integer};
-use rust_ev_system_library::rust_ev_crypto_primitives::prelude::{ByteArray, DecodeTrait, Hexa};
-use serde::{
-    de::{Deserialize as DeDeserialize, Deserializer, Error as SerdeError},
-    Deserialize,
-};
-use std::path::Path;
-use thiserror::Error;
-pub use xml::XMLError;
+use serde::*;
 
-// Enum representing the datza structure errors
-#[derive(Error, Debug)]
-pub enum DataStructureError {
-    #[error("IO error {msg} -> caused by: {source}")]
-    IO { msg: String, source: std::io::Error },
+use roxmltree::Error as RoXmlTreeError;
+use std::{path::Path, sync::Arc};
+use thiserror::Error;
+
+#[derive(Error, Debug, Clone)]
+#[error(transparent)]
+pub struct DataStructureError(#[from] DataStructureErrorImpl);
+
+#[derive(Error, Debug, Clone)]
+enum DataStructureErrorImpl {
     #[error("Not implemented: {0}")]
-    NotImplemented(String),
-    #[error("Error parsing xml {msg} -> caused by: {source}")]
-    ParseRoXML { msg: String, source: RoXmlTreeError },
-    #[error("Error parsing xml {msg} -> caused by: {source}")]
-    ParseQuickXML { msg: String, source: QuickXmlError },
-    #[error("Error parsing xml {msg} -> caused by: {source}")]
-    ParseQuickXMLDE { msg: String, source: QuickXmDeError },
-    #[error("Error parsing json {msg} -> caused by: {source}")]
+    NotImplemented(&'static str),
+    #[error("Error parsing json {msg}")]
     ParseJSON {
         msg: String,
-        source: serde_json::Error,
+        source: Arc<serde_json::Error>,
     },
-    #[error("Data error {0}")]
-    DataError(String),
+    #[error("Error parsing xml {msg} -> caused by: {source}")]
+    ParseRoXML { msg: String, source: RoXmlTreeError },
 }
 
 /// The type VerifierDataType implement an option between
-/// [VerifierContextDataType], [VerifierSetupDataType] and [VerifierTallyDataType]
-pub type VerifierDataType =
-    DatasetType<VerifierContextDataType, VerifierSetupDataType, VerifierTallyDataType>;
+/// [VerifierContextDataType] and [VerifierTallyDataType]
+pub type VerifierDataType = DatasetType<VerifierContextDataType, VerifierTallyDataType>;
 
 /// Trait to add the funcitonality to get the [VerifierDataType] from the verifier data
 pub trait VerifierDataToTypeTrait {
@@ -77,8 +77,8 @@ pub trait VerifierDataDecode: Sized {
     /// The decoded data or [DataStructureError] if something wrong, e.g. if it is not allowed, or if an error
     /// occured during the decoding
     fn decode_json(_: &str) -> Result<Self, DataStructureError> {
-        Err(DataStructureError::NotImplemented(
-            "decode_json".to_string(),
+        Err(DataStructureError::from(
+            DataStructureErrorImpl::NotImplemented("decode_json"),
         ))
     }
 
@@ -87,8 +87,10 @@ pub trait VerifierDataDecode: Sized {
     /// # Return
     /// The decoded data or [DataStructureError] if something wrong, e.g. if it is not allowed, or if an error
     /// occured during the decoding
-    fn decode_xml<'a>(_: &'a Document<'a>) -> Result<Self, DataStructureError> {
-        Err(DataStructureError::NotImplemented("decode_xml".to_string()))
+    fn decode_xml(_: String) -> Result<Self, DataStructureError> {
+        Err(DataStructureError::from(
+            DataStructureErrorImpl::NotImplemented("decode_xml"),
+        ))
     }
 
     /// Prepare the streamin of data from a json file
@@ -97,8 +99,8 @@ pub trait VerifierDataDecode: Sized {
     /// The decoded data or [DataStructureError] if something wrong, e.g. if it is not allowed, or if an error
     /// occured during the decoding
     fn stream_json(_: &Path) -> Result<Self, DataStructureError> {
-        Err(DataStructureError::NotImplemented(
-            "stream_json".to_string(),
+        Err(DataStructureError::from(
+            DataStructureErrorImpl::NotImplemented("stream_json"),
         ))
     }
 
@@ -108,7 +110,9 @@ pub trait VerifierDataDecode: Sized {
     /// The decoded data or [DataStructureError] if something wrong, e.g. if it is not allowed, or if an error
     /// occured during the decoding
     fn stream_xml(_: &Path) -> Result<Self, DataStructureError> {
-        Err(DataStructureError::NotImplemented("stream_xml".to_string()))
+        Err(DataStructureError::from(
+            DataStructureErrorImpl::NotImplemented("stream_xml"),
+        ))
     }
 }
 
@@ -117,10 +121,12 @@ macro_rules! implement_trait_verifier_data_json_decode {
     ($s: ty) => {
         impl VerifierDataDecode for $s {
             fn decode_json(s: &str) -> Result<Self, DataStructureError> {
-                serde_json::from_str(s).map_err(|e| DataStructureError::ParseJSON {
-                    msg: format!("Cannot deserialize json"),
-                    source: e,
-                })
+                serde_json::from_str(s)
+                    .map_err(|e| DataStructureErrorImpl::ParseJSON {
+                        msg: format!("Cannot deserialize json"),
+                        source: Arc::new(e),
+                    })
+                    .map_err(DataStructureError::from)
             }
         }
     };
@@ -227,230 +233,6 @@ use implement_trait_verifier_data_json_decode;
     }
 }*/
 
-#[allow(dead_code)]
-fn deserialize_string_hex_to_integer<'de, D>(deserializer: D) -> Result<Integer, D::Error>
-where
-    D: Deserializer<'de>,
-{
-    let buf = String::deserialize(deserializer)?;
-
-    Integer::from_hexa_string(&buf).map_err(|e| SerdeError::custom(e.to_string()))
-}
-
-fn deserialize_string_base64_to_integer<'de, D>(deserializer: D) -> Result<Integer, D::Error>
-where
-    D: Deserializer<'de>,
-{
-    let buf = String::deserialize(deserializer)?;
-
-    ByteArray::base64_decode(&buf)
-        .map_err(|e| SerdeError::custom(e.to_string()))
-        .map(|e| e.into_integer())
-}
-
-fn deserialize_option_string_base64_to_option_integer<'de, D>(
-    deserializer: D,
-) -> Result<Option<Integer>, D::Error>
-where
-    D: Deserializer<'de>,
-{
-    let buf = Option::<String>::deserialize(deserializer)?;
-
-    match buf {
-        Some(buf) => ByteArray::base64_decode(&buf)
-            .map_err(|e| SerdeError::custom(e.to_string()))
-            .map(|e| Some(e.into_integer())),
-        None => Ok(None),
-    }
-}
-
-fn deserialize_string_string_to_datetime<'de, D>(deserializer: D) -> Result<NaiveDateTime, D::Error>
-where
-    D: Deserializer<'de>,
-{
-    let buf = String::deserialize(deserializer)?;
-
-    NaiveDateTime::parse_from_str(&buf, "%Y-%m-%dT%H:%M:%S")
-        .map_err(|e| SerdeError::custom(e.to_string()))
-}
-
-#[allow(dead_code)]
-fn deserialize_seq_string_hex_to_seq_integer<'de, D>(
-    deserializer: D,
-) -> Result<Vec<Integer>, D::Error>
-where
-    D: Deserializer<'de>,
-{
-    struct Visitor;
-
-    impl<'de> ::serde::de::Visitor<'de> for Visitor {
-        type Value = Vec<Integer>;
-
-        fn expecting(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
-            write!(f, "a sequence of string")
-        }
-
-        fn visit_seq<A>(self, mut seq: A) -> Result<Self::Value, A::Error>
-        where
-            A: serde::de::SeqAccess<'de>,
-        {
-            let mut vec = <Self::Value>::new();
-
-            while let Some(v) = (seq.next_element())? {
-                let r_b = Integer::from_hexa_string(v).map_err(A::Error::custom)?;
-                vec.push(r_b);
-            }
-            Ok(vec)
-        }
-    }
-    deserializer.deserialize_seq(Visitor)
-}
-
-#[allow(dead_code)]
-fn deserialize_seq_string_base64_to_seq_bytearray<'de, D>(
-    deserializer: D,
-) -> Result<Vec<ByteArray>, D::Error>
-where
-    D: Deserializer<'de>,
-{
-    struct Visitor;
-
-    impl<'de> ::serde::de::Visitor<'de> for Visitor {
-        type Value = Vec<ByteArray>;
-
-        fn expecting(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
-            write!(f, "a sequence of string")
-        }
-
-        fn visit_seq<A>(self, mut seq: A) -> Result<Self::Value, A::Error>
-        where
-            A: serde::de::SeqAccess<'de>,
-        {
-            let mut vec = <Self::Value>::new();
-
-            while let Some(v) = (seq.next_element())? {
-                let r_b = ByteArray::base64_decode(v).map_err(A::Error::custom)?;
-                vec.push(r_b);
-            }
-            Ok(vec)
-        }
-    }
-    deserializer.deserialize_seq(Visitor)
-}
-
-fn deserialize_seq_string_base64_to_seq_integer<'de, D>(
-    deserializer: D,
-) -> Result<Vec<Integer>, D::Error>
-where
-    D: Deserializer<'de>,
-{
-    struct Visitor;
-
-    impl<'de> ::serde::de::Visitor<'de> for Visitor {
-        type Value = Vec<Integer>;
-
-        fn expecting(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
-            write!(f, "a sequence of string")
-        }
-
-        fn visit_seq<A>(self, mut seq: A) -> Result<Self::Value, A::Error>
-        where
-            A: serde::de::SeqAccess<'de>,
-        {
-            let mut vec = <Self::Value>::new();
-
-            while let Some(v) = (seq.next_element())? {
-                let r_b = ByteArray::base64_decode(v).map_err(A::Error::custom)?;
-                vec.push(r_b.into_integer());
-            }
-            Ok(vec)
-        }
-    }
-    deserializer.deserialize_seq(Visitor)
-}
-
-fn deserialize_seq_ciphertext<'de, D>(deserializer: D) -> Result<Vec<Ciphertext>, D::Error>
-where
-    D: Deserializer<'de>,
-{
-    #[derive(Deserialize)]
-    struct Wrapper(#[serde(with = "CiphertextDef")] Ciphertext);
-
-    let v = Vec::deserialize(deserializer)?;
-    Ok(v.into_iter().map(|Wrapper(a)| a).collect())
-}
-
-#[allow(dead_code)]
-fn deserialize_seq_seq_string_hex_to_seq_seq_integer<'de, D>(
-    deserializer: D,
-) -> Result<Vec<Vec<Integer>>, D::Error>
-where
-    D: Deserializer<'de>,
-{
-    struct Visitor;
-
-    impl<'de> ::serde::de::Visitor<'de> for Visitor {
-        type Value = Vec<Vec<Integer>>;
-
-        fn expecting(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
-            write!(f, "a sequence of string")
-        }
-
-        fn visit_seq<A>(self, mut seq: A) -> Result<Self::Value, A::Error>
-        where
-            A: serde::de::SeqAccess<'de>,
-        {
-            let mut vec = <Self::Value>::new();
-
-            while let Some(v) = (seq.next_element::<Vec<String>>())? {
-                let mut inner_vec = Vec::new();
-                for x in v {
-                    let r_b = Integer::from_hexa_string(&x).map_err(A::Error::custom)?;
-                    inner_vec.push(r_b);
-                }
-                vec.push(inner_vec.to_owned());
-            }
-            Ok(vec)
-        }
-    }
-    deserializer.deserialize_seq(Visitor)
-}
-
-fn deserialize_seq_seq_string_base64_to_seq_seq_integer<'de, D>(
-    deserializer: D,
-) -> Result<Vec<Vec<Integer>>, D::Error>
-where
-    D: Deserializer<'de>,
-{
-    struct Visitor;
-
-    impl<'de> ::serde::de::Visitor<'de> for Visitor {
-        type Value = Vec<Vec<Integer>>;
-
-        fn expecting(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
-            write!(f, "a sequence of string")
-        }
-
-        fn visit_seq<A>(self, mut seq: A) -> Result<Self::Value, A::Error>
-        where
-            A: serde::de::SeqAccess<'de>,
-        {
-            let mut vec = <Self::Value>::new();
-
-            while let Some(v) = (seq.next_element::<Vec<String>>())? {
-                let mut inner_vec = Vec::new();
-                for x in v {
-                    let r_b = ByteArray::base64_decode(&x).map_err(A::Error::custom)?;
-                    inner_vec.push(r_b.into_integer());
-                }
-                vec.push(inner_vec.to_owned());
-            }
-            Ok(vec)
-        }
-    }
-    deserializer.deserialize_seq(Visitor)
-}
-
 /// Verification of the length of unique ID according the expected length l_id
 ///
 /// `name` is used for the error message
@@ -468,6 +250,12 @@ fn verifiy_domain_length_unique_id(uuid: &str, name: &str) -> Vec<String> {
 
 #[cfg(test)]
 pub(super) mod test {
+
+    use rust_ev_system_library::rust_ev_crypto_primitives::prelude::{HashableMessage, Integer};
+    use serde::de::DeserializeOwned;
+    use serde_json::Value;
+    use std::path::Path;
+
     /// Macro testing the data structure (read data, signature and verify domain)
     ///
     /// # Parameters
@@ -527,10 +315,7 @@ pub(super) mod test {
             #[test]
             fn read_data_set() {
                 let data_res = get_data_res();
-                if data_res.is_err() {
-                    println!("{:?}", data_res.as_ref().unwrap_err());
-                }
-                assert!(data_res.is_ok())
+                assert!(data_res.is_ok(), "{:?}", data_res.as_ref().unwrap_err())
             }
         };
         ($suffix: ident) => {
@@ -538,10 +323,7 @@ pub(super) mod test {
                 #[test]
                 fn [<read_data_set_ $suffix>]() {
                     let data_res = [<get_data_res_ $suffix>]();
-                    if data_res.is_err() {
-                        println!("{:?}", data_res.as_ref().unwrap_err());
-                    }
-                    assert!(data_res.is_ok())
+                    assert!(data_res.is_ok(), "{:?}", data_res.as_ref().unwrap_err())
                 }
             }
         };
@@ -558,13 +340,14 @@ pub(super) mod test {
             #[test]
             fn verify_signature() {
                 let data = get_data_res().unwrap();
-                let ks = CONFIG_TEST.keystore().unwrap();
+                let ks = get_keystore();
                 let sign_validate_res = data.verify_signatures(&ks);
                 for r in sign_validate_res {
-                    if !r.is_ok() {
-                        println!("error validating signature: {:?}", r.as_ref().unwrap_err())
-                    }
-                    assert!(r.is_ok());
+                    assert!(
+                        r.is_ok(),
+                        "error validating signature: {:?}",
+                        r.as_ref().unwrap_err()
+                    );
                     assert!(r.unwrap())
                 }
             }
@@ -581,13 +364,10 @@ pub(super) mod test {
                 #[test]
                 fn [<verify_signature_ $suffix>]() {
                     let data = [<get_data_res_ $suffix>]().unwrap();
-                    let ks = CONFIG_TEST.keystore().unwrap();
+                    let ks = get_keystore();
                     let sign_validate_res = data.verify_signatures(&ks);
                     for r in sign_validate_res {
-                        if !r.is_ok() {
-                            println!("error validating signature: {:?}", r.as_ref().unwrap_err())
-                        }
-                        assert!(r.is_ok());
+                        assert!(r.is_ok(), "error validating signature: {:?}", r.as_ref().unwrap_err());
                         assert!(r.unwrap())
                     }
                 }
@@ -617,4 +397,91 @@ pub(super) mod test {
         };
     }
     pub(super) use test_data_structure_verify_domain;
+
+    pub fn json_to_hashable_message<'a>(value: &'a Value) -> HashableMessage<'a> {
+        match value {
+            v if v.is_array() => HashableMessage::from(
+                value
+                    .as_array()
+                    .unwrap()
+                    .iter()
+                    .map(|e| json_to_hashable_message(e))
+                    .collect::<Vec<_>>(),
+            ),
+            v if v.is_boolean() => HashableMessage::from(value.as_bool().unwrap()),
+            v if v.is_number() => {
+                HashableMessage::from(Integer::from_str_radix(&value.to_string(), 10).unwrap())
+            }
+            v if v.is_string() => HashableMessage::from(value.as_str().unwrap()),
+            _ => panic!("Not possible"),
+        }
+    }
+
+    #[derive(Debug, Clone)]
+    pub struct OutputVerifySignature {
+        pub h: Value,
+        pub d: String,
+    }
+    #[derive(Debug, Clone)]
+    pub struct TestDataStructureVerifySignature<T>
+    where
+        T: DeserializeOwned,
+    {
+        pub description: String,
+        pub context: T,
+        pub output: OutputVerifySignature,
+    }
+
+    pub fn json_to_testdata<T>(v: &Value) -> TestDataStructureVerifySignature<T>
+    where
+        T: DeserializeOwned,
+    {
+        TestDataStructureVerifySignature {
+            description: v["description"].as_str().unwrap().to_string(),
+            context: serde_json::from_value::<T>(v["input"].clone()).unwrap(),
+            output: OutputVerifySignature {
+                h: v["output"]["h"].clone(),
+                d: v["output"]["d"].as_str().unwrap().to_string(),
+            },
+        }
+    }
+
+    pub fn file_to_test_cases(path: &Path) -> Value {
+        serde_json::from_str(&std::fs::read_to_string(path).unwrap()).unwrap()
+    }
+
+    macro_rules! test_hash_json {
+        ($t: ident, $p: literal) => {
+            #[test]
+            fn test_hash_json() {
+                let path = test_resources_path().join("test_data").join($p);
+                for tc in file_to_test_cases(&path).as_array().unwrap().iter() {
+                    let test_data = json_to_testdata::<$t>(tc);
+                    let hash_context = HashableMessage::from(&test_data.context);
+                    let h = json_to_hashable_message(&test_data.output.h);
+                    let comp = hash_context.compare_to(&h, None);
+                    assert!(
+                        comp.is_ok(),
+                        "{}: {}",
+                        test_data.description,
+                        comp.unwrap_err()
+                    );
+                    let hashed = hash_context.recursive_hash();
+                    assert!(
+                        hashed.is_ok(),
+                        "{}: {}",
+                        test_data.description,
+                        hashed.unwrap_err()
+                    );
+                    assert_eq!(
+                        hashed.unwrap().base64_encode().unwrap(),
+                        test_data.output.d,
+                        "{}",
+                        test_data.description
+                    )
+                }
+            }
+        };
+    }
+    pub(super) use test_hash_json;
 }

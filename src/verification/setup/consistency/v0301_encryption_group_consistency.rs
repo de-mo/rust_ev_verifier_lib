@@ -1,9 +1,24 @@
+// Copyright © 2025 Denis Morel
+//
+// This program is free software: you can redistribute it and/or modify it under
+// the terms of the GNU General Public License as published by the Free
+// Software Foundation, either version 3 of the License, or (at your option) any
+// later version.
+//
+// This program is distributed in the hope that it will be useful, but WITHOUT
+// ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+// FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+// details.
+//
+// You should have received a copy of the GNU General Public License and
+// a copy of the GNU General Public License along with this program. If not, see
+// <https://www.gnu.org/licenses/>.
+
 use super::super::super::result::{VerificationEvent, VerificationResult};
 use crate::{
     config::VerifierConfig,
     file_structure::{
         context_directory::{ContextDirectoryTrait, ContextVCSDirectoryTrait},
-        setup_directory::{SetupDirectoryTrait, SetupVCSDirectoryTrait},
         VerificationDirectoryTrait,
     },
 };
@@ -36,57 +51,12 @@ fn verify_encryption_group_for_context_vcs_dir<V: ContextVCSDirectoryTrait>(
             &verify_encryption_group(&p.encryption_group, eg),
             format!("{}/setup_component_tally_data_payload", dir.name()),
         ),
-        Err(e) => result.push(VerificationEvent::new_error(&e).add_context(format!(
-            "{}/setup_component_tally_data_payload has wrong format",
-            dir.name()
-        ))),
-    }
-}
-
-fn verify_encryption_group_for_setup_vcs_dir<V: SetupVCSDirectoryTrait>(
-    dir: &V,
-    eg: &EncryptionParameters,
-    result: &mut VerificationResult,
-) {
-    for (i, f) in dir.setup_component_verification_data_payload_iter() {
-        match f {
-            Ok(s) => result.append_with_context(
-                &verify_encryption_group(&s.encryption_group, eg),
-                format!(
-                    "{}/setup_component_verification_data_payload.{}",
-                    i,
-                    dir.name()
-                ),
-            ),
-            Err(e) => result.push(VerificationEvent::new_error(&e).add_context(format!(
-                "{}/setup_component_verification_data_payload.{} has wrong format",
-                dir.name(),
-                i
-            ))),
-        }
-    }
-    for (i, f) in dir.control_component_code_shares_payload_iter() {
-        match f {
-            Ok(cc) => {
-                for (j, p) in cc.0.iter().enumerate() {
-                    result.append_with_context(
-                        &verify_encryption_group(&p.encryption_group, eg),
-                        format!(
-                            "{}/control_component_code_shares_payload.{}_chunk{}_element{}",
-                            dir.name(),
-                            i,
-                            p.chunk_id,
-                            j
-                        ),
-                    )
-                }
-            }
-            Err(e) => result.push(VerificationEvent::new_error(&e).add_context(format!(
-                "{}/control_component_code_shares_payload_.{} has wrong format",
-                dir.name(),
-                i
-            ))),
-        }
+        Err(e) => result.push(
+            VerificationEvent::new_error_from_error(&e).add_context(format!(
+                "{}/setup_component_tally_data_payload has wrong format",
+                dir.name()
+            )),
+        ),
     }
 }
 
@@ -96,12 +66,11 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
     result: &mut VerificationResult,
 ) {
     let config_dir = dir.context();
-    let setup_dir = dir.unwrap_setup();
     let context = match config_dir.election_event_context_payload() {
         Ok(p) => p,
         Err(e) => {
             result.push(
-                VerificationEvent::new_error(&e)
+                VerificationEvent::new_error_from_error(&e)
                     .add_context("election_event_context_payload cannot be read"),
             );
             return;
@@ -114,10 +83,12 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
                 &verify_encryption_group(&cc.encryption_group, eg),
                 format!("control_component_public_keys_payload.{}", i),
             ),
-            Err(e) => result.push(VerificationEvent::new_error(&e).add_context(format!(
-                "control_component_public_keys_payload.{} has wrong format",
-                i
-            ))),
+            Err(e) => result.push(VerificationEvent::new_error_from_error(&e).add_context(
+                format!(
+                    "control_component_public_keys_payload.{} has wrong format",
+                    i
+                ),
+            )),
         }
     }
     match config_dir.setup_component_public_keys_payload() {
@@ -126,17 +97,13 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
             "setup_component_public_keys_payload",
         ),
         Err(e) => result.push(
-            VerificationEvent::new_error(&e)
+            VerificationEvent::new_error_from_error(&e)
                 .add_context("election_event_context_payload has wrong format"),
         ),
     }
 
     for vcs in config_dir.vcs_directories().iter() {
         verify_encryption_group_for_context_vcs_dir(vcs, eg, result);
-    }
-
-    for vcs in setup_dir.vcs_directories().iter() {
-        verify_encryption_group_for_setup_vcs_dir(vcs, eg, result);
     }
 }
 

@@ -1,4 +1,22 @@
+// Copyright © 2025 Denis Morel
+//
+// This program is free software: you can redistribute it and/or modify it under
+// the terms of the GNU General Public License as published by the Free
+// Software Foundation, either version 3 of the License, or (at your option) any
+// later version.
+//
+// This program is distributed in the hope that it will be useful, but WITHOUT
+// ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+// FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+// details.
+//
+// You should have received a copy of the GNU General Public License and
+// a copy of the GNU General Public License along with this program. If not, see
+// <https://www.gnu.org/licenses/>.
+
+use chrono::{DateTime, Local};
 //use futures::{stream::FuturesUnordered, StreamExt};
+use crate::RunnerErrorImpl;
 use rust_ev_verifier_lib::{
     file_structure::{VerificationDirectory, VerificationDirectoryTrait},
     startup_checks::{check_complete, check_verification_dir, start_check},
@@ -8,6 +26,7 @@ use rust_ev_verifier_lib::{
     VerifierConfig,
 };
 use tracing::{info, warn};
+
 //use std::future::Future;
 use super::{prepare_fixed_based_optimization, RunnerError};
 use rayon::prelude::*;
@@ -35,19 +54,84 @@ pub struct VerificationRunInformation {
 }
 
 /// Information of the runner, that can be used to know some information about the runner.
-#[derive(Debug, Clone, Default)]
+#[derive(Clone)]
 pub struct RunnerInformation {
+    config: &'static VerifierConfig,
     pub start_time: Option<SystemTime>,
     pub duration: Option<Duration>,
 }
 
 impl RunnerInformation {
+    pub fn new(config: &'static VerifierConfig) -> Self {
+        Self {
+            config,
+            start_time: None,
+            duration: None,
+        }
+    }
+
     pub fn is_finished(&self) -> bool {
         self.duration.is_some()
     }
 
     pub fn is_running(&self) -> bool {
         self.start_time.is_some() && self.duration.is_none()
+    }
+
+    pub fn start_time(&self) -> Option<SystemTime> {
+        self.start_time
+    }
+
+    pub fn duration(&self) -> Option<Duration> {
+        self.duration
+    }
+
+    pub fn stop_time(&self) -> Option<SystemTime> {
+        match self.start_time.is_some() && self.duration.is_some() {
+            true => Some(self.start_time.unwrap() + self.duration.unwrap()),
+            false => None,
+        }
+    }
+
+    pub fn start_time_to_string(&self) -> Option<String> {
+        self.start_time.map(|t| {
+            std::convert::Into::<DateTime<Local>>::into(t)
+                .format(self.config.report_format_date().as_str())
+                .to_string()
+        })
+    }
+
+    pub fn stop_time_to_string(&self) -> Option<String> {
+        self.stop_time().map(|t| {
+            std::convert::Into::<DateTime<Local>>::into(t)
+                .format(self.config.report_format_date().as_str())
+                .to_string()
+        })
+    }
+
+    pub fn duration_as_secs(&self) -> Option<u64> {
+        self.duration.map(|d| d.as_secs())
+    }
+
+    pub fn duration_as_secs_to_string(&self) -> Option<String> {
+        self.duration_as_secs().map(|d| {
+            let mut s = d;
+            let res;
+            if s < 60 {
+                res = format!("{s}s");
+            } else {
+                let mut m = s / 60;
+                s %= 60;
+                if m < 60 {
+                    res = format!("{m}m {s}s");
+                } else {
+                    let h = m / 60;
+                    m %= 60;
+                    res = format!("{h}h {m}m {s}s")
+                }
+            }
+            res
+        })
     }
 }
 
@@ -58,10 +142,10 @@ pub trait RunStrategy<'a> {
     /// - `verifications`: The suite of verifications, which will be modified during the run
     /// - `directory`: Verification directoy containing the datasets extracted
     /// - `action_before_verification`:
-    ///     Function that will be call before the run of each verification. As parameter take the id of the verification
+    ///   Function that will be call before the run of each verification. As parameter take the id of the verification
     /// - `action_after_verification`:
-    ///     Function that will be call before the run of each verification.
-    ///     As parameter take the information regarding the run of the verification
+    ///   Function that will be call before the run of each verification.
+    ///   As parameter take the information regarding the run of the verification
     fn run(
         &self,
         verifications: &'a mut VerificationSuite<'a>,
@@ -162,10 +246,10 @@ where
     /// - `run_strategy`: The choosen run strategy
     /// - `config`: The configuration of the verifier
     /// - `action_before_verification`:
-    ///     Function that will be call before the run of each verification. As parameter take the id of the verification
+    ///   Function that will be call before the run of each verification. As parameter take the id of the verification
     /// - `action_after_verification`:
-    ///     Function that will be call before the run of each verification.
-    ///     As parameter take the information regarding the run of the verification
+    ///   Function that will be call before the run of each verification.
+    ///   As parameter take the information regarding the run of the verification
     ///
     /// It is recommended to keep the data in the calling function and to update them in the closure as follow:
     /// ```ignored
@@ -230,17 +314,62 @@ where
         action_after_verification: impl Fn(VerificationRunInformation) + Send + Sync + 'static,
         action_after_runner: impl Fn(RunnerInformation) + Send + Sync + 'static,
     ) -> Result<Runner<'a, T>, RunnerError> {
-        start_check(config).map_err(RunnerError::CheckError)?;
-        check_verification_dir(period, path).map_err(RunnerError::CheckError)?;
+        Self::new_impl(
+            path,
+            period,
+            metadata,
+            exclusion,
+            run_strategy,
+            config,
+            action_before_runner,
+            action_before_verification,
+            action_after_verification,
+            action_after_runner,
+        )
+        .map_err(RunnerError::from)
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    fn new_impl(
+        path: &Path,
+        period: &VerificationPeriod,
+        metadata: &'a VerificationMetaDataList,
+        exclusion: &[String],
+        run_strategy: T,
+        config: &'static VerifierConfig,
+        action_before_runner: impl Fn(SystemTime) + Send + Sync + 'static,
+        action_before_verification: impl Fn(&str) + Send + Sync + 'static,
+        action_after_verification: impl Fn(VerificationRunInformation) + Send + Sync + 'static,
+        action_after_runner: impl Fn(RunnerInformation) + Send + Sync + 'static,
+    ) -> Result<Runner<'a, T>, RunnerErrorImpl> {
+        start_check(config).map_err(|msg| RunnerErrorImpl::CheckError {
+            function: "start_check",
+            msg,
+        })?;
+        check_verification_dir(period, path).map_err(|msg| RunnerErrorImpl::CheckError {
+            function: "check_verification_dir",
+            msg,
+        })?;
         let directory = VerificationDirectory::new(period, path);
-        check_complete(period, &directory).map_err(RunnerError::CheckError)?;
-        prepare_fixed_based_optimization(&directory)?;
+        check_complete(period, &directory).map_err(|msg| RunnerErrorImpl::CheckError {
+            function: "check_complete",
+            msg,
+        })?;
+        prepare_fixed_based_optimization(&directory).map_err(|e| {
+            RunnerErrorImpl::RunnerFixBased {
+                source: Box::new(e),
+            }
+        })?;
         Ok(Runner {
             path: path.to_path_buf(),
             verification_directory: Box::new(directory),
             verifications: Box::new(
-                VerificationSuite::new(period, metadata, exclusion, config)
-                    .map_err(RunnerError::Verification)?,
+                VerificationSuite::new(period, metadata, exclusion, config).map_err(|e| {
+                    RunnerErrorImpl::Suite {
+                        function: "new runner",
+                        source: Box::new(e),
+                    }
+                })?,
             ),
             start_time: None,
             duration: None,
@@ -267,7 +396,10 @@ where
                 self.verifications.exclusion(),
                 self.config,
             )
-            .map_err(RunnerError::Verification)?,
+            .map_err(|e| RunnerErrorImpl::Suite {
+                function: "reset runner",
+                source: Box::new(e),
+            })?,
         );
         Ok(())
     }
@@ -278,10 +410,10 @@ where
         metadata_list: &'a VerificationMetaDataList,
     ) -> Result<(), RunnerError> {
         if self.is_running() {
-            return Err(RunnerError::IsRunning);
+            return Err(RunnerError::from(RunnerErrorImpl::IsRunning));
         }
         if self.is_finished() {
-            return Err(RunnerError::HasAlreadyRun);
+            return Err(RunnerError::from(RunnerErrorImpl::HasAlreadyRun));
         }
         self.start_time = Some(SystemTime::now());
         info!(
@@ -308,6 +440,7 @@ where
         }
         self.duration = Some(self.start_time.unwrap().elapsed().unwrap());
         (self.action_after_runner)(RunnerInformation {
+            config: self.config,
             start_time: self.start_time,
             duration: self.duration,
         });

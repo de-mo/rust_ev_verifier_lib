@@ -1,5 +1,21 @@
+// Copyright © 2025 Denis Morel
+//
+// This program is free software: you can redistribute it and/or modify it under
+// the terms of the GNU General Public License as published by the Free
+// Software Foundation, either version 3 of the License, or (at your option) any
+// later version.
+//
+// This program is distributed in the hope that it will be useful, but WITHOUT
+// ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+// FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+// details.
+//
+// You should have received a copy of the GNU General Public License and
+// a copy of the GNU General Public License along with this program. If not, see
+// <https://www.gnu.org/licenses/>.
+
 //! Trait implementing group of files with the same structure (in particular for the files from the control components)
-use super::{file::File, FileStructureError, GetFileNameTrait};
+use super::{FileStructureError, GetFileNameTrait, file::File};
 use crate::data_structures::{VerifierDataDecode, VerifierDataToTypeTrait, VerifierDataType};
 use std::{
     fs,
@@ -56,10 +72,7 @@ impl<D: VerifierDataDecode + VerifierDataToTypeTrait + Clone> Iterator for FileG
 }
 
 /// Implement iterator for the [FileGroupDataIter] as generic type
-impl<D: VerifierDataDecode + VerifierDataToTypeTrait + Clone> Iterator for FileGroupDataIter<D>
-//where
-//    Self: GenericFileGroupIterTrait<Result<D, FileStructureError>>,
-{
+impl<D: VerifierDataDecode + VerifierDataToTypeTrait + Clone> Iterator for FileGroupDataIter<D> {
     type Item = (usize, Result<Arc<D>, FileStructureError>);
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -160,7 +173,9 @@ impl<D: VerifierDataDecode + VerifierDataToTypeTrait + Clone> FileGroup<D> {
 
     /// Get the paths of the files
     pub fn get_paths(&self) -> Vec<PathBuf> {
-        self.iter_file().map(|(_, f)| f.path()).collect()
+        self.iter_file()
+            .map(|(_, f)| f.path().to_path_buf())
+            .collect()
     }
 
     /// Get all the valid numbers of the files
@@ -201,7 +216,7 @@ mod test {
         assert_eq!(fg.get_location(), location);
         assert_eq!(fg.get_numbers(), &[1, 2, 3, 4]);
         for (i, f) in fg.iter_file() {
-            let name = format!("controlComponentPublicKeysPayload.{}.json", i);
+            let name = format!("controlComponentPublicKeysPayload.{i}.json");
             assert_eq!(f.path(), location.join(name));
         }
     }

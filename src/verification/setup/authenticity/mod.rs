@@ -1,3 +1,19 @@
+// Copyright © 2025 Denis Morel
+//
+// This program is free software: you can redistribute it and/or modify it under
+// the terms of the GNU General Public License as published by the Free
+// Software Foundation, either version 3 of the License, or (at your option) any
+// later version.
+//
+// This program is distributed in the hope that it will be useful, but WITHOUT
+// ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+// FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+// details.
+//
+// You should have received a copy of the GNU General Public License and
+// a copy of the GNU General Public License along with this program. If not, see
+// <https://www.gnu.org/licenses/>.
+
 use tracing::trace;
 
 use super::super::{
@@ -12,7 +28,7 @@ use crate::{
         context_directory::{ContextDirectoryTrait, ContextVCSDirectoryTrait},
         VerificationDirectoryTrait,
     },
-    verification::{meta_data::VerificationMetaDataList, VerificationError},
+    verification::{meta_data::VerificationMetaDataList, VerificationError, VerificationErrorImpl},
 };
 
 pub fn get_verifications<'a>(
@@ -26,35 +42,55 @@ pub fn get_verifications<'a>(
             fn_0201_verify_signature_canton_config,
             metadata_list,
             config,
-        )?,
+        )
+        .map_err(|e| VerificationErrorImpl::GetVerification {
+            name: "VerifySignatureCantonConfig",
+            source: Box::new(e),
+        })?,
         Verification::new(
             "02.02",
             "VerifySignatureSetupComponentPublicKeys",
             fn_0202_verify_signature_setup_component_public_keys,
             metadata_list,
             config,
-        )?,
+        )
+        .map_err(|e| VerificationErrorImpl::GetVerification {
+            name: "VerifySignatureSetupComponentPublicKeys",
+            source: Box::new(e),
+        })?,
         Verification::new(
             "02.03",
             "VerifySignatureControlComponentPublicKeys",
             fn_0203_verify_signature_control_component_public_keys,
             metadata_list,
             config,
-        )?,
+        )
+        .map_err(|e| VerificationErrorImpl::GetVerification {
+            name: "VerifySignatureControlComponentPublicKeys",
+            source: Box::new(e),
+        })?,
         Verification::new(
             "02.04",
             "VerifySignatureSetupComponentTallyData",
             fn_0204_verify_signature_setup_component_tally_data,
             metadata_list,
             config,
-        )?,
+        )
+        .map_err(|e| VerificationErrorImpl::GetVerification {
+            name: "VerifySignatureSetupComponentTallyData",
+            source: Box::new(e),
+        })?,
         Verification::new(
             "02.05",
             "VerifySignatureElectionEventContext",
             fn_0205_verify_signature_election_event_context,
             metadata_list,
             config,
-        )?,
+        )
+        .map_err(|e| VerificationErrorImpl::GetVerification {
+            name: "VerifySignatureElectionEventContext",
+            source: Box::new(e),
+        })?,
     ]))
 }
 
@@ -68,7 +104,7 @@ fn fn_0201_verify_signature_canton_config<D: VerificationDirectoryTrait>(
         Ok(p) => p,
         Err(e) => {
             result.push(
-                VerificationEvent::new_error(&e)
+                VerificationEvent::new_error_from_error(&e)
                     .add_context(format!("{} cannot be read", "election_event_configuration")),
             );
             return;
@@ -89,10 +125,12 @@ fn fn_0202_verify_signature_setup_component_public_keys<D: VerificationDirectory
     let payload = match context_dir.setup_component_public_keys_payload() {
         Ok(p) => p,
         Err(e) => {
-            result.push(VerificationEvent::new_error(&e).add_context(format!(
-                "{} cannot be read",
-                "setup_component_public_keys_payload"
-            )));
+            result.push(
+                VerificationEvent::new_error_from_error(&e).add_context(format!(
+                    "{} cannot be read",
+                    "setup_component_public_keys_payload"
+                )),
+            );
             return;
         }
     };
@@ -113,12 +151,11 @@ fn fn_0203_verify_signature_control_component_public_keys<D: VerificationDirecto
         match cc {
             Ok(cc) => result.append_with_context(
                 &verify_signature_for_object(cc.as_ref(), config),
-                format!("control_component_public_keys_payload_{}", i),
+                format!("control_component_public_keys_payload_{i}"),
             ),
-            Err(e) => result.push(VerificationEvent::new_error(&e).add_context(format!(
-                "control_component_public_keys_payload_{} cannot be read",
-                i
-            ))),
+            Err(e) => result.push(VerificationEvent::new_error_from_error(&e).add_context(
+                format!("control_component_public_keys_payload_{i} cannot be read"),
+            )),
         }
     }
 }
@@ -136,10 +173,9 @@ fn fn_0204_verify_signature_setup_component_tally_data<D: VerificationDirectoryT
                 &verify_signature_for_object(p.as_ref(), config),
                 format!("{}/setup_component_tally_data_payload.json", d.name(),),
             ),
-            Err(e) => result.push(VerificationEvent::new_error(&e).add_context(format!(
-                "{}/setup_component_tally_data_payload.json",
-                d.name(),
-            ))),
+            Err(e) => result.push(VerificationEvent::new_error_from_error(&e).add_context(
+                format!("{}/setup_component_tally_data_payload.json", d.name(),),
+            )),
         }
     }
 }
@@ -153,10 +189,12 @@ fn fn_0205_verify_signature_election_event_context<D: VerificationDirectoryTrait
     let rp = match context_dir.election_event_context_payload() {
         Ok(p) => p,
         Err(e) => {
-            result.push(VerificationEvent::new_error(&e).add_context(format!(
-                "{} cannot be read",
-                "election_event_context_payload"
-            )));
+            result.push(
+                VerificationEvent::new_error_from_error(&e).add_context(format!(
+                    "{} cannot be read",
+                    "election_event_context_payload"
+                )),
+            );
             return;
         }
     };
@@ -172,17 +210,16 @@ mod test {
     use crate::config::test::{get_test_verifier_setup_dir as get_verifier_dir, CONFIG_TEST};
 
     #[test]
-    #[ignore = "error with XML"]
     fn test_0201() {
         let dir = get_verifier_dir();
         let mut result = VerificationResult::new();
         fn_0201_verify_signature_canton_config(&dir, &CONFIG_TEST, &mut result);
         if !result.is_ok() {
             for e in result.errors() {
-                println!("{:?}", e);
+                println!("{e:?}");
             }
             for f in result.failures() {
-                println!("{:?}", f);
+                println!("{f:?}");
             }
         }
         assert!(result.is_ok());
@@ -193,7 +230,6 @@ mod test {
         let dir = get_verifier_dir();
         let mut result = VerificationResult::new();
         fn_0202_verify_signature_setup_component_public_keys(&dir, &CONFIG_TEST, &mut result);
-        println!("{:?}", result);
         assert!(result.is_ok());
     }
 

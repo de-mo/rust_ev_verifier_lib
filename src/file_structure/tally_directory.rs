@@ -1,3 +1,19 @@
+// Copyright © 2025 Denis Morel
+//
+// This program is free software: you can redistribute it and/or modify it under
+// the terms of the GNU General Public License as published by the Free
+// Software Foundation, either version 3 of the License, or (at your option) any
+// later version.
+//
+// This program is distributed in the hope that it will be useful, but WITHOUT
+// ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+// FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+// details.
+//
+// You should have received a copy of the GNU General Public License and
+// a copy of the GNU General Public License along with this program. If not, see
+// <https://www.gnu.org/licenses/>.
+
 use super::{
     file::{create_file, File},
     file_group::{FileGroup, FileGroupDataIter, FileGroupFileIter},
@@ -7,8 +23,7 @@ use crate::{
     config::VerifierConfig,
     data_structures::tally::{
         control_component_ballot_box_payload::ControlComponentBallotBoxPayload,
-        control_component_shuffle_payload::ControlComponentShufflePayload,
-        e_voting_decrypt::EVotingDecrypt, ech_0110::ECH0110, ech_0222::ECH0222,
+        control_component_shuffle_payload::ControlComponentShufflePayload, ech_0222::ECH0222,
         tally_component_shuffle_payload::TallyComponentShufflePayload,
         tally_component_votes_payload::TallyComponentVotesPayload,
     },
@@ -22,8 +37,6 @@ use std::{
 //#[derive(Clone)]
 pub struct TallyDirectory {
     location: PathBuf,
-    e_voting_decrypt_file: File<EVotingDecrypt>,
-    ech_0110_file: File<ECH0110>,
     ech_0222_file: File<ECH0222>,
     bb_directories: Vec<BBDirectory>,
 }
@@ -45,9 +58,8 @@ pub struct BBDirectory {
 pub trait TallyDirectoryTrait: CompletnessTestTrait + Send + Sync {
     type BBDirType: BBDirectoryTrait;
 
-    fn e_voting_decrypt_file(&self) -> &File<EVotingDecrypt>;
-    fn ech_0110_file(&self) -> &File<ECH0110>;
     fn ech_0222_file(&self) -> &File<ECH0222>;
+    fn ech_0222(&self) -> Result<Arc<ECH0222>, FileStructureError>;
     fn bb_directories(&self) -> &[Self::BBDirType];
 
     /// Collect the names of the ballot box directories
@@ -64,6 +76,7 @@ pub trait TallyDirectoryTrait: CompletnessTestTrait + Send + Sync {
 /// The trait is used as parameter of the verification functions to allow mock of
 /// test (negative tests)
 pub trait BBDirectoryTrait: CompletnessTestTrait + Send + Sync {
+    #[allow(dead_code)]
     fn tally_component_votes_payload_file(&self) -> &File<TallyComponentVotesPayload>;
     fn tally_component_shuffle_payload_file(&self) -> &File<TallyComponentShufflePayload>;
     fn control_component_ballot_box_payload_group(
@@ -101,15 +114,14 @@ pub trait BBDirectoryTrait: CompletnessTestTrait + Send + Sync {
 impl TallyDirectoryTrait for TallyDirectory {
     type BBDirType = BBDirectory;
 
-    fn e_voting_decrypt_file(&self) -> &File<EVotingDecrypt> {
-        &self.e_voting_decrypt_file
-    }
-    fn ech_0110_file(&self) -> &File<ECH0110> {
-        &self.ech_0110_file
-    }
     fn ech_0222_file(&self) -> &File<ECH0222> {
         &self.ech_0222_file
     }
+
+    fn ech_0222(&self) -> Result<Arc<ECH0222>, FileStructureError> {
+        self.ech_0222_file.decode_verifier_data()
+    }
+
     fn bb_directories(&self) -> &[BBDirectory] {
         &self.bb_directories
     }
@@ -124,14 +136,8 @@ macro_rules! impl_completness_test_trait_for_tally {
         impl CompletnessTestTrait for $t {
             fn test_completness(&self) -> Result<Vec<String>, FileStructureError> {
                 let mut missings = vec![];
-                if !self.ech_0110_file().exists() {
-                    missings.push("ech_0110 does not exist".to_string())
-                }
                 if !self.ech_0222_file().exists() {
                     missings.push("ech_0222 does not exist".to_string())
-                }
-                if !self.e_voting_decrypt_file().exists() {
-                    missings.push("e_voting_decrypt does not exist".to_string())
                 }
                 if self.bb_directories().is_empty() {
                     missings.push("No bb directory found".to_string());
@@ -276,12 +282,6 @@ impl TallyDirectory {
         let location = data_location.join(VerifierConfig::tally_dir_name());
         let mut res = TallyDirectory {
             location: location.to_path_buf(),
-            e_voting_decrypt_file: create_file!(
-                location,
-                Tally,
-                VerifierTallyDataType::EVotingDecrypt
-            ),
-            ech_0110_file: create_file!(location, Tally, VerifierTallyDataType::ECH0110),
             ech_0222_file: create_file!(location, Tally, VerifierTallyDataType::ECH0222),
             bb_directories: vec![],
         };

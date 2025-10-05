@@ -1,3 +1,19 @@
+// Copyright © 2025 Denis Morel
+//
+// This program is free software: you can redistribute it and/or modify it under
+// the terms of the GNU General Public License as published by the Free
+// Software Foundation, either version 3 of the License, or (at your option) any
+// later version.
+//
+// This program is distributed in the hope that it will be useful, but WITHOUT
+// ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+// FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+// details.
+//
+// You should have received a copy of the GNU General Public License and
+// a copy of the GNU General Public License along with this program. If not, see
+// <https://www.gnu.org/licenses/>.
+
 use super::super::{
     deserialize_option_string_base64_to_option_integer, deserialize_seq_ciphertext,
     deserialize_seq_string_base64_to_seq_integer, deserialize_string_base64_to_integer,
@@ -5,10 +21,7 @@ use super::super::{
 use rust_ev_system_library::rust_ev_crypto_primitives::prelude::{
     elgamal::Ciphertext,
     mix_net::{
-        arguments::{
-            HadamardArgumentError, MultiExponentiationArgumentError, ProductArgumentError,
-            ShuffleArgumentError, SingleValueProductArgumentError, ZeroArgumentError,
-        },
+        MixnetError,
         HadamardArgument as CryptoHadamardArgument,
         MultiExponentiationArgument as CryptoMultiExponentiationArgument,
         ProductArgument as CryptoProductArgument, ShuffleArgument as CryptoShuffleArgument,
@@ -61,7 +74,7 @@ impl VerifyDomainTrait<String> for ShuffleArgument {
 }
 
 impl<'a> TryFrom<&'a ShuffleArgument> for CryptoShuffleArgument<'a> {
-    type Error = ShuffleArgumentError;
+    type Error = MixnetError;
 
     fn try_from(value: &'a ShuffleArgument) -> Result<Self, Self::Error> {
         Self::new(
@@ -87,7 +100,7 @@ pub struct ProductArgument {
 }
 
 impl<'a> TryFrom<&'a ProductArgument> for CryptoProductArgument<'a> {
-    type Error = ProductArgumentError;
+    type Error = MixnetError;
     fn try_from(value: &'a ProductArgument) -> Result<Self, Self::Error> {
         Self::new(
             value.c_b.as_ref(),
@@ -109,7 +122,7 @@ pub struct HadamardArgument {
 }
 
 impl<'a> TryFrom<&'a HadamardArgument> for CryptoHadamardArgument<'a> {
-    type Error = HadamardArgumentError;
+    type Error = MixnetError;
 
     fn try_from(value: &'a HadamardArgument) -> Result<Self, Self::Error> {
         Self::new(
@@ -145,7 +158,7 @@ pub struct ZeroArgument {
 }
 
 impl<'a> TryFrom<&'a ZeroArgument> for CryptoZeroArgument<'a> {
-    type Error = ZeroArgumentError;
+    type Error = MixnetError;
 
     fn try_from(value: &'a ZeroArgument) -> Result<Self, Self::Error> {
         Self::new(
@@ -181,7 +194,7 @@ pub struct SingleValueProductArgument {
 }
 
 impl<'a> TryFrom<&'a SingleValueProductArgument> for CryptoSingleValueProductArgument<'a> {
-    type Error = SingleValueProductArgumentError;
+    type Error = MixnetError;
     fn try_from(value: &'a SingleValueProductArgument) -> Result<Self, Self::Error> {
         CryptoSingleValueProductArgument::new(
             &value.c_d,
@@ -220,7 +233,7 @@ pub struct MultiExponentiationArgument {
 }
 
 impl<'a> TryFrom<&'a MultiExponentiationArgument> for CryptoMultiExponentiationArgument<'a> {
-    type Error = MultiExponentiationArgumentError;
+    type Error = MixnetError;
     fn try_from(value: &'a MultiExponentiationArgument) -> Result<Self, Self::Error> {
         CryptoMultiExponentiationArgument::new(
             &value.c_a_0,

@@ -1,8 +1,24 @@
+// Copyright © 2025 Denis Morel
+//
+// This program is free software: you can redistribute it and/or modify it under
+// the terms of the GNU General Public License as published by the Free
+// Software Foundation, either version 3 of the License, or (at your option) any
+// later version.
+//
+// This program is distributed in the hope that it will be useful, but WITHOUT
+// ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+// FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+// details.
+//
+// You should have received a copy of the GNU General Public License and
+// a copy of the GNU General Public License along with this program. If not, see
+// <https://www.gnu.org/licenses/>.
+
 //! Module to implement the metadata of the tests
 //!
 //! The metadata list is loaded from the file in resources.
 
-use super::{VerificationCategory, VerificationError, VerificationPeriod};
+use super::{VerificationCategory, VerificationError, VerificationErrorImpl, VerificationPeriod};
 use serde::{
     de::{Deserialize as Deserialize2, Deserializer, Error},
     Deserialize,
@@ -38,15 +54,18 @@ pub struct VerificationMetaData {
 
 impl VerificationMetaDataList {
     pub fn load(data: &str) -> Result<Self, VerificationError> {
-        serde_json::from_str(data).map_err(|e| VerificationError::ParseJSON {
-            msg: "Cannot deserialize the verification list from json".to_string(),
-            source: e,
-        })
+        serde_json::from_str(data)
+            .map_err(|e| VerificationErrorImpl::LoadMetadata { source: e })
+            .map_err(VerificationError::from)
     }
 
     pub fn load_period(data: &str, period: &VerificationPeriod) -> Result<Self, VerificationError> {
         Ok(Self(
-            Self::load(data)?
+            Self::load(data)
+                .map_err(|e| VerificationErrorImpl::LoadMetadataPeriod {
+                    period: *period,
+                    source: Box::new(e),
+                })?
                 .0
                 .iter()
                 .filter(|&m| m.period() == period)
@@ -83,7 +102,7 @@ impl VerificationMetaDataList {
         self.iter().find(|&e| e.id == id)
     }
 
-    pub fn iter(&self) -> std::slice::Iter<VerificationMetaData> {
+    pub fn iter(&'_ self) -> std::slice::Iter<'_, VerificationMetaData> {
         self.0.iter()
     }
 

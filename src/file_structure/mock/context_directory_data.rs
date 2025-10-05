@@ -1,3 +1,19 @@
+// Copyright © 2025 Denis Morel
+//
+// This program is free software: you can redistribute it and/or modify it under
+// the terms of the GNU General Public License as published by the Free
+// Software Foundation, either version 3 of the License, or (at your option) any
+// later version.
+//
+// This program is distributed in the hope that it will be useful, but WITHOUT
+// ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+// FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+// details.
+//
+// You should have received a copy of the GNU General Public License and
+// a copy of the GNU General Public License along with this program. If not, see
+// <https://www.gnu.org/licenses/>.
+
 use super::{
     impl_mock_methods_for_mocked_data, impl_mock_methods_for_mocked_group,
     impl_trait_get_method_for_mocked_data, impl_trait_get_method_for_mocked_group,
@@ -7,10 +23,11 @@ use crate::{
     data_structures::{
         context::{
             control_component_public_keys_payload::ControlComponentPublicKeysPayload,
+            election_event_configuration::ElectionEventConfiguration,
             setup_component_public_keys_payload::SetupComponentPublicKeysPayload,
             setup_component_tally_data_payload::SetupComponentTallyDataPayload,
         },
-        ElectionEventConfiguration, ElectionEventContextPayload,
+        ElectionEventContextPayload,
     },
     file_structure::{
         context_directory::{
@@ -20,6 +37,7 @@ use crate::{
         file::File,
         file_group::FileGroup,
         CompletnessTestTrait, ContextDirectory, ContextDirectoryTrait, FileStructureError,
+        FileStructureErrorImpl,
     },
 };
 use paste::paste;
@@ -235,8 +253,8 @@ mod test {
                 .as_str(),
             "TOTO"
         );
-        mock_dir.mock_election_event_context_payload_error(FileStructureError::Mock(
-            "test error".to_string(),
+        mock_dir.mock_election_event_context_payload_error(FileStructureError::from(
+            FileStructureErrorImpl::Mock("test error".to_string()),
         ));
         assert!(mock_dir.election_event_context_payload().is_err());
         mock_dir.mock_election_event_context_payload_reset();
@@ -309,7 +327,7 @@ mod test {
             MockContextDirectory::new(test_datasets_context_path().as_path().parent().unwrap());
         mock_dir.mock_control_component_public_keys_payload_error(
             2,
-            FileStructureError::Mock("Test".to_string()),
+            FileStructureError::from(FileStructureErrorImpl::Mock("Test".to_string())),
         );
         let mut it = mock_dir.control_component_public_keys_payload_iter();
         assert_eq!(
