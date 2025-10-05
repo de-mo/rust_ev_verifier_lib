@@ -17,16 +17,16 @@
 use crate::data_structures::dataset::DatasetTypeKind;
 use chrono::Local;
 use rust_ev_system_library::{
-    chanel_security::stream::{get_stream_plaintext, StreamSymEncryptionError},
+    chanel_security::stream::{StreamSymEncryptionError, get_stream_plaintext},
     rust_ev_crypto_primitives::prelude::{
-        argon2::Argon2idParameters,
-        basic_crypto_functions::{sha256_stream, BasisCryptoError},
         ByteArray, EncodeTrait,
+        argon2::Argon2idParameters,
+        basic_crypto_functions::{BasisCryptoError, sha256_stream},
     },
 };
 use std::{
-    fs::File,
-    io::{BufReader, BufWriter},
+    fs::{self, File},
+    io::{self, BufReader, BufWriter},
     path::{Path, PathBuf},
 };
 use thiserror::Error;
@@ -66,8 +66,12 @@ enum DatasetErrorImpl {
     },
     #[error("Error new zipArchive {file}")]
     NewZipArchive { file: PathBuf, source: ZipError },
-    #[error("Error extracting {file}")]
-    Extract { file: PathBuf, source: ZipError },
+    #[error("Error extracting {file}: {msg}")]
+    Extract {
+        file: PathBuf,
+        msg: String,
+        source: std::io::Error,
+    },
     #[error("process_dataset_operations: Error crreating EncryptedZipReader")]
     ProcessNewEncryptedZipReader { source: Box<DatasetError> },
     #[error("process_dataset_operations: Error unzipping")]
@@ -237,13 +241,8 @@ impl DatasetMetadata {
         trace!("Start process_dataset_operations");
         let fingerprint = Self::calculate_fingerprint(input)?;
         let extract_dir_with_context = extract_dir.join(datasetkind.as_ref());
-        let mut reader = EncryptedZipReader::new(
-            input,
-            password,
-            &extract_dir_with_context,
-            zip_temp_dir_path,
-        )
-        .map_err(|e| DatasetErrorImpl::ProcessNewEncryptedZipReader {
+        let mut reader = EncryptedZipReader::new(input, password, extract_dir, zip_temp_dir_path)
+            .map_err(|e| DatasetErrorImpl::ProcessNewEncryptedZipReader {
             source: Box::new(e),
         })?;
         trace!("Zip decrypter");
@@ -349,16 +348,63 @@ impl EncryptedZipReader {
             source: e,
         })?;
         let buf_reader = std::io::BufReader::new(f);
-        zip::ZipArchive::new(buf_reader)
-            .map_err(|e| DatasetErrorImpl::NewZipArchive {
-                file: self.temp_zip.to_path_buf(),
-                source: e,
-            })?
-            .extract(&self.target_dir)
-            .map_err(|e| DatasetErrorImpl::Extract {
+        let mut zip =
+            zip::ZipArchive::new(buf_reader).map_err(|e| DatasetErrorImpl::NewZipArchive {
                 file: self.temp_zip.to_path_buf(),
                 source: e,
             })?;
+
+        // Explicitly implement the extraction to avoid problem between Windows and Linux (Backslashes)
+        // Implementation is using the example: https://github.com/zip-rs/zip2/blob/master/examples/extract.rs
+        for i in 0..zip.len() {
+            let mut file = zip.by_index(i).unwrap();
+            let outpath = file.mangled_name();
+            let outpath = self.target_dir.join(outpath);
+            if file.is_dir() {
+                fs::create_dir_all(&outpath).map_err(|e| DatasetErrorImpl::Extract {
+                    file: self.temp_zip.to_path_buf(),
+                    msg: format!("Create dir {:?}", outpath),
+                    source: e,
+                })?;
+            } else {
+                if let Some(p) = outpath.parent()
+                    && !p.exists()
+                {
+                    fs::create_dir_all(p).map_err(|e| DatasetErrorImpl::Extract {
+                        file: self.temp_zip.to_path_buf(),
+                        msg: format!("Create dir {:?}", p),
+                        source: e,
+                    })?;
+                }
+                let mut outfile =
+                    fs::File::create(&outpath).map_err(|e| DatasetErrorImpl::Extract {
+                        file: self.temp_zip.to_path_buf(),
+                        msg: format!("Create file {:?}", outpath),
+                        source: e,
+                    })?;
+                io::copy(&mut file, &mut outfile).map_err(|e| DatasetErrorImpl::Extract {
+                    file: self.temp_zip.to_path_buf(),
+                    msg: format!("Extract file {:?}", outpath),
+                    source: e,
+                })?;
+            }
+            // Get and Set permissions
+            #[cfg(unix)]
+            {
+                use std::os::unix::fs::PermissionsExt;
+
+                if let Some(mode) = file.unix_mode() {
+                    fs::set_permissions(&outpath, fs::Permissions::from_mode(mode)).unwrap();
+                }
+            }
+        }
+
+        // This is not working (backslash problem)
+        /*zip.extract(&self.target_dir)
+        .map_err(|e| DatasetErrorImpl::Extract {
+            file: self.temp_zip.to_path_buf(),
+            source: e,
+        })?;*/
         Ok(self.target_dir.to_owned())
     }
 
@@ -378,8 +424,8 @@ impl EncryptedZipReader {
 mod test {
     use super::*;
     use crate::config::test::{
-        test_datasets_context_zip_path, test_datasets_path, test_decrypt_zip_password,
-        test_temp_dir_path, CONFIG_TEST,
+        CONFIG_TEST, test_datasets_context_zip_path, test_datasets_path, test_decrypt_zip_password,
+        test_temp_dir_path,
     };
     use std::ffi::OsString;
 
@@ -415,12 +461,12 @@ mod test {
     }
 
     #[test]
-    fn test_unzip() {
+    fn test_decryt_and_unzip() {
         let path = test_datasets_context_zip_path();
         let subdir_time =
             test_temp_dir_path().join(Local::now().format("%Y%m%d-%H%M%S").to_string());
         let _ = std::fs::create_dir(&subdir_time);
-        let target_dir = subdir_time.join("context");
+        let target_dir = subdir_time;
         let mut zip_reader = EncryptedZipReader::new(
             &path,
             test_decrypt_zip_password(),
@@ -430,6 +476,8 @@ mod test {
         .unwrap();
         let unzip_res = zip_reader.unzip();
         let path_res = unzip_res.unwrap();
-        assert_eq!(path_res, target_dir)
+        assert_eq!(path_res, target_dir);
+        assert!(path_res.join("context").exists());
+        assert!(!path_res.join("context").join("context").exists());
     }
 }
