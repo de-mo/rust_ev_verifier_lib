@@ -23,7 +23,11 @@ use crate::{
     data_structures::{
         ControlComponentBallotBoxPayload, ControlComponentShufflePayload,
         TallyComponentShufflePayload,
-        tally::{ech_0222::ECH0222, tally_component_votes_payload::TallyComponentVotesPayload},
+        mock::MockXmlTrait,
+        tally::{
+            ech_0222::{ECH0222, ECH0222Data},
+            tally_component_votes_payload::TallyComponentVotesPayload,
+        },
     },
     file_structure::{
         CompletnessTestTrait, FileStructureError, FileStructureErrorImpl, TallyDirectoryTrait,
@@ -73,6 +77,23 @@ impl MockTallyDirectory {
             bb_directories: bb_dirs,
             mocked_ech_0222: None,
         }
+    }
+
+    impl_mock_methods_for_mocked_data!(ech_0222, ECH0222);
+
+    #[allow(dead_code)]
+    /// Mock ElectionEventConfiguration data
+    pub fn mock_election_event_configuration_data(
+        &mut self,
+        closure: impl FnMut(&mut ECH0222Data) + Clone,
+    ) {
+        self.mock_ech_0222(|d| d.set_data(closure.clone()));
+    }
+
+    #[allow(dead_code)]
+    /// Mock ElectionEventConfiguration raw data (string)
+    pub fn mock_election_event_configuration_string(&mut self, new_str: String) {
+        self.mock_ech_0222(|d| d.set_raw(new_str.clone()));
     }
 
     pub fn bb_directories_mut(&mut self) -> &mut [MockBBDirectory] {

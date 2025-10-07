@@ -24,10 +24,13 @@ use crate::{
         ElectionEventContextPayload,
         context::{
             control_component_public_keys_payload::ControlComponentPublicKeysPayload,
-            election_event_configuration::ElectionEventConfiguration,
+            election_event_configuration::{
+                ElectionEventConfiguration, ElectionEventConfigurationData,
+            },
             setup_component_public_keys_payload::SetupComponentPublicKeysPayload,
             setup_component_tally_data_payload::SetupComponentTallyDataPayload,
         },
+        mock::MockXmlTrait,
     },
     file_structure::{
         CompletnessTestTrait, ContextDirectory, ContextDirectoryTrait, FileStructureError,
@@ -91,6 +94,21 @@ impl MockContextDirectory {
     impl_mock_methods_for_mocked_data!(election_event_context_payload, ElectionEventContextPayload);
 
     impl_mock_methods_for_mocked_data!(election_event_configuration, ElectionEventConfiguration);
+
+    #[allow(dead_code)]
+    /// Mock ElectionEventConfiguration data
+    pub fn mock_election_event_configuration_data(
+        &mut self,
+        closure: impl FnMut(&mut ElectionEventConfigurationData) + Clone,
+    ) {
+        self.mock_election_event_configuration(|d| d.set_data(closure.clone()));
+    }
+
+    #[allow(dead_code)]
+    /// Mock ElectionEventConfiguration raw data (string)
+    pub fn mock_election_event_configuration_string(&mut self, new_str: String) {
+        self.mock_election_event_configuration(|d| d.set_raw(new_str.clone()));
+    }
 
     impl_mock_methods_for_mocked_group!(
         control_component_public_keys_payload,
@@ -422,5 +440,22 @@ mod test {
             4
         );
         assert!(it.next().is_none());
+    }
+
+    #[test]
+    fn test_mock_config() {
+        let mut mock_dir =
+            MockContextDirectory::new(test_datasets_context_path().as_path().parent().unwrap());
+        mock_dir.mock_election_event_configuration_data(|d| d.header.voter_total = 10000);
+        assert_eq!(
+            mock_dir
+                .election_event_configuration()
+                .unwrap()
+                .get_data()
+                .unwrap()
+                .header
+                .voter_total,
+            10000
+        );
     }
 }

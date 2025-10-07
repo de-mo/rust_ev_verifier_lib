@@ -20,8 +20,8 @@ mod vote;
 use super::super::{DataStructureError, VerifierDataDecode};
 use crate::{
     data_structures::{
-        xml::{ElementChildren, XMLData},
         DataStructureErrorImpl, VerifierDataToTypeTrait, VerifierDataType,
+        xml::{ElementChildren, XMLData},
     },
     direct_trust::{CertificateAuthority, VerifiySignatureTrait, VerifiyXMLSignatureTrait},
 };
@@ -42,10 +42,7 @@ pub struct ElectionEventConfigurationData {
     pub register: Vec<Voter>,
 }
 
-#[derive(Debug, Clone)]
-pub struct ElectionEventConfiguration {
-    inner: XMLData<ElectionEventConfigurationData, DataStructureError>,
-}
+pub type ElectionEventConfiguration = XMLData<ElectionEventConfigurationData, DataStructureError>;
 
 impl VerifierDataToTypeTrait for ElectionEventConfiguration {
     fn data_type() -> crate::data_structures::VerifierDataType {
@@ -110,20 +107,6 @@ pub struct ElectionGroupBallot {
     pub election_informations: Vec<ElectionInformation>,
 }
 
-impl ElectionEventConfiguration {
-    /// Get the data behind the electionEventConfiguration
-    pub fn get_data(&self) -> Result<Arc<ElectionEventConfigurationData>, DataStructureError> {
-        self.inner.get_data()
-    }
-
-    /// Unwrap the data behind the electionEventConfiguration
-    ///
-    /// Panic if the data cannot be created
-    pub fn unwrap_data(&self) -> Arc<ElectionEventConfigurationData> {
-        self.get_data().unwrap()
-    }
-}
-
 impl ElectionEventConfigurationData {
     fn list_of_test_ballot_boxes(&self) -> Result<Vec<&str>, DataStructureError> {
         Ok(self
@@ -174,9 +157,7 @@ impl VerifyDomainTrait<String> for ElectionEventConfiguration {}
 
 impl VerifierDataDecode for ElectionEventConfiguration {
     fn decode_xml<'a>(s: String) -> Result<Self, DataStructureError> {
-        Ok(Self {
-            inner: XMLData::new(s.as_str(), decode_xml),
-        })
+        Ok(XMLData::new(s.as_str(), decode_xml))
     }
 }
 
@@ -400,7 +381,7 @@ impl VerifiyXMLSignatureTrait<'_> for ElectionEventConfiguration {
     }
 
     fn get_data_str(&self) -> Option<Arc<String>> {
-        self.inner.get_raw()
+        self.get_raw()
     }
 }
 
@@ -488,7 +469,7 @@ mod test {
         let data_res = get_data_res();
         assert!(data_res.is_ok(), "{:?}", data_res.unwrap_err());
         let data = data_res.unwrap();
-        assert_eq!(data.unwrap_data().as_ref().header.voter_total, 43);
+        assert_eq!(data.get_data().unwrap().as_ref().header.voter_total, 43);
     }
 
     #[test]
@@ -509,7 +490,7 @@ mod test {
     #[test]
     fn test_voters() {
         let ec = get_data_res().unwrap();
-        let data = ec.unwrap_data();
+        let data = ec.get_data().unwrap();
         let mut it = data.register.iter();
         assert_eq!(it.count(), 43);
         it = data.register.iter();
@@ -519,7 +500,7 @@ mod test {
     #[test]
     fn test_authorizations() {
         let ec = get_data_res().unwrap();
-        let data = ec.unwrap_data();
+        let data = ec.get_data().unwrap();
         let mut it = data.authorizations.iter();
         assert_eq!(it.count(), 4);
         it = data.authorizations.iter();
@@ -539,7 +520,7 @@ mod test {
     #[test]
     fn test_votes() {
         let ec = get_data_res().unwrap();
-        let data = ec.unwrap_data();
+        let data = ec.get_data().unwrap();
         let mut it = data.contest.votes.iter();
         assert_eq!(it.count(), 1);
         it = data.contest.votes.iter();
@@ -549,7 +530,7 @@ mod test {
     #[test]
     fn test_elections() {
         let ec = get_data_res().unwrap();
-        let data = ec.unwrap_data();
+        let data = ec.get_data().unwrap();
         let mut it = data.contest.election_groups.iter();
         assert_eq!(it.count(), 2);
         it = data.contest.election_groups.iter();
@@ -566,7 +547,7 @@ mod test {
     #[test]
     fn test_manual_data() {
         let ec = get_data_res().unwrap();
-        let data = ec.unwrap_data();
+        let data = ec.get_data().unwrap();
         let manual_data =
             ManuelVerificationInputFromConfiguration::try_from(data.as_ref()).unwrap();
         assert_eq!(

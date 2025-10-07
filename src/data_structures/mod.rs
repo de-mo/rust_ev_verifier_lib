@@ -25,15 +25,19 @@ mod serde;
 pub mod tally;
 mod xml;
 
+#[cfg(test)]
+pub use xml::mock;
+
 pub use self::{
     context::{
-        election_event_context_payload::ElectionEventContextPayload, VerifierContextDataType,
+        VerifierContextDataType, election_event_context_payload::ElectionEventContextPayload,
     },
     dataset::DatasetType,
     tally::{
+        VerifierTallyDataType,
         control_component_ballot_box_payload::ControlComponentBallotBoxPayload,
         control_component_shuffle_payload::ControlComponentShufflePayload,
-        tally_component_shuffle_payload::TallyComponentShufflePayload, VerifierTallyDataType,
+        tally_component_shuffle_payload::TallyComponentShufflePayload,
     },
 };
 use crate::config::VerifierConfig;

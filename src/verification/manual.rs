@@ -166,7 +166,7 @@ impl<D: VerificationDirectoryTrait> ManualVerificationsForAllPeriod<D> {
             }
         })?;
         let manual_inputs = ManuelVerificationInputFromConfiguration::try_from(
-            ee_config.as_ref().unwrap_data().as_ref(),
+            ee_config.as_ref().get_data().unwrap().as_ref(),
         )
         .map_err(|e| VerificationErrorImpl::VerifInputsNewAll { source: e })?;
         Ok(Self {
