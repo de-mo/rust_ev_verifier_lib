@@ -15,24 +15,24 @@
 // <https://www.gnu.org/licenses/>.
 
 use super::{
+    FileGroupFileIter, MockFileGroupDataIter, MockFileGroupElement, MockedDataType,
     impl_mock_methods_for_mocked_data, impl_mock_methods_for_mocked_group,
     impl_trait_get_method_for_mocked_data, impl_trait_get_method_for_mocked_group,
-    FileGroupFileIter, MockFileGroupDataIter, MockFileGroupElement, MockedDataType,
 };
 use crate::{
     data_structures::{
-        tally::{ech_0222::ECH0222, tally_component_votes_payload::TallyComponentVotesPayload},
         ControlComponentBallotBoxPayload, ControlComponentShufflePayload,
         TallyComponentShufflePayload,
+        tally::{ech_0222::ECH0222, tally_component_votes_payload::TallyComponentVotesPayload},
     },
     file_structure::{
+        CompletnessTestTrait, FileStructureError, FileStructureErrorImpl, TallyDirectoryTrait,
         file::File,
         file_group::FileGroup,
         tally_directory::{
-            impl_completness_test_trait_for_tally, impl_completness_test_trait_for_tally_bb,
-            BBDirectory, BBDirectoryTrait, TallyDirectory,
+            BBDirectory, BBDirectoryTrait, TallyDirectory, impl_completness_test_trait_for_tally,
+            impl_completness_test_trait_for_tally_bb,
         },
-        CompletnessTestTrait, FileStructureError, FileStructureErrorImpl, TallyDirectoryTrait,
     },
 };
 use paste::paste;
@@ -73,6 +73,10 @@ impl MockTallyDirectory {
             bb_directories: bb_dirs,
             mocked_ech_0222: None,
         }
+    }
+
+    pub fn bb_directories_mut(&mut self) -> &mut [MockBBDirectory] {
+        &mut self.bb_directories
     }
 }
 

@@ -15,29 +15,29 @@
 // <https://www.gnu.org/licenses/>.
 
 use super::{
+    FileGroupFileIter, MockFileGroupDataIter, MockFileGroupElement, MockedDataType,
     impl_mock_methods_for_mocked_data, impl_mock_methods_for_mocked_group,
     impl_trait_get_method_for_mocked_data, impl_trait_get_method_for_mocked_group,
-    FileGroupFileIter, MockFileGroupDataIter, MockFileGroupElement, MockedDataType,
 };
 use crate::{
     data_structures::{
+        ElectionEventContextPayload,
         context::{
             control_component_public_keys_payload::ControlComponentPublicKeysPayload,
             election_event_configuration::ElectionEventConfiguration,
             setup_component_public_keys_payload::SetupComponentPublicKeysPayload,
             setup_component_tally_data_payload::SetupComponentTallyDataPayload,
         },
-        ElectionEventContextPayload,
     },
     file_structure::{
+        CompletnessTestTrait, ContextDirectory, ContextDirectoryTrait, FileStructureError,
+        FileStructureErrorImpl,
         context_directory::{
-            impl_completness_test_trait_for_context, impl_completness_test_trait_for_context_vcs,
-            ContextVCSDirectory, ContextVCSDirectoryTrait,
+            ContextVCSDirectory, ContextVCSDirectoryTrait, impl_completness_test_trait_for_context,
+            impl_completness_test_trait_for_context_vcs,
         },
         file::File,
         file_group::FileGroup,
-        CompletnessTestTrait, ContextDirectory, ContextDirectoryTrait, FileStructureError,
-        FileStructureErrorImpl,
     },
 };
 use paste::paste;
@@ -96,6 +96,10 @@ impl MockContextDirectory {
         control_component_public_keys_payload,
         ControlComponentPublicKeysPayload
     );
+
+    pub fn vcs_directories_mut(&mut self) -> &mut [MockContextVCSDirectory] {
+        &mut self.vcs_directories
+    }
 }
 
 impl ContextDirectoryTrait for MockContextDirectory {

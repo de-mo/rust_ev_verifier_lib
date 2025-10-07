@@ -246,10 +246,10 @@ impl VerifierConfig {
 pub(crate) mod test {
     use super::*;
     use crate::{
-        direct_trust::CertificateAuthority,
-        file_structure::{mock::MockVerificationDirectory, VerificationDirectory},
-        verification::VerificationPeriod,
         Report,
+        direct_trust::CertificateAuthority,
+        file_structure::{VerificationDirectory, mock::MockVerificationDirectory},
+        verification::VerificationPeriod,
     };
     use lazy_static::lazy_static;
     use rust_ev_system_library::rust_ev_crypto_primitives::prelude::direct_trust::Keystore as BasisKeystore;
@@ -377,7 +377,7 @@ pub(crate) mod test {
 
     #[allow(dead_code)]
     pub(crate) fn get_test_verifier_mock_tally_dir() -> MockVerificationDirectory {
-        MockVerificationDirectory::new(&VerificationPeriod::Setup, &test_datasets_path())
+        MockVerificationDirectory::new(&VerificationPeriod::Tally, &test_datasets_path())
     }
 
     pub(crate) fn get_verifier_direct_trust_path() -> PathBuf {
