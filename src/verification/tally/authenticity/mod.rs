@@ -20,12 +20,12 @@ use super::super::{
 use crate::{
     config::VerifierConfig,
     file_structure::{
-        tally_directory::{BBDirectoryTrait, TallyDirectoryTrait},
         VerificationDirectoryTrait,
+        tally_directory::{BBDirectoryTrait, TallyDirectoryTrait},
     },
     verification::{
-        meta_data::VerificationMetaDataList, result::VerificationResult,
-        verify_signature_for_object, VerificationError, VerificationErrorImpl,
+        VerificationError, VerificationErrorImpl, meta_data::VerificationMetaDataList,
+        result::VerificationResult, verify_signature_for_object,
     },
 };
 
@@ -207,8 +207,13 @@ fn fn_0705_verify_signature_ech0222<D: VerificationDirectoryTrait>(
 
 #[cfg(test)]
 mod test {
+    use rust_ev_system_library::rust_ev_crypto_primitives::prelude::Integer;
+
     use super::*;
-    use crate::config::test::{get_test_verifier_tally_dir as get_verifier_dir, CONFIG_TEST};
+    use crate::config::test::{
+        CONFIG_TEST, get_test_verifier_mock_tally_dir,
+        get_test_verifier_tally_dir as get_verifier_dir,
+    };
 
     #[test]
     fn test_0701() {
@@ -288,5 +293,109 @@ mod test {
             }
         }
         assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_0701_changed() {
+        let mut mock_dir = get_test_verifier_mock_tally_dir();
+        mock_dir
+            .unwrap_tally_mut()
+            .bb_directories_mut()
+            .get_mut(0)
+            .unwrap()
+            .mock_control_component_ballot_box_payload(1, |d| {
+                d.encryption_group.set_p(&Integer::from(1234usize));
+            });
+        let mut result = VerificationResult::new();
+        fn_0701_verify_signature_control_component_ballot_box(&mock_dir, &CONFIG_TEST, &mut result);
+        dbg!(&result);
+        assert!(!result.is_ok());
+        assert!(!result.has_errors());
+        assert_eq!(result.failures().len(), 1);
+    }
+
+    #[test]
+    fn test_0702_changed() {
+        let mut mock_dir = get_test_verifier_mock_tally_dir();
+        mock_dir
+            .unwrap_tally_mut()
+            .bb_directories_mut()
+            .get_mut(0)
+            .unwrap()
+            .mock_control_component_shuffle_payload(1, |d| {
+                d.encryption_group.set_p(&Integer::from(1234usize));
+            });
+        let mut result = VerificationResult::new();
+        fn_0702_verify_verify_signature_control_component_shuffle(
+            &mock_dir,
+            &CONFIG_TEST,
+            &mut result,
+        );
+        dbg!(&result);
+        assert!(!result.is_ok());
+        assert!(!result.has_errors());
+        assert_eq!(result.failures().len(), 1);
+    }
+
+    #[test]
+    fn test_0703_changed() {
+        let mut mock_dir = get_test_verifier_mock_tally_dir();
+        mock_dir
+            .unwrap_tally_mut()
+            .bb_directories_mut()
+            .get_mut(0)
+            .unwrap()
+            .mock_tally_component_shuffle_payload(|d| {
+                d.encryption_group.set_p(&Integer::from(1234usize));
+            });
+        let mut result = VerificationResult::new();
+        fn_0703_verify_signature_tally_component_shuffle(&mock_dir, &CONFIG_TEST, &mut result);
+        dbg!(&result);
+        assert!(!result.is_ok());
+        assert!(!result.has_errors());
+        assert_eq!(result.failures().len(), 1);
+    }
+
+    #[test]
+    fn test_0704_changed() {
+        let mut mock_dir = get_test_verifier_mock_tally_dir();
+        mock_dir
+            .unwrap_tally_mut()
+            .bb_directories_mut()
+            .get_mut(0)
+            .unwrap()
+            .mock_tally_component_votes_payload(|d| {
+                d.encryption_group.set_p(&Integer::from(1234usize));
+            });
+        let mut result = VerificationResult::new();
+        fn_0704_verify_signature_tally_component_votes(&mock_dir, &CONFIG_TEST, &mut result);
+        assert!(!result.is_ok());
+        assert!(!result.has_errors());
+        assert_eq!(result.failures().len(), 1);
+    }
+
+    #[test]
+    fn test_0705_changed() {
+        let mut mock_dir = get_test_verifier_mock_tally_dir();
+        let input = mock_dir
+            .unwrap_tally_mut()
+            .ech_0222()
+            .unwrap()
+            .get_raw()
+            .unwrap()
+            .as_ref()
+            .clone();
+        let new_input = input.replace(
+            "<eCH-0058:manufacturer>SwissPost</eCH-0058:manufacturer>",
+            "<eCH-0058:manufacturer>Die Schweizerische Post</eCH-0058:manufacturer>",
+        );
+        mock_dir
+            .unwrap_tally_mut()
+            .mock_mock_ech_0222_raw(new_input);
+        let mut result = VerificationResult::new();
+        fn_0705_verify_signature_ech0222(&mock_dir, &CONFIG_TEST, &mut result);
+        assert!(!result.is_ok());
+        assert!(!result.has_errors());
+        assert_eq!(result.failures().len(), 1);
     }
 }

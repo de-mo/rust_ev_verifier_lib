@@ -83,16 +83,13 @@ impl MockTallyDirectory {
 
     #[allow(dead_code)]
     /// Mock ElectionEventConfiguration data
-    pub fn mock_election_event_configuration_data(
-        &mut self,
-        closure: impl FnMut(&mut ECH0222Data) + Clone,
-    ) {
+    pub fn mock_mock_ech_0222_data(&mut self, closure: impl FnMut(&mut ECH0222Data) + Clone) {
         self.mock_ech_0222(|d| d.set_data(closure.clone()));
     }
 
     #[allow(dead_code)]
     /// Mock ElectionEventConfiguration raw data (string)
-    pub fn mock_election_event_configuration_string(&mut self, new_str: String) {
+    pub fn mock_mock_ech_0222_raw(&mut self, new_str: String) {
         self.mock_ech_0222(|d| d.set_raw(new_str.clone()));
     }
 
