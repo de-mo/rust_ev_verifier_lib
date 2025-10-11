@@ -114,6 +114,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "build_html"
+version = "2.7.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "10b322c8c13b6b775e5befd834d2a27c683506f1100b56a7b39d33c28024ba54"
+
+[[package]]
 name = "bumpalo"
 version = "3.19.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1104,6 +1110,7 @@ dependencies = [
 name = "rust_ev_verifier_application_lib"
 version = "0.4.0"
 dependencies = [
+ "build_html",
  "chrono",
  "derive-getters",
  "rayon",
