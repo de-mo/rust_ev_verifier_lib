@@ -302,13 +302,13 @@ lines.";
     #[test]
     fn generate_txt_report() {
         let dir = std::env::temp_dir();
-        let options = ReportOutputOptionsBuilder::new()
+        let options = ReportOutputOptionsBuilder::default()
             .add_output_type(ReportOutputType::Txt)
-            .set_dir(dir.as_path())
-            .set_filename_without_extension("test_report")
-            .set_title("Test Report")
-            .set_logo_bytes(&[])
-            .set_nb_electoral_board(3)
+            .directory(dir.as_path())
+            .filename_without_extension("test_report")
+            .title("Test Report")
+            .logo_bytes(&[])
+            .nb_electoral_board(3)
             .build()
             .unwrap();
 
@@ -329,12 +329,12 @@ lines.";
         let dir = PathBuf::from(".").join("test_temp_dir");
         let now: String = Local::now().format("%Y%m%d_%H%M%S").to_string();
         let filenname = format!("test_report_{}", now);
-        let options = ReportOutputOptionsBuilder::new()
+        let options = ReportOutputOptionsBuilder::default()
             .add_output_type(ReportOutputType::Html)
-            .set_dir(dir.as_path())
-            .set_filename_without_extension(filenname.as_str())
-            .set_title("Test Report")
-            .set_nb_electoral_board(3)
+            .directory(dir.as_path())
+            .filename_without_extension(filenname.as_str())
+            .title("Test Report")
+            .nb_electoral_board(3)
             .build()
             .unwrap();
 
@@ -351,13 +351,13 @@ lines.";
         let now: String = Local::now().format("%Y%m%d_%H%M%S").to_string();
         let filenname = format!("test_report_with_logo_{}", now);
         let logo_bytes = test_logo();
-        let options = ReportOutputOptionsBuilder::new()
+        let options = ReportOutputOptionsBuilder::default()
             .add_output_type(ReportOutputType::Html)
-            .set_dir(dir.as_path())
-            .set_filename_without_extension(filenname.as_str())
-            .set_title("Test Report")
-            .set_logo_bytes(&logo_bytes)
-            .set_nb_electoral_board(3)
+            .directory(dir.as_path())
+            .filename_without_extension(filenname.as_str())
+            .title("Test Report")
+            .logo_bytes(&logo_bytes)
+            .nb_electoral_board(3)
             .build()
             .unwrap();
 
@@ -375,16 +375,16 @@ lines.";
         let filenname = format!("test_report_with_logo_{}", now);
         let logo_bytes = test_logo();
         let chrome_path = PathBuf::from(".").join("test_data").join("chrome.exe.txt");
-        let options = ReportOutputOptionsBuilder::new()
+        let options = ReportOutputOptionsBuilder::default()
             .add_output_type(ReportOutputType::Pdf)
-            .set_dir(dir.as_path())
-            .set_filename_without_extension(filenname.as_str())
-            .set_title("Test Report")
-            .set_logo_bytes(&logo_bytes)
-            .set_nb_electoral_board(3)
-            .set_pdf_options(
-                PDFReportOptionsBuilder::new()
-                    .set_path_to_browser(&chrome_path)
+            .directory(dir.as_path())
+            .filename_without_extension(filenname.as_str())
+            .title("Test Report")
+            .logo_bytes(&logo_bytes)
+            .nb_electoral_board(3)
+            .pdf_options(
+                PDFReportOptionsBuilder::default()
+                    .path_to_browser(&chrome_path)
                     .build()
                     .unwrap(),
             )

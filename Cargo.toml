@@ -37,6 +37,7 @@ strum = { version = "0.27", features = ["derive"] }
 chrono = "0.4"
 typed-builder = "0.22"
 derive-getters = "0.5"
+derive_builder = "0.20"
 
 [dependencies]
 rust_ev_system_library.workspace = true

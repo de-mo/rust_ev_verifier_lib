@@ -24,6 +24,7 @@ strum.workspace = true
 chrono.workspace = true
 typed-builder.workspace = true
 derive-getters.workspace = true
+derive_builder.workspace = true
 build_html = "2.7.0"
 headless_chrome = "1"
 
