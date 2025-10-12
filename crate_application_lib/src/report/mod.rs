@@ -21,7 +21,8 @@ mod report_output_data;
 use super::{RunnerError, run_information::RunInformation};
 pub use report_config::{ReportConfig, ReportConfigBuilder};
 pub use report_output::{
-    ReportOutput, ReportOutputOptions, ReportOutputOptionsBuilder, ReportOutputType,
+    PDFReportOptions, PDFReportOptionsBuilder, ReportOutput, ReportOutputOptions,
+    ReportOutputOptionsBuilder, ReportOutputType,
 };
 pub use report_output_data::ReportOutputData;
 use report_output_data::{
