@@ -20,7 +20,9 @@ use derive_builder::{Builder, UninitializedFieldError};
 use headless_chrome::Browser;
 use rust_ev_system_library::rust_ev_crypto_primitives::prelude::{ByteArray, EncodeTrait};
 use std::ffi::OsStr;
+use std::fs;
 use std::path::{Path, PathBuf};
+use tracing::info;
 
 /// Options for report output
 #[derive(Debug, Clone, Builder)]
@@ -87,6 +89,19 @@ impl<'a> ReportOutputOptions<'a> {
     pub fn pdf_options<'b>(&'b self) -> Option<&'b PDFReportOptions<'a>> {
         self.pdf_options.as_ref()
     }
+
+    pub fn signatures(&self) -> Vec<String> {
+        match self.explicit_electoral_board_members().len() {
+            0 => (0..(self.nb_electoral_board()))
+                .map(|n| format!("Member {}", n + 1))
+                .collect::<Vec<_>>(),
+            _ => self
+                .explicit_electoral_board_members()
+                .iter()
+                .map(|m| m.to_string())
+                .collect::<Vec<_>>(),
+        }
+    }
 }
 
 impl<'a> ReportOutputOptionsBuilder<'a> {
@@ -133,12 +148,21 @@ impl<'a> ReportOutputOptionsBuilder<'a> {
     fn build_impl(self) -> Result<ReportOutputOptions<'a>, ReportErrorImpl> {
         let dir = match self.directory {
             Some(dir) => {
-                if dir.is_dir() {
-                    dir
-                } else {
+                if dir.is_file() {
                     return Err(ReportErrorImpl::ReportOutputOptions(
-                        "The output directory is not a directory".to_string(),
+                        "The output directory is a file".to_string(),
                     ));
+                } else {
+                    if !dir.exists() {
+                        fs::create_dir_all(dir).map_err(|e| {
+                            ReportErrorImpl::ReportOutputOptions(format!(
+                                "Failed to create output directory: {}",
+                                e
+                            ))
+                        })?;
+                        info!("Created output directory: {}", dir.display());
+                    }
+                    dir
                 }
             }
             None => {
@@ -212,7 +236,7 @@ pub struct PDFReportOptions<'a> {
 
 impl From<UninitializedFieldError> for ReportError {
     fn from(ufe: UninitializedFieldError) -> Self {
-        ReportErrorImpl::ReportOutputOptions(ufe.to_string()).into()
+        ReportErrorImpl::ReportOutputOptions(format!("{ufe:?}")).into()
     }
 }
 

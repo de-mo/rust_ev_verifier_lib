@@ -24,6 +24,7 @@ use build_html::{
     TableCell, TableCellType, TableRow,
 };
 pub use options::*;
+use tracing::info;
 
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, strum::Display, PartialOrd, Ord)]
 pub enum ReportOutputType {
@@ -84,6 +85,8 @@ impl<'a, 'b> ReportOutput<'a, 'b> {
     fn generate_txt(&self) -> Result<Vec<u8>, ReportErrorImpl> {
         let mut content: String = self.options.title().to_string() + "\n\n";
         content.push_str(&self.report_data.output_to_string(4));
+        content.push_str("\n Signatures:\n\n");
+        content.push_str(&self.options.signatures().join("\n\n"));
         Ok(content.into_bytes())
     }
 
@@ -111,21 +114,11 @@ impl<'a, 'b> ReportOutput<'a, 'b> {
             section_container
         });
 
-        let signatures = match self.options.explicit_electoral_board_members().len() {
-            0 => (0..(self.options.nb_electoral_board()))
-                .map(|n| format!("Member {}", n + 1))
-                .collect::<Vec<_>>(),
-            _ => self
-                .options
-                .explicit_electoral_board_members()
-                .iter()
-                .map(|m| m.to_string())
-                .collect::<Vec<_>>(),
-        };
+        let signatures = self.options.signatures();
         let style_row = format!("width:{}%", 100 / signatures.len());
 
         let mut signature_header_row = TableRow::new();
-        for signature in signatures {
+        for signature in signatures.iter() {
             signature_header_row.add_cell(
                 TableCell::new(TableCellType::Header)
                     .with_attributes(vec![("style", style_row.as_str())])
@@ -233,6 +226,7 @@ impl<'a, 'b> ReportOutput<'a, 'b> {
                     source: e,
                 })
             })?;
+            info!("Generated report {}: {}", output_type, filepath.display());
         }
         Ok(())
     }
