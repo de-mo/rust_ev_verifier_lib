@@ -182,6 +182,24 @@ impl ReportOutputDataBlock {
     pub fn entries(&self) -> &[ReportOutputDataEntry] {
         &self.entries
     }
+
+    /// Get all entries of type [ReportOutputDataEntry::KeyValue]
+    pub fn key_value_entries(&self) -> Vec<(&str, &str)> {
+        self.entries()
+            .iter()
+            .filter(|e| e.is_key_value())
+            .map(|entry| entry.unwrap_key_value())
+            .collect()
+    }
+
+    /// Get all entries of type [ReportOutputDataEntry::OnlyValue]
+    pub fn only_value_entries(&self) -> Vec<&str> {
+        self.entries()
+            .iter()
+            .filter(|e| !e.is_key_value())
+            .map(|entry| entry.unwrap_only_value())
+            .collect()
+    }
 }
 
 /// Store whole Report output

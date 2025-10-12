@@ -16,11 +16,14 @@
 
 use std::path::Path;
 
-use build_html::{Container, ContainerType, Html, HtmlContainer, HtmlPage, Table};
-
 use super::{OutputToString, ReportError, ReportErrorImpl, ReportOutputData};
+use build_html::{
+    Container, ContainerType, Html, HtmlContainer, HtmlElement, HtmlPage, HtmlTag, Table,
+    TableCell, TableCellType, TableRow,
+};
+use rust_ev_system_library::rust_ev_crypto_primitives::prelude::{ByteArray, EncodeTrait};
 
-#[derive(Debug, Clone, Default, PartialEq, Eq, strum::Display)]
+#[derive(Debug, Clone, Default, PartialEq, Eq, strum::Display, PartialOrd, Ord)]
 pub enum ReportOutputType {
     #[default]
     #[strum(to_string = "txt")]
@@ -30,6 +33,29 @@ pub enum ReportOutputType {
     #[strum(to_string = "pdf")]
     Pdf,
 }
+
+const STYLE: &str = r#"
+    html {
+    font-family: Arial, Helvetica, sans-serif;
+    }
+    .content {
+        position:relative;
+    }
+    .logo {
+        position: absolute;
+        top: 0;
+        right: 0;
+        max-height: 100px;
+    }
+    .key_value_table {
+        border-collapse: collapse;
+    }
+    .key_value_table th, .key_value_table td {
+        border: 1px solid #ddd;
+        padding: 8px;
+        vertical-align: top;
+    }
+"#;
 
 /// Struct to handle report generation and output
 #[derive(Debug)]
@@ -54,27 +80,30 @@ impl<'a, 'b> ReportOutput<'a, 'b> {
     }
 
     fn gernerate_html(&self) -> Result<Vec<u8>, ReportErrorImpl> {
-        let contents = self.report_data.blocks().iter().map(|b| {
-            let mut table = Table::new();
-            for entry in b.entries().iter().filter(|e| e.is_key_value()) {
-                let (key, value) = entry.unwrap_key_value();
-                table.add_body_row(vec![key, value]);
+        let sections = self.report_data.blocks().iter().map(|b| {
+            let mut section_container =
+                Container::new(ContainerType::Div).with_header(2, b.title());
+
+            let key_value_entries = b.key_value_entries();
+            if !key_value_entries.is_empty() {
+                let mut table = Table::new().with_attributes(vec![("clas", "key_value_table")]);
+                for (key, value) in key_value_entries.iter() {
+                    table.add_body_row(vec![key, value]);
+                }
+                section_container.add_table(table);
             }
-            let elements_no_table = b.entries().iter().filter(|e| !e.is_key_value()).map(|e| {
-                Container::new(ContainerType::Div)
-                    .with_attributes([("style", "white-space:pre")])
-                    .with_raw(e.unwrap_only_value())
-            });
-            let mut container = Container::new(ContainerType::Div)
-                .with_header(2, b.title())
-                .with_table(table);
-            for elem in elements_no_table {
-                container.add_container(elem);
+
+            for elem in b.only_value_entries().iter() {
+                section_container.add_html(
+                    HtmlElement::new(HtmlTag::ParagraphText)
+                        .with_attribute("style", "white-space:pre")
+                        .with_raw(elem),
+                );
             }
-            container
+            section_container
         });
 
-        let signtures = match self.options.explicit_electoral_board_members.len() {
+        let signatures = match self.options.explicit_electoral_board_members.len() {
             0 => (0..(self.options.nb_electoral_board))
                 .map(|n| format!("Member {}", n + 1))
                 .collect::<Vec<_>>(),
@@ -85,22 +114,49 @@ impl<'a, 'b> ReportOutput<'a, 'b> {
                 .map(|m| m.to_string())
                 .collect::<Vec<_>>(),
         };
-        let signature_table = Table::new().with_body_row(signtures);
+        let style_row = format!("width:{}%", 100 / signatures.len());
 
-        let signature = Container::new(ContainerType::Div)
-            .with_header(2, "Signature")
+        let mut signature_header_row = TableRow::new();
+        for signature in signatures {
+            signature_header_row.add_cell(
+                TableCell::new(TableCellType::Header)
+                    .with_attributes(vec![("style", style_row.as_str())])
+                    .with_raw(signature.as_str()),
+            )
+        }
+        let signature_table = Table::new()
+            .with_attributes(vec![("style", "width: 100%")])
+            .with_custom_header_row(signature_header_row);
+
+        let signature_container = Container::new(ContainerType::Div)
+            .with_header(2, "Signatures")
             .with_table(signature_table);
 
-        let mut page = HtmlPage::new()
-            .with_title(self.options.title)
-            .with_header(1, self.options.title);
+        let mut content =
+            Container::new(ContainerType::Div).with_attributes(vec![("class", "content")]);
 
-        for content in contents {
-            page.add_container(content);
+        if let Some(logo_base64) = self.options.logo_base64() {
+            let logo = HtmlElement::new(HtmlTag::Image)
+                .with_attribute(
+                    "src",
+                    format!("data:image/png;base64,{}", logo_base64).as_str(),
+                )
+                .with_attribute("alt", "Logo")
+                .with_attribute("class", "logo");
+            content.add_html(logo);
         }
-        page.add_container(signature);
 
-        Ok(page.to_html_string().into_bytes())
+        content.add_header(1, self.options.title);
+        for section in sections {
+            content.add_container(section);
+        }
+        content.add_container(signature_container);
+
+        Ok(HtmlPage::new()
+            .with_style(STYLE)
+            .with_container(content)
+            .to_html_string()
+            .into_bytes())
     }
 
     fn generate_pdf(&self) -> Result<Vec<u8>, ReportErrorImpl> {
@@ -141,9 +197,28 @@ pub struct ReportOutputOptions<'a> {
     logo_bytes: &'a [u8],
     nb_electoral_board: usize,
     explicit_electoral_board_members: Vec<&'a str>,
+    pdf_options: Option<PDFReportOptions>,
+}
+
+impl<'a> ReportOutputOptions<'a> {
+    /// Get the logo bytes
+    pub fn logo_base64(&self) -> Option<String> {
+        match self.logo_bytes {
+            [] => None,
+            bytes => Some(ByteArray::from_bytes(bytes).base64_encode().unwrap()),
+        }
+    }
 }
 
 /// Builder for [ReportOutputOptions]
+///
+/// Following rules apply:
+/// - If no output type is specified, defaults to [ReportOutputType::Txt]
+/// - The output directory, filename without extension and title are mandatory
+/// - If neither the number of electoral board members nor the explicit electoral board members are specified,
+///   defaults to 2 members with generic names "Member 1", "Member 2"
+/// - It is not allowed to specify both the number of electoral board members and the explicit electoral board members
+/// - If PDF output type is selected, PDF report options must be specified
 #[derive(Debug, Default)]
 pub struct ReportOutputOptionsBuilder<'a> {
     output_types: Option<Vec<ReportOutputType>>,
@@ -153,6 +228,7 @@ pub struct ReportOutputOptionsBuilder<'a> {
     logo_bytes: Option<&'a [u8]>,
     nb_electoral_board: Option<usize>,
     explicit_electoral_board_members: Option<Vec<&'a str>>,
+    pdf_options: Option<PDFReportOptions>,
 }
 
 impl<'a> ReportOutputOptionsBuilder<'a> {
@@ -164,7 +240,11 @@ impl<'a> ReportOutputOptionsBuilder<'a> {
     /// Add an output type to the report options
     pub fn add_output_type(mut self, output_type: ReportOutputType) -> Self {
         match self.output_types.as_mut() {
-            Some(v) => v.push(output_type),
+            Some(v) => {
+                v.push(output_type);
+                v.sort();
+                v.dedup();
+            }
             None => self.output_types = Some(vec![output_type]),
         }
         self
@@ -206,6 +286,12 @@ impl<'a> ReportOutputOptionsBuilder<'a> {
             Some(v) => v.push(member),
             None => self.explicit_electoral_board_members = Some(vec![member]),
         }
+        self
+    }
+
+    /// Set the PDF report options
+    pub fn set_pdf_options(mut self, pdf_options: PDFReportOptions) -> Self {
+        self.pdf_options = Some(pdf_options);
         self
     }
 
@@ -264,6 +350,19 @@ impl<'a> ReportOutputOptionsBuilder<'a> {
                 ));
             }
         };
+        if self.output_types.is_some()
+            && self
+                .output_types
+                .as_ref()
+                .unwrap()
+                .iter()
+                .any(|t| matches!(&t, ReportOutputType::Pdf))
+            && self.pdf_options.is_none()
+        {
+            return Err(ReportErrorImpl::ReportOutputOptions(
+                "PDF report options must be set when PDF output type is selected".to_string(),
+            ));
+        }
         Ok(ReportOutputOptions {
             output_types: self.output_types.unwrap_or(vec![ReportOutputType::Txt]),
             dir,
@@ -272,9 +371,18 @@ impl<'a> ReportOutputOptionsBuilder<'a> {
             logo_bytes,
             nb_electoral_board,
             explicit_electoral_board_members,
+            pdf_options: self.pdf_options,
         })
     }
 }
+
+/// Options specific to PDF report generation
+#[derive(Debug, Clone)]
+pub struct PDFReportOptions {}
+
+/// Builder for [PDFReportOptions]
+#[derive(Debug, Default)]
+pub struct PDFReportOptionsBuilder {}
 
 #[cfg(test)]
 mod test {
@@ -287,6 +395,22 @@ mod test {
         *,
     };
     use std::path::PathBuf;
+
+    const VALUE_MULTILINE: &str = r"This is a value
+that spans multiple
+lines.";
+
+    const VALUE_MULTILINE_2: &str = r"This is a second value
+that spans multiple
+lines.";
+
+    const VALUE_MULTILINE_3: &str = r"This is a third value
+that spans multiple
+lines.";
+
+    pub fn test_logo() -> Vec<u8> {
+        std::fs::read(PathBuf::from("").join("test_data").join("test_logo.png")).unwrap()
+    }
 
     pub fn test_sample() -> ReportOutputData {
         let block1 = ReportOutputDataBlock::new_with_tuples(
@@ -306,8 +430,19 @@ mod test {
             "ResultKey".to_string(),
             "ResultValue".to_string(),
         )));
-        block3.push(ReportOutputDataEntry::OnlyValue("Just a value".to_string()));
-        ReportOutputData::from_vec(vec![block1, block2, block3])
+        block3.push(ReportOutputDataEntry::OnlyValue(
+            VALUE_MULTILINE.to_string(),
+        ));
+        let mut block4 = ReportOutputDataBlock::new(
+            ReportOutputDataBlockTitle::VerificationErrors("test".to_string()),
+        );
+        block4.push(ReportOutputDataEntry::OnlyValue(
+            VALUE_MULTILINE_2.to_string(),
+        ));
+        block4.push(ReportOutputDataEntry::OnlyValue(
+            VALUE_MULTILINE_3.to_string(),
+        ));
+        ReportOutputData::from_vec(vec![block1, block2, block3, block4])
     }
 
     #[test]
@@ -346,7 +481,29 @@ mod test {
             .set_dir(dir.as_path())
             .set_filename_without_extension(filenname.as_str())
             .set_title("Test Report")
-            .set_logo_bytes(&[])
+            .set_nb_electoral_board(3)
+            .build()
+            .unwrap();
+
+        let report_data = test_sample();
+
+        let report_output = ReportOutput::new(options, &report_data);
+        let res_gen = report_output.generate();
+        assert!(res_gen.is_ok());
+    }
+
+    #[test]
+    fn generate_html_report_with_logo() {
+        let dir = PathBuf::from(".").join("test_temp_dir");
+        let now: String = Local::now().format("%Y%m%d_%H%M%S").to_string();
+        let filenname = format!("test_report_with_logo_{}", now);
+        let logo_bytes = test_logo();
+        let options = ReportOutputOptionsBuilder::new()
+            .add_output_type(ReportOutputType::Html)
+            .set_dir(dir.as_path())
+            .set_filename_without_extension(filenname.as_str())
+            .set_title("Test Report")
+            .set_logo_bytes(&logo_bytes)
             .set_nb_electoral_board(3)
             .build()
             .unwrap();
@@ -420,6 +577,40 @@ mod test_builder {
         assert_eq!(opts.output_types, vec![ReportOutputType::Txt]);
         assert_eq!(opts.nb_electoral_board, 2);
         assert_eq!(opts.explicit_electoral_board_members, Vec::<&str>::new());
+    }
+
+    #[test]
+    fn builder_many_output_types() {
+        let mut builder = ReportOutputOptionsBuilder::new();
+        builder = builder.add_output_type(ReportOutputType::Pdf);
+        builder = builder.add_output_type(ReportOutputType::Txt);
+        assert_eq!(
+            builder.output_types,
+            Some(vec![ReportOutputType::Txt, ReportOutputType::Pdf])
+        );
+        builder = builder.add_output_type(ReportOutputType::Txt);
+        assert_eq!(
+            builder.output_types,
+            Some(vec![ReportOutputType::Txt, ReportOutputType::Pdf])
+        );
+        builder = builder.add_output_type(ReportOutputType::Html);
+        assert_eq!(
+            builder.output_types,
+            Some(vec![
+                ReportOutputType::Txt,
+                ReportOutputType::Html,
+                ReportOutputType::Pdf
+            ])
+        );
+        let builder = builder.add_output_type(ReportOutputType::Html);
+        assert_eq!(
+            builder.output_types,
+            Some(vec![
+                ReportOutputType::Txt,
+                ReportOutputType::Html,
+                ReportOutputType::Pdf
+            ])
+        );
     }
 
     #[test]
