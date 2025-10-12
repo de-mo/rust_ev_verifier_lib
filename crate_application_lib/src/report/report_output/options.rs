@@ -19,7 +19,6 @@ use super::ReportOutputType;
 use derive_builder::{Builder, UninitializedFieldError};
 use headless_chrome::Browser;
 use rust_ev_system_library::rust_ev_crypto_primitives::prelude::{ByteArray, EncodeTrait};
-use std::ffi::OsStr;
 use std::fs;
 use std::path::{Path, PathBuf};
 use tracing::info;
@@ -232,6 +231,8 @@ impl<'a> ReportOutputOptionsBuilder<'a> {
 #[builder(pattern = "owned", build_fn(error = "ReportError"))]
 pub struct PDFReportOptions<'a> {
     path_to_browser: &'a Path,
+    #[builder(default = "true")]
+    sandbox: bool,
 }
 
 impl From<UninitializedFieldError> for ReportError {
@@ -241,30 +242,44 @@ impl From<UninitializedFieldError> for ReportError {
 }
 
 impl<'a> PDFReportOptions<'a> {
+    /// Returns a headless browser instance based on the options
+    ///
+    /// In test mode, uses the fetcher to get a headless browser installation.
     pub(super) fn browser(&self) -> Result<Browser, ReportErrorImpl> {
         if cfg!(test) {
             let fetcher_options = headless_chrome::FetcherOptions::default()
                 .with_install_dir(Some(PathBuf::from(".").join("test_temp_dir")));
             return Browser::new(
                 headless_chrome::LaunchOptionsBuilder::default()
-                    .args(vec![
-                        &OsStr::new("--disable-gpu"),
-                        &OsStr::new("--no-sandbox"),
-                        &OsStr::new("--headless"),
-                    ])
                     .fetcher_options(fetcher_options)
+                    .sandbox(false)
+                    .headless(true)
                     .build()
                     .map_err(|e| ReportErrorImpl::Browser {
-                        msg: "Failed to build options for headless Chrome".to_string(),
+                        msg: "Failed to build options for headless chrome".to_string(),
                         error: e.to_string(),
                     })?,
             )
             .map_err(|e| ReportErrorImpl::Browser {
-                msg: "Failed to launch headless Chrome".to_string(),
+                msg: "Failed to launch headless chrome".to_string(),
                 error: e.to_string(),
             });
         }
-        todo!("Implement PDF report browser for production with Windows and Linux Support")
+        Browser::new(
+            headless_chrome::LaunchOptionsBuilder::default()
+                .path(Some(self.path_to_browser.to_path_buf()))
+                .sandbox(self.sandbox)
+                .headless(true)
+                .build()
+                .map_err(|e| ReportErrorImpl::Browser {
+                    msg: "Failed to build options for headless browser".to_string(),
+                    error: e.to_string(),
+                })?,
+        )
+        .map_err(|e| ReportErrorImpl::Browser {
+            msg: "Failed to launch headless browser".to_string(),
+            error: e.to_string(),
+        })
     }
 }
 
