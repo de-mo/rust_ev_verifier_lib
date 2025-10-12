@@ -56,6 +56,8 @@ enum ReportErrorImpl {
     ReportOutputOptions(String),
     #[error("IO Error: {msg}")]
     IOError { msg: String, source: std::io::Error },
+    #[error("Chrome headless error: {msg} \n Error: {error}")]
+    Browser { msg: String, error: String },
 }
 
 /// Trait to collect the report information

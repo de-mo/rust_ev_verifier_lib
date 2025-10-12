@@ -16,8 +16,10 @@
 
 use super::super::{ReportError, ReportErrorImpl};
 use super::ReportOutputType;
+use headless_chrome::Browser;
 use rust_ev_system_library::rust_ev_crypto_primitives::prelude::{ByteArray, EncodeTrait};
-use std::path::Path;
+use std::ffi::OsStr;
+use std::path::{Path, PathBuf};
 
 /// Options for report output
 #[derive(Debug, Clone)]
@@ -29,7 +31,7 @@ pub struct ReportOutputOptions<'a> {
     logo_bytes: &'a [u8],
     nb_electoral_board: usize,
     explicit_electoral_board_members: Vec<&'a str>,
-    pdf_options: Option<PDFReportOptions>,
+    pdf_options: Option<PDFReportOptions<'a>>,
 }
 
 impl<'a> ReportOutputOptions<'a> {
@@ -100,7 +102,7 @@ pub struct ReportOutputOptionsBuilder<'a> {
     logo_bytes: Option<&'a [u8]>,
     nb_electoral_board: Option<usize>,
     explicit_electoral_board_members: Option<Vec<&'a str>>,
-    pdf_options: Option<PDFReportOptions>,
+    pdf_options: Option<PDFReportOptions<'a>>,
 }
 
 impl<'a> ReportOutputOptionsBuilder<'a> {
@@ -110,6 +112,8 @@ impl<'a> ReportOutputOptionsBuilder<'a> {
     }
 
     /// Add an output type to the report options
+    /// If PDF is added, HTML is also added automatically
+    /// Duplicates are ignored
     pub fn add_output_type(mut self, output_type: ReportOutputType) -> Self {
         match self.output_types.as_mut() {
             Some(v) => {
@@ -118,6 +122,9 @@ impl<'a> ReportOutputOptionsBuilder<'a> {
                 v.dedup();
             }
             None => self.output_types = Some(vec![output_type]),
+        }
+        if matches!(output_type, ReportOutputType::Pdf) {
+            return self.add_output_type(ReportOutputType::Html);
         }
         self
     }
@@ -162,7 +169,7 @@ impl<'a> ReportOutputOptionsBuilder<'a> {
     }
 
     /// Set the PDF report options
-    pub fn set_pdf_options(mut self, pdf_options: PDFReportOptions) -> Self {
+    pub fn set_pdf_options(mut self, pdf_options: PDFReportOptions<'a>) -> Self {
         self.pdf_options = Some(pdf_options);
         self
     }
@@ -222,13 +229,10 @@ impl<'a> ReportOutputOptionsBuilder<'a> {
                 ));
             }
         };
-        if self.output_types.is_some()
-            && self
-                .output_types
-                .as_ref()
-                .unwrap()
-                .iter()
-                .any(|t| matches!(&t, ReportOutputType::Pdf))
+        let output_types = self.output_types.unwrap_or(vec![ReportOutputType::Txt]);
+        if output_types
+            .iter()
+            .any(|t| matches!(&t, ReportOutputType::Pdf))
             && self.pdf_options.is_none()
         {
             return Err(ReportErrorImpl::ReportOutputOptions(
@@ -236,7 +240,7 @@ impl<'a> ReportOutputOptionsBuilder<'a> {
             ));
         }
         Ok(ReportOutputOptions {
-            output_types: self.output_types.unwrap_or(vec![ReportOutputType::Txt]),
+            output_types,
             dir,
             filename_without_extension,
             title,
@@ -250,11 +254,78 @@ impl<'a> ReportOutputOptionsBuilder<'a> {
 
 /// Options specific to PDF report generation
 #[derive(Debug, Clone)]
-pub struct PDFReportOptions {}
+pub struct PDFReportOptions<'a> {
+    path_to_browser: &'a Path,
+}
+
+impl<'a> PDFReportOptions<'a> {
+    pub(super) fn browser(&self) -> Result<Browser, ReportErrorImpl> {
+        if cfg!(test) {
+            let fetcher_options = headless_chrome::FetcherOptions::default()
+                .with_install_dir(Some(PathBuf::from(".").join("test_temp_dir")));
+            return Browser::new(
+                headless_chrome::LaunchOptionsBuilder::default()
+                    .args(vec![
+                        &OsStr::new("--disable-gpu"),
+                        &OsStr::new("--no-sandbox"),
+                        &OsStr::new("--headless"),
+                    ])
+                    .fetcher_options(fetcher_options)
+                    .build()
+                    .map_err(|e| ReportErrorImpl::Browser {
+                        msg: "Failed to build options for headless Chrome".to_string(),
+                        error: e.to_string(),
+                    })?,
+            )
+            .map_err(|e| ReportErrorImpl::Browser {
+                msg: "Failed to launch headless Chrome".to_string(),
+                error: e.to_string(),
+            });
+        }
+        todo!("Implement PDF report browser for production with Windows and Linux Support")
+    }
+}
 
 /// Builder for [PDFReportOptions]
 #[derive(Debug, Default)]
-pub struct PDFReportOptionsBuilder {}
+pub struct PDFReportOptionsBuilder<'a> {
+    path_to_browser: Option<&'a Path>,
+}
+
+impl<'a> PDFReportOptionsBuilder<'a> {
+    /// Create a new builder instance
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    /// Set the path to the browser executable
+    pub fn set_path_to_browser(mut self, path: &'a Path) -> Self {
+        self.path_to_browser = Some(path);
+        self
+    }
+
+    /// Build the [PDFReportOptions] from the builder
+    pub fn build(self) -> Result<PDFReportOptions<'a>, ReportError> {
+        self.build_impl().map_err(ReportError::from)
+    }
+
+    fn build_impl(self) -> Result<PDFReportOptions<'a>, ReportErrorImpl> {
+        let path_to_browser = match self.path_to_browser {
+            Some(p) => p,
+            None => {
+                return Err(ReportErrorImpl::ReportOutputOptions(
+                    "The path to the browser executable is not set".to_string(),
+                ));
+            }
+        };
+        if !path_to_browser.is_file() {
+            return Err(ReportErrorImpl::ReportOutputOptions(
+                "The path to the browser executable is not a file".to_string(),
+            ));
+        }
+        Ok(PDFReportOptions { path_to_browser })
+    }
+}
 
 #[cfg(test)]
 mod test {
@@ -263,6 +334,19 @@ mod test {
 
     fn test_dir() -> PathBuf {
         std::env::temp_dir()
+    }
+
+    #[test]
+    fn test_browser_in_test() {
+        let chrome_path = PathBuf::from(".").join("test_data").join("chrome.exe.txt");
+        let pdf_options = PDFReportOptionsBuilder::new()
+            .set_path_to_browser(&chrome_path)
+            .build()
+            .unwrap();
+        let browser_res = pdf_options.browser();
+        assert!(browser_res.is_ok());
+        let browser = browser_res.unwrap();
+        assert!(browser.get_process_id().is_some());
     }
 
     #[test]
@@ -292,12 +376,19 @@ mod test {
     #[test]
     fn builder_explicit_members_only() {
         let dir = test_dir();
+        let chrome_path = PathBuf::from(".").join("test_data").join("chrome.exe.txt");
         let builder = ReportOutputOptionsBuilder::new()
             .add_output_type(ReportOutputType::Pdf)
             .set_dir(dir.as_path())
             .set_filename_without_extension("report2")
             .set_title("Another Report")
             .set_logo_bytes(&[])
+            .set_pdf_options(
+                PDFReportOptionsBuilder::new()
+                    .set_path_to_browser(&chrome_path)
+                    .build()
+                    .unwrap(),
+            )
             .add_explicit_electoral_board_members("Alice")
             .add_explicit_electoral_board_members("Bob");
         let opts = builder.build().unwrap();
@@ -323,15 +414,27 @@ mod test {
     fn builder_many_output_types() {
         let mut builder = ReportOutputOptionsBuilder::new();
         builder = builder.add_output_type(ReportOutputType::Pdf);
-        builder = builder.add_output_type(ReportOutputType::Txt);
         assert_eq!(
             builder.output_types,
-            Some(vec![ReportOutputType::Txt, ReportOutputType::Pdf])
+            Some(vec![ReportOutputType::Html, ReportOutputType::Pdf])
         );
         builder = builder.add_output_type(ReportOutputType::Txt);
         assert_eq!(
             builder.output_types,
-            Some(vec![ReportOutputType::Txt, ReportOutputType::Pdf])
+            Some(vec![
+                ReportOutputType::Txt,
+                ReportOutputType::Html,
+                ReportOutputType::Pdf
+            ])
+        );
+        builder = builder.add_output_type(ReportOutputType::Txt);
+        assert_eq!(
+            builder.output_types,
+            Some(vec![
+                ReportOutputType::Txt,
+                ReportOutputType::Html,
+                ReportOutputType::Pdf
+            ])
         );
         builder = builder.add_output_type(ReportOutputType::Html);
         assert_eq!(

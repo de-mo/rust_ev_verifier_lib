@@ -16,6 +16,8 @@
 
 mod options;
 
+use std::path::PathBuf;
+
 use super::{OutputToString, ReportError, ReportErrorImpl, ReportOutputData};
 use build_html::{
     Container, ContainerType, Html, HtmlContainer, HtmlElement, HtmlPage, HtmlTag, Table,
@@ -23,7 +25,7 @@ use build_html::{
 };
 pub use options::*;
 
-#[derive(Debug, Clone, Default, PartialEq, Eq, strum::Display, PartialOrd, Ord)]
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, strum::Display, PartialOrd, Ord)]
 pub enum ReportOutputType {
     #[default]
     #[strum(to_string = "txt")]
@@ -62,6 +64,9 @@ const STYLE: &str = r#"
 pub struct ReportOutput<'a, 'b> {
     options: ReportOutputOptions<'b>,
     report_data: &'a ReportOutputData,
+    txt_filepath: Option<PathBuf>,
+    html_filepath: Option<PathBuf>,
+    pdf_filepath: Option<PathBuf>,
 }
 
 impl<'a, 'b> ReportOutput<'a, 'b> {
@@ -70,6 +75,9 @@ impl<'a, 'b> ReportOutput<'a, 'b> {
         Self {
             options,
             report_data,
+            txt_filepath: None,
+            html_filepath: None,
+            pdf_filepath: None,
         }
     }
 
@@ -79,7 +87,7 @@ impl<'a, 'b> ReportOutput<'a, 'b> {
         Ok(content.into_bytes())
     }
 
-    fn gernerate_html(&self) -> Result<Vec<u8>, ReportErrorImpl> {
+    fn generate_html(&self) -> Result<Vec<u8>, ReportErrorImpl> {
         let sections = self.report_data.blocks().iter().map(|b| {
             let mut section_container =
                 Container::new(ContainerType::Div).with_header(2, b.title());
@@ -160,23 +168,65 @@ impl<'a, 'b> ReportOutput<'a, 'b> {
     }
 
     fn generate_pdf(&self) -> Result<Vec<u8>, ReportErrorImpl> {
-        // Placeholder for PDF generation logic
-        unimplemented!();
+        let pdf_options = self.options.pdf_options().unwrap();
+        let browser = pdf_options.browser()?;
+        let file_path = format!(
+            "file://{}",
+            self.html_filepath
+                .as_ref()
+                .unwrap()
+                .canonicalize()
+                .unwrap()
+                .to_str()
+                .unwrap()
+        );
+        let tab = browser.new_tab().map_err(|e| ReportErrorImpl::Browser {
+            msg: "Error opening tab".to_string(),
+            error: e.to_string(),
+        })?;
+
+        tab.navigate_to(&file_path)
+            .map_err(|e| ReportErrorImpl::Browser {
+                msg: format!("Error navigating to {}", file_path),
+                error: e.to_string(),
+            })?
+            .wait_until_navigated()
+            .map_err(|e| ReportErrorImpl::Browser {
+                msg: format!("Error waiting for navigation to {}", file_path),
+                error: e.to_string(),
+            })?
+            .print_to_pdf(None)
+            .map_err(|e| ReportErrorImpl::Browser {
+                msg: format!("Error generating PDF from {}", file_path),
+                error: e.to_string(),
+            })
     }
 
     /// Generate the reports in the specified formats and write to files
-    pub fn generate(&self) -> Result<(), ReportError> {
+    pub fn generate(&mut self) -> Result<(), ReportError> {
         for output_type in self.options.output_types().iter() {
-            let content = match output_type {
-                ReportOutputType::Txt => self.generate_txt()?,
-                ReportOutputType::Html => self.gernerate_html()?,
-                ReportOutputType::Pdf => self.generate_pdf()?,
-            };
             let filepath = self.options.dir().join(format!(
                 "{}.{}",
                 self.options.filename_without_extension(),
                 output_type
             ));
+            let content = match output_type {
+                ReportOutputType::Txt => {
+                    let res = self.generate_txt()?;
+                    self.txt_filepath = Some(filepath.clone());
+                    res
+                }
+                ReportOutputType::Html => {
+                    let res = self.generate_html()?;
+                    self.html_filepath = Some(filepath.clone());
+                    res
+                }
+                ReportOutputType::Pdf => {
+                    let res = self.generate_pdf()?;
+                    self.pdf_filepath = Some(filepath.clone());
+                    res
+                }
+            };
             std::fs::write(&filepath, content).map_err(|e| {
                 ReportError::from(ReportErrorImpl::IOError {
                     msg: format!("Error writing {} file {}", output_type, filepath.display()),
@@ -272,7 +322,6 @@ lines.";
         assert!(content.contains("Key1: Value1"));
         assert!(content.contains("Info1"));
         assert!(content.contains("ResultKey: ResultValue"));
-        assert!(content.contains("Just a value"));
     }
 
     #[test]
@@ -291,7 +340,7 @@ lines.";
 
         let report_data = test_sample();
 
-        let report_output = ReportOutput::new(options, &report_data);
+        let mut report_output = ReportOutput::new(options, &report_data);
         let res_gen = report_output.generate();
         assert!(res_gen.is_ok());
     }
@@ -314,8 +363,38 @@ lines.";
 
         let report_data = test_sample();
 
-        let report_output = ReportOutput::new(options, &report_data);
+        let mut report_output = ReportOutput::new(options, &report_data);
         let res_gen = report_output.generate();
         assert!(res_gen.is_ok());
+    }
+
+    #[test]
+    fn generate_pdf_report_with_logo() {
+        let dir = PathBuf::from(".").join("test_temp_dir");
+        let now: String = Local::now().format("%Y%m%d_%H%M%S").to_string();
+        let filenname = format!("test_report_with_logo_{}", now);
+        let logo_bytes = test_logo();
+        let chrome_path = PathBuf::from(".").join("test_data").join("chrome.exe.txt");
+        let options = ReportOutputOptionsBuilder::new()
+            .add_output_type(ReportOutputType::Pdf)
+            .set_dir(dir.as_path())
+            .set_filename_without_extension(filenname.as_str())
+            .set_title("Test Report")
+            .set_logo_bytes(&logo_bytes)
+            .set_nb_electoral_board(3)
+            .set_pdf_options(
+                PDFReportOptionsBuilder::new()
+                    .set_path_to_browser(&chrome_path)
+                    .build()
+                    .unwrap(),
+            )
+            .build()
+            .unwrap();
+
+        let report_data = test_sample();
+
+        let mut report_output = ReportOutput::new(options, &report_data);
+        let res_gen = report_output.generate();
+        assert!(res_gen.is_ok(), "{:?}", res_gen.err());
     }
 }

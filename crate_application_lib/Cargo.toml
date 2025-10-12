@@ -24,5 +24,8 @@ strum.workspace = true
 chrono.workspace = true
 typed-builder.workspace = true
 derive-getters.workspace = true
-build_html.workspace = true
+build_html = "2.7.0"
+headless_chrome = "1"
 
+[dev-dependencies]
+headless_chrome = { version = "1", features = ["fetch"] }
