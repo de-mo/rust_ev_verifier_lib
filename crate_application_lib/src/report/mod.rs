@@ -15,25 +15,26 @@
 // <https://www.gnu.org/licenses/>.
 
 mod report_config;
-mod report_output;
 mod report_output_data;
+mod report_output_file;
 
 use super::{RunnerError, run_information::RunInformation};
 pub use report_config::{ReportConfig, ReportConfigBuilder};
-pub use report_output::{
-    PDFReportOptions, PDFReportOptionsBuilder, ReportOutput, ReportOutputOptions,
-    ReportOutputOptionsBuilder, ReportOutputType,
-};
 pub use report_output_data::ReportOutputData;
 use report_output_data::{
     OutputToString, ReportOutputDataBlock, ReportOutputDataBlockTitle, ReportOutputDataEntry,
+};
+use report_output_file::ReportOutputFile;
+pub use report_output_file::{
+    PDFReportOptions, PDFReportOptionsBuilder, ReportOutputFileOptions,
+    ReportOutputFileOptionsBuilder, ReportOutputFileType,
 };
 use rust_ev_verifier_lib::{
     DatasetTypeKind,
     file_structure::{VerificationDirectory, VerificationDirectoryTrait},
     verification::{ManualVerificationInformationTrait, ManualVerifications, VerificationPeriod},
 };
-use std::fmt::Display;
+use std::{fmt::Display, path::PathBuf};
 use thiserror::Error;
 use tracing::{Level, debug, error, info, trace, warn};
 
@@ -58,6 +59,11 @@ enum ReportErrorImpl {
     IOError { msg: String, source: std::io::Error },
     #[error("Chrome headless error: {msg} \n Error: {error}")]
     Browser { msg: String, error: String },
+    #[error("Error generating the report file {path}")]
+    ReportError {
+        path: PathBuf,
+        source: Box<ReportError>,
+    },
 }
 
 /// Trait to collect the report information
@@ -75,6 +81,17 @@ pub trait ReportInformationTrait {
                 source: Box::new(e),
             })?
             .output_to_string(tab_size))
+    }
+
+    /// Generate the report files according to the specified output options
+    ///
+    /// Returns a vector of [ReportError] encountered during the generation
+    fn generate_files(&self, output_options: &ReportOutputFileOptions) -> Vec<ReportError> {
+        let report_output = match self.to_report_output() {
+            Ok(ro) => ro,
+            Err(e) => return vec![e],
+        };
+        ReportOutputFile::new(output_options, &report_output).generate()
     }
 }
 

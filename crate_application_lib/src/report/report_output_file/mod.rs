@@ -24,10 +24,10 @@ use build_html::{
     TableCell, TableCellType, TableRow,
 };
 pub use options::*;
-use tracing::info;
+use tracing::{error, info};
 
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, strum::Display, PartialOrd, Ord)]
-pub enum ReportOutputType {
+pub enum ReportOutputFileType {
     #[default]
     #[strum(to_string = "txt")]
     Txt,
@@ -62,17 +62,20 @@ const STYLE: &str = r#"
 
 /// Struct to handle report generation and output
 #[derive(Debug)]
-pub struct ReportOutput<'a, 'b> {
-    options: ReportOutputOptions<'b>,
+pub struct ReportOutputFile<'a, 'b> {
+    options: &'b ReportOutputFileOptions<'b>,
     report_data: &'a ReportOutputData,
     txt_filepath: Option<PathBuf>,
     html_filepath: Option<PathBuf>,
     pdf_filepath: Option<PathBuf>,
 }
 
-impl<'a, 'b> ReportOutput<'a, 'b> {
+impl<'a, 'b> ReportOutputFile<'a, 'b> {
     /// Create a new ReportOutput instance
-    pub fn new(options: ReportOutputOptions<'b>, report_data: &'a ReportOutputData) -> Self {
+    pub fn new(
+        options: &'b ReportOutputFileOptions<'b>,
+        report_data: &'a ReportOutputData,
+    ) -> Self {
         Self {
             options,
             report_data,
@@ -196,39 +199,57 @@ impl<'a, 'b> ReportOutput<'a, 'b> {
     }
 
     /// Generate the reports in the specified formats and write to files
-    pub fn generate(&mut self) -> Result<(), ReportError> {
+    pub fn generate(&mut self) -> Vec<ReportError> {
+        let mut res = vec![];
         for output_type in self.options.output_types().iter() {
             let filepath = self.options.dir().join(format!(
                 "{}.{}",
                 self.options.filename_without_extension(),
                 output_type
             ));
-            let content = match output_type {
-                ReportOutputType::Txt => {
-                    let res = self.generate_txt()?;
+            let content_res = match output_type {
+                ReportOutputFileType::Txt => {
+                    let res = self.generate_txt();
                     self.txt_filepath = Some(filepath.clone());
                     res
                 }
-                ReportOutputType::Html => {
-                    let res = self.generate_html()?;
+                ReportOutputFileType::Html => {
+                    let res = self.generate_html();
                     self.html_filepath = Some(filepath.clone());
                     res
                 }
-                ReportOutputType::Pdf => {
-                    let res = self.generate_pdf()?;
+                ReportOutputFileType::Pdf => {
+                    let res = self.generate_pdf();
                     self.pdf_filepath = Some(filepath.clone());
                     res
                 }
             };
-            std::fs::write(&filepath, content).map_err(|e| {
-                ReportError::from(ReportErrorImpl::IOError {
-                    msg: format!("Error writing {} file {}", output_type, filepath.display()),
-                    source: e,
-                })
-            })?;
-            info!("Generated report {}: {}", output_type, filepath.display());
+            match content_res {
+                Ok(content) => match std::fs::write(&filepath, content) {
+                    Ok(_) => info!("Generated report {}: {}", output_type, filepath.display()),
+                    Err(e) => {
+                        error!(
+                            "Error writing {} file {}: {:?}",
+                            output_type,
+                            filepath.display(),
+                            e
+                        );
+                        res.push(ReportError::from(ReportErrorImpl::IOError {
+                            msg: format!("Error writing {} file", filepath.display()),
+                            source: e,
+                        }));
+                    }
+                },
+                Err(e) => {
+                    error!("Error generating {} report: {:?}", output_type, e);
+                    res.push(ReportError::from(ReportErrorImpl::ReportError {
+                        path: filepath.clone(),
+                        source: Box::new(ReportError::from(e)),
+                    }));
+                }
+            }
         }
-        Ok(())
+        res
     }
 }
 
@@ -296,8 +317,8 @@ lines.";
     #[test]
     fn generate_txt_report() {
         let dir = std::env::temp_dir();
-        let options = ReportOutputOptionsBuilder::default()
-            .add_output_type(ReportOutputType::Txt)
+        let options = ReportOutputFileOptionsBuilder::default()
+            .add_output_type(ReportOutputFileType::Txt)
             .directory(dir.as_path())
             .filename_without_extension("test_report")
             .title("Test Report")
@@ -308,7 +329,7 @@ lines.";
 
         let report_data = test_sample();
 
-        let report_output = ReportOutput::new(options, &report_data);
+        let report_output = ReportOutputFile::new(&options, &report_data);
         let res_gen = report_output.generate_txt();
         assert!(res_gen.is_ok());
         let content = String::from_utf8(res_gen.unwrap()).unwrap();
@@ -323,8 +344,8 @@ lines.";
         let dir = PathBuf::from(".").join("test_temp_dir");
         let now: String = Local::now().format("%Y%m%d_%H%M%S").to_string();
         let filenname = format!("test_report_{}", now);
-        let options = ReportOutputOptionsBuilder::default()
-            .add_output_type(ReportOutputType::Html)
+        let options = ReportOutputFileOptionsBuilder::default()
+            .add_output_type(ReportOutputFileType::Html)
             .directory(dir.as_path())
             .filename_without_extension(filenname.as_str())
             .title("Test Report")
@@ -334,9 +355,9 @@ lines.";
 
         let report_data = test_sample();
 
-        let mut report_output = ReportOutput::new(options, &report_data);
+        let mut report_output = ReportOutputFile::new(&options, &report_data);
         let res_gen = report_output.generate();
-        assert!(res_gen.is_ok());
+        assert!(res_gen.is_empty());
     }
 
     #[test]
@@ -345,8 +366,8 @@ lines.";
         let now: String = Local::now().format("%Y%m%d_%H%M%S").to_string();
         let filenname = format!("test_report_with_logo_{}", now);
         let logo_bytes = test_logo();
-        let options = ReportOutputOptionsBuilder::default()
-            .add_output_type(ReportOutputType::Html)
+        let options = ReportOutputFileOptionsBuilder::default()
+            .add_output_type(ReportOutputFileType::Html)
             .directory(dir.as_path())
             .filename_without_extension(filenname.as_str())
             .title("Test Report")
@@ -357,9 +378,9 @@ lines.";
 
         let report_data = test_sample();
 
-        let mut report_output = ReportOutput::new(options, &report_data);
+        let mut report_output = ReportOutputFile::new(&options, &report_data);
         let res_gen = report_output.generate();
-        assert!(res_gen.is_ok());
+        assert!(res_gen.is_empty());
     }
 
     #[test]
@@ -369,8 +390,8 @@ lines.";
         let filenname = format!("test_report_with_logo_{}", now);
         let logo_bytes = test_logo();
         let chrome_path = PathBuf::from(".").join("test_data").join("chrome.exe.txt");
-        let options = ReportOutputOptionsBuilder::default()
-            .add_output_type(ReportOutputType::Pdf)
+        let options = ReportOutputFileOptionsBuilder::default()
+            .add_output_type(ReportOutputFileType::Pdf)
             .directory(dir.as_path())
             .filename_without_extension(filenname.as_str())
             .title("Test Report")
@@ -387,8 +408,8 @@ lines.";
 
         let report_data = test_sample();
 
-        let mut report_output = ReportOutput::new(options, &report_data);
+        let mut report_output = ReportOutputFile::new(&options, &report_data);
         let res_gen = report_output.generate();
-        assert!(res_gen.is_ok(), "{:?}", res_gen.err());
+        assert!(res_gen.is_empty(), "{:?}", res_gen);
     }
 }

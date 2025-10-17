@@ -15,7 +15,7 @@
 // <https://www.gnu.org/licenses/>.
 
 use super::super::{ReportError, ReportErrorImpl};
-use super::ReportOutputType;
+use super::ReportOutputFileType;
 use derive_builder::{Builder, UninitializedFieldError};
 use headless_chrome::Browser;
 use rust_ev_system_library::rust_ev_crypto_primitives::prelude::{ByteArray, EncodeTrait};
@@ -26,23 +26,23 @@ use tracing::info;
 /// Options for report output
 #[derive(Debug, Clone, Builder)]
 #[builder(pattern = "owned", build_fn(skip))]
-pub struct ReportOutputOptions<'a> {
+pub struct ReportOutputFileOptions<'a> {
     #[builder(setter(name = "add_output_type", custom))]
-    output_types: Vec<ReportOutputType>,
+    output_types: Vec<ReportOutputFileType>,
     directory: &'a Path,
     filename_without_extension: &'a str,
     title: &'a str,
     logo_bytes: &'a [u8],
     nb_electoral_board: usize,
-    #[builder(setter(name = "add_explicit_electoral_board_members", custom))]
+    #[builder(setter(name = "add_explicit_electoral_board_member", custom))]
     explicit_electoral_board_members: Vec<&'a str>,
     #[builder(setter(strip_option))]
     pdf_options: Option<PDFReportOptions<'a>>,
 }
 
-impl<'a> ReportOutputOptions<'a> {
+impl<'a> ReportOutputFileOptions<'a> {
     /// Returns the output types for the report.
-    pub fn output_types(&self) -> &[ReportOutputType] {
+    pub fn output_types(&self) -> &[ReportOutputFileType] {
         &self.output_types
     }
 
@@ -103,11 +103,11 @@ impl<'a> ReportOutputOptions<'a> {
     }
 }
 
-impl<'a> ReportOutputOptionsBuilder<'a> {
+impl<'a> ReportOutputFileOptionsBuilder<'a> {
     /// Add an output type to the report options
     /// If PDF is added, HTML is also added automatically
     /// Duplicates are ignored
-    pub fn add_output_type(mut self, output_type: ReportOutputType) -> Self {
+    pub fn add_output_type(mut self, output_type: ReportOutputFileType) -> Self {
         match self.output_types.as_mut() {
             Some(v) => {
                 v.push(output_type);
@@ -116,14 +116,14 @@ impl<'a> ReportOutputOptionsBuilder<'a> {
             }
             None => self.output_types = Some(vec![output_type]),
         }
-        if matches!(output_type, ReportOutputType::Pdf) {
-            return self.add_output_type(ReportOutputType::Html);
+        if matches!(output_type, ReportOutputFileType::Pdf) {
+            return self.add_output_type(ReportOutputFileType::Html);
         }
         self
     }
 
     /// Add an explicit electoral board member
-    pub fn add_explicit_electoral_board_members(mut self, member: &'a str) -> Self {
+    pub fn add_explicit_electoral_board_member(mut self, member: &'a str) -> Self {
         match self.explicit_electoral_board_members.as_mut() {
             Some(v) => v.push(member),
             None => self.explicit_electoral_board_members = Some(vec![member]),
@@ -140,11 +140,11 @@ impl<'a> ReportOutputOptionsBuilder<'a> {
     ///   defaults to 2 members with generic names "Member 1", "Member 2"
     /// - It is not allowed to specify both the number of electoral board members and the explicit electoral board members
     /// - If PDF output type is selected, PDF report options must be specified
-    pub fn build(self) -> Result<ReportOutputOptions<'a>, ReportError> {
+    pub fn build(self) -> Result<ReportOutputFileOptions<'a>, ReportError> {
         self.build_impl().map_err(ReportError::from)
     }
 
-    fn build_impl(self) -> Result<ReportOutputOptions<'a>, ReportErrorImpl> {
+    fn build_impl(self) -> Result<ReportOutputFileOptions<'a>, ReportErrorImpl> {
         let dir = match self.directory {
             Some(dir) => {
                 if dir.is_file() {
@@ -203,17 +203,17 @@ impl<'a> ReportOutputOptionsBuilder<'a> {
                 ));
             }
         };
-        let output_types = self.output_types.unwrap_or(vec![ReportOutputType::Txt]);
+        let output_types = self.output_types.unwrap_or(vec![ReportOutputFileType::Txt]);
         if output_types
             .iter()
-            .any(|t| matches!(&t, ReportOutputType::Pdf))
+            .any(|t| matches!(&t, ReportOutputFileType::Pdf))
             && self.pdf_options.is_none()
         {
             return Err(ReportErrorImpl::ReportOutputOptions(
                 "PDF report options must be set when PDF output type is selected".to_string(),
             ));
         }
-        Ok(ReportOutputOptions {
+        Ok(ReportOutputFileOptions {
             output_types,
             directory: dir,
             filename_without_extension,
@@ -245,26 +245,29 @@ impl<'a> PDFReportOptions<'a> {
     /// Returns a headless browser instance based on the options
     ///
     /// In test mode, uses the fetcher to get a headless browser installation.
+    #[cfg(feature = "fetch")]
     pub(super) fn browser(&self) -> Result<Browser, ReportErrorImpl> {
-        if cfg!(test) {
-            let fetcher_options = headless_chrome::FetcherOptions::default()
-                .with_install_dir(Some(PathBuf::from(".").join("test_temp_dir")));
-            return Browser::new(
-                headless_chrome::LaunchOptionsBuilder::default()
-                    .fetcher_options(fetcher_options)
-                    .sandbox(false)
-                    .headless(true)
-                    .build()
-                    .map_err(|e| ReportErrorImpl::Browser {
-                        msg: "Failed to build options for headless chrome".to_string(),
-                        error: e.to_string(),
-                    })?,
-            )
-            .map_err(|e| ReportErrorImpl::Browser {
-                msg: "Failed to launch headless chrome".to_string(),
-                error: e.to_string(),
-            });
-        }
+        let fetcher_options = headless_chrome::FetcherOptions::default()
+            .with_install_dir(Some(PathBuf::from(".").join("test_temp_dir")));
+        Browser::new(
+            headless_chrome::LaunchOptionsBuilder::default()
+                .fetcher_options(fetcher_options)
+                .sandbox(false)
+                .headless(true)
+                .build()
+                .map_err(|e| ReportErrorImpl::Browser {
+                    msg: "Failed to build options for headless chrome".to_string(),
+                    error: e.to_string(),
+                })?,
+        )
+        .map_err(|e| ReportErrorImpl::Browser {
+            msg: "Failed to launch headless chrome".to_string(),
+            error: e.to_string(),
+        })
+    }
+
+    #[cfg(not(feature = "fetch"))]
+    pub(super) fn browser(&self) -> Result<Browser, ReportErrorImpl> {
         Browser::new(
             headless_chrome::LaunchOptionsBuilder::default()
                 .path(Some(self.path_to_browser.to_path_buf()))
@@ -308,9 +311,9 @@ mod test {
     #[test]
     fn builder_sets_all_fields() {
         let dir = test_dir();
-        let opts = ReportOutputOptionsBuilder::default()
-            .add_output_type(ReportOutputType::Txt)
-            .add_output_type(ReportOutputType::Html)
+        let opts = ReportOutputFileOptionsBuilder::default()
+            .add_output_type(ReportOutputFileType::Txt)
+            .add_output_type(ReportOutputFileType::Html)
             .directory(dir.as_path())
             .filename_without_extension("report")
             .title("Test Report")
@@ -320,7 +323,7 @@ mod test {
             .unwrap();
         assert_eq!(
             opts.output_types,
-            vec![ReportOutputType::Txt, ReportOutputType::Html]
+            vec![ReportOutputFileType::Txt, ReportOutputFileType::Html]
         );
         assert_eq!(opts.directory, dir.as_path());
         assert_eq!(opts.filename_without_extension, "report");
@@ -334,8 +337,8 @@ mod test {
     fn builder_explicit_members_only() {
         let dir = test_dir();
         let chrome_path = PathBuf::from(".").join("test_data").join("chrome.exe.txt");
-        let builder = ReportOutputOptionsBuilder::default()
-            .add_output_type(ReportOutputType::Pdf)
+        let builder = ReportOutputFileOptionsBuilder::default()
+            .add_output_type(ReportOutputFileType::Pdf)
             .directory(dir.as_path())
             .filename_without_extension("report2")
             .title("Another Report")
@@ -346,8 +349,8 @@ mod test {
                     .build()
                     .unwrap(),
             )
-            .add_explicit_electoral_board_members("Alice")
-            .add_explicit_electoral_board_members("Bob");
+            .add_explicit_electoral_board_member("Alice")
+            .add_explicit_electoral_board_member("Bob");
         let opts = builder.build().unwrap();
         assert_eq!(opts.nb_electoral_board, 2);
         assert_eq!(opts.explicit_electoral_board_members, vec!["Alice", "Bob"]);
@@ -356,66 +359,66 @@ mod test {
     #[test]
     fn builder_defaults() {
         let dir = test_dir();
-        let builder = ReportOutputOptionsBuilder::default()
+        let builder = ReportOutputFileOptionsBuilder::default()
             .directory(dir.as_path())
             .filename_without_extension("default")
             .title("Default Report")
             .logo_bytes(&[]);
         let opts = builder.build().unwrap();
-        assert_eq!(opts.output_types, vec![ReportOutputType::Txt]);
+        assert_eq!(opts.output_types, vec![ReportOutputFileType::Txt]);
         assert_eq!(opts.nb_electoral_board, 2);
         assert_eq!(opts.explicit_electoral_board_members, Vec::<&str>::new());
     }
 
     #[test]
     fn builder_many_output_types() {
-        let mut builder = ReportOutputOptionsBuilder::default();
-        builder = builder.add_output_type(ReportOutputType::Pdf);
+        let mut builder = ReportOutputFileOptionsBuilder::default();
+        builder = builder.add_output_type(ReportOutputFileType::Pdf);
         assert_eq!(
             builder.output_types,
-            Some(vec![ReportOutputType::Html, ReportOutputType::Pdf])
+            Some(vec![ReportOutputFileType::Html, ReportOutputFileType::Pdf])
         );
-        builder = builder.add_output_type(ReportOutputType::Txt);
+        builder = builder.add_output_type(ReportOutputFileType::Txt);
         assert_eq!(
             builder.output_types,
             Some(vec![
-                ReportOutputType::Txt,
-                ReportOutputType::Html,
-                ReportOutputType::Pdf
+                ReportOutputFileType::Txt,
+                ReportOutputFileType::Html,
+                ReportOutputFileType::Pdf
             ])
         );
-        builder = builder.add_output_type(ReportOutputType::Txt);
+        builder = builder.add_output_type(ReportOutputFileType::Txt);
         assert_eq!(
             builder.output_types,
             Some(vec![
-                ReportOutputType::Txt,
-                ReportOutputType::Html,
-                ReportOutputType::Pdf
+                ReportOutputFileType::Txt,
+                ReportOutputFileType::Html,
+                ReportOutputFileType::Pdf
             ])
         );
-        builder = builder.add_output_type(ReportOutputType::Html);
+        builder = builder.add_output_type(ReportOutputFileType::Html);
         assert_eq!(
             builder.output_types,
             Some(vec![
-                ReportOutputType::Txt,
-                ReportOutputType::Html,
-                ReportOutputType::Pdf
+                ReportOutputFileType::Txt,
+                ReportOutputFileType::Html,
+                ReportOutputFileType::Pdf
             ])
         );
-        let builder = builder.add_output_type(ReportOutputType::Html);
+        let builder = builder.add_output_type(ReportOutputFileType::Html);
         assert_eq!(
             builder.output_types,
             Some(vec![
-                ReportOutputType::Txt,
-                ReportOutputType::Html,
-                ReportOutputType::Pdf
+                ReportOutputFileType::Txt,
+                ReportOutputFileType::Html,
+                ReportOutputFileType::Pdf
             ])
         );
     }
 
     #[test]
     fn builder_missing_dir() {
-        let builder = ReportOutputOptionsBuilder::default()
+        let builder = ReportOutputFileOptionsBuilder::default()
             .filename_without_extension("fail")
             .title("Fail Report")
             .logo_bytes(&[]);
@@ -426,7 +429,7 @@ mod test {
     #[test]
     fn builder_missing_filename() {
         let dir = test_dir();
-        let builder = ReportOutputOptionsBuilder::default()
+        let builder = ReportOutputFileOptionsBuilder::default()
             .directory(dir.as_path())
             .title("Fail Report")
             .logo_bytes(&[]);
@@ -437,7 +440,7 @@ mod test {
     #[test]
     fn builder_missing_title() {
         let dir = test_dir();
-        let builder = ReportOutputOptionsBuilder::default()
+        let builder = ReportOutputFileOptionsBuilder::default()
             .directory(dir.as_path())
             .filename_without_extension("fail")
             .logo_bytes(&[]);
@@ -448,13 +451,13 @@ mod test {
     #[test]
     fn builder_conflicting_nb_and_members() {
         let dir = test_dir();
-        let builder = ReportOutputOptionsBuilder::default()
+        let builder = ReportOutputFileOptionsBuilder::default()
             .directory(dir.as_path())
             .filename_without_extension("fail")
             .title("Fail Report")
             .logo_bytes(&[])
             .nb_electoral_board(2)
-            .add_explicit_electoral_board_members("Alice");
+            .add_explicit_electoral_board_member("Alice");
         let err = builder.build();
         assert!(err.is_err());
     }
@@ -462,14 +465,14 @@ mod test {
     #[test]
     fn builder_with_members() {
         let dir = test_dir();
-        let builder = ReportOutputOptionsBuilder::default()
+        let builder = ReportOutputFileOptionsBuilder::default()
             .directory(dir.as_path())
             .filename_without_extension("fail")
             .title("Fail Report")
             .logo_bytes(&[])
-            .add_explicit_electoral_board_members("Alice")
-            .add_explicit_electoral_board_members("Ben")
-            .add_explicit_electoral_board_members("Toto");
+            .add_explicit_electoral_board_member("Alice")
+            .add_explicit_electoral_board_member("Ben")
+            .add_explicit_electoral_board_member("Toto");
         let res = builder.build();
         assert!(res.is_ok());
         let opts = res.unwrap();

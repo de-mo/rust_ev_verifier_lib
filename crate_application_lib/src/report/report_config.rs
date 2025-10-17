@@ -14,12 +14,12 @@
 // a copy of the GNU General Public License along with this program. If not, see
 // <https://www.gnu.org/licenses/>.
 
+use derive_builder::Builder;
 use derive_getters::Getters;
 use tracing::Level;
-use typed_builder::TypedBuilder;
 
 /// Configuration of the report
-#[derive(Debug, Clone, PartialEq, TypedBuilder, Getters)]
+#[derive(Debug, Clone, PartialEq, Builder, Getters)]
 pub struct ReportConfig {
     /// Size of the tabulation in the output
     tab_size: u8,

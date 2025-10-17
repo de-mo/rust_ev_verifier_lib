@@ -23,6 +23,7 @@ use super::direct_trust::Keystore;
 use super::resources::VERIFICATION_LIST;
 use std::path::{Path, PathBuf};
 use thiserror::Error;
+use tracing::info;
 
 // Directory structure
 const CONTEXT_DIR_NAME: &str = "context";
@@ -37,10 +38,13 @@ const LOG_FILE_NAME: &str = "log.txt";
 const DIRECT_TRUST_DIR_NAME: &str = "direct-trust";
 const DATA_DIR_NAME: &str = "data";
 const ZIP_TEMP_DIR_NAME: &str = "decrypted_zip";
+const REPORT_DIR_NAME: &str = "report";
 
 // Other Options
 const DEFAULT_TXT_REPORT_TAB_SIZE: u8 = 2;
 const DEFAULT_REPORT_FORMAT_DATE_TIME: &str = "%d.%m.%Y %H:%M:%S.%3f";
+const DEFAULT_REPORT_TYPE_EXPORT: bool = false;
+const DEFAULT_REPORT_BROWSER_SANDBOX: bool = false;
 
 #[derive(Error, Debug)]
 #[error(transparent)]
@@ -53,6 +57,8 @@ enum VerifierConfigErrorImpl {
     Env(String),
     #[error("Error reading the keystore")]
     DirectTrust(#[from] DirectTrustError),
+    #[error("Error with file {msg}: {value}")]
+    FileError { msg: String, value: String },
 }
 
 /// Structuring getting all the configuration information relevant for the
@@ -160,6 +166,7 @@ impl VerifierConfig {
         let res = self.root_dir_path().join(Self::temp_dir_name());
         if !res.is_dir() {
             let _ = std::fs::create_dir_all(&res);
+            info!("Created data directory at {:?}", &res);
         }
         res
     }
@@ -170,6 +177,18 @@ impl VerifierConfig {
         let res = self.data_dir_path().join(ZIP_TEMP_DIR_NAME);
         if !res.is_dir() {
             let _ = std::fs::create_dir_all(&res);
+            info!("Created temporary directory for zip files at {:?}", &res);
+        }
+        res
+    }
+
+    /// The path to the report output dir name
+    /// Create the directory if not exist
+    pub fn report_dir_path(&self) -> PathBuf {
+        let res = self.root_dir_path().join(REPORT_DIR_NAME);
+        if !res.is_dir() {
+            let _ = std::fs::create_dir_all(&res);
+            info!("Created report directory at {:?}", &res);
         }
         res
     }
@@ -212,12 +231,94 @@ impl VerifierConfig {
     ///
     /// If the env variable not found, use the default value
     pub fn txt_report_tab_size(&self) -> u8 {
-        match dotenvy::var(consts::ENV_TXT_REPORT_TAB_SIZE) {
+        match dotenvy::var(consts::ENV_TXT_TAB_SIZE) {
             Ok(v) => match v.parse::<u8>() {
                 Ok(v) => v,
                 Err(_) => DEFAULT_TXT_REPORT_TAB_SIZE,
             },
             Err(_) => DEFAULT_TXT_REPORT_TAB_SIZE,
+        }
+    }
+
+    /// Get the path to the browser executable for PDF report generation
+    ///
+    /// If the env variable not found, return error
+    pub fn pdf_report_browser_path(&self) -> Result<PathBuf, VerifierConfigError> {
+        dotenvy::var(consts::ENV_REPORT_BROWSER_PATH)
+            .map(PathBuf::from)
+            .map_err(|_| VerifierConfigErrorImpl::Env(consts::ENV_REPORT_BROWSER_PATH.to_string()))
+            .map_err(VerifierConfigError::from)
+    }
+
+    /// Get the path to the browser executable for PDF report generation
+    ///
+    /// If the env variable not found, return error
+    pub fn report_logo_path(&self) -> Result<Option<PathBuf>, VerifierConfigError> {
+        match dotenvy::var(consts::ENV_REPORT_LOGO) {
+            Ok(v) => {
+                let path = PathBuf::from(v);
+                if !path.is_file() {
+                    return Err(VerifierConfigErrorImpl::FileError {
+                        msg: "Report logo file not found".to_string(),
+                        value: path.to_string_lossy().to_string(),
+                    }
+                    .into());
+                }
+                Ok(Some(path))
+            }
+            Err(_) => Ok(None),
+        }
+    }
+
+    /// Get the electoral board members to be displayed in the report   
+    pub fn report_electoral_board_members(&self) -> Vec<String> {
+        match dotenvy::var(consts::ENV_REPORT_ELECTORAL_BOARD_MEMBERS) {
+            Ok(v) => v.split(',').map(|s| s.trim().to_string()).collect(),
+            Err(_) => Vec::new(),
+        }
+    }
+
+    /// Has the report to be exported as PDF
+    pub fn report_export_pdf(&self) -> bool {
+        match dotenvy::var(consts::ENV_REPORT_EXPORT_PDF) {
+            Ok(v) => match v.parse::<bool>() {
+                Ok(v) => v,
+                Err(_) => DEFAULT_REPORT_TYPE_EXPORT,
+            },
+            Err(_) => DEFAULT_REPORT_TYPE_EXPORT,
+        }
+    }
+
+    /// Has the report to be exported as HTML
+    pub fn report_export_html(&self) -> bool {
+        match dotenvy::var(consts::ENV_REPORT_EXPORT_HTML) {
+            Ok(v) => match v.parse::<bool>() {
+                Ok(v) => v,
+                Err(_) => DEFAULT_REPORT_TYPE_EXPORT,
+            },
+            Err(_) => DEFAULT_REPORT_TYPE_EXPORT,
+        }
+    }
+
+    /// Has the report to be exported as HTML
+    pub fn report_sandbox(&self) -> bool {
+        match dotenvy::var(consts::ENV_REPORT_BROWSER_SANDBOX) {
+            Ok(v) => match v.parse::<bool>() {
+                Ok(v) => v,
+                Err(_) => DEFAULT_REPORT_BROWSER_SANDBOX,
+            },
+            Err(_) => DEFAULT_REPORT_BROWSER_SANDBOX,
+        }
+    }
+
+    /// Has the report to be exported as TXT
+    pub fn report_export_txt(&self) -> bool {
+        match dotenvy::var(consts::ENV_REPORT_EXPORT_TXT) {
+            Ok(v) => match v.parse::<bool>() {
+                Ok(v) => v,
+                Err(_) => DEFAULT_REPORT_TYPE_EXPORT,
+            },
+            Err(_) => DEFAULT_REPORT_TYPE_EXPORT,
         }
     }
 

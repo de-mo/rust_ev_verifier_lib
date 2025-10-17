@@ -1531,13 +1531,13 @@ dependencies = [
  "headless_chrome",
  "rayon",
  "rust_ev_system_library",
+ "rust_ev_verifier_application_lib",
  "rust_ev_verifier_lib",
  "serde",
  "serde_json",
  "strum",
  "thiserror",
  "tracing",
- "typed-builder",
 ]
 
 [[package]]
@@ -1927,26 +1927,6 @@ dependencies = [
  "sha1",
  "thiserror",
  "utf-8",
-]
-
-[[package]]
-name = "typed-builder"
-version = "0.22.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "398a3a3c918c96de527dc11e6e846cd549d4508030b8a33e1da12789c856b81a"
-dependencies = [
- "typed-builder-macro",
-]
-
-[[package]]
-name = "typed-builder-macro"
-version = "0.22.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0e48cea23f68d1f78eb7bc092881b6bb88d3d6b5b7e6234f6f9c911da1ffb221"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn 2.0.106",
 ]
 
 [[package]]

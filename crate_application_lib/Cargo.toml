@@ -22,11 +22,13 @@ serde_json.workspace = true
 tracing.workspace = true
 strum.workspace = true
 chrono.workspace = true
-typed-builder.workspace = true
 derive-getters.workspace = true
 derive_builder.workspace = true
 build_html = "2.7.0"
 headless_chrome = "1"
 
+[features]
+fetch = ["headless_chrome/fetch"]
+
 [dev-dependencies]
-headless_chrome = { version = "1", features = ["fetch"] }
+rust_ev_verifier_application_lib = { path = ".", features = ["fetch"] }
