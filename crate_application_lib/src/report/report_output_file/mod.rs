@@ -254,7 +254,7 @@ impl<'a, 'b> ReportOutputFile<'a, 'b> {
 }
 
 #[cfg(test)]
-mod test {
+pub mod test {
     use chrono::Local;
 
     use super::{

@@ -16,8 +16,10 @@
 
 use std::iter::once;
 
+use serde::{Deserialize, Serialize};
+
 /// Enum with the title types
-#[derive(Debug, Clone, strum::Display)]
+#[derive(Debug, Clone, strum::Display, Serialize, Deserialize, PartialEq, Eq)]
 pub enum ReportOutputDataBlockTitle {
     #[strum(to_string = "Fingerprints")]
     Fingerprints,
@@ -44,7 +46,7 @@ pub trait OutputToString {
 }
 
 /// Structure to store an output entry
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub enum ReportOutputDataEntry {
     /// A tuple key, value
     KeyValue((String, String)),
@@ -73,7 +75,7 @@ impl ReportOutputDataEntry {
 }
 
 /// Structure to store a block for output
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct ReportOutputDataBlock {
     /// Title of the block
     title: ReportOutputDataBlockTitle,
@@ -203,7 +205,7 @@ impl ReportOutputDataBlock {
 }
 
 /// Store whole Report output
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct ReportOutputData {
     blocks: Vec<ReportOutputDataBlock>,
 }
@@ -250,5 +252,58 @@ impl OutputToString for ReportOutputData {
             .map(|b| b.output_to_string(tab_size))
             .collect::<Vec<_>>()
             .join("\n\n")
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::path::PathBuf;
+
+    use chrono::Local;
+
+    use super::*;
+
+    #[test]
+    fn test_serialization() {
+        let data = super::super::report_output_file::test::test_sample();
+        let json_res = serde_json::to_string_pretty(&data);
+        assert!(json_res.is_ok(), "{:?}", json_res.err());
+        let json = json_res.unwrap();
+        println!("Serialized JSON:\n{}", json);
+        let dir = PathBuf::from(".").join("test_temp_dir");
+        let now: String = Local::now().format("%Y%m%d_%H%M%S").to_string();
+        let json_path = dir.join(format!("test_report_{}.json", now));
+        let mut write = std::fs::File::create(&json_path).unwrap();
+        let res = serde_json::to_writer_pretty(&mut write, &data);
+        assert!(res.is_ok(), "{:?}", res.err());
+    }
+
+    #[test]
+    fn test_deserialization() {
+        let data = super::super::report_output_file::test::test_sample();
+        let json_res = serde_json::to_string_pretty(&data);
+        assert!(json_res.is_ok(), "{:?}", json_res.err());
+        let json = json_res.unwrap();
+        let deserialized = serde_json::from_str(&json);
+        assert!(deserialized.is_ok(), "{:?}", deserialized.err());
+        let deserialized_data: ReportOutputData = deserialized.unwrap();
+        assert_eq!(data, deserialized_data);
+    }
+
+    #[test]
+    fn test_deserialization_file() {
+        let data = super::super::report_output_file::test::test_sample();
+        let dir = PathBuf::from(".").join("test_temp_dir");
+        let now: String = Local::now().format("%Y%m%d_%H%M%S").to_string();
+        let json_path = dir.join(format!("test_report_{}.json", now));
+        {
+            let mut write = std::fs::File::create(&json_path).unwrap();
+            serde_json::to_writer_pretty(&mut write, &data).unwrap();
+        }
+        let read = std::fs::File::open(&json_path).unwrap();
+        let deserialized: serde_json::Result<ReportOutputData> = serde_json::from_reader(read);
+        assert!(deserialized.is_ok(), "{:?}", deserialized.err());
+        let deserialized_data: ReportOutputData = deserialized.unwrap();
+        assert_eq!(data, deserialized_data);
     }
 }
