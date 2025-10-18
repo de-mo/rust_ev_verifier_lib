@@ -86,7 +86,7 @@ impl<'a, 'b> ReportOutputFile<'a, 'b> {
     }
 
     fn generate_txt(&self) -> Result<Vec<u8>, ReportErrorImpl> {
-        let mut content: String = self.options.title().to_string() + "\n\n";
+        let mut content: String = self.report_data.title().to_string() + "\n\n";
         content.push_str(&self.report_data.output_to_string(4));
         content.push_str("\n Signatures:\n\n");
         content.push_str(&self.options.signatures().join("\n\n"));
@@ -150,7 +150,7 @@ impl<'a, 'b> ReportOutputFile<'a, 'b> {
             content.add_html(logo);
         }
 
-        content.add_header(1, self.options.title());
+        content.add_header(1, self.report_data.title());
         for section in sections {
             content.add_container(section);
         }
@@ -164,7 +164,7 @@ impl<'a, 'b> ReportOutputFile<'a, 'b> {
     }
 
     fn generate_pdf(&self) -> Result<Vec<u8>, ReportErrorImpl> {
-        let pdf_options = self.options.pdf_options().unwrap();
+        let pdf_options = self.options.pdf_options().as_ref().unwrap();
         let browser = pdf_options.browser()?;
         let file_path = format!(
             "file://{}",
@@ -202,7 +202,7 @@ impl<'a, 'b> ReportOutputFile<'a, 'b> {
     pub fn generate(&mut self) -> Vec<ReportError> {
         let mut res = vec![];
         for output_type in self.options.output_types().iter() {
-            let filepath = self.options.dir().join(format!(
+            let filepath = self.options.directory().join(format!(
                 "{}.{}",
                 self.options.filename_without_extension(),
                 output_type
@@ -311,7 +311,7 @@ lines.";
         block4.push(ReportOutputDataEntry::OnlyValue(
             VALUE_MULTILINE_3.to_string(),
         ));
-        ReportOutputData::from_vec(vec![block1, block2, block3, block4])
+        ReportOutputData::from_vec("Verifier Test Report", vec![block1, block2, block3, block4])
     }
 
     #[test]
@@ -321,7 +321,6 @@ lines.";
             .add_output_type(ReportOutputFileType::Txt)
             .directory(dir.as_path())
             .filename_without_extension("test_report")
-            .title("Test Report")
             .logo_bytes(&[])
             .nb_electoral_board(3)
             .build()
@@ -333,7 +332,7 @@ lines.";
         let res_gen = report_output.generate_txt();
         assert!(res_gen.is_ok());
         let content = String::from_utf8(res_gen.unwrap()).unwrap();
-        assert!(content.contains("Test Report"));
+        assert!(content.contains("Verifier Test Report"));
         assert!(content.contains("Key1: Value1"));
         assert!(content.contains("Info1"));
         assert!(content.contains("ResultKey: ResultValue"));
@@ -348,7 +347,6 @@ lines.";
             .add_output_type(ReportOutputFileType::Html)
             .directory(dir.as_path())
             .filename_without_extension(filenname.as_str())
-            .title("Test Report")
             .nb_electoral_board(3)
             .build()
             .unwrap();
@@ -370,7 +368,6 @@ lines.";
             .add_output_type(ReportOutputFileType::Html)
             .directory(dir.as_path())
             .filename_without_extension(filenname.as_str())
-            .title("Test Report")
             .logo_bytes(&logo_bytes)
             .nb_electoral_board(3)
             .build()
@@ -394,7 +391,6 @@ lines.";
             .add_output_type(ReportOutputFileType::Pdf)
             .directory(dir.as_path())
             .filename_without_extension(filenname.as_str())
-            .title("Test Report")
             .logo_bytes(&logo_bytes)
             .nb_electoral_board(3)
             .pdf_options(

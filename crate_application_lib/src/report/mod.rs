@@ -14,12 +14,12 @@
 // a copy of the GNU General Public License along with this program. If not, see
 // <https://www.gnu.org/licenses/>.
 
-mod report_config;
 mod report_output_data;
 mod report_output_file;
 
 use super::{RunnerError, run_information::RunInformation};
-pub use report_config::{ReportConfig, ReportConfigBuilder};
+use derive_builder::Builder;
+use derive_getters::Getters;
 pub use report_output_data::ReportOutputData;
 use report_output_data::{
     OutputToString, ReportOutputDataBlock, ReportOutputDataBlockTitle, ReportOutputDataEntry,
@@ -64,19 +64,40 @@ enum ReportErrorImpl {
         path: PathBuf,
         source: Box<ReportError>,
     },
+    #[error("Error exporting to json")]
+    ToJson { source: serde_json::Error },
+}
+
+/// General Configuration of the report
+#[derive(Debug, Clone, PartialEq, Builder, Getters)]
+pub struct ReportConfig {
+    /// Title of the report
+    title: String,
+
+    /// Size of the tabulation in the output
+    tab_size: u8,
+
+    /// Level of output log
+    ///
+    /// Default: `[Level::INFO]`
+    #[builder(default=Level::INFO)]
+    output_log_level: Level,
+
+    /// Format of the printed date
+    fromat_date: String,
 }
 
 /// Trait to collect the report information
 pub trait ReportInformationTrait {
     /// Transform the report information to a [ReportOutput].
-    fn to_report_output(&self) -> Result<ReportOutputData, ReportError>;
+    fn to_report_output(&self, title: &str) -> Result<ReportOutputData, ReportError>;
 
     /// Transform the information to a multiline string.
     ///
     /// Take the verifier configuration as input for the tab size
-    fn info_to_string(&self, tab_size: u8) -> Result<String, ReportError> {
+    fn info_to_string(&self, title: &str, tab_size: u8) -> Result<String, ReportError> {
         Ok(self
-            .to_report_output()
+            .to_report_output(title)
             .map_err(|e| ReportErrorImpl::OutputToString {
                 source: Box::new(e),
             })?
@@ -86,8 +107,12 @@ pub trait ReportInformationTrait {
     /// Generate the report files according to the specified output options
     ///
     /// Returns a vector of [ReportError] encountered during the generation
-    fn generate_files(&self, output_options: &ReportOutputFileOptions) -> Vec<ReportError> {
-        let report_output = match self.to_report_output() {
+    fn generate_files(
+        &self,
+        title: &str,
+        output_options: &ReportOutputFileOptions,
+    ) -> Vec<ReportError> {
+        let report_output = match self.to_report_output(title) {
             Ok(ro) => ro,
             Err(e) => return vec![e],
         };
@@ -103,7 +128,10 @@ pub struct ReportData<'a> {
 
 impl Display for ReportData<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self.info_to_string(*self.report_configuration.tab_size()) {
+        match self.info_to_string(
+            self.report_configuration.title(),
+            *self.report_configuration.tab_size(),
+        ) {
             Ok(s) => write!(f, "{}", s),
             Err(e) => write!(f, "ERROR generating text of report {}", e),
         }
@@ -113,18 +141,14 @@ impl Display for ReportData<'_> {
 impl<'a> ReportData<'a> {
     /// Create new [ReportData]
     pub fn new(report_configuration: ReportConfig, run_information: &'a RunInformation) -> Self {
-        let res = Self {
+        Self {
             report_configuration,
             run_information,
-        };
-        if *res.report_configuration.output_log() {
-            res.trace();
         }
-        res
     }
 
-    /// Trace the [ReportData] according to the configuration
-    pub fn trace(&self) {
+    /// Output the [ReportData] in the log according to the configuration
+    pub fn output_log(&self) {
         let s = self.to_string();
         match *self.report_configuration.output_log_level() {
             Level::TRACE => trace!("Report: \n{}", s),
@@ -134,10 +158,29 @@ impl<'a> ReportData<'a> {
             Level::ERROR => error!("Report: \n{}", s),
         }
     }
+
+    /// Export to json
+    pub fn to_json(&self) -> Result<String, ReportError> {
+        serde_json::to_string(&self.to_report_output(self.report_configuration.title())?)
+            .map_err(|e| ReportError::from(ReportErrorImpl::ToJson { source: e }))
+    }
+}
+
+pub fn generate_files_from_json(
+    json_str: &str,
+    output_options: &ReportOutputFileOptions,
+) -> Vec<ReportError> {
+    let report_output: ReportOutputData = match serde_json::from_str(json_str) {
+        Ok(ro) => ro,
+        Err(e) => {
+            return vec![ReportError::from(ReportErrorImpl::ToJson { source: e })];
+        }
+    };
+    ReportOutputFile::new(output_options, &report_output).generate()
 }
 
 impl<D: VerificationDirectoryTrait> ReportInformationTrait for ManualVerifications<D> {
-    fn to_report_output(&self) -> Result<ReportOutputData, ReportError> {
+    fn to_report_output(&self, title: &str) -> Result<ReportOutputData, ReportError> {
         let mut res = vec![
             ReportOutputDataBlock::new_with_tuples(
                 ReportOutputDataBlockTitle::Fingerprints,
@@ -182,12 +225,12 @@ impl<D: VerificationDirectoryTrait> ReportInformationTrait for ManualVerificatio
                 })
                 .collect::<Vec<_>>(),
         );
-        Ok(ReportOutputData::from_vec(res))
+        Ok(ReportOutputData::from_vec(title, res))
     }
 }
 
 impl ReportInformationTrait for ReportData<'_> {
-    fn to_report_output(&self) -> Result<ReportOutputData, ReportError> {
+    fn to_report_output(&self, title: &str) -> Result<ReportOutputData, ReportError> {
         if !self.run_information.is_prepared() {
             return Err(ReportError::from(ReportErrorImpl::ToTitleKeyValue(
                 "The run information used is not prepared",
@@ -256,14 +299,14 @@ impl ReportInformationTrait for ReportData<'_> {
             "Duration",
             duration_string.as_str(),
         )));
-        let mut res = ReportOutputData::new();
+        let mut res = ReportOutputData::new(title);
         res.push(running_information);
         res.append(
             &mut ManualVerifications::<VerificationDirectory>::try_from(self.run_information)
                 .map_err(|e| ReportErrorImpl::Manual {
                     source: Box::new(e),
                 })?
-                .to_report_output()
+                .to_report_output(title)
                 .map_err(|e| ReportErrorImpl::ToOutput {
                     source: Box::new(e),
                 })?,

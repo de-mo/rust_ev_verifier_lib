@@ -16,6 +16,7 @@
 
 use std::iter::once;
 
+use derive_getters::Getters;
 use serde::{Deserialize, Serialize};
 
 /// Enum with the title types
@@ -205,26 +206,27 @@ impl ReportOutputDataBlock {
 }
 
 /// Store whole Report output
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Getters)]
 pub struct ReportOutputData {
+    title: String,
     blocks: Vec<ReportOutputDataBlock>,
-}
-
-impl Default for ReportOutputData {
-    fn default() -> Self {
-        Self::new()
-    }
 }
 
 impl ReportOutputData {
     /// New empty report output
-    pub fn new() -> Self {
-        Self { blocks: vec![] }
+    pub fn new(title: &str) -> Self {
+        Self {
+            title: title.to_string(),
+            blocks: vec![],
+        }
     }
 
     /// Report output from vec of blocks
-    pub fn from_vec(blocks: Vec<ReportOutputDataBlock>) -> Self {
-        Self { blocks }
+    pub fn from_vec(title: &str, blocks: Vec<ReportOutputDataBlock>) -> Self {
+        Self {
+            title: title.to_string(),
+            blocks,
+        }
     }
 
     /// Push a block
@@ -237,11 +239,6 @@ impl ReportOutputData {
     /// `other` is emptied
     pub fn append(&mut self, other: &mut Self) {
         self.blocks.append(&mut other.blocks);
-    }
-
-    /// Get the blocks
-    pub fn blocks(&self) -> &[ReportOutputDataBlock] {
-        &self.blocks
     }
 }
 

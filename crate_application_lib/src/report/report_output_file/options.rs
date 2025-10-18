@@ -17,6 +17,7 @@
 use super::super::{ReportError, ReportErrorImpl};
 use super::ReportOutputFileType;
 use derive_builder::{Builder, UninitializedFieldError};
+use derive_getters::Getters;
 use headless_chrome::Browser;
 use rust_ev_system_library::rust_ev_crypto_primitives::prelude::{ByteArray, EncodeTrait};
 use std::fs;
@@ -24,14 +25,13 @@ use std::path::{Path, PathBuf};
 use tracing::info;
 
 /// Options for report output
-#[derive(Debug, Clone, Builder)]
+#[derive(Debug, Clone, Builder, Getters)]
 #[builder(pattern = "owned", build_fn(skip))]
 pub struct ReportOutputFileOptions<'a> {
     #[builder(setter(name = "add_output_type", custom))]
     output_types: Vec<ReportOutputFileType>,
     directory: &'a Path,
     filename_without_extension: &'a str,
-    title: &'a str,
     logo_bytes: &'a [u8],
     nb_electoral_board: usize,
     #[builder(setter(name = "add_explicit_electoral_board_member", custom))]
@@ -41,31 +41,6 @@ pub struct ReportOutputFileOptions<'a> {
 }
 
 impl<'a> ReportOutputFileOptions<'a> {
-    /// Returns the output types for the report.
-    pub fn output_types(&self) -> &[ReportOutputFileType] {
-        &self.output_types
-    }
-
-    /// Returns the output directory path.
-    pub fn dir(&self) -> &Path {
-        self.directory
-    }
-
-    /// Returns the filename without extension.
-    pub fn filename_without_extension(&self) -> &str {
-        self.filename_without_extension
-    }
-
-    /// Returns the report title.
-    pub fn title(&self) -> &str {
-        self.title
-    }
-
-    /// Returns the logo bytes.
-    pub fn logo_bytes(&self) -> &[u8] {
-        self.logo_bytes
-    }
-
     /// Returns the logo bytes as base64 string, if present.
     pub fn logo_base64(&self) -> Option<String> {
         match self.logo_bytes {
@@ -74,24 +49,9 @@ impl<'a> ReportOutputFileOptions<'a> {
         }
     }
 
-    /// Returns the number of electoral board members.
-    pub fn nb_electoral_board(&self) -> usize {
-        self.nb_electoral_board
-    }
-
-    /// Returns the explicit electoral board members.
-    pub fn explicit_electoral_board_members(&self) -> &[&str] {
-        &self.explicit_electoral_board_members
-    }
-
-    /// Returns the PDF report options, if present.
-    pub fn pdf_options<'b>(&'b self) -> Option<&'b PDFReportOptions<'a>> {
-        self.pdf_options.as_ref()
-    }
-
     pub fn signatures(&self) -> Vec<String> {
         match self.explicit_electoral_board_members().len() {
-            0 => (0..(self.nb_electoral_board()))
+            0 => (0..(*self.nb_electoral_board()))
                 .map(|n| format!("Member {}", n + 1))
                 .collect::<Vec<_>>(),
             _ => self
@@ -178,14 +138,6 @@ impl<'a> ReportOutputFileOptionsBuilder<'a> {
                 ));
             }
         };
-        let title = match self.title {
-            Some(t) => t,
-            None => {
-                return Err(ReportErrorImpl::ReportOutputOptions(
-                    "The report title is not set".to_string(),
-                ));
-            }
-        };
         let logo_bytes = match self.logo_bytes {
             Some(b) => b,
             None => &[],
@@ -217,7 +169,6 @@ impl<'a> ReportOutputFileOptionsBuilder<'a> {
             output_types,
             directory: dir,
             filename_without_extension,
-            title,
             logo_bytes,
             nb_electoral_board,
             explicit_electoral_board_members,
@@ -227,7 +178,7 @@ impl<'a> ReportOutputFileOptionsBuilder<'a> {
 }
 
 /// Options specific to PDF report generation
-#[derive(Debug, Clone, Builder)]
+#[derive(Debug, Clone, Builder, Getters)]
 #[builder(pattern = "owned", build_fn(error = "ReportError"))]
 pub struct PDFReportOptions<'a> {
     path_to_browser: &'a Path,
@@ -316,7 +267,6 @@ mod test {
             .add_output_type(ReportOutputFileType::Html)
             .directory(dir.as_path())
             .filename_without_extension("report")
-            .title("Test Report")
             .logo_bytes(&[1, 2, 3])
             .nb_electoral_board(3)
             .build()
@@ -327,7 +277,6 @@ mod test {
         );
         assert_eq!(opts.directory, dir.as_path());
         assert_eq!(opts.filename_without_extension, "report");
-        assert_eq!(opts.title, "Test Report");
         assert_eq!(opts.logo_bytes, &[1, 2, 3]);
         assert_eq!(opts.nb_electoral_board, 3);
         assert_eq!(opts.explicit_electoral_board_members, Vec::<&str>::new());
@@ -341,7 +290,6 @@ mod test {
             .add_output_type(ReportOutputFileType::Pdf)
             .directory(dir.as_path())
             .filename_without_extension("report2")
-            .title("Another Report")
             .logo_bytes(&[])
             .pdf_options(
                 PDFReportOptionsBuilder::default()
@@ -362,7 +310,6 @@ mod test {
         let builder = ReportOutputFileOptionsBuilder::default()
             .directory(dir.as_path())
             .filename_without_extension("default")
-            .title("Default Report")
             .logo_bytes(&[]);
         let opts = builder.build().unwrap();
         assert_eq!(opts.output_types, vec![ReportOutputFileType::Txt]);
@@ -420,7 +367,6 @@ mod test {
     fn builder_missing_dir() {
         let builder = ReportOutputFileOptionsBuilder::default()
             .filename_without_extension("fail")
-            .title("Fail Report")
             .logo_bytes(&[]);
         let err = builder.build();
         assert!(err.is_err());
@@ -431,18 +377,6 @@ mod test {
         let dir = test_dir();
         let builder = ReportOutputFileOptionsBuilder::default()
             .directory(dir.as_path())
-            .title("Fail Report")
-            .logo_bytes(&[]);
-        let err = builder.build();
-        assert!(err.is_err());
-    }
-
-    #[test]
-    fn builder_missing_title() {
-        let dir = test_dir();
-        let builder = ReportOutputFileOptionsBuilder::default()
-            .directory(dir.as_path())
-            .filename_without_extension("fail")
             .logo_bytes(&[]);
         let err = builder.build();
         assert!(err.is_err());
@@ -454,7 +388,6 @@ mod test {
         let builder = ReportOutputFileOptionsBuilder::default()
             .directory(dir.as_path())
             .filename_without_extension("fail")
-            .title("Fail Report")
             .logo_bytes(&[])
             .nb_electoral_board(2)
             .add_explicit_electoral_board_member("Alice");
@@ -468,7 +401,6 @@ mod test {
         let builder = ReportOutputFileOptionsBuilder::default()
             .directory(dir.as_path())
             .filename_without_extension("fail")
-            .title("Fail Report")
             .logo_bytes(&[])
             .add_explicit_electoral_board_member("Alice")
             .add_explicit_electoral_board_member("Ben")
