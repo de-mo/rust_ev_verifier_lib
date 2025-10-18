@@ -70,9 +70,13 @@ enum ReportErrorImpl {
 
 /// General Configuration of the report
 #[derive(Debug, Clone, PartialEq, Builder, Getters)]
+#[builder(setter(into))]
 pub struct ReportConfig {
     /// Title of the report
     title: String,
+
+    /// Date and time of the report
+    date_time: String,
 
     /// Size of the tabulation in the output
     tab_size: u8,
@@ -90,14 +94,23 @@ pub struct ReportConfig {
 /// Trait to collect the report information
 pub trait ReportInformationTrait {
     /// Transform the report information to a [ReportOutput].
-    fn to_report_output(&self, title: &str) -> Result<ReportOutputData, ReportError>;
+    fn to_report_output(
+        &self,
+        title: &str,
+        date_time: &str,
+    ) -> Result<ReportOutputData, ReportError>;
 
     /// Transform the information to a multiline string.
     ///
     /// Take the verifier configuration as input for the tab size
-    fn info_to_string(&self, title: &str, tab_size: u8) -> Result<String, ReportError> {
+    fn info_to_string(
+        &self,
+        title: &str,
+        date_time: &str,
+        tab_size: u8,
+    ) -> Result<String, ReportError> {
         Ok(self
-            .to_report_output(title)
+            .to_report_output(title, date_time)
             .map_err(|e| ReportErrorImpl::OutputToString {
                 source: Box::new(e),
             })?
@@ -110,9 +123,10 @@ pub trait ReportInformationTrait {
     fn generate_files(
         &self,
         title: &str,
-        output_options: &ReportOutputFileOptions,
+        date_time: &str,
+        output_options: ReportOutputFileOptions,
     ) -> Vec<ReportError> {
-        let report_output = match self.to_report_output(title) {
+        let report_output = match self.to_report_output(title, date_time) {
             Ok(ro) => ro,
             Err(e) => return vec![e],
         };
@@ -130,6 +144,7 @@ impl Display for ReportData<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self.info_to_string(
             self.report_configuration.title(),
+            self.report_configuration.date_time(),
             *self.report_configuration.tab_size(),
         ) {
             Ok(s) => write!(f, "{}", s),
@@ -161,14 +176,17 @@ impl<'a> ReportData<'a> {
 
     /// Export to json
     pub fn to_json(&self) -> Result<String, ReportError> {
-        serde_json::to_string(&self.to_report_output(self.report_configuration.title())?)
-            .map_err(|e| ReportError::from(ReportErrorImpl::ToJson { source: e }))
+        serde_json::to_string(&self.to_report_output(
+            self.report_configuration.title(),
+            self.report_configuration.date_time(),
+        )?)
+        .map_err(|e| ReportError::from(ReportErrorImpl::ToJson { source: e }))
     }
 }
 
 pub fn generate_files_from_json(
     json_str: &str,
-    output_options: &ReportOutputFileOptions,
+    output_options: ReportOutputFileOptions,
 ) -> Vec<ReportError> {
     let report_output: ReportOutputData = match serde_json::from_str(json_str) {
         Ok(ro) => ro,
@@ -180,7 +198,11 @@ pub fn generate_files_from_json(
 }
 
 impl<D: VerificationDirectoryTrait> ReportInformationTrait for ManualVerifications<D> {
-    fn to_report_output(&self, title: &str) -> Result<ReportOutputData, ReportError> {
+    fn to_report_output(
+        &self,
+        title: &str,
+        date_time: &str,
+    ) -> Result<ReportOutputData, ReportError> {
         let mut res = vec![
             ReportOutputDataBlock::new_with_tuples(
                 ReportOutputDataBlockTitle::Fingerprints,
@@ -225,12 +247,16 @@ impl<D: VerificationDirectoryTrait> ReportInformationTrait for ManualVerificatio
                 })
                 .collect::<Vec<_>>(),
         );
-        Ok(ReportOutputData::from_vec(title, res))
+        Ok(ReportOutputData::from_vec(title, date_time, res))
     }
 }
 
 impl ReportInformationTrait for ReportData<'_> {
-    fn to_report_output(&self, title: &str) -> Result<ReportOutputData, ReportError> {
+    fn to_report_output(
+        &self,
+        title: &str,
+        date_time: &str,
+    ) -> Result<ReportOutputData, ReportError> {
         if !self.run_information.is_prepared() {
             return Err(ReportError::from(ReportErrorImpl::ToTitleKeyValue(
                 "The run information used is not prepared",
@@ -286,7 +312,7 @@ impl ReportInformationTrait for ReportData<'_> {
             "Stop Time",
             self.run_information
                 .runner_information()
-                .start_time_to_string()
+                .stop_time_to_string()
                 .unwrap_or_else(|| "Not finished".to_string())
                 .as_str(),
         )));
@@ -299,14 +325,14 @@ impl ReportInformationTrait for ReportData<'_> {
             "Duration",
             duration_string.as_str(),
         )));
-        let mut res = ReportOutputData::new(title);
+        let mut res = ReportOutputData::new(title, date_time);
         res.push(running_information);
         res.append(
             &mut ManualVerifications::<VerificationDirectory>::try_from(self.run_information)
                 .map_err(|e| ReportErrorImpl::Manual {
                     source: Box::new(e),
                 })?
-                .to_report_output(title)
+                .to_report_output(title, date_time)
                 .map_err(|e| ReportErrorImpl::ToOutput {
                     source: Box::new(e),
                 })?,

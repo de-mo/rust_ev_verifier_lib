@@ -30,7 +30,7 @@ pub enum ReportOutputDataBlockTitle {
     Information,
     #[strum(to_string = "Verification results")]
     VerificationResults,
-    #[strum(to_string = "Running Infomration")]
+    #[strum(to_string = "Running Information")]
     RunningInformation,
     #[strum(to_string = "Errors for {0}")]
     VerificationErrors(String),
@@ -209,22 +209,25 @@ impl ReportOutputDataBlock {
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Getters)]
 pub struct ReportOutputData {
     title: String,
+    date_time: String,
     blocks: Vec<ReportOutputDataBlock>,
 }
 
 impl ReportOutputData {
     /// New empty report output
-    pub fn new(title: &str) -> Self {
+    pub fn new(title: &str, date_time: &str) -> Self {
         Self {
             title: title.to_string(),
+            date_time: date_time.to_string(),
             blocks: vec![],
         }
     }
 
     /// Report output from vec of blocks
-    pub fn from_vec(title: &str, blocks: Vec<ReportOutputDataBlock>) -> Self {
+    pub fn from_vec(title: &str, date_time: &str, blocks: Vec<ReportOutputDataBlock>) -> Self {
         Self {
             title: title.to_string(),
+            date_time: date_time.to_string(),
             blocks,
         }
     }
@@ -244,11 +247,18 @@ impl ReportOutputData {
 
 impl OutputToString for ReportOutputData {
     fn output_to_string(&self, tab_size: u8) -> String {
-        self.blocks
-            .iter()
-            .map(|b| b.output_to_string(tab_size))
-            .collect::<Vec<_>>()
-            .join("\n\n")
+        let mut res = String::new();
+        res.push_str(&format!("{}\n", self.title));
+        res.push_str(&format!("Date / Time: {}\n\n", self.date_time));
+        res.push_str(
+            &self
+                .blocks
+                .iter()
+                .map(|b| b.output_to_string(tab_size))
+                .collect::<Vec<_>>()
+                .join("\n\n"),
+        );
+        res
     }
 }
 

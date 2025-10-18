@@ -88,6 +88,7 @@ pub trait ManualVerificationInformationTrait {
 struct ManualVerificationsForAllPeriod<D: VerificationDirectoryTrait> {
     verification_directory: Arc<D>,
     direct_trust_certificate_fingerprints: HashMap<String, String>,
+    election_event_identification: String,
     contest_identification: String,
     contest_date: NaiveDate,
     number_of_votes: usize,
@@ -165,6 +166,11 @@ impl<D: VerificationDirectoryTrait> ManualVerificationsForAllPeriod<D> {
                 source: Box::new(e),
             }
         })?;
+        let ee_context = config_dir.election_event_context_payload().map_err(|e| {
+            VerificationErrorImpl::EEContextNewAll {
+                source: Box::new(e),
+            }
+        })?;
         let manual_inputs = ManuelVerificationInputFromConfiguration::try_from(
             ee_config.as_ref().get_data().unwrap().as_ref(),
         )
@@ -172,6 +178,10 @@ impl<D: VerificationDirectoryTrait> ManualVerificationsForAllPeriod<D> {
         Ok(Self {
             verification_directory: directory.clone(),
             direct_trust_certificate_fingerprints: fingerprints,
+            election_event_identification: ee_context
+                .election_event_context
+                .election_event_id
+                .clone(),
             contest_identification: manual_inputs.contest_identification,
             contest_date: manual_inputs.contest_date,
             number_of_votes: manual_inputs.number_of_votes,
@@ -200,6 +210,10 @@ impl<D: VerificationDirectoryTrait> ManualVerificationInformationTrait
 
     fn information_to_key_value(&self) -> Vec<(String, String)> {
         vec![
+            (
+                "Election Event (seed)".to_string(),
+                self.election_event_identification.to_string(),
+            ),
             (
                 "Contest Identification".to_string(),
                 self.contest_identification.to_string(),
@@ -348,7 +362,7 @@ impl VerificationsResult {
         ids.iter()
             .map(|id| {
                 let id_string = id.to_string();
-                let key = format!("{} ({})", &id_string, self.metadata.get(id).unwrap().name());
+                let key = format!("{} - {}", &id_string, self.metadata.get(id).unwrap().name());
                 if self.excluded_verifications.contains(&id_string) {
                     return (key, "Excluded".to_string());
                 }

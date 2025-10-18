@@ -39,10 +39,13 @@ pub enum ReportOutputFileType {
 
 const STYLE: &str = r#"
     html {
-    font-family: Arial, Helvetica, sans-serif;
+        font-family: Arial, Helvetica, sans-serif;
     }
     .content {
         position:relative;
+    }
+    .content p {
+        font-size: 90%;
     }
     .logo {
         position: absolute;
@@ -57,25 +60,23 @@ const STYLE: &str = r#"
         border: 1px solid #ddd;
         padding: 8px;
         vertical-align: top;
+        font-size: 90%;
     }
 "#;
 
 /// Struct to handle report generation and output
 #[derive(Debug)]
-pub struct ReportOutputFile<'a, 'b> {
-    options: &'b ReportOutputFileOptions<'b>,
+pub struct ReportOutputFile<'a> {
+    options: ReportOutputFileOptions,
     report_data: &'a ReportOutputData,
     txt_filepath: Option<PathBuf>,
     html_filepath: Option<PathBuf>,
     pdf_filepath: Option<PathBuf>,
 }
 
-impl<'a, 'b> ReportOutputFile<'a, 'b> {
+impl<'a> ReportOutputFile<'a> {
     /// Create a new ReportOutput instance
-    pub fn new(
-        options: &'b ReportOutputFileOptions<'b>,
-        report_data: &'a ReportOutputData,
-    ) -> Self {
+    pub fn new(options: ReportOutputFileOptions, report_data: &'a ReportOutputData) -> Self {
         Self {
             options,
             report_data,
@@ -86,8 +87,7 @@ impl<'a, 'b> ReportOutputFile<'a, 'b> {
     }
 
     fn generate_txt(&self) -> Result<Vec<u8>, ReportErrorImpl> {
-        let mut content: String = self.report_data.title().to_string() + "\n\n";
-        content.push_str(&self.report_data.output_to_string(4));
+        let mut content: String = self.report_data.output_to_string(4);
         content.push_str("\n Signatures:\n\n");
         content.push_str(&self.options.signatures().join("\n\n"));
         Ok(content.into_bytes())
@@ -100,7 +100,7 @@ impl<'a, 'b> ReportOutputFile<'a, 'b> {
 
             let key_value_entries = b.key_value_entries();
             if !key_value_entries.is_empty() {
-                let mut table = Table::new().with_attributes(vec![("clas", "key_value_table")]);
+                let mut table = Table::new().with_attributes(vec![("class", "key_value_table")]);
                 for (key, value) in key_value_entries.iter() {
                     table.add_body_row(vec![key, value]);
                 }
@@ -151,6 +151,10 @@ impl<'a, 'b> ReportOutputFile<'a, 'b> {
         }
 
         content.add_header(1, self.report_data.title());
+        content.add_html(
+            HtmlElement::new(HtmlTag::ParagraphText)
+                .with_raw(format!("Date / Time: {}", self.report_data.date_time()).as_str()),
+        );
         for section in sections {
             content.add_container(section);
         }
@@ -311,7 +315,14 @@ lines.";
         block4.push(ReportOutputDataEntry::OnlyValue(
             VALUE_MULTILINE_3.to_string(),
         ));
-        ReportOutputData::from_vec("Verifier Test Report", vec![block1, block2, block3, block4])
+        ReportOutputData::from_vec(
+            "Verifier Test Report",
+            Local::now()
+                .format("%Y-%m-%d %H:%M:%S")
+                .to_string()
+                .as_str(),
+            vec![block1, block2, block3, block4],
+        )
     }
 
     #[test]
@@ -321,14 +332,14 @@ lines.";
             .add_output_type(ReportOutputFileType::Txt)
             .directory(dir.as_path())
             .filename_without_extension("test_report")
-            .logo_bytes(&[])
-            .nb_electoral_board(3)
+            .logo_bytes(vec![])
+            .nb_electoral_board(3usize)
             .build()
             .unwrap();
 
         let report_data = test_sample();
 
-        let report_output = ReportOutputFile::new(&options, &report_data);
+        let report_output = ReportOutputFile::new(options, &report_data);
         let res_gen = report_output.generate_txt();
         assert!(res_gen.is_ok());
         let content = String::from_utf8(res_gen.unwrap()).unwrap();
@@ -347,13 +358,13 @@ lines.";
             .add_output_type(ReportOutputFileType::Html)
             .directory(dir.as_path())
             .filename_without_extension(filenname.as_str())
-            .nb_electoral_board(3)
+            .nb_electoral_board(3usize)
             .build()
             .unwrap();
 
         let report_data = test_sample();
 
-        let mut report_output = ReportOutputFile::new(&options, &report_data);
+        let mut report_output = ReportOutputFile::new(options, &report_data);
         let res_gen = report_output.generate();
         assert!(res_gen.is_empty());
     }
@@ -363,19 +374,18 @@ lines.";
         let dir = PathBuf::from(".").join("test_temp_dir");
         let now: String = Local::now().format("%Y%m%d_%H%M%S").to_string();
         let filenname = format!("test_report_with_logo_{}", now);
-        let logo_bytes = test_logo();
         let options = ReportOutputFileOptionsBuilder::default()
             .add_output_type(ReportOutputFileType::Html)
             .directory(dir.as_path())
             .filename_without_extension(filenname.as_str())
-            .logo_bytes(&logo_bytes)
-            .nb_electoral_board(3)
+            .logo_bytes(test_logo())
+            .nb_electoral_board(3usize)
             .build()
             .unwrap();
 
         let report_data = test_sample();
 
-        let mut report_output = ReportOutputFile::new(&options, &report_data);
+        let mut report_output = ReportOutputFile::new(options, &report_data);
         let res_gen = report_output.generate();
         assert!(res_gen.is_empty());
     }
@@ -385,14 +395,13 @@ lines.";
         let dir = PathBuf::from(".").join("test_temp_dir");
         let now: String = Local::now().format("%Y%m%d_%H%M%S").to_string();
         let filenname = format!("test_report_with_logo_{}", now);
-        let logo_bytes = test_logo();
         let chrome_path = PathBuf::from(".").join("test_data").join("chrome.exe.txt");
         let options = ReportOutputFileOptionsBuilder::default()
             .add_output_type(ReportOutputFileType::Pdf)
             .directory(dir.as_path())
             .filename_without_extension(filenname.as_str())
-            .logo_bytes(&logo_bytes)
-            .nb_electoral_board(3)
+            .logo_bytes(test_logo())
+            .nb_electoral_board(3usize)
             .pdf_options(
                 PDFReportOptionsBuilder::default()
                     .path_to_browser(&chrome_path)
@@ -404,7 +413,7 @@ lines.";
 
         let report_data = test_sample();
 
-        let mut report_output = ReportOutputFile::new(&options, &report_data);
+        let mut report_output = ReportOutputFile::new(options, &report_data);
         let res_gen = report_output.generate();
         assert!(res_gen.is_empty(), "{:?}", res_gen);
     }

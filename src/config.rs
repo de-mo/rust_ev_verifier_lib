@@ -243,11 +243,21 @@ impl VerifierConfig {
     /// Get the path to the browser executable for PDF report generation
     ///
     /// If the env variable not found, return error
-    pub fn pdf_report_browser_path(&self) -> Result<PathBuf, VerifierConfigError> {
-        dotenvy::var(consts::ENV_REPORT_BROWSER_PATH)
-            .map(PathBuf::from)
-            .map_err(|_| VerifierConfigErrorImpl::Env(consts::ENV_REPORT_BROWSER_PATH.to_string()))
-            .map_err(VerifierConfigError::from)
+    pub fn pdf_report_browser_path(&self) -> Result<Option<PathBuf>, VerifierConfigError> {
+        match dotenvy::var(consts::ENV_REPORT_BROWSER_PATH) {
+            Ok(v) => {
+                let path = PathBuf::from(v);
+                if !path.is_file() {
+                    return Err(VerifierConfigErrorImpl::FileError {
+                        msg: "Browser executable path not found".to_string(),
+                        value: path.to_string_lossy().to_string(),
+                    }
+                    .into());
+                }
+                Ok(Some(path))
+            }
+            Err(_) => Ok(None),
+        }
     }
 
     /// Get the path to the browser executable for PDF report generation

@@ -21,32 +21,36 @@ use derive_getters::Getters;
 use headless_chrome::Browser;
 use rust_ev_system_library::rust_ev_crypto_primitives::prelude::{ByteArray, EncodeTrait};
 use std::fs;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use tracing::info;
 
 /// Options for report output
 #[derive(Debug, Clone, Builder, Getters)]
-#[builder(pattern = "owned", build_fn(skip))]
-pub struct ReportOutputFileOptions<'a> {
+#[builder(setter(into), pattern = "owned", build_fn(skip))]
+pub struct ReportOutputFileOptions {
     #[builder(setter(name = "add_output_type", custom))]
     output_types: Vec<ReportOutputFileType>,
-    directory: &'a Path,
-    filename_without_extension: &'a str,
-    logo_bytes: &'a [u8],
+    directory: PathBuf,
+    filename_without_extension: String,
+    logo_bytes: Vec<u8>,
     nb_electoral_board: usize,
     #[builder(setter(name = "add_explicit_electoral_board_member", custom))]
-    explicit_electoral_board_members: Vec<&'a str>,
+    explicit_electoral_board_members: Vec<String>,
     #[builder(setter(strip_option))]
-    pdf_options: Option<PDFReportOptions<'a>>,
+    pdf_options: Option<PDFReportOptions>,
 }
 
-impl<'a> ReportOutputFileOptions<'a> {
+impl ReportOutputFileOptions {
     /// Returns the logo bytes as base64 string, if present.
     pub fn logo_base64(&self) -> Option<String> {
-        match self.logo_bytes {
-            [] => None,
-            bytes => Some(ByteArray::from_bytes(bytes).base64_encode().unwrap()),
+        if self.logo_bytes.is_empty() {
+            return None;
         }
+        Some(
+            ByteArray::from_bytes(&self.logo_bytes)
+                .base64_encode()
+                .unwrap(),
+        )
     }
 
     pub fn signatures(&self) -> Vec<String> {
@@ -63,7 +67,7 @@ impl<'a> ReportOutputFileOptions<'a> {
     }
 }
 
-impl<'a> ReportOutputFileOptionsBuilder<'a> {
+impl ReportOutputFileOptionsBuilder {
     /// Add an output type to the report options
     /// If PDF is added, HTML is also added automatically
     /// Duplicates are ignored
@@ -83,10 +87,10 @@ impl<'a> ReportOutputFileOptionsBuilder<'a> {
     }
 
     /// Add an explicit electoral board member
-    pub fn add_explicit_electoral_board_member(mut self, member: &'a str) -> Self {
+    pub fn add_explicit_electoral_board_member(mut self, member: &str) -> Self {
         match self.explicit_electoral_board_members.as_mut() {
-            Some(v) => v.push(member),
-            None => self.explicit_electoral_board_members = Some(vec![member]),
+            Some(v) => v.push(member.to_string()),
+            None => self.explicit_electoral_board_members = Some(vec![member.to_string()]),
         }
         self
     }
@@ -100,11 +104,11 @@ impl<'a> ReportOutputFileOptionsBuilder<'a> {
     ///   defaults to 2 members with generic names "Member 1", "Member 2"
     /// - It is not allowed to specify both the number of electoral board members and the explicit electoral board members
     /// - If PDF output type is selected, PDF report options must be specified
-    pub fn build(self) -> Result<ReportOutputFileOptions<'a>, ReportError> {
+    pub fn build(self) -> Result<ReportOutputFileOptions, ReportError> {
         self.build_impl().map_err(ReportError::from)
     }
 
-    fn build_impl(self) -> Result<ReportOutputFileOptions<'a>, ReportErrorImpl> {
+    fn build_impl(self) -> Result<ReportOutputFileOptions, ReportErrorImpl> {
         let dir = match self.directory {
             Some(dir) => {
                 if dir.is_file() {
@@ -113,7 +117,7 @@ impl<'a> ReportOutputFileOptionsBuilder<'a> {
                     ));
                 } else {
                     if !dir.exists() {
-                        fs::create_dir_all(dir).map_err(|e| {
+                        fs::create_dir_all(&dir).map_err(|e| {
                             ReportErrorImpl::ReportOutputOptions(format!(
                                 "Failed to create output directory: {}",
                                 e
@@ -138,10 +142,7 @@ impl<'a> ReportOutputFileOptionsBuilder<'a> {
                 ));
             }
         };
-        let logo_bytes = match self.logo_bytes {
-            Some(b) => b,
-            None => &[],
-        };
+        let logo_bytes = self.logo_bytes.unwrap_or_default();
         let (nb_electoral_board, explicit_electoral_board_members) = match (
             self.nb_electoral_board,
             self.explicit_electoral_board_members,
@@ -179,9 +180,10 @@ impl<'a> ReportOutputFileOptionsBuilder<'a> {
 
 /// Options specific to PDF report generation
 #[derive(Debug, Clone, Builder, Getters)]
-#[builder(pattern = "owned", build_fn(error = "ReportError"))]
-pub struct PDFReportOptions<'a> {
-    path_to_browser: &'a Path,
+#[builder(build_fn(error = "ReportError"))]
+pub struct PDFReportOptions {
+    #[builder(setter(into))]
+    path_to_browser: PathBuf,
     #[builder(default = "true")]
     sandbox: bool,
 }
@@ -192,7 +194,7 @@ impl From<UninitializedFieldError> for ReportError {
     }
 }
 
-impl<'a> PDFReportOptions<'a> {
+impl PDFReportOptions {
     /// Returns a headless browser instance based on the options
     ///
     /// In test mode, uses the fetcher to get a headless browser installation.
@@ -267,8 +269,8 @@ mod test {
             .add_output_type(ReportOutputFileType::Html)
             .directory(dir.as_path())
             .filename_without_extension("report")
-            .logo_bytes(&[1, 2, 3])
-            .nb_electoral_board(3)
+            .logo_bytes(vec![1, 2, 3])
+            .nb_electoral_board(3usize)
             .build()
             .unwrap();
         assert_eq!(
@@ -290,7 +292,7 @@ mod test {
             .add_output_type(ReportOutputFileType::Pdf)
             .directory(dir.as_path())
             .filename_without_extension("report2")
-            .logo_bytes(&[])
+            .logo_bytes(vec![])
             .pdf_options(
                 PDFReportOptionsBuilder::default()
                     .path_to_browser(&chrome_path)
@@ -310,7 +312,7 @@ mod test {
         let builder = ReportOutputFileOptionsBuilder::default()
             .directory(dir.as_path())
             .filename_without_extension("default")
-            .logo_bytes(&[]);
+            .logo_bytes(vec![]);
         let opts = builder.build().unwrap();
         assert_eq!(opts.output_types, vec![ReportOutputFileType::Txt]);
         assert_eq!(opts.nb_electoral_board, 2);
@@ -367,7 +369,7 @@ mod test {
     fn builder_missing_dir() {
         let builder = ReportOutputFileOptionsBuilder::default()
             .filename_without_extension("fail")
-            .logo_bytes(&[]);
+            .logo_bytes(vec![]);
         let err = builder.build();
         assert!(err.is_err());
     }
@@ -377,7 +379,7 @@ mod test {
         let dir = test_dir();
         let builder = ReportOutputFileOptionsBuilder::default()
             .directory(dir.as_path())
-            .logo_bytes(&[]);
+            .logo_bytes(vec![]);
         let err = builder.build();
         assert!(err.is_err());
     }
@@ -388,8 +390,8 @@ mod test {
         let builder = ReportOutputFileOptionsBuilder::default()
             .directory(dir.as_path())
             .filename_without_extension("fail")
-            .logo_bytes(&[])
-            .nb_electoral_board(2)
+            .logo_bytes(vec![])
+            .nb_electoral_board(2usize)
             .add_explicit_electoral_board_member("Alice");
         let err = builder.build();
         assert!(err.is_err());
@@ -401,7 +403,7 @@ mod test {
         let builder = ReportOutputFileOptionsBuilder::default()
             .directory(dir.as_path())
             .filename_without_extension("fail")
-            .logo_bytes(&[])
+            .logo_bytes(vec![])
             .add_explicit_electoral_board_member("Alice")
             .add_explicit_electoral_board_member("Ben")
             .add_explicit_electoral_board_member("Toto");
