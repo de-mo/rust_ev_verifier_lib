@@ -32,3 +32,4 @@ fetch = ["headless_chrome/fetch"]
 
 [dev-dependencies]
 rust_ev_verifier_application_lib = { path = ".", features = ["fetch"] }
+dotenvy = "0.15"

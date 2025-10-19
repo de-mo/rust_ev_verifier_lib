@@ -1528,6 +1528,7 @@ dependencies = [
  "chrono",
  "derive-getters",
  "derive_builder",
+ "dotenvy",
  "headless_chrome",
  "rayon",
  "rust_ev_system_library",

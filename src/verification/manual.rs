@@ -89,6 +89,7 @@ struct ManualVerificationsForAllPeriod<D: VerificationDirectoryTrait> {
     verification_directory: Arc<D>,
     direct_trust_certificate_fingerprints: HashMap<String, String>,
     election_event_identification: String,
+    seed: String,
     contest_identification: String,
     contest_date: NaiveDate,
     number_of_votes: usize,
@@ -178,6 +179,7 @@ impl<D: VerificationDirectoryTrait> ManualVerificationsForAllPeriod<D> {
         Ok(Self {
             verification_directory: directory.clone(),
             direct_trust_certificate_fingerprints: fingerprints,
+            seed: ee_context.seed.clone(),
             election_event_identification: ee_context
                 .election_event_context
                 .election_event_id
@@ -211,9 +213,10 @@ impl<D: VerificationDirectoryTrait> ManualVerificationInformationTrait
     fn information_to_key_value(&self) -> Vec<(String, String)> {
         vec![
             (
-                "Election Event (seed)".to_string(),
+                "Election Event Identification".to_string(),
                 self.election_event_identification.to_string(),
             ),
+            ("Seed".to_string(), self.seed.to_string()),
             (
                 "Contest Identification".to_string(),
                 self.contest_identification.to_string(),

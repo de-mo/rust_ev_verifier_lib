@@ -150,11 +150,10 @@ impl<'a> ReportOutputFile<'a> {
             content.add_html(logo);
         }
 
-        content.add_header(1, self.report_data.title());
-        content.add_html(
-            HtmlElement::new(HtmlTag::ParagraphText)
-                .with_raw(format!("Date / Time: {}", self.report_data.date_time()).as_str()),
-        );
+        content.add_header(1, self.report_data.metadata().title());
+        content.add_html(HtmlElement::new(HtmlTag::ParagraphText).with_raw(
+            format!("Date / Time: {}", self.report_data.metadata().date_time()).as_str(),
+        ));
         for section in sections {
             content.add_container(section);
         }
@@ -259,14 +258,14 @@ impl<'a> ReportOutputFile<'a> {
 
 #[cfg(test)]
 pub mod test {
-    use chrono::Local;
-
     use super::{
         super::report_output_data::{
             ReportOutputDataBlock, ReportOutputDataBlockTitle, ReportOutputDataEntry,
         },
         *,
     };
+    use crate::report::report_output_data::ReportOutputDataMetaDataBuilder;
+    use chrono::Local;
     use std::path::PathBuf;
 
     const VALUE_MULTILINE: &str = r"This is a value
@@ -316,11 +315,17 @@ lines.";
             VALUE_MULTILINE_3.to_string(),
         ));
         ReportOutputData::from_vec(
-            "Verifier Test Report",
-            Local::now()
-                .format("%Y-%m-%d %H:%M:%S")
-                .to_string()
-                .as_str(),
+            ReportOutputDataMetaDataBuilder::default()
+                .title("Verifier Test Report")
+                .date_time(
+                    Local::now()
+                        .format("%Y-%m-%d %H:%M:%S")
+                        .to_string()
+                        .as_str(),
+                )
+                .seed("KT_20250101_TT99")
+                .build()
+                .unwrap(),
             vec![block1, block2, block3, block4],
         )
     }

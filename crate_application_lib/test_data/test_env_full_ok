@@ -1,0 +1,12 @@
+VERIFIER_DATASET_PASSWORD=LongPassword_Encryption1
+RUST_LOG=info
+DIRECT_TRUST_DIR_PATH=./test_temp_dir
+TXT_TAB_SIZE=2
+REPORT_FORMAT_DATE="%d.%m.%Y %H:%M:%S.%3f"
+REPORT_EXPORT_PDF=true
+REPORT_EXPORT_HTML=true
+REPORT_EXPORT_TXT=true
+REPORT_ELECTORAL_BOARD_MEMBERS="Person 1, Person 2, Person 3"
+REPORT_LOGO=./test_data/test_logo.png
+REPORT_BROWSER_PATH=./test_temp_dir/linux-1095492/chrome-linux/chrome
+REPORT_BROWSER_SANDBOX=false

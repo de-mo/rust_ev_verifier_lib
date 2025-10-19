@@ -75,6 +75,6 @@ mod resources;
 pub mod startup_checks;
 pub mod verification;
 
-pub use config::VerifierConfig;
-pub use data_structures::{dataset::DatasetTypeKind, DatasetType};
+pub use config::{VerifierConfig, VerifierConfigError};
+pub use data_structures::{DatasetType, dataset::DatasetTypeKind};
 pub use error_utils::{ErrorChain, Report};

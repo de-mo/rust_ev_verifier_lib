@@ -20,9 +20,12 @@ mod report_output_file;
 use super::{RunnerError, run_information::RunInformation};
 use derive_builder::Builder;
 use derive_getters::Getters;
-pub use report_output_data::ReportOutputData;
 use report_output_data::{
     OutputToString, ReportOutputDataBlock, ReportOutputDataBlockTitle, ReportOutputDataEntry,
+    ReportOutputDataMetaDataBuilderError,
+};
+pub use report_output_data::{
+    ReportOutputData, ReportOutputDataMetaData, ReportOutputDataMetaDataBuilder,
 };
 use report_output_file::ReportOutputFile;
 pub use report_output_file::{
@@ -30,7 +33,7 @@ pub use report_output_file::{
     ReportOutputFileOptionsBuilder, ReportOutputFileType,
 };
 use rust_ev_verifier_lib::{
-    DatasetTypeKind,
+    DatasetTypeKind, VerifierConfigError,
     file_structure::{VerificationDirectory, VerificationDirectoryTrait},
     verification::{ManualVerificationInformationTrait, ManualVerifications, VerificationPeriod},
 };
@@ -64,8 +67,23 @@ enum ReportErrorImpl {
         path: PathBuf,
         source: Box<ReportError>,
     },
+    #[error("Error building the pdf report options")]
+    PdfReportOptionBuilder { source: Box<ReportError> },
+    #[error("Error building the report options")]
+    ReportOptionBuilder { source: Box<ReportError> },
     #[error("Error exporting to json")]
     ToJson { source: serde_json::Error },
+    #[error("Error generating the metadata for the report")]
+    MetadataError {
+        source: ReportOutputDataMetaDataBuilderError,
+    },
+    #[error("Error reading the verifier configuration: {msg}")]
+    VerifierConfig {
+        msg: String,
+        source: Box<VerifierConfigError>,
+    },
+    #[error("PDF report generation requires a browser path, but none is set")]
+    BrowserPathNone,
 }
 
 /// General Configuration of the report
@@ -96,8 +114,7 @@ pub trait ReportInformationTrait {
     /// Transform the report information to a [ReportOutput].
     fn to_report_output(
         &self,
-        title: &str,
-        date_time: &str,
+        metadata: ReportOutputDataMetaData,
     ) -> Result<ReportOutputData, ReportError>;
 
     /// Transform the information to a multiline string.
@@ -105,12 +122,11 @@ pub trait ReportInformationTrait {
     /// Take the verifier configuration as input for the tab size
     fn info_to_string(
         &self,
-        title: &str,
-        date_time: &str,
+        metadata: ReportOutputDataMetaData,
         tab_size: u8,
     ) -> Result<String, ReportError> {
         Ok(self
-            .to_report_output(title, date_time)
+            .to_report_output(metadata)
             .map_err(|e| ReportErrorImpl::OutputToString {
                 source: Box::new(e),
             })?
@@ -122,11 +138,10 @@ pub trait ReportInformationTrait {
     /// Returns a vector of [ReportError] encountered during the generation
     fn generate_files(
         &self,
-        title: &str,
-        date_time: &str,
+        metadata: ReportOutputDataMetaData,
         output_options: ReportOutputFileOptions,
     ) -> Vec<ReportError> {
-        let report_output = match self.to_report_output(title, date_time) {
+        let report_output = match self.to_report_output(metadata) {
             Ok(ro) => ro,
             Err(e) => return vec![e],
         };
@@ -143,8 +158,12 @@ pub struct ReportData<'a> {
 impl Display for ReportData<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self.info_to_string(
-            self.report_configuration.title(),
-            self.report_configuration.date_time(),
+            match self.report_output_data_meta_data() {
+                Ok(md) => md,
+                Err(e) => {
+                    return write!(f, "ERROR generating metadata for report display: {:?}", e);
+                }
+            },
             *self.report_configuration.tab_size(),
         ) {
             Ok(s) => write!(f, "{}", s),
@@ -162,6 +181,21 @@ impl<'a> ReportData<'a> {
         }
     }
 
+    fn report_output_data_meta_data(&self) -> Result<ReportOutputDataMetaData, ReportErrorImpl> {
+        ReportOutputDataMetaDataBuilder::default()
+            .seed(
+                self.run_information
+                    .runner_information()
+                    .seed
+                    .as_deref()
+                    .unwrap_or("Unknown"),
+            )
+            .title(self.report_configuration.title().clone())
+            .date_time(self.report_configuration.date_time().clone())
+            .build()
+            .map_err(|e| ReportErrorImpl::MetadataError { source: e })
+    }
+
     /// Output the [ReportData] in the log according to the configuration
     pub fn output_log(&self) {
         let s = self.to_string();
@@ -176,11 +210,8 @@ impl<'a> ReportData<'a> {
 
     /// Export to json
     pub fn to_json(&self) -> Result<String, ReportError> {
-        serde_json::to_string(&self.to_report_output(
-            self.report_configuration.title(),
-            self.report_configuration.date_time(),
-        )?)
-        .map_err(|e| ReportError::from(ReportErrorImpl::ToJson { source: e }))
+        serde_json::to_string(&self.to_report_output(self.report_output_data_meta_data()?)?)
+            .map_err(|e| ReportError::from(ReportErrorImpl::ToJson { source: e }))
     }
 }
 
@@ -200,8 +231,7 @@ pub fn generate_files_from_json(
 impl<D: VerificationDirectoryTrait> ReportInformationTrait for ManualVerifications<D> {
     fn to_report_output(
         &self,
-        title: &str,
-        date_time: &str,
+        metadata: ReportOutputDataMetaData,
     ) -> Result<ReportOutputData, ReportError> {
         let mut res = vec![
             ReportOutputDataBlock::new_with_tuples(
@@ -247,15 +277,14 @@ impl<D: VerificationDirectoryTrait> ReportInformationTrait for ManualVerificatio
                 })
                 .collect::<Vec<_>>(),
         );
-        Ok(ReportOutputData::from_vec(title, date_time, res))
+        Ok(ReportOutputData::from_vec(metadata, res))
     }
 }
 
 impl ReportInformationTrait for ReportData<'_> {
     fn to_report_output(
         &self,
-        title: &str,
-        date_time: &str,
+        metadata: ReportOutputDataMetaData,
     ) -> Result<ReportOutputData, ReportError> {
         if !self.run_information.is_prepared() {
             return Err(ReportError::from(ReportErrorImpl::ToTitleKeyValue(
@@ -280,7 +309,12 @@ impl ReportInformationTrait for ReportData<'_> {
         running_information.push(ReportOutputDataEntry::from(("Period", period.as_ref())));
         running_information.push(ReportOutputDataEntry::from((
             "Context Dataset",
-            context_dataset_info.source_path().to_str().unwrap(),
+            context_dataset_info
+                .source_path()
+                .canonicalize()
+                .unwrap()
+                .to_str()
+                .unwrap(),
         )));
         running_information.push(ReportOutputDataEntry::from((
             "Context Dataset Fingerprint",
@@ -289,7 +323,7 @@ impl ReportInformationTrait for ReportData<'_> {
         if let Some(info) = dataset_period_info {
             running_information.push(ReportOutputDataEntry::from((
                 format!("{} Dataset", period).as_str(),
-                info.source_path().to_str().unwrap(),
+                info.source_path().canonicalize().unwrap().to_str().unwrap(),
             )));
             running_information.push(ReportOutputDataEntry::from((
                 format!("{} Dataset Fingerprint", period).as_str(),
@@ -298,7 +332,12 @@ impl ReportInformationTrait for ReportData<'_> {
         };
         running_information.push(ReportOutputDataEntry::from((
             "Verification directory",
-            self.run_information.run_directory().to_str().unwrap(),
+            self.run_information
+                .run_directory()
+                .canonicalize()
+                .unwrap()
+                .to_str()
+                .unwrap(),
         )));
         running_information.push(ReportOutputDataEntry::from((
             "Start Time",
@@ -325,14 +364,14 @@ impl ReportInformationTrait for ReportData<'_> {
             "Duration",
             duration_string.as_str(),
         )));
-        let mut res = ReportOutputData::new(title, date_time);
+        let mut res = ReportOutputData::new(metadata.clone());
         res.push(running_information);
         res.append(
             &mut ManualVerifications::<VerificationDirectory>::try_from(self.run_information)
                 .map_err(|e| ReportErrorImpl::Manual {
                     source: Box::new(e),
                 })?
-                .to_report_output(title, date_time)
+                .to_report_output(metadata)
                 .map_err(|e| ReportErrorImpl::ToOutput {
                     source: Box::new(e),
                 })?,

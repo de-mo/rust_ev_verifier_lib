@@ -16,6 +16,7 @@
 
 use std::iter::once;
 
+use derive_builder::Builder;
 use derive_getters::Getters;
 use serde::{Deserialize, Serialize};
 
@@ -205,31 +206,36 @@ impl ReportOutputDataBlock {
     }
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Getters, Builder)]
+#[builder(setter(into))]
+pub struct ReportOutputDataMetaData {
+    seed: String,
+    title: String,
+    date_time: String,
+}
+
 /// Store whole Report output
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Getters)]
 pub struct ReportOutputData {
-    title: String,
-    date_time: String,
+    metadata: ReportOutputDataMetaData,
     blocks: Vec<ReportOutputDataBlock>,
 }
 
 impl ReportOutputData {
     /// New empty report output
-    pub fn new(title: &str, date_time: &str) -> Self {
+    pub fn new(metadata: ReportOutputDataMetaData) -> Self {
         Self {
-            title: title.to_string(),
-            date_time: date_time.to_string(),
+            metadata,
             blocks: vec![],
         }
     }
 
     /// Report output from vec of blocks
-    pub fn from_vec(title: &str, date_time: &str, blocks: Vec<ReportOutputDataBlock>) -> Self {
-        Self {
-            title: title.to_string(),
-            date_time: date_time.to_string(),
-            blocks,
-        }
+    pub fn from_vec(
+        metadata: ReportOutputDataMetaData,
+        blocks: Vec<ReportOutputDataBlock>,
+    ) -> Self {
+        Self { metadata, blocks }
     }
 
     /// Push a block
@@ -248,8 +254,8 @@ impl ReportOutputData {
 impl OutputToString for ReportOutputData {
     fn output_to_string(&self, tab_size: u8) -> String {
         let mut res = String::new();
-        res.push_str(&format!("{}\n", self.title));
-        res.push_str(&format!("Date / Time: {}\n\n", self.date_time));
+        res.push_str(&format!("{}\n", self.metadata().title()));
+        res.push_str(&format!("Date / Time: {}\n\n", self.metadata().date_time()));
         res.push_str(
             &self
                 .blocks

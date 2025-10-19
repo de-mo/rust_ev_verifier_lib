@@ -20,9 +20,10 @@ use derive_builder::{Builder, UninitializedFieldError};
 use derive_getters::Getters;
 use headless_chrome::Browser;
 use rust_ev_system_library::rust_ev_crypto_primitives::prelude::{ByteArray, EncodeTrait};
+use rust_ev_verifier_lib::VerifierConfig;
 use std::fs;
-use std::path::PathBuf;
-use tracing::info;
+use std::path::{Path, PathBuf};
+use tracing::{error, info};
 
 /// Options for report output
 #[derive(Debug, Clone, Builder, Getters)]
@@ -64,6 +65,85 @@ impl ReportOutputFileOptions {
                 .map(|m| m.to_string())
                 .collect::<Vec<_>>(),
         }
+    }
+
+    pub fn generate_from_config(
+        filename_without_extension: &str,
+        output_dir: &Path,
+        config: &VerifierConfig,
+    ) -> Result<Self, ReportError> {
+        Self::generate_from_config_impl(filename_without_extension, output_dir, config)
+            .map_err(ReportError::from)
+    }
+
+    fn generate_from_config_impl(
+        filename_without_extension: &str,
+        output_dir: &Path,
+        config: &VerifierConfig,
+    ) -> Result<Self, ReportErrorImpl> {
+        let mut options_builder = ReportOutputFileOptionsBuilder::default()
+            .directory(output_dir)
+            .filename_without_extension(filename_without_extension);
+
+        if config.report_export_txt() {
+            options_builder = options_builder.add_output_type(ReportOutputFileType::Txt);
+        }
+
+        if config.report_export_pdf() {
+            let browser_path =
+                config
+                    .pdf_report_browser_path()
+                    .map_err(|e| ReportErrorImpl::VerifierConfig {
+                        msg: "getting PDF browser path".to_string(),
+                        source: Box::new(e),
+                    })?;
+            match browser_path {
+                Some(bp) => {
+                    options_builder = options_builder.add_output_type(ReportOutputFileType::Pdf);
+                    options_builder = options_builder.pdf_options(
+                        PDFReportOptionsBuilder::default()
+                            .path_to_browser(bp)
+                            .sandbox(config.report_sandbox())
+                            .build()
+                            .map_err(|e| ReportErrorImpl::PdfReportOptionBuilder {
+                                source: Box::new(e),
+                            })?,
+                    );
+                }
+                None => return Err(ReportErrorImpl::BrowserPathNone),
+            }
+        }
+        if config.report_export_html() {
+            options_builder = options_builder.add_output_type(ReportOutputFileType::Html);
+        }
+
+        let logo_path = match config.report_logo_path() {
+            Ok(logo_path) => logo_path,
+            Err(e) => {
+                error!("Error getting logo path: {}", e);
+                None
+            }
+        };
+
+        if let Some(lg) = logo_path {
+            match std::fs::read(lg) {
+                Ok(bytes) => options_builder = options_builder.logo_bytes(bytes),
+                Err(e) => {
+                    error!("Error reading logo file: {}", e);
+                }
+            };
+        }
+
+        let electoral_board_members = config.report_electoral_board_members();
+        for member in &electoral_board_members {
+            options_builder = options_builder.add_explicit_electoral_board_member(member);
+        }
+
+        options_builder
+            .build()
+            .map_err(|e| ReportErrorImpl::ReportOptionBuilder {
+                source: Box::new(e),
+            })
     }
 }
 
@@ -248,6 +328,10 @@ mod test {
         std::env::temp_dir()
     }
 
+    fn test_data_dir() -> PathBuf {
+        PathBuf::from(".").join("test_data")
+    }
+
     #[test]
     fn test_browser_in_test() {
         let chrome_path = PathBuf::from(".").join("test_data").join("chrome.exe.txt");
@@ -415,5 +499,18 @@ mod test {
             opts.explicit_electoral_board_members,
             vec!["Alice", "Ben", "Toto"]
         );
+    }
+
+    #[test]
+    fn generate_from_config() {
+        let env_file = test_data_dir().join("test_env_full_ok");
+        dotenvy::from_filename(env_file).ok();
+        let config = VerifierConfig::default();
+        let res = ReportOutputFileOptions::generate_from_config(
+            "test_report",
+            test_dir().as_path(),
+            &config,
+        );
+        assert!(res.is_ok(), "{:?}", res.err());
     }
 }
