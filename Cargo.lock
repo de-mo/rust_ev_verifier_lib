@@ -1487,9 +1487,9 @@ dependencies = [
 
 [[package]]
 name = "rust_ev_crypto_primitives"
-version = "0.8.0"
+version = "0.8.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "09632e81e499034ae4770391e5255a8ebb22d23db385fb77d01475cc994ca72b"
+checksum = "1b17fa76cdeb4a928cf310c51abca0a270f156e353c52e7d475e1a4e4e8c7042"
 dependencies = [
  "argon2",
  "data-encoding",
@@ -1506,8 +1506,6 @@ dependencies = [
 [[package]]
 name = "rust_ev_system_library"
 version = "0.3.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9677c1ed8df80cedde6e7adb6a2fb7a7e5975848d2697bed1736ab79842b4b6d"
 dependencies = [
  "chrono",
  "rayon",
@@ -2181,7 +2179,7 @@ version = "0.1.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c2a7b1c03c876122aa43f3020e6c3c3ee5c05081c9a00739faf7503aeba10d22"
 dependencies = [
- "windows-sys 0.52.0",
+ "windows-sys 0.61.1",
 ]
 
 [[package]]

@@ -9,9 +9,9 @@
 			},
 			"electionEventId": "B32667D7D3B9A974EB4036B49EB1D3D5",
 			"ballotBoxId": "B0EDAB149D5272E5F8450596B1892023",
-			"votes": [],
-			"actualSelectedVotingOptions": [],
-			"decodedWriteInVotes": []
+			"decryptedVotes": [],
+			"decodedVotes": [],
+			"decodedWriteIns": []
 		},
 		"output": {
 			"h": [
@@ -39,7 +39,7 @@
 			},
 			"electionEventId": "B32667D7D3B9A974EB4036B49EB1D3D5",
 			"ballotBoxId": "B0EDAB149D5272E5F8450596B1892023",
-			"votes": [
+			"decryptedVotes": [
 				[
 					37,
 					67,
@@ -67,7 +67,7 @@
 					761
 				]
 			],
-			"actualSelectedVotingOptions": [
+			"decodedVotes": [
 				[
 					"806f52e6-9d49-4906-b2a8-7c89dfdf53e2|fbed7bf6-a7ed-3812-bb0c-22e449aa4f96",
 					"16f99be5-0ce6-4a81-ae8b-1817ceecaebc|ecdbcc43-396a-348f-a671-919abfff4e12",
@@ -95,7 +95,7 @@
 					"nrw_test|1a6ea144-5fe6-376a-a659-aa8d72bb2ad8"
 				]
 			],
-			"decodedWriteInVotes": [
+			"decodedWriteIns": [
 				[],
 				[]
 			]
@@ -183,7 +183,7 @@
 			},
 			"electionEventId": "B32667D7D3B9A974EB4036B49EB1D3D5",
 			"ballotBoxId": "B0EDAB149D5272E5F8450596B1892023",
-			"votes": [
+			"decryptedVotes": [
 				[
 					11,
 					43,
@@ -213,7 +213,7 @@
 					839
 				]
 			],
-			"actualSelectedVotingOptions": [
+			"decodedVotes": [
 				[
 					"806f52e6-9d49-4906-b2a8-7c89dfdf53e2|3aa38c9e-6e93-3159-91e1-c3da90681572",
 					"16f99be5-0ce6-4a81-ae8b-1817ceecaebc|d7a1b387-a90c-31ca-bfc2-ad038a1d9816",
@@ -243,7 +243,7 @@
 					"majorz_test|f71ffce9-78c9-3621-895b-aebcc0849ad1"
 				]
 			],
-			"decodedWriteInVotes": [
+			"decodedWriteIns": [
 				[
 					"John Doe (Write-In)"
 				],

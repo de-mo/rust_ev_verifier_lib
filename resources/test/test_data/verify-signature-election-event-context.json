@@ -6890,6 +6890,7 @@
 								"lists": [
 									{
 										"listIdentification": "244ab111-a5d4-4090-bed3-79f850a27fa1",
+										"listIndentureNumber": "01a",
 										"listDescription": {
 											"RM": "Partei 01",
 											"DE": "Partei 01",
@@ -6944,6 +6945,7 @@
 									},
 									{
 										"listIdentification": "50504845-5222-4e70-8d34-f812fce04009",
+										"listIndentureNumber": "02a",
 										"listDescription": {
 											"RM": "Partei 02",
 											"DE": "Partei 02",
@@ -7004,6 +7006,7 @@
 									},
 									{
 										"listIdentification": "9ef97382-006e-4e3d-b079-1b7e53da339b",
+										"listIndentureNumber": "03a",
 										"listDescription": {
 											"RM": "Partei 03",
 											"DE": "Partei 03",
@@ -7064,6 +7067,7 @@
 									},
 									{
 										"listIdentification": "97e7687a-9ce7-4724-91bb-17396344b50c",
+										"listIndentureNumber": "10",
 										"listDescription": {
 											"RM": "Partei 10",
 											"DE": "Partei 10",
@@ -7103,6 +7107,7 @@
 								],
 								"emptyList": {
 									"listIdentification": "99",
+									"listIndentureNumber": "99",
 									"listDescription": {
 										"RM": "Wahlzettel ohne Parteibezeichnung",
 										"DE": "Wahlzettel ohne Parteibezeichnung",
@@ -7236,6 +7241,7 @@
 								"lists": [],
 								"emptyList": {
 									"listIdentification": "ca127938-5e2f-372f-8a4e-a0cb1da35b3b",
+									"listIndentureNumber": "99",
 									"listDescription": {
 										"RM": "Leere Liste",
 										"DE": "Leere Liste",
