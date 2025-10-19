@@ -27,6 +27,9 @@ pub mod report;
 mod run_information;
 mod runner;
 
+#[cfg(not(target_os = "windows"))]
+use std::path::Path;
+
 pub use extract::*;
 //pub use report::*;
 pub use run_information::RunInformation;
@@ -98,4 +101,25 @@ fn prepare_fixed_based_optimization(dir: &VerificationDirectory) -> Result<(), R
         context.encryption_group.p(),
     );
     Ok(())
+}
+
+#[cfg(not(target_os = "windows"))]
+fn canonicalize_path_os_dependent<P: AsRef<Path>>(p: P) -> String {
+    p.as_ref()
+        .canonicalize()
+        .unwrap()
+        .to_str()
+        .unwrap()
+        .to_string()
+}
+
+#[cfg(target_os = "windows")]
+fn canonicalize_path_os_dependent<P: AsRef<Path>>(p: P) -> String {
+    const VERBATIM_PREFIX: &str = r#"\\?\"#;
+    let p = p.as_ref().canonicalize().unwrap().to_str().unwrap();
+    if p.starts_with(VERBATIM_PREFIX) {
+        p[VERBATIM_PREFIX.len()..].to_string()
+    } else {
+        p
+    }
 }

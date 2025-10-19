@@ -18,6 +18,8 @@ mod options;
 
 use std::path::PathBuf;
 
+use crate::canonicalize_path_os_dependent;
+
 use super::{OutputToString, ReportError, ReportErrorImpl, ReportOutputData};
 use build_html::{
     Container, ContainerType, Html, HtmlContainer, HtmlElement, HtmlPage, HtmlTag, Table,
@@ -171,13 +173,7 @@ impl<'a> ReportOutputFile<'a> {
         let browser = pdf_options.browser()?;
         let file_path = format!(
             "file://{}",
-            self.html_filepath
-                .as_ref()
-                .unwrap()
-                .canonicalize()
-                .unwrap()
-                .to_str()
-                .unwrap()
+            canonicalize_path_os_dependent(self.html_filepath.as_ref().unwrap())
         );
         let tab = browser.new_tab().map_err(|e| ReportErrorImpl::Browser {
             msg: "Error opening tab".to_string(),

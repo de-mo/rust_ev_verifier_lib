@@ -17,6 +17,8 @@
 mod report_output_data;
 mod report_output_file;
 
+use crate::canonicalize_path_os_dependent;
+
 use super::{RunnerError, run_information::RunInformation};
 use derive_builder::Builder;
 use derive_getters::Getters;
@@ -309,12 +311,7 @@ impl ReportInformationTrait for ReportData<'_> {
         running_information.push(ReportOutputDataEntry::from(("Period", period.as_ref())));
         running_information.push(ReportOutputDataEntry::from((
             "Context Dataset",
-            context_dataset_info
-                .source_path()
-                .canonicalize()
-                .unwrap()
-                .to_str()
-                .unwrap(),
+            canonicalize_path_os_dependent(context_dataset_info.source_path()).as_str(),
         )));
         running_information.push(ReportOutputDataEntry::from((
             "Context Dataset Fingerprint",
@@ -323,7 +320,7 @@ impl ReportInformationTrait for ReportData<'_> {
         if let Some(info) = dataset_period_info {
             running_information.push(ReportOutputDataEntry::from((
                 format!("{} Dataset", period).as_str(),
-                info.source_path().canonicalize().unwrap().to_str().unwrap(),
+                canonicalize_path_os_dependent(info.source_path()).as_str(),
             )));
             running_information.push(ReportOutputDataEntry::from((
                 format!("{} Dataset Fingerprint", period).as_str(),
