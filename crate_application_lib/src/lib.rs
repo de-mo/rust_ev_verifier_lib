@@ -27,10 +27,8 @@ pub mod report;
 mod run_information;
 mod runner;
 
-#[cfg(not(target_os = "windows"))]
-use std::path::Path;
-
 pub use extract::*;
+use std::path::Path;
 //pub use report::*;
 pub use run_information::RunInformation;
 pub use runner::{
@@ -116,10 +114,16 @@ fn canonicalize_path_os_dependent<P: AsRef<Path>>(p: P) -> String {
 #[cfg(target_os = "windows")]
 fn canonicalize_path_os_dependent<P: AsRef<Path>>(p: P) -> String {
     const VERBATIM_PREFIX: &str = r#"\\?\"#;
-    let p = p.as_ref().canonicalize().unwrap().to_str().unwrap();
+    let p = p
+        .as_ref()
+        .canonicalize()
+        .unwrap()
+        .to_str()
+        .unwrap()
+        .to_string();
     if p.starts_with(VERBATIM_PREFIX) {
-        p[VERBATIM_PREFIX.len()..].to_string()
+        p.replace(VERBATIM_PREFIX, "")
     } else {
-        p
+        p.to_string()
     }
 }

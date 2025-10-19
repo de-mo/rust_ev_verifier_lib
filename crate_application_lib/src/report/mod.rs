@@ -329,12 +329,7 @@ impl ReportInformationTrait for ReportData<'_> {
         };
         running_information.push(ReportOutputDataEntry::from((
             "Verification directory",
-            self.run_information
-                .run_directory()
-                .canonicalize()
-                .unwrap()
-                .to_str()
-                .unwrap(),
+            canonicalize_path_os_dependent(self.run_information.run_directory()).as_str(),
         )));
         running_information.push(ReportOutputDataEntry::from((
             "Start Time",
