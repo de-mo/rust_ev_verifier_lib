@@ -38,11 +38,8 @@ use roxmltree::Document;
 use std::{fmt::Display, sync::Arc};
 use thiserror::Error;
 
-#[derive(Debug, Clone)]
 /// Data structure containing the eCH0222
-pub struct ECH0222 {
-    inner: XMLData<ECH0222Data, DataStructureError>,
-}
+pub type ECH0222 = XMLData<ECH0222Data, DataStructureError>;
 
 #[derive(Error, Debug)]
 #[error(transparent)]
@@ -130,20 +127,6 @@ impl Display for ECH0222Difference {
     }
 }
 
-impl ECH0222 {
-    /// Get the data behind the eCH0222
-    pub fn get_data(&self) -> Result<Arc<ECH0222Data>, DataStructureError> {
-        self.inner.get_data()
-    }
-
-    /// Unwrap the data behind the eCH0222
-    ///
-    /// Panic if the data cannot be created
-    pub fn unwrap_data(&self) -> Arc<ECH0222Data> {
-        self.get_data().unwrap()
-    }
-}
-
 impl VerifierDataToTypeTrait for ECH0222 {
     fn data_type() -> VerifierDataType {
         VerifierDataType::Tally(VerifierTallyDataType::ECH0222)
@@ -162,9 +145,7 @@ fn decode_xml(s: &str) -> Result<ECH0222Data, DataStructureError> {
 
 impl VerifierDataDecode for ECH0222 {
     fn decode_xml<'a>(s: String) -> Result<Self, DataStructureError> {
-        Ok(Self {
-            inner: XMLData::new(s.as_str(), decode_xml),
-        })
+        Ok(XMLData::new(s.as_str(), decode_xml))
     }
 }
 
@@ -174,7 +155,7 @@ impl<'a> VerifiyXMLSignatureTrait<'a> for ECH0222 {
     }
 
     fn get_data_str(&self) -> Option<Arc<String>> {
-        self.inner.get_raw()
+        self.get_raw()
     }
 }
 

@@ -15,29 +15,32 @@
 // <https://www.gnu.org/licenses/>.
 
 use super::{
+    FileGroupFileIter, MockFileGroupDataIter, MockFileGroupElement, MockedDataType,
     impl_mock_methods_for_mocked_data, impl_mock_methods_for_mocked_group,
     impl_trait_get_method_for_mocked_data, impl_trait_get_method_for_mocked_group,
-    FileGroupFileIter, MockFileGroupDataIter, MockFileGroupElement, MockedDataType,
 };
 use crate::{
     data_structures::{
+        ElectionEventContextPayload,
         context::{
             control_component_public_keys_payload::ControlComponentPublicKeysPayload,
-            election_event_configuration::ElectionEventConfiguration,
+            election_event_configuration::{
+                ElectionEventConfiguration, ElectionEventConfigurationData,
+            },
             setup_component_public_keys_payload::SetupComponentPublicKeysPayload,
             setup_component_tally_data_payload::SetupComponentTallyDataPayload,
         },
-        ElectionEventContextPayload,
+        mock::MockXmlTrait,
     },
     file_structure::{
+        CompletnessTestTrait, ContextDirectory, ContextDirectoryTrait, FileStructureError,
+        FileStructureErrorImpl,
         context_directory::{
-            impl_completness_test_trait_for_context, impl_completness_test_trait_for_context_vcs,
-            ContextVCSDirectory, ContextVCSDirectoryTrait,
+            ContextVCSDirectory, ContextVCSDirectoryTrait, impl_completness_test_trait_for_context,
+            impl_completness_test_trait_for_context_vcs,
         },
         file::File,
         file_group::FileGroup,
-        CompletnessTestTrait, ContextDirectory, ContextDirectoryTrait, FileStructureError,
-        FileStructureErrorImpl,
     },
 };
 use paste::paste;
@@ -92,10 +95,29 @@ impl MockContextDirectory {
 
     impl_mock_methods_for_mocked_data!(election_event_configuration, ElectionEventConfiguration);
 
+    #[allow(dead_code)]
+    /// Mock ElectionEventConfiguration data
+    pub fn mock_election_event_configuration_data(
+        &mut self,
+        closure: impl FnMut(&mut ElectionEventConfigurationData) + Clone,
+    ) {
+        self.mock_election_event_configuration(|d| d.set_data(closure.clone()));
+    }
+
+    #[allow(dead_code)]
+    /// Mock ElectionEventConfiguration raw data (string)
+    pub fn mock_election_event_configuration_string(&mut self, new_str: String) {
+        self.mock_election_event_configuration(|d| d.set_raw(new_str.clone()));
+    }
+
     impl_mock_methods_for_mocked_group!(
         control_component_public_keys_payload,
         ControlComponentPublicKeysPayload
     );
+
+    pub fn vcs_directories_mut(&mut self) -> &mut [MockContextVCSDirectory] {
+        &mut self.vcs_directories
+    }
 }
 
 impl ContextDirectoryTrait for MockContextDirectory {
@@ -418,5 +440,22 @@ mod test {
             4
         );
         assert!(it.next().is_none());
+    }
+
+    #[test]
+    fn test_mock_config() {
+        let mut mock_dir =
+            MockContextDirectory::new(test_datasets_context_path().as_path().parent().unwrap());
+        mock_dir.mock_election_event_configuration_data(|d| d.header.voter_total = 10000);
+        assert_eq!(
+            mock_dir
+                .election_event_configuration()
+                .unwrap()
+                .get_data()
+                .unwrap()
+                .header
+                .voter_total,
+            10000
+        );
     }
 }

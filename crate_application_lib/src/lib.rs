@@ -28,11 +28,12 @@ mod run_information;
 mod runner;
 
 pub use extract::*;
+use std::path::Path;
 //pub use report::*;
 pub use run_information::RunInformation;
 pub use runner::{
-    no_action_after_fn, no_action_after_runner_fn, no_action_before_fn, no_action_before_runner_fn,
     RunParallel, RunSequential, Runner, RunnerInformation, VerificationRunInformation,
+    no_action_after_fn, no_action_after_runner_fn, no_action_before_fn, no_action_before_runner_fn,
 };
 use rust_ev_verifier_lib::{
     dataset::DatasetError,
@@ -84,15 +85,8 @@ enum RunnerErrorImpl {
     IsRunning,
     #[error("Runner has already run. Cannot be started before resetting it")]
     HasAlreadyRun,
-    /*
-    #[error("IO error {msg} -> caused by: {source}")]
-    IO { msg: String, source: std::io::Error },
-    #[error("File structure error {msg} -> caused by: {source}")]
-    FileStructure {
-        msg: String,
-        source: Box<FileStructureError>,
-    },
-     */
+    #[error("Error collectiong the election event id")]
+    ElectionEventIdCollection { source: Box<FileStructureError> },
 }
 
 fn prepare_fixed_based_optimization(dir: &VerificationDirectory) -> Result<(), RunnerError> {
@@ -105,4 +99,31 @@ fn prepare_fixed_based_optimization(dir: &VerificationDirectory) -> Result<(), R
         context.encryption_group.p(),
     );
     Ok(())
+}
+
+#[cfg(not(target_os = "windows"))]
+fn canonicalize_path_os_dependent<P: AsRef<Path>>(p: P) -> String {
+    p.as_ref()
+        .canonicalize()
+        .unwrap()
+        .to_str()
+        .unwrap()
+        .to_string()
+}
+
+#[cfg(target_os = "windows")]
+fn canonicalize_path_os_dependent<P: AsRef<Path>>(p: P) -> String {
+    const VERBATIM_PREFIX: &str = r#"\\?\"#;
+    let p = p
+        .as_ref()
+        .canonicalize()
+        .unwrap()
+        .to_str()
+        .unwrap()
+        .to_string();
+    if p.starts_with(VERBATIM_PREFIX) {
+        p.replace(VERBATIM_PREFIX, "")
+    } else {
+        p.to_string()
+    }
 }

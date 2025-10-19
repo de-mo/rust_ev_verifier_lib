@@ -18,17 +18,17 @@ use chrono::{DateTime, Local};
 //use futures::{stream::FuturesUnordered, StreamExt};
 use crate::RunnerErrorImpl;
 use rust_ev_verifier_lib::{
-    file_structure::{VerificationDirectory, VerificationDirectoryTrait},
+    VerifierConfig,
+    file_structure::{ContextDirectoryTrait, VerificationDirectory, VerificationDirectoryTrait},
     startup_checks::{check_complete, check_verification_dir, start_check},
     verification::{
         VerificationMetaDataList, VerificationPeriod, VerificationStatus, VerificationSuite,
     },
-    VerifierConfig,
 };
 use tracing::{info, warn};
 
 //use std::future::Future;
-use super::{prepare_fixed_based_optimization, RunnerError};
+use super::{RunnerError, prepare_fixed_based_optimization};
 use rayon::prelude::*;
 use std::{iter::zip, sync::Mutex};
 use std::{
@@ -57,6 +57,8 @@ pub struct VerificationRunInformation {
 #[derive(Clone)]
 pub struct RunnerInformation {
     config: &'static VerifierConfig,
+    pub election_event_id: Option<String>,
+    pub seed: Option<String>,
     pub start_time: Option<SystemTime>,
     pub duration: Option<Duration>,
 }
@@ -65,6 +67,8 @@ impl RunnerInformation {
     pub fn new(config: &'static VerifierConfig) -> Self {
         Self {
             config,
+            election_event_id: None,
+            seed: None,
             start_time: None,
             duration: None,
         }
@@ -224,6 +228,8 @@ pub struct Runner<'a, T: RunStrategy<'a>> {
     verifications: Box<VerificationSuite<'a>>,
     start_time: Option<SystemTime>,
     duration: Option<Duration>,
+    election_event_id: String,
+    seed: String,
     run_strategy: T,
     config: &'static VerifierConfig,
     action_before_runner: Box<dyn Fn(SystemTime) + Send + Sync>,
@@ -360,6 +366,14 @@ where
                 source: Box::new(e),
             }
         })?;
+        let ee_context = directory
+            .context()
+            .election_event_context_payload()
+            .map_err(|e| RunnerErrorImpl::ElectionEventIdCollection {
+                source: Box::new(e),
+            })?;
+        let eeid = ee_context.election_event_context.election_event_id.clone();
+        let seed = ee_context.seed.clone();
         Ok(Runner {
             path: path.to_path_buf(),
             verification_directory: Box::new(directory),
@@ -371,6 +385,8 @@ where
                     }
                 })?,
             ),
+            election_event_id: eeid,
+            seed,
             start_time: None,
             duration: None,
             run_strategy,
@@ -443,6 +459,8 @@ where
             config: self.config,
             start_time: self.start_time,
             duration: self.duration,
+            election_event_id: Some(self.election_event_id.clone()),
+            seed: Some(self.seed.clone()),
         });
         info!(
             "{} verifications run (duration: {}s)",

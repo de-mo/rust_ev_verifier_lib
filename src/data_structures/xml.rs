@@ -20,6 +20,7 @@ use std::{
     fmt::Debug,
     sync::{Arc, RwLock},
 };
+
 #[allow(clippy::type_complexity)]
 #[derive(Clone)]
 pub struct XMLData<T, E>
@@ -148,5 +149,85 @@ impl<'a, 'input> ElementChildren<'a, 'input> for Node<'a, 'input> {
         ElementChildrenIter {
             children: self.children(),
         }
+    }
+}
+
+#[cfg(test)]
+pub mod mock {
+    use super::*;
+
+    pub trait MockXmlTrait<T>
+    where
+        T: Clone + std::fmt::Debug + Send + Sync,
+    {
+        fn set_raw(&self, new: String);
+        fn set_data(&self, closure: impl FnMut(&mut T));
+    }
+
+    impl<T, E> MockXmlTrait<T> for XMLData<T, E>
+    where
+        T: Clone + std::fmt::Debug + Send + Sync,
+        E: Clone + std::fmt::Debug + Send + Sync,
+    {
+        fn set_raw(&self, new: String) {
+            if self.get_raw().is_some() {
+                let mut value = self.inner.write().unwrap();
+                *value = RawOrData::Raw(Arc::new(new));
+            }
+        }
+
+        fn set_data(&self, mut closure: impl FnMut(&mut T)) {
+            let mut payload = match self.get_data() {
+                Ok(p) => p.as_ref().clone(),
+                Err(_) => return,
+            };
+            closure(&mut payload);
+            let mut value = self.inner.write().unwrap();
+            *value = RawOrData::Data(Arc::new(payload));
+        }
+    }
+}
+
+#[cfg(test)]
+pub mod test {
+    use super::mock::*;
+    use crate::config::test::get_test_verifier_setup_dir;
+    use crate::direct_trust::VerifiyXMLSignatureTrait;
+    use crate::file_structure::{ContextDirectoryTrait, VerificationDirectoryTrait};
+
+    #[test]
+    fn test_set_raw() {
+        let dir = get_test_verifier_setup_dir();
+        let config = dir.context().election_event_configuration().unwrap();
+        let current_raw = config.get_data_str().as_ref().unwrap().clone();
+        config.set_raw("toto".to_string());
+        assert_ne!(
+            config.get_data_str().unwrap().as_ref(),
+            current_raw.as_str()
+        );
+        assert_eq!(config.get_data_str().unwrap().as_ref(), "toto");
+    }
+
+    #[test]
+    fn test_set_data() {
+        let dir = get_test_verifier_setup_dir();
+        let config = dir.context().election_event_configuration().unwrap();
+        config.set_data(|d| d.header.voter_total = 10000);
+        assert_eq!(
+            config.get_data().unwrap().as_ref().header.voter_total,
+            10000
+        );
+    }
+
+    #[test]
+    fn test_set_data_already_data_extracted() {
+        let dir = get_test_verifier_setup_dir();
+        let config = dir.context().election_event_configuration().unwrap();
+        let _ = config.get_data();
+        config.set_data(|d| d.header.voter_total = 10000);
+        assert_eq!(
+            config.get_data().unwrap().as_ref().header.voter_total,
+            10000
+        );
     }
 }

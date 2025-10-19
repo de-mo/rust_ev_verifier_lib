@@ -17,7 +17,7 @@
 use super::super::super::result::{VerificationEvent, VerificationResult};
 use crate::{
     config::VerifierConfig,
-    file_structure::{context_directory::ContextDirectoryTrait, VerificationDirectoryTrait},
+    file_structure::{VerificationDirectoryTrait, context_directory::ContextDirectoryTrait},
 };
 
 pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
@@ -40,11 +40,20 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
         .election_event_context
         .verification_card_set_contexts;
     let total_voter = match context_dir.election_event_configuration() {
-        Ok(o) => o.unwrap_data().register.len(),
+        Ok(o) => match o.get_data() {
+            Ok(o) => o.register.len(),
+            Err(e) => {
+                result.push(
+                    VerificationEvent::new_error_from_error(&e)
+                        .add_context("Cannot extract election_event_configuration"),
+                );
+                return;
+            }
+        },
         Err(e) => {
             result.push(
                 VerificationEvent::new_error_from_error(&e)
-                    .add_context("Cannot extract election_event_context_payload"),
+                    .add_context("Cannot read election_event_context_payload"),
             );
             return;
         }
@@ -65,7 +74,7 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::config::test::{get_test_verifier_setup_dir as get_verifier_dir, CONFIG_TEST};
+    use crate::config::test::{CONFIG_TEST, get_test_verifier_setup_dir as get_verifier_dir};
 
     #[test]
     fn test_ok() {

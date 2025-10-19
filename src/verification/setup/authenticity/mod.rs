@@ -25,10 +25,10 @@ use super::super::{
 use crate::{
     config::VerifierConfig,
     file_structure::{
-        context_directory::{ContextDirectoryTrait, ContextVCSDirectoryTrait},
         VerificationDirectoryTrait,
+        context_directory::{ContextDirectoryTrait, ContextVCSDirectoryTrait},
     },
-    verification::{meta_data::VerificationMetaDataList, VerificationError, VerificationErrorImpl},
+    verification::{VerificationError, VerificationErrorImpl, meta_data::VerificationMetaDataList},
 };
 
 pub fn get_verifications<'a>(
@@ -206,8 +206,13 @@ fn fn_0205_verify_signature_election_event_context<D: VerificationDirectoryTrait
 
 #[cfg(test)]
 mod test {
+    use rust_ev_system_library::rust_ev_crypto_primitives::prelude::Integer;
+
     use super::*;
-    use crate::config::test::{get_test_verifier_setup_dir as get_verifier_dir, CONFIG_TEST};
+    use crate::config::test::{
+        CONFIG_TEST, get_test_verifier_mock_setup_dir,
+        get_test_verifier_setup_dir as get_verifier_dir,
+    };
 
     #[test]
     fn test_0201() {
@@ -255,5 +260,125 @@ mod test {
         let mut result = VerificationResult::new();
         fn_0205_verify_signature_election_event_context(&dir, &CONFIG_TEST, &mut result);
         assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_0201_changed() {
+        let mut mock_dir = get_test_verifier_mock_setup_dir();
+        let input = mock_dir
+            .context_mut()
+            .election_event_configuration()
+            .unwrap()
+            .get_raw()
+            .unwrap()
+            .as_ref()
+            .clone();
+        let new_input = input.replace(
+            "<config:voterTotal>43</config:voterTotal>",
+            "<config:voterTotal>1000</config:voterTotal>",
+        );
+        mock_dir
+            .context_mut()
+            .mock_election_event_configuration_string(new_input);
+        let mut result = VerificationResult::new();
+        fn_0201_verify_signature_canton_config(&mock_dir, &CONFIG_TEST, &mut result);
+        assert!(!result.is_ok());
+        assert!(!result.has_errors());
+        assert_eq!(result.failures().len(), 1);
+    }
+
+    #[test]
+    fn test_0202_changed() {
+        let mut mock_dir = get_test_verifier_mock_setup_dir();
+        mock_dir
+            .context_mut()
+            .mock_setup_component_public_keys_payload(|d| {
+                d.encryption_group.set_p(&Integer::from(1234usize));
+            });
+        let mut result = VerificationResult::new();
+        fn_0202_verify_signature_setup_component_public_keys(&mock_dir, &CONFIG_TEST, &mut result);
+        assert!(!result.is_ok());
+        assert!(!result.has_errors());
+        assert_eq!(result.failures().len(), 1);
+    }
+
+    #[test]
+    fn test_0203_changed() {
+        let mut mock_dir = get_test_verifier_mock_setup_dir();
+        mock_dir
+            .context_mut()
+            .mock_control_component_public_keys_payload(1, |d| {
+                d.encryption_group.set_p(&Integer::from(1234usize));
+            });
+        let mut result = VerificationResult::new();
+        fn_0203_verify_signature_control_component_public_keys(
+            &mock_dir,
+            &CONFIG_TEST,
+            &mut result,
+        );
+        dbg!(&result);
+        assert!(!result.is_ok());
+        assert!(!result.has_errors());
+        assert_eq!(result.failures().len(), 1);
+        mock_dir
+            .context_mut()
+            .mock_control_component_public_keys_payload(2, |d| {
+                d.encryption_group.set_p(&Integer::from(1234usize));
+            });
+        let mut result = VerificationResult::new();
+        fn_0203_verify_signature_control_component_public_keys(
+            &mock_dir,
+            &CONFIG_TEST,
+            &mut result,
+        );
+        assert!(!result.is_ok());
+        assert!(!result.has_errors());
+        assert_eq!(result.failures().len(), 2);
+    }
+
+    #[test]
+    fn test_0204_changed() {
+        let mut mock_dir = get_test_verifier_mock_setup_dir();
+        mock_dir
+            .context_mut()
+            .vcs_directories_mut()
+            .get_mut(0)
+            .unwrap()
+            .mock_setup_component_tally_data_payload(|d| {
+                d.encryption_group.set_p(&Integer::from(1234usize));
+            });
+        let mut result = VerificationResult::new();
+        fn_0204_verify_signature_setup_component_tally_data(&mock_dir, &CONFIG_TEST, &mut result);
+        assert!(!result.is_ok());
+        assert!(!result.has_errors());
+        assert_eq!(result.failures().len(), 1);
+        mock_dir
+            .context_mut()
+            .vcs_directories_mut()
+            .get_mut(1)
+            .unwrap()
+            .mock_setup_component_tally_data_payload(|d| {
+                d.encryption_group.set_p(&Integer::from(1234usize));
+            });
+        let mut result = VerificationResult::new();
+        fn_0204_verify_signature_setup_component_tally_data(&mock_dir, &CONFIG_TEST, &mut result);
+        assert!(!result.is_ok());
+        assert!(!result.has_errors());
+        assert_eq!(result.failures().len(), 2);
+    }
+
+    #[test]
+    fn test_0205_changed() {
+        let mut mock_dir = get_test_verifier_mock_setup_dir();
+        mock_dir
+            .context_mut()
+            .mock_election_event_context_payload(|d| {
+                d.encryption_group.set_p(&Integer::from(1234usize));
+            });
+        let mut result = VerificationResult::new();
+        fn_0205_verify_signature_election_event_context(&mock_dir, &CONFIG_TEST, &mut result);
+        assert!(!result.is_ok());
+        assert!(!result.has_errors());
+        assert_eq!(result.failures().len(), 1);
     }
 }

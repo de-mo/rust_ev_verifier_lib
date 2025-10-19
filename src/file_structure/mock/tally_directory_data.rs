@@ -15,24 +15,28 @@
 // <https://www.gnu.org/licenses/>.
 
 use super::{
+    FileGroupFileIter, MockFileGroupDataIter, MockFileGroupElement, MockedDataType,
     impl_mock_methods_for_mocked_data, impl_mock_methods_for_mocked_group,
     impl_trait_get_method_for_mocked_data, impl_trait_get_method_for_mocked_group,
-    FileGroupFileIter, MockFileGroupDataIter, MockFileGroupElement, MockedDataType,
 };
 use crate::{
     data_structures::{
-        tally::{ech_0222::ECH0222, tally_component_votes_payload::TallyComponentVotesPayload},
         ControlComponentBallotBoxPayload, ControlComponentShufflePayload,
         TallyComponentShufflePayload,
+        mock::MockXmlTrait,
+        tally::{
+            ech_0222::{ECH0222, ECH0222Data},
+            tally_component_votes_payload::TallyComponentVotesPayload,
+        },
     },
     file_structure::{
+        CompletnessTestTrait, FileStructureError, FileStructureErrorImpl, TallyDirectoryTrait,
         file::File,
         file_group::FileGroup,
         tally_directory::{
-            impl_completness_test_trait_for_tally, impl_completness_test_trait_for_tally_bb,
-            BBDirectory, BBDirectoryTrait, TallyDirectory,
+            BBDirectory, BBDirectoryTrait, TallyDirectory, impl_completness_test_trait_for_tally,
+            impl_completness_test_trait_for_tally_bb,
         },
-        CompletnessTestTrait, FileStructureError, FileStructureErrorImpl, TallyDirectoryTrait,
     },
 };
 use paste::paste;
@@ -73,6 +77,24 @@ impl MockTallyDirectory {
             bb_directories: bb_dirs,
             mocked_ech_0222: None,
         }
+    }
+
+    impl_mock_methods_for_mocked_data!(ech_0222, ECH0222);
+
+    #[allow(dead_code)]
+    /// Mock ElectionEventConfiguration data
+    pub fn mock_mock_ech_0222_data(&mut self, closure: impl FnMut(&mut ECH0222Data) + Clone) {
+        self.mock_ech_0222(|d| d.set_data(closure.clone()));
+    }
+
+    #[allow(dead_code)]
+    /// Mock ElectionEventConfiguration raw data (string)
+    pub fn mock_mock_ech_0222_raw(&mut self, new_str: String) {
+        self.mock_ech_0222(|d| d.set_raw(new_str.clone()));
+    }
+
+    pub fn bb_directories_mut(&mut self) -> &mut [MockBBDirectory] {
+        &mut self.bb_directories
     }
 }
 

@@ -20,7 +20,7 @@ use super::super::super::result::{VerificationEvent, VerificationResult};
 use crate::{
     config::VerifierConfig,
     data_structures::context::election_event_context_payload::ElectionEventContext,
-    file_structure::{context_directory::ContextDirectoryTrait, VerificationDirectoryTrait},
+    file_structure::{VerificationDirectoryTrait, context_directory::ContextDirectoryTrait},
 };
 use consistent_xml::verification_2_3_same_than_xml;
 use rust_ev_system_library::preliminaries::PTableElement;
@@ -43,17 +43,25 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
         }
     };
 
-    let ee_configuration = match context_dir.election_event_configuration() {
-        Ok(o) => o,
+    let ee_configuration_data = match context_dir.election_event_configuration() {
+        Ok(o) => match o.get_data() {
+            Ok(o) => o,
+            Err(e) => {
+                result.push(
+                    VerificationEvent::new_error_from_error(&e)
+                        .add_context("Cannot extract election_event_configuration"),
+                );
+                return;
+            }
+        },
         Err(e) => {
             result.push(
                 VerificationEvent::new_error_from_error(&e)
-                    .add_context("Cannot extract election_event_configuration"),
+                    .add_context("Cannot read election_event_configuration"),
             );
             return;
         }
     };
-    let ee_configuration_data = ee_configuration.unwrap_data();
 
     // Verification 1
     result.append_with_context(
@@ -103,7 +111,7 @@ fn verify_1_same_actual_voting_options(ee_context: &ElectionEventContext) -> Ver
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::config::test::{get_test_verifier_setup_dir as get_verifier_dir, CONFIG_TEST};
+    use crate::config::test::{CONFIG_TEST, get_test_verifier_setup_dir as get_verifier_dir};
 
     #[test]
     fn test_ok() {
