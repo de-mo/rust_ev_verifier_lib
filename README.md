@@ -32,7 +32,7 @@ The algorithm `VerifyECH0222` uses a complete different implementation as specif
 
 The Verifier is not ready for production.
 
-- For most of the verifications, the negative unit tests are not implemented. A mechanisms of mocks is implemented (see [README](src/verification/README.md)
+- For most of the verifications, the negative unit tests are not implemented. A mechanisms of mocks is implemented (see [README](src/verification/README.md))
 
 ## Usage
 
