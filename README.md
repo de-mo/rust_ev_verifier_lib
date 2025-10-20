@@ -26,7 +26,7 @@ The implementation don't use any code of Swiss Post. It is only based on the pub
 
 A major difference with the Swiss Post Verifier is that the verifications does not return true or false, but return all the errors and failures found, with the necessary information in regard to the position of the element, which generates the error. In this case it helps a better granularity for the analysis of the errors and failures.
 
-The algorithm `VerifyECH0222` uses a complete different implementation as specified by Swiss Post (see [README](src/data_structures/tally/ech_0222/README.md)). The reason is that it is complitaed to generate an XML file that match the hash value (spaces, tabs, prefix must be exactly the same). We prefer to compare the business relevant data.
+The algorithm `VerifyECH0222` uses a complete different implementation as specified by Swiss Post (see [README](src/data_structures/tally/ech_0222/README.md)). The reason is that it is complex and unnecessary to generate an XML file that match the hash value (spaces, tabs, prefix must be exactly the same). We prefer to compare the business relevant data.
 
 ###  Future works
 
