@@ -241,7 +241,7 @@ mod test {
     }
 
     #[test]
-    fn change_el_pk() {
+    fn change_eb_pk() {
         let mut result = VerificationResult::new();
         let mut mock_dir = get_test_verifier_mock_setup_dir();
         mock_dir
@@ -256,7 +256,7 @@ mod test {
     }
 
     #[test]
-    fn change_el_pi() {
+    fn change_eb_pi() {
         let mut result = VerificationResult::new();
         let mut mock_dir = get_test_verifier_mock_setup_dir();
         mock_dir
@@ -271,7 +271,7 @@ mod test {
     }
 
     #[test]
-    fn remove_el_pk() {
+    fn remove_eb_pk() {
         let mut result = VerificationResult::new();
         let mut mock_dir = get_test_verifier_mock_setup_dir();
         mock_dir

@@ -22,7 +22,7 @@ The following table gives the situation of the development of the verifications 
 | Setup | 03.09        | Implemented     | Done (without negative) |
 | Setup | 03.10        | Implemented     | Done (without negative) |
 | setup | 03.11        | Implemented     | Done (without negative) |
-| setup | 03.12        | Implemented     | Done (without negative) |
+| setup | 03.12        | Implemented     | Done (with negative)    |
 | Setup | 03.13        | Implemented     | Done (without negative) |
 | Setup | 03.14        | Implemented     | Done (without negative) |
 | Setup | 04.01        | Implemented     | Done (without negative) |

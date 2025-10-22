@@ -17,7 +17,7 @@
 use super::super::super::result::{VerificationEvent, VerificationResult};
 use crate::{
     config::VerifierConfig,
-    file_structure::{context_directory::ContextDirectoryTrait, VerificationDirectoryTrait},
+    file_structure::{VerificationDirectoryTrait, context_directory::ContextDirectoryTrait},
 };
 use rust_ev_system_library::rust_ev_crypto_primitives::prelude::Integer;
 use rust_ev_system_library::rust_ev_crypto_primitives::prelude::{ConstantsTrait, OperationsTrait};
@@ -39,7 +39,7 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
         }
     };
     let eg = &context.as_ref().encryption_group;
-    let sc_pk = match context_dir.setup_component_public_keys_payload() {
+    let setup_component_pk_payload = match context_dir.setup_component_public_keys_payload() {
         Ok(o) => o,
         Err(e) => {
             result.push(
@@ -49,20 +49,53 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
             return;
         }
     };
-    let combined_cc_pk = &sc_pk
-        .setup_component_public_keys
-        .combined_control_component_public_keys;
-    let setup_el_pk = &sc_pk.setup_component_public_keys.election_public_key;
 
-    for (i, el_pk_i) in setup_el_pk.iter().enumerate() {
+    let setup_el_pk = setup_component_pk_payload
+        .setup_component_public_keys
+        .election_public_key
+        .as_slice();
+    let expected_keys_len = setup_el_pk.len();
+
+    let setup_eb_pk = setup_component_pk_payload
+        .setup_component_public_keys
+        .electoral_board_public_key
+        .as_slice();
+
+    if setup_eb_pk.len() != expected_keys_len {
+        result.push(VerificationEvent::new_failure(&format!(
+            "The number of electoral board public keys ({}) does not match the number of election public keys ({})",
+            setup_eb_pk.len(),
+            expected_keys_len
+        )));
+    }
+
+    let combined_cc_pk = setup_component_pk_payload
+        .setup_component_public_keys
+        .combined_control_component_public_keys
+        .as_slice();
+
+    for (j, cc_pk_j) in combined_cc_pk.iter().enumerate() {
+        if cc_pk_j.ccmj_election_public_key.len() != expected_keys_len {
+            result.push(VerificationEvent::new_failure(&format!(
+                "The number of ccm election public keys in combined control component public key {} ({}) does not match the number of election public keys ({})",
+                j,
+                cc_pk_j.ccmj_election_public_key.len(),
+                expected_keys_len
+            )));
+        }
+    }
+
+    // cannot continue if sizes are not the same
+    if result.has_failures() {
+        return;
+    }
+
+    for (i, (el_pk_i, eb_pk_i)) in setup_el_pk.iter().zip(setup_eb_pk.iter()).enumerate() {
         let product_cc_el_pk = combined_cc_pk
             .iter()
-            .map(|e| &e.ccmj_election_public_key[i])
+            .map(|e| e.ccmj_election_public_key.get(i).unwrap())
             .fold(Integer::one().clone(), |acc, x| acc.mod_multiply(x, eg.p()));
-        let calculated_el_pk = product_cc_el_pk.mod_multiply(
-            &sc_pk.setup_component_public_keys.electoral_board_public_key[i],
-            eg.p(),
-        );
+        let calculated_el_pk = product_cc_el_pk.mod_multiply(eb_pk_i, eg.p());
         if &calculated_el_pk != el_pk_i {
             result.push(VerificationEvent::new_failure(&format!(
                 "The election public key EL_pk at {} is correctly combined",
@@ -75,13 +108,174 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::config::test::{get_test_verifier_setup_dir as get_verifier_dir, CONFIG_TEST};
+    use crate::config::test::{
+        CONFIG_TEST, get_test_verifier_mock_setup_dir, get_test_verifier_setup_dir,
+    };
 
     #[test]
     fn test_ok() {
-        let dir = get_verifier_dir();
+        let dir = get_test_verifier_setup_dir();
         let mut result = VerificationResult::new();
         fn_verification(&dir, &CONFIG_TEST, &mut result);
         assert!(result.is_ok());
+    }
+
+    #[test]
+    fn change_eb_pk() {
+        for i in 0..2 {
+            let mut result = VerificationResult::new();
+            let mut mock_dir = get_test_verifier_mock_setup_dir();
+            mock_dir
+                .context_mut()
+                .mock_setup_component_public_keys_payload(|d| {
+                    d.setup_component_public_keys.electoral_board_public_key[i] =
+                        Integer::from(111u32)
+                });
+            fn_verification(&mock_dir, &CONFIG_TEST, &mut result);
+            assert!(!result.has_errors());
+            assert!(result.has_failures());
+        }
+    }
+
+    #[test]
+    fn change_el_pk() {
+        for i in 0..2 {
+            let mut result = VerificationResult::new();
+            let mut mock_dir = get_test_verifier_mock_setup_dir();
+            mock_dir
+                .context_mut()
+                .mock_setup_component_public_keys_payload(|d| {
+                    d.setup_component_public_keys.election_public_key[i] = Integer::from(111u32)
+                });
+            fn_verification(&mock_dir, &CONFIG_TEST, &mut result);
+            assert!(!result.has_errors());
+            assert!(result.has_failures());
+        }
+    }
+
+    #[test]
+    fn change_ccm_el() {
+        for j in 0..4 {
+            for i in 0..2 {
+                let mut result = VerificationResult::new();
+                let mut mock_dir = get_test_verifier_mock_setup_dir();
+                mock_dir
+                    .context_mut()
+                    .mock_setup_component_public_keys_payload(|d| {
+                        d.setup_component_public_keys
+                            .combined_control_component_public_keys
+                            .get_mut(j)
+                            .unwrap()
+                            .ccmj_election_public_key[i] = Integer::from(111u32);
+                    });
+                fn_verification(&mock_dir, &CONFIG_TEST, &mut result);
+                assert!(!result.has_errors());
+                assert!(result.has_failures());
+            }
+        }
+    }
+
+    #[test]
+    fn remove_eb_pk() {
+        let mut result = VerificationResult::new();
+        let mut mock_dir = get_test_verifier_mock_setup_dir();
+        mock_dir
+            .context_mut()
+            .mock_setup_component_public_keys_payload(|d| {
+                d.setup_component_public_keys
+                    .electoral_board_public_key
+                    .pop();
+            });
+        fn_verification(&mock_dir, &CONFIG_TEST, &mut result);
+        assert!(!result.has_errors());
+        assert!(result.has_failures());
+    }
+
+    #[test]
+    fn remove_el_pk() {
+        let mut result = VerificationResult::new();
+        let mut mock_dir = get_test_verifier_mock_setup_dir();
+        mock_dir
+            .context_mut()
+            .mock_setup_component_public_keys_payload(|d| {
+                d.setup_component_public_keys.election_public_key.pop();
+            });
+        fn_verification(&mock_dir, &CONFIG_TEST, &mut result);
+        assert!(!result.has_errors());
+        assert!(result.has_failures());
+    }
+
+    #[test]
+    fn remove_ccm_el() {
+        for j in 0..4 {
+            let mut result = VerificationResult::new();
+            let mut mock_dir = get_test_verifier_mock_setup_dir();
+            mock_dir
+                .context_mut()
+                .mock_setup_component_public_keys_payload(|d| {
+                    d.setup_component_public_keys
+                        .combined_control_component_public_keys
+                        .get_mut(j)
+                        .unwrap()
+                        .ccmj_election_public_key
+                        .pop();
+                });
+            fn_verification(&mock_dir, &CONFIG_TEST, &mut result);
+            assert!(!result.has_errors());
+            assert!(result.has_failures());
+        }
+    }
+
+    #[test]
+    fn add_eb_pk() {
+        let mut result = VerificationResult::new();
+        let mut mock_dir = get_test_verifier_mock_setup_dir();
+        mock_dir
+            .context_mut()
+            .mock_setup_component_public_keys_payload(|d| {
+                d.setup_component_public_keys
+                    .electoral_board_public_key
+                    .push(Integer::from(111u32));
+            });
+        fn_verification(&mock_dir, &CONFIG_TEST, &mut result);
+        assert!(!result.has_errors());
+        assert!(result.has_failures());
+    }
+
+    #[test]
+    fn add_el_pk() {
+        let mut result = VerificationResult::new();
+        let mut mock_dir = get_test_verifier_mock_setup_dir();
+        mock_dir
+            .context_mut()
+            .mock_setup_component_public_keys_payload(|d| {
+                d.setup_component_public_keys
+                    .election_public_key
+                    .push(Integer::from(111u32));
+            });
+        fn_verification(&mock_dir, &CONFIG_TEST, &mut result);
+        assert!(!result.has_errors());
+        assert!(result.has_failures());
+    }
+
+    #[test]
+    fn add_ccm_el() {
+        for j in 0..4 {
+            let mut result = VerificationResult::new();
+            let mut mock_dir = get_test_verifier_mock_setup_dir();
+            mock_dir
+                .context_mut()
+                .mock_setup_component_public_keys_payload(|d| {
+                    d.setup_component_public_keys
+                        .combined_control_component_public_keys
+                        .get_mut(j)
+                        .unwrap()
+                        .ccmj_election_public_key
+                        .push(Integer::from(111u32));
+                });
+            fn_verification(&mock_dir, &CONFIG_TEST, &mut result);
+            assert!(!result.has_errors());
+            assert!(result.has_failures());
+        }
     }
 }
