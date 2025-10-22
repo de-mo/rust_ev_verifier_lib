@@ -50,25 +50,6 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
         }
     };
 
-    let setup_el_pk = setup_component_pk_payload
-        .setup_component_public_keys
-        .election_public_key
-        .as_slice();
-    let expected_keys_len = setup_el_pk.len();
-
-    let setup_eb_pk = setup_component_pk_payload
-        .setup_component_public_keys
-        .electoral_board_public_key
-        .as_slice();
-
-    if setup_eb_pk.len() != expected_keys_len {
-        result.push(VerificationEvent::new_failure(&format!(
-            "The number of electoral board public keys ({}) does not match the number of election public keys ({})",
-            setup_eb_pk.len(),
-            expected_keys_len
-        )));
-    }
-
     let cc_pk_payloads_res = context_dir
         .control_component_public_keys_payload_iter()
         .map(|(j, cc_pk_payload_res)| match cc_pk_payload_res {
@@ -88,6 +69,25 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
         Ok(p) => p,
         Err(_) => return,
     };
+
+    let setup_el_pk = setup_component_pk_payload
+        .setup_component_public_keys
+        .election_public_key
+        .as_slice();
+    let expected_keys_len = setup_el_pk.len();
+
+    let setup_eb_pk = setup_component_pk_payload
+        .setup_component_public_keys
+        .electoral_board_public_key
+        .as_slice();
+
+    if setup_eb_pk.len() != expected_keys_len {
+        result.push(VerificationEvent::new_failure(&format!(
+            "The number of electoral board public keys ({}) does not match the number of election public keys ({})",
+            setup_eb_pk.len(),
+            expected_keys_len
+        )));
+    }
 
     let cc_pk = cc_pk_payloads
         .iter()
