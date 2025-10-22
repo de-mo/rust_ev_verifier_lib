@@ -191,29 +191,33 @@ mod test {
 
     #[test]
     fn test_wrong_control_component_public_keys() {
-        let mut result = VerificationResult::new();
-        let mut mock_dir = get_mock_verifier_dir();
-        mock_dir
-            .context_mut()
-            .mock_control_component_public_keys_payload(2, |d| {
-                d.encryption_group.set_p(&Integer::from(1234usize));
-                d.encryption_group.set_q(&Integer::from(1234usize))
-            });
-        fn_verification(&mock_dir, &CONFIG_TEST, &mut result);
-        assert!(result.has_failures());
+        for j in 1..=4 {
+            let mut result = VerificationResult::new();
+            let mut mock_dir = get_mock_verifier_dir();
+            mock_dir
+                .context_mut()
+                .mock_control_component_public_keys_payload(j, |d| {
+                    d.encryption_group.set_p(&Integer::from(1234usize));
+                    d.encryption_group.set_q(&Integer::from(1234usize))
+                });
+            fn_verification(&mock_dir, &CONFIG_TEST, &mut result);
+            assert!(result.has_failures());
+        }
     }
 
     #[test]
     fn test_wrong_setup_tally_data_payload() {
-        let mut result = VerificationResult::new();
-        let mut mock_dir = get_mock_verifier_dir();
-        mock_dir.context_mut().vcs_directories_mut()[0].mock_setup_component_tally_data_payload(
-            |d| {
-                d.encryption_group.set_p(&Integer::from(1234usize));
-                d.encryption_group.set_q(&Integer::from(1234usize))
-            },
-        );
-        fn_verification(&mock_dir, &CONFIG_TEST, &mut result);
-        assert!(result.has_failures());
+        let nb = get_mock_verifier_dir().context().vcs_directories().len();
+        for i in 0..nb {
+            let mut result = VerificationResult::new();
+            let mut mock_dir = get_mock_verifier_dir();
+            mock_dir.context_mut().vcs_directories_mut()[i]
+                .mock_setup_component_tally_data_payload(|d| {
+                    d.encryption_group.set_p(&Integer::from(1234usize));
+                    d.encryption_group.set_q(&Integer::from(1234usize))
+                });
+            fn_verification(&mock_dir, &CONFIG_TEST, &mut result);
+            assert!(result.has_failures());
+        }
     }
 }

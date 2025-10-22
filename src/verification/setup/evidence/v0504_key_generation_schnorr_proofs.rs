@@ -169,121 +169,169 @@ mod test {
     }
 
     #[test]
-    fn change_ccr_pk_1() {
-        let mut result = VerificationResult::new();
-        let mut mock_dir = get_test_verifier_mock_setup_dir();
-        mock_dir
-            .context_mut()
-            .mock_setup_component_public_keys_payload(|d| {
-                d.setup_component_public_keys
-                    .combined_control_component_public_keys
-                    .get_mut(0)
-                    .unwrap()
-                    .ccrj_choice_return_codes_encryption_public_key[0] = Integer::from(111u32)
-            });
+    fn change_ccr_pk() {
+        for j in 0..4 {
+            for i in 0..2 {
+                let mut result = VerificationResult::new();
+                let mut mock_dir = get_test_verifier_mock_setup_dir();
+                mock_dir
+                    .context_mut()
+                    .mock_setup_component_public_keys_payload(|d| {
+                        d.setup_component_public_keys
+                            .combined_control_component_public_keys
+                            .get_mut(j)
+                            .unwrap()
+                            .ccrj_choice_return_codes_encryption_public_key[i] =
+                            Integer::from(111u32)
+                    });
 
-        fn_verification(&mock_dir, &CONFIG_TEST, &mut result);
-        assert!(!result.has_errors());
-        assert!(result.has_failures());
+                fn_verification(&mock_dir, &CONFIG_TEST, &mut result);
+                assert!(!result.has_errors());
+                assert!(result.has_failures());
+            }
+        }
     }
 
     #[test]
-    fn change_ccr_pi_1() {
-        let mut result = VerificationResult::new();
-        let mut mock_dir = get_test_verifier_mock_setup_dir();
-        mock_dir
-            .context_mut()
-            .mock_setup_component_public_keys_payload(|d| {
-                d.setup_component_public_keys
-                    .combined_control_component_public_keys[0]
-                    .ccrj_schnorr_proofs[0]
-                    .e = Integer::from(111u32)
-            });
-        fn_verification(&mock_dir, &CONFIG_TEST, &mut result);
-        assert!(!result.has_errors());
-        assert!(result.has_failures());
+    fn change_ccr_pi() {
+        for j in 0..4 {
+            for i in 0..2 {
+                // e
+                let mut result = VerificationResult::new();
+                let mut mock_dir = get_test_verifier_mock_setup_dir();
+                mock_dir
+                    .context_mut()
+                    .mock_setup_component_public_keys_payload(|d| {
+                        d.setup_component_public_keys
+                            .combined_control_component_public_keys[j]
+                            .ccrj_schnorr_proofs[i]
+                            .e = Integer::from(111u32)
+                    });
+                fn_verification(&mock_dir, &CONFIG_TEST, &mut result);
+                assert!(!result.has_errors());
+                assert!(result.has_failures());
+                // z
+                let mut result = VerificationResult::new();
+                let mut mock_dir = get_test_verifier_mock_setup_dir();
+                mock_dir
+                    .context_mut()
+                    .mock_setup_component_public_keys_payload(|d| {
+                        d.setup_component_public_keys
+                            .combined_control_component_public_keys[j]
+                            .ccrj_schnorr_proofs[i]
+                            .z = Integer::from(111u32)
+                    });
+                fn_verification(&mock_dir, &CONFIG_TEST, &mut result);
+                assert!(!result.has_errors());
+                assert!(result.has_failures());
+            }
+        }
     }
 
     #[test]
-    fn change_ccm_pk_1() {
-        let mut result = VerificationResult::new();
-        let mut mock_dir = get_test_verifier_mock_setup_dir();
-        mock_dir
-            .context_mut()
-            .mock_setup_component_public_keys_payload(|d| {
-                d.setup_component_public_keys
-                    .combined_control_component_public_keys
-                    .get_mut(0)
-                    .unwrap()
-                    .ccmj_election_public_key[0] = Integer::from(111u32)
-            });
+    fn change_ccm_pk() {
+        for j in 0..4 {
+            for i in 0..2 {
+                let mut result = VerificationResult::new();
+                let mut mock_dir = get_test_verifier_mock_setup_dir();
+                mock_dir
+                    .context_mut()
+                    .mock_setup_component_public_keys_payload(|d| {
+                        d.setup_component_public_keys
+                            .combined_control_component_public_keys
+                            .get_mut(j)
+                            .unwrap()
+                            .ccmj_election_public_key[i] = Integer::from(111u32)
+                    });
 
-        fn_verification(&mock_dir, &CONFIG_TEST, &mut result);
-        assert!(!result.has_errors());
-        assert!(result.has_failures());
+                fn_verification(&mock_dir, &CONFIG_TEST, &mut result);
+                assert!(!result.has_errors());
+                assert!(result.has_failures());
+            }
+        }
     }
 
     #[test]
-    fn change_ccm_pi_1() {
-        let mut result = VerificationResult::new();
-        let mut mock_dir = get_test_verifier_mock_setup_dir();
-        mock_dir
-            .context_mut()
-            .mock_setup_component_public_keys_payload(|d| {
-                d.setup_component_public_keys
-                    .combined_control_component_public_keys[0]
-                    .ccmj_schnorr_proofs[0]
-                    .e = Integer::from(111u32)
-            });
-        fn_verification(&mock_dir, &CONFIG_TEST, &mut result);
-        assert!(!result.has_errors());
-        assert!(result.has_failures());
+    fn change_ccm_pi() {
+        for j in 0..4 {
+            for i in 0..2 {
+                // e
+                let mut result = VerificationResult::new();
+                let mut mock_dir = get_test_verifier_mock_setup_dir();
+                mock_dir
+                    .context_mut()
+                    .mock_setup_component_public_keys_payload(|d| {
+                        d.setup_component_public_keys
+                            .combined_control_component_public_keys[j]
+                            .ccmj_schnorr_proofs[i]
+                            .e = Integer::from(111u32)
+                    });
+                fn_verification(&mock_dir, &CONFIG_TEST, &mut result);
+                assert!(!result.has_errors());
+                assert!(result.has_failures());
+                // z
+                let mut result = VerificationResult::new();
+                let mut mock_dir = get_test_verifier_mock_setup_dir();
+                mock_dir
+                    .context_mut()
+                    .mock_setup_component_public_keys_payload(|d| {
+                        d.setup_component_public_keys
+                            .combined_control_component_public_keys[j]
+                            .ccmj_schnorr_proofs[i]
+                            .z = Integer::from(111u32)
+                    });
+                fn_verification(&mock_dir, &CONFIG_TEST, &mut result);
+                assert!(!result.has_errors());
+                assert!(result.has_failures());
+            }
+        }
     }
 
     #[test]
     fn change_eb_pk() {
-        let mut result = VerificationResult::new();
-        let mut mock_dir = get_test_verifier_mock_setup_dir();
-        mock_dir
-            .context_mut()
-            .mock_setup_component_public_keys_payload(|d| {
-                d.setup_component_public_keys.electoral_board_public_key[0] = Integer::from(111u32)
-            });
+        for i in 0..2 {
+            let mut result = VerificationResult::new();
+            let mut mock_dir = get_test_verifier_mock_setup_dir();
+            mock_dir
+                .context_mut()
+                .mock_setup_component_public_keys_payload(|d| {
+                    d.setup_component_public_keys.electoral_board_public_key[i] =
+                        Integer::from(111u32)
+                });
 
-        fn_verification(&mock_dir, &CONFIG_TEST, &mut result);
-        assert!(!result.has_errors());
-        assert!(result.has_failures());
+            fn_verification(&mock_dir, &CONFIG_TEST, &mut result);
+            assert!(!result.has_errors());
+            assert!(result.has_failures());
+        }
     }
 
     #[test]
     fn change_eb_pi() {
-        let mut result = VerificationResult::new();
-        let mut mock_dir = get_test_verifier_mock_setup_dir();
-        mock_dir
-            .context_mut()
-            .mock_setup_component_public_keys_payload(|d| {
-                d.setup_component_public_keys.electoral_board_schnorr_proofs[0].e =
-                    Integer::from(111u32)
-            });
-        fn_verification(&mock_dir, &CONFIG_TEST, &mut result);
-        assert!(!result.has_errors());
-        assert!(result.has_failures());
-    }
-
-    #[test]
-    fn remove_eb_pk() {
-        let mut result = VerificationResult::new();
-        let mut mock_dir = get_test_verifier_mock_setup_dir();
-        mock_dir
-            .context_mut()
-            .mock_setup_component_public_keys_payload(|d| {
-                d.setup_component_public_keys
-                    .electoral_board_public_key
-                    .pop();
-            });
-
-        fn_verification(&mock_dir, &CONFIG_TEST, &mut result);
-        assert!(result.has_errors());
-        assert!(!result.has_failures());
+        for i in 0..2 {
+            // e
+            let mut result = VerificationResult::new();
+            let mut mock_dir = get_test_verifier_mock_setup_dir();
+            mock_dir
+                .context_mut()
+                .mock_setup_component_public_keys_payload(|d| {
+                    d.setup_component_public_keys.electoral_board_schnorr_proofs[i].e =
+                        Integer::from(111u32)
+                });
+            fn_verification(&mock_dir, &CONFIG_TEST, &mut result);
+            assert!(!result.has_errors());
+            assert!(result.has_failures());
+            // z
+            let mut result = VerificationResult::new();
+            let mut mock_dir = get_test_verifier_mock_setup_dir();
+            mock_dir
+                .context_mut()
+                .mock_setup_component_public_keys_payload(|d| {
+                    d.setup_component_public_keys.electoral_board_schnorr_proofs[i].z =
+                        Integer::from(111u32)
+                });
+            fn_verification(&mock_dir, &CONFIG_TEST, &mut result);
+            assert!(!result.has_errors());
+            assert!(result.has_failures());
+        }
     }
 }

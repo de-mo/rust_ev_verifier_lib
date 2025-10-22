@@ -215,6 +215,13 @@ mod test {
         get_test_verifier_tally_dir as get_verifier_dir,
     };
 
+    fn nb_bb() -> usize {
+        get_test_verifier_mock_tally_dir()
+            .unwrap_tally()
+            .bb_directories()
+            .len()
+    }
+
     #[test]
     fn test_0701() {
         let dir = get_verifier_dir();
@@ -297,81 +304,97 @@ mod test {
 
     #[test]
     fn test_0701_changed() {
-        let mut mock_dir = get_test_verifier_mock_tally_dir();
-        mock_dir
-            .unwrap_tally_mut()
-            .bb_directories_mut()
-            .get_mut(0)
-            .unwrap()
-            .mock_control_component_ballot_box_payload(1, |d| {
-                d.encryption_group.set_p(&Integer::from(1234usize));
-            });
-        let mut result = VerificationResult::new();
-        fn_0701_verify_signature_control_component_ballot_box(&mock_dir, &CONFIG_TEST, &mut result);
-        dbg!(&result);
-        assert!(!result.is_ok());
-        assert!(!result.has_errors());
-        assert_eq!(result.failures().len(), 1);
+        for i in 0..nb_bb() {
+            for j in 1..=4 {
+                let mut mock_dir = get_test_verifier_mock_tally_dir();
+                mock_dir
+                    .unwrap_tally_mut()
+                    .bb_directories_mut()
+                    .get_mut(i)
+                    .unwrap()
+                    .mock_control_component_ballot_box_payload(j, |d| {
+                        d.encryption_group.set_p(&Integer::from(1234usize));
+                    });
+                let mut result = VerificationResult::new();
+                fn_0701_verify_signature_control_component_ballot_box(
+                    &mock_dir,
+                    &CONFIG_TEST,
+                    &mut result,
+                );
+                dbg!(&result);
+                assert!(!result.is_ok());
+                assert!(!result.has_errors());
+                assert_eq!(result.failures().len(), 1);
+            }
+        }
     }
 
     #[test]
     fn test_0702_changed() {
-        let mut mock_dir = get_test_verifier_mock_tally_dir();
-        mock_dir
-            .unwrap_tally_mut()
-            .bb_directories_mut()
-            .get_mut(0)
-            .unwrap()
-            .mock_control_component_shuffle_payload(1, |d| {
-                d.encryption_group.set_p(&Integer::from(1234usize));
-            });
-        let mut result = VerificationResult::new();
-        fn_0702_verify_verify_signature_control_component_shuffle(
-            &mock_dir,
-            &CONFIG_TEST,
-            &mut result,
-        );
-        dbg!(&result);
-        assert!(!result.is_ok());
-        assert!(!result.has_errors());
-        assert_eq!(result.failures().len(), 1);
+        for i in 0..nb_bb() {
+            for j in 1..=4 {
+                let mut mock_dir = get_test_verifier_mock_tally_dir();
+                mock_dir
+                    .unwrap_tally_mut()
+                    .bb_directories_mut()
+                    .get_mut(i)
+                    .unwrap()
+                    .mock_control_component_shuffle_payload(j, |d| {
+                        d.encryption_group.set_p(&Integer::from(1234usize));
+                    });
+                let mut result = VerificationResult::new();
+                fn_0702_verify_verify_signature_control_component_shuffle(
+                    &mock_dir,
+                    &CONFIG_TEST,
+                    &mut result,
+                );
+                dbg!(&result);
+                assert!(!result.is_ok());
+                assert!(!result.has_errors());
+                assert_eq!(result.failures().len(), 1);
+            }
+        }
     }
 
     #[test]
     fn test_0703_changed() {
-        let mut mock_dir = get_test_verifier_mock_tally_dir();
-        mock_dir
-            .unwrap_tally_mut()
-            .bb_directories_mut()
-            .get_mut(0)
-            .unwrap()
-            .mock_tally_component_shuffle_payload(|d| {
-                d.encryption_group.set_p(&Integer::from(1234usize));
-            });
-        let mut result = VerificationResult::new();
-        fn_0703_verify_signature_tally_component_shuffle(&mock_dir, &CONFIG_TEST, &mut result);
-        dbg!(&result);
-        assert!(!result.is_ok());
-        assert!(!result.has_errors());
-        assert_eq!(result.failures().len(), 1);
+        for i in 0..nb_bb() {
+            let mut mock_dir = get_test_verifier_mock_tally_dir();
+            mock_dir
+                .unwrap_tally_mut()
+                .bb_directories_mut()
+                .get_mut(i)
+                .unwrap()
+                .mock_tally_component_shuffle_payload(|d| {
+                    d.encryption_group.set_p(&Integer::from(1234usize));
+                });
+            let mut result = VerificationResult::new();
+            fn_0703_verify_signature_tally_component_shuffle(&mock_dir, &CONFIG_TEST, &mut result);
+            dbg!(&result);
+            assert!(!result.is_ok());
+            assert!(!result.has_errors());
+            assert_eq!(result.failures().len(), 1);
+        }
     }
 
     #[test]
     fn test_0704_changed() {
-        let mut mock_dir = get_test_verifier_mock_tally_dir();
-        mock_dir
-            .unwrap_tally_mut()
-            .bb_directories_mut()
-            .get_mut(0)
-            .unwrap()
-            .mock_tally_component_votes_payload(|d| {
-                d.encryption_group.set_p(&Integer::from(1234usize));
-            });
-        let mut result = VerificationResult::new();
-        fn_0704_verify_signature_tally_component_votes(&mock_dir, &CONFIG_TEST, &mut result);
-        assert!(!result.is_ok());
-        assert!(!result.has_errors());
-        assert_eq!(result.failures().len(), 1);
+        for i in 0..nb_bb() {
+            let mut mock_dir = get_test_verifier_mock_tally_dir();
+            mock_dir
+                .unwrap_tally_mut()
+                .bb_directories_mut()
+                .get_mut(i)
+                .unwrap()
+                .mock_tally_component_votes_payload(|d| {
+                    d.encryption_group.set_p(&Integer::from(1234usize));
+                });
+            let mut result = VerificationResult::new();
+            fn_0704_verify_signature_tally_component_votes(&mock_dir, &CONFIG_TEST, &mut result);
+            assert!(!result.is_ok());
+            assert!(!result.has_errors());
+            assert_eq!(result.failures().len(), 1);
+        }
     }
 
     #[test]
