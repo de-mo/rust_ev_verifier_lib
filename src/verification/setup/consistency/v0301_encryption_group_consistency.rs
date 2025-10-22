@@ -18,8 +18,8 @@ use super::super::super::result::{VerificationEvent, VerificationResult};
 use crate::{
     config::VerifierConfig,
     file_structure::{
-        context_directory::{ContextDirectoryTrait, ContextVCSDirectoryTrait},
         VerificationDirectoryTrait,
+        context_directory::{ContextDirectoryTrait, ContextVCSDirectoryTrait},
     },
 };
 use rust_ev_system_library::rust_ev_crypto_primitives::prelude::elgamal::EncryptionParameters;
@@ -113,8 +113,8 @@ mod test {
 
     use super::*;
     use crate::config::test::{
-        get_test_verifier_mock_setup_dir as get_mock_verifier_dir,
-        get_test_verifier_setup_dir as get_verifier_dir, CONFIG_TEST,
+        CONFIG_TEST, get_test_verifier_mock_setup_dir as get_mock_verifier_dir,
+        get_test_verifier_setup_dir as get_verifier_dir,
     };
 
     #[test]
@@ -176,6 +176,20 @@ mod test {
     }
 
     #[test]
+    fn test_wrong_setup_component_public_keys() {
+        let mut result = VerificationResult::new();
+        let mut mock_dir = get_mock_verifier_dir();
+        mock_dir
+            .context_mut()
+            .mock_setup_component_public_keys_payload(|d| {
+                d.encryption_group.set_p(&Integer::from(1234usize));
+                d.encryption_group.set_q(&Integer::from(1234usize))
+            });
+        fn_verification(&mock_dir, &CONFIG_TEST, &mut result);
+        assert!(result.has_failures());
+    }
+
+    #[test]
     fn test_wrong_control_component_public_keys() {
         let mut result = VerificationResult::new();
         let mut mock_dir = get_mock_verifier_dir();
@@ -185,6 +199,20 @@ mod test {
                 d.encryption_group.set_p(&Integer::from(1234usize));
                 d.encryption_group.set_q(&Integer::from(1234usize))
             });
+        fn_verification(&mock_dir, &CONFIG_TEST, &mut result);
+        assert!(result.has_failures());
+    }
+
+    #[test]
+    fn test_wrong_setup_tally_data_payload() {
+        let mut result = VerificationResult::new();
+        let mut mock_dir = get_mock_verifier_dir();
+        mock_dir.context_mut().vcs_directories_mut()[0].mock_setup_component_tally_data_payload(
+            |d| {
+                d.encryption_group.set_p(&Integer::from(1234usize));
+                d.encryption_group.set_q(&Integer::from(1234usize))
+            },
+        );
         fn_verification(&mock_dir, &CONFIG_TEST, &mut result);
         assert!(result.has_failures());
     }

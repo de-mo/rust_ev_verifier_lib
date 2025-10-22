@@ -11,7 +11,7 @@ The following table gives the situation of the development of the verifications 
 | Setup | 02.03        | Implemented     | Done (with negative)    |
 | Setup | 02.04        | Implemented     | Done (with negative)    |
 | Setup | 02.05        | Implemented     | Done (with negative)    |
-| Setup | 03.01        | Implemented     | Done (without negative) |
+| Setup | 03.01        | Implemented     | Done (with negative)    |
 | Setup | 03.02        | Implemented     | Done (without negative) |
 | Setup | 03.03        | Implemented     | Done (without negative) |
 | Setup | 03.04        | Implemented     | Done (without negative) |
