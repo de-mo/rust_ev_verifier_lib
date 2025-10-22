@@ -69,19 +69,46 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
         )));
     }
 
-    let combined_cc_pk = setup_component_pk_payload
-        .setup_component_public_keys
-        .combined_control_component_public_keys
-        .as_slice();
+    let cc_pk_payloads_res = context_dir
+        .control_component_public_keys_payload_iter()
+        .map(|(j, cc_pk_payload_res)| match cc_pk_payload_res {
+            Ok(cc_pk_payload) => Ok(cc_pk_payload),
+            Err(e) => {
+                result.push(
+                    VerificationEvent::new_error_from_error(&e).add_context(format!(
+                        "Cannot extract control_component_public_keys_payload_{j}"
+                    )),
+                );
+                Err(false)
+            }
+        })
+        .collect::<Result<Vec<_>, _>>();
 
-    for (j, cc_pk_j) in combined_cc_pk.iter().enumerate() {
-        if cc_pk_j.ccmj_election_public_key.len() != expected_keys_len {
-            result.push(VerificationEvent::new_failure(&format!(
+    let cc_pk_payloads = match cc_pk_payloads_res {
+        Ok(p) => p,
+        Err(_) => return,
+    };
+
+    let cc_pk = cc_pk_payloads
+        .iter()
+        .map(|cc_pk_payload| {
+            cc_pk_payload
+                .control_component_public_keys
+                .ccmj_election_public_key
+                .as_slice()
+        })
+        .collect::<Vec<_>>();
+
+    for (j, cc_pk_j) in cc_pk.iter().enumerate() {
+        if cc_pk_j.len() != expected_keys_len {
+            {
+                result.push(VerificationEvent::new_failure(&format!(
                 "The number of ccm election public keys in combined control component public key {} ({}) does not match the number of election public keys ({})",
                 j,
-                cc_pk_j.ccmj_election_public_key.len(),
+                cc_pk_j.len(),
                 expected_keys_len
             )));
+            }
         }
     }
 
@@ -91,9 +118,9 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
     }
 
     for (i, (el_pk_i, eb_pk_i)) in setup_el_pk.iter().zip(setup_eb_pk.iter()).enumerate() {
-        let product_cc_el_pk = combined_cc_pk
+        let product_cc_el_pk = cc_pk
             .iter()
-            .map(|e| e.ccmj_election_public_key.get(i).unwrap())
+            .map(|e| e.get(i).unwrap())
             .fold(Integer::one().clone(), |acc, x| acc.mod_multiply(x, eg.p()));
         let calculated_el_pk = product_cc_el_pk.mod_multiply(eb_pk_i, eg.p());
         if &calculated_el_pk != el_pk_i {
@@ -117,7 +144,12 @@ mod test {
         let dir = get_test_verifier_setup_dir();
         let mut result = VerificationResult::new();
         fn_verification(&dir, &CONFIG_TEST, &mut result);
-        assert!(result.is_ok());
+        assert!(
+            result.is_ok(),
+            "errors: {:?} \n failures: {:?}",
+            result.errors(),
+            result.failures()
+        );
     }
 
     #[test]
@@ -155,18 +187,15 @@ mod test {
 
     #[test]
     fn change_ccm_el() {
-        for j in 0..4 {
+        for j in 1..=4 {
             for i in 0..2 {
                 let mut result = VerificationResult::new();
                 let mut mock_dir = get_test_verifier_mock_setup_dir();
                 mock_dir
                     .context_mut()
-                    .mock_setup_component_public_keys_payload(|d| {
-                        d.setup_component_public_keys
-                            .combined_control_component_public_keys
-                            .get_mut(j)
-                            .unwrap()
-                            .ccmj_election_public_key[i] = Integer::from(111u32);
+                    .mock_control_component_public_keys_payload(j, |d| {
+                        d.control_component_public_keys.ccmj_election_public_key[i] =
+                            Integer::from(111u32);
                     });
                 fn_verification(&mock_dir, &CONFIG_TEST, &mut result);
                 assert!(!result.has_errors());
@@ -207,16 +236,13 @@ mod test {
 
     #[test]
     fn remove_ccm_el() {
-        for j in 0..4 {
+        for j in 1..=4 {
             let mut result = VerificationResult::new();
             let mut mock_dir = get_test_verifier_mock_setup_dir();
             mock_dir
                 .context_mut()
-                .mock_setup_component_public_keys_payload(|d| {
-                    d.setup_component_public_keys
-                        .combined_control_component_public_keys
-                        .get_mut(j)
-                        .unwrap()
+                .mock_control_component_public_keys_payload(j, |d| {
+                    d.control_component_public_keys
                         .ccmj_election_public_key
                         .pop();
                 });
@@ -260,16 +286,13 @@ mod test {
 
     #[test]
     fn add_ccm_el() {
-        for j in 0..4 {
+        for j in 1..=4 {
             let mut result = VerificationResult::new();
             let mut mock_dir = get_test_verifier_mock_setup_dir();
             mock_dir
                 .context_mut()
-                .mock_setup_component_public_keys_payload(|d| {
-                    d.setup_component_public_keys
-                        .combined_control_component_public_keys
-                        .get_mut(j)
-                        .unwrap()
+                .mock_control_component_public_keys_payload(j, |d| {
+                    d.control_component_public_keys
                         .ccmj_election_public_key
                         .push(Integer::from(111u32));
                 });
