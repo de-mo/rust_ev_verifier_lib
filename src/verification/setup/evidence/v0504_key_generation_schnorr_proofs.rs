@@ -17,7 +17,7 @@
 use super::super::super::result::{VerificationEvent, VerificationResult};
 use crate::{
     config::VerifierConfig,
-    file_structure::{context_directory::ContextDirectoryTrait, VerificationDirectoryTrait},
+    file_structure::{VerificationDirectoryTrait, context_directory::ContextDirectoryTrait},
 };
 use rust_ev_system_library::preliminaries::{
     GetHashElectionEventContextContext, VerifyKeyGenerationSchnorrProofsInput,
@@ -128,27 +128,32 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
                 verif_schnorr_key_generation
                     .verif_schnorr_ccm
                     .iter()
-                    .map(|e| VerificationEvent::new_error(e).add_context("verif_schnorr_ccm")),
+                    .map(|e| VerificationEvent::new_failure(e).add_context("verif_schnorr_ccm")),
             )
             .chain(
                 verif_schnorr_key_generation
                     .verif_schnorr_ccr
                     .iter()
-                    .map(|e| VerificationEvent::new_error(e).add_context("verif_schnorr_ccr")),
+                    .map(|e| VerificationEvent::new_failure(e).add_context("verif_schnorr_ccr")),
             )
             .chain(
                 verif_schnorr_key_generation
                     .verif_schnorr_eb
                     .iter()
-                    .map(|e| VerificationEvent::new_error(e).add_context("verif_schnorr_eb")),
+                    .map(|e| VerificationEvent::new_failure(e).add_context("verif_schnorr_eb")),
             ),
     );
 }
 
 #[cfg(test)]
 mod test {
+    use rust_ev_system_library::rust_ev_crypto_primitives::prelude::Integer;
+
     use super::*;
-    use crate::config::test::{get_test_verifier_setup_dir as get_verifier_dir, CONFIG_TEST};
+    use crate::config::test::{
+        CONFIG_TEST, get_test_verifier_mock_setup_dir,
+        get_test_verifier_setup_dir as get_verifier_dir,
+    };
 
     #[test]
     fn test_ok() {
@@ -161,5 +166,124 @@ mod test {
             result.errors(),
             result.failures()
         );
+    }
+
+    #[test]
+    fn change_ccr_pk_1() {
+        let mut result = VerificationResult::new();
+        let mut mock_dir = get_test_verifier_mock_setup_dir();
+        mock_dir
+            .context_mut()
+            .mock_setup_component_public_keys_payload(|d| {
+                d.setup_component_public_keys
+                    .combined_control_component_public_keys
+                    .get_mut(0)
+                    .unwrap()
+                    .ccrj_choice_return_codes_encryption_public_key[0] = Integer::from(111u32)
+            });
+
+        fn_verification(&mock_dir, &CONFIG_TEST, &mut result);
+        assert!(!result.has_errors());
+        assert!(result.has_failures());
+    }
+
+    #[test]
+    fn change_ccr_pi_1() {
+        let mut result = VerificationResult::new();
+        let mut mock_dir = get_test_verifier_mock_setup_dir();
+        mock_dir
+            .context_mut()
+            .mock_setup_component_public_keys_payload(|d| {
+                d.setup_component_public_keys
+                    .combined_control_component_public_keys[0]
+                    .ccrj_schnorr_proofs[0]
+                    .e = Integer::from(111u32)
+            });
+        fn_verification(&mock_dir, &CONFIG_TEST, &mut result);
+        assert!(!result.has_errors());
+        assert!(result.has_failures());
+    }
+
+    #[test]
+    fn change_ccm_pk_1() {
+        let mut result = VerificationResult::new();
+        let mut mock_dir = get_test_verifier_mock_setup_dir();
+        mock_dir
+            .context_mut()
+            .mock_setup_component_public_keys_payload(|d| {
+                d.setup_component_public_keys
+                    .combined_control_component_public_keys
+                    .get_mut(0)
+                    .unwrap()
+                    .ccmj_election_public_key[0] = Integer::from(111u32)
+            });
+
+        fn_verification(&mock_dir, &CONFIG_TEST, &mut result);
+        assert!(!result.has_errors());
+        assert!(result.has_failures());
+    }
+
+    #[test]
+    fn change_ccm_pi_1() {
+        let mut result = VerificationResult::new();
+        let mut mock_dir = get_test_verifier_mock_setup_dir();
+        mock_dir
+            .context_mut()
+            .mock_setup_component_public_keys_payload(|d| {
+                d.setup_component_public_keys
+                    .combined_control_component_public_keys[0]
+                    .ccmj_schnorr_proofs[0]
+                    .e = Integer::from(111u32)
+            });
+        fn_verification(&mock_dir, &CONFIG_TEST, &mut result);
+        assert!(!result.has_errors());
+        assert!(result.has_failures());
+    }
+
+    #[test]
+    fn change_el_pk() {
+        let mut result = VerificationResult::new();
+        let mut mock_dir = get_test_verifier_mock_setup_dir();
+        mock_dir
+            .context_mut()
+            .mock_setup_component_public_keys_payload(|d| {
+                d.setup_component_public_keys.electoral_board_public_key[0] = Integer::from(111u32)
+            });
+
+        fn_verification(&mock_dir, &CONFIG_TEST, &mut result);
+        assert!(!result.has_errors());
+        assert!(result.has_failures());
+    }
+
+    #[test]
+    fn change_el_pi() {
+        let mut result = VerificationResult::new();
+        let mut mock_dir = get_test_verifier_mock_setup_dir();
+        mock_dir
+            .context_mut()
+            .mock_setup_component_public_keys_payload(|d| {
+                d.setup_component_public_keys.electoral_board_schnorr_proofs[0].e =
+                    Integer::from(111u32)
+            });
+        fn_verification(&mock_dir, &CONFIG_TEST, &mut result);
+        assert!(!result.has_errors());
+        assert!(result.has_failures());
+    }
+
+    #[test]
+    fn remove_el_pk() {
+        let mut result = VerificationResult::new();
+        let mut mock_dir = get_test_verifier_mock_setup_dir();
+        mock_dir
+            .context_mut()
+            .mock_setup_component_public_keys_payload(|d| {
+                d.setup_component_public_keys
+                    .electoral_board_public_key
+                    .pop();
+            });
+
+        fn_verification(&mock_dir, &CONFIG_TEST, &mut result);
+        assert!(result.has_errors());
+        assert!(!result.has_failures());
     }
 }

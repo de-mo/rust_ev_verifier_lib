@@ -29,7 +29,7 @@ The following table gives the situation of the development of the verifications 
 | Setup | 05.01        | Implemented     | Done (with negative)    |
 | Setup | 05.02        | Implemented     | Done (with negative)    |
 | Setup | 05.03        | Implemented     | Done (with negative)    |
-| Setup | 05.04        | Implemented     | Done (without negative) |
+| Setup | 05.04        | Implemented     | Done (with negative)    |
 
 # Tally phase
 The following table gives the situation of the development of the verifications for tally:

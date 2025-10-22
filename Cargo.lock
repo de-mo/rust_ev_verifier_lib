@@ -1486,6 +1486,21 @@ dependencies = [
 [[package]]
 name = "rust_ev_system_library"
 version = "0.3.1"
+dependencies = [
+ "chrono",
+ "rayon",
+ "regex",
+ "roxmltree",
+ "rust_ev_crypto_primitives",
+ "thiserror",
+ "tracing",
+ "xml-canonicalization",
+ "xot",
+]
+
+[[package]]
+name = "rust_ev_system_library"
+version = "0.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b029227f33b15d209a4bdfd223b62851b30af2a3fccf0f2be3de598c1b75557e"
 dependencies = [
@@ -1511,7 +1526,7 @@ dependencies = [
  "dotenvy",
  "headless_chrome",
  "rayon",
- "rust_ev_system_library",
+ "rust_ev_system_library 0.3.1",
  "rust_ev_verifier_application_lib",
  "rust_ev_verifier_lib 0.4.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde",
@@ -1536,7 +1551,7 @@ dependencies = [
  "rayon",
  "regex",
  "roxmltree",
- "rust_ev_system_library",
+ "rust_ev_system_library 0.3.1",
  "serde",
  "serde_json",
  "strum",
@@ -1561,7 +1576,7 @@ dependencies = [
  "rayon",
  "regex",
  "roxmltree",
- "rust_ev_system_library",
+ "rust_ev_system_library 0.3.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde",
  "serde_json",
  "strum",
