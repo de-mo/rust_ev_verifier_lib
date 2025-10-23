@@ -17,7 +17,7 @@
 use super::super::super::result::{VerificationEvent, VerificationResult};
 use crate::{
     config::VerifierConfig,
-    file_structure::{context_directory::ContextDirectoryTrait, VerificationDirectoryTrait},
+    file_structure::{VerificationDirectoryTrait, context_directory::ContextDirectoryTrait},
 };
 
 pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
@@ -27,7 +27,7 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
 ) {
     let context_dir = dir.context();
 
-    for (i, file) in context_dir
+    for (j, file) in context_dir
         .control_component_public_keys_payload_group()
         .iter_file()
     {
@@ -47,7 +47,7 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
             }
             Err(e) => result.push(VerificationEvent::new_error(&format!(
                 "Cannot open conntrolComponentPubllicKeysPayload.{}.json: {}",
-                i, e
+                j, e
             ))),
         }
     }
@@ -56,7 +56,13 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::config::test::{get_test_verifier_setup_dir as get_verifier_dir, CONFIG_TEST};
+    use crate::{
+        config::test::{
+            CONFIG_TEST, get_test_verifier_setup_dir as get_verifier_dir, test_data_path,
+        },
+        file_structure::VerificationDirectory,
+        verification::VerificationPeriod,
+    };
 
     #[test]
     fn test_ok() {
@@ -72,5 +78,30 @@ mod test {
             }
         }
         assert!(result.is_ok());
+    }
+
+    #[test]
+    fn change_node_id() {
+        let test_dir_path = test_data_path().join("verification_0303");
+        for p in test_dir_path
+            .read_dir()
+            .unwrap()
+            .map(|f| f.unwrap().path())
+            .filter(|f| f.is_dir())
+        {
+            let dir = VerificationDirectory::new(&VerificationPeriod::Setup, &p);
+            let mut result = VerificationResult::new();
+            fn_verification(&dir, &CONFIG_TEST, &mut result);
+            assert!(
+                !result.has_errors(),
+                "path={}",
+                p.file_name().unwrap().to_str().unwrap()
+            );
+            assert!(
+                result.has_failures(),
+                "path={}",
+                p.file_name().unwrap().to_str().unwrap()
+            );
+        }
     }
 }
