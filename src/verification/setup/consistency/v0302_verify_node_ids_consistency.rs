@@ -74,9 +74,13 @@ fn verify_cc_pk_payload<C: ContextDirectoryTrait>(dir: &C) -> VerificationResult
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::config::test::{
-        CONFIG_TEST, get_test_verifier_mock_setup_dir,
-        get_test_verifier_setup_dir as get_verifier_dir,
+    use crate::{
+        config::test::{
+            CONFIG_TEST, get_test_verifier_mock_setup_dir,
+            get_test_verifier_setup_dir as get_verifier_dir, test_data_path,
+        },
+        file_structure::VerificationDirectory,
+        verification::VerificationPeriod,
     };
 
     #[test]
@@ -107,6 +111,31 @@ mod test {
             fn_verification(&mock_dir, &CONFIG_TEST, &mut result);
             assert!(!result.has_errors(), "j={}", j);
             assert!(result.has_failures(), "j={}", j);
+        }
+    }
+
+    #[test]
+    fn test_remove_file() {
+        let test_dir_path = test_data_path().join("verification_0302");
+        for p in test_dir_path
+            .read_dir()
+            .unwrap()
+            .map(|f| f.unwrap().path())
+            .filter(|f| f.is_dir())
+        {
+            let dir = VerificationDirectory::new(&VerificationPeriod::Setup, &p);
+            let mut result = VerificationResult::new();
+            fn_verification(&dir, &CONFIG_TEST, &mut result);
+            assert!(
+                !result.has_errors(),
+                "path={}",
+                p.file_name().unwrap().to_str().unwrap()
+            );
+            assert!(
+                result.has_failures(),
+                "path={}",
+                p.file_name().unwrap().to_str().unwrap()
+            );
         }
     }
 }
