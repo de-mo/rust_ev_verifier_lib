@@ -74,7 +74,10 @@ fn verify_cc_pk_payload<C: ContextDirectoryTrait>(dir: &C) -> VerificationResult
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::config::test::{get_test_verifier_setup_dir as get_verifier_dir, CONFIG_TEST};
+    use crate::config::test::{
+        CONFIG_TEST, get_test_verifier_mock_setup_dir,
+        get_test_verifier_setup_dir as get_verifier_dir,
+    };
 
     #[test]
     fn test_ok() {
@@ -82,5 +85,28 @@ mod test {
         let mut result = VerificationResult::new();
         fn_verification(&dir, &CONFIG_TEST, &mut result);
         assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_change_node_id() {
+        for j in 1..=4 {
+            let mut result = VerificationResult::new();
+            let mut mock_dir = get_test_verifier_mock_setup_dir();
+            mock_dir
+                .context_mut()
+                .mock_control_component_public_keys_payload(j, |d| {
+                    let new_j = match j {
+                        1 => 2,
+                        2 => 3,
+                        3 => 4,
+                        4 => 1,
+                        _ => unreachable!(),
+                    };
+                    d.control_component_public_keys.node_id = new_j;
+                });
+            fn_verification(&mock_dir, &CONFIG_TEST, &mut result);
+            assert!(!result.has_errors(), "j={}", j);
+            assert!(result.has_failures(), "j={}", j);
+        }
     }
 }
