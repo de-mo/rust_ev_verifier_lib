@@ -458,7 +458,7 @@ pub(super) mod test {
         ($t: ident, $p: literal) => {
             #[test]
             fn test_hash_json() {
-                let path = test_resources_path().join("test_data").join($p);
+                let path = test_data_signature_hash_path().join($p);
                 for tc in file_to_test_cases(&path).as_array().unwrap().iter() {
                     let test_data = json_to_testdata::<$t>(tc);
                     let hash_context = HashableMessage::from(&test_data.context);

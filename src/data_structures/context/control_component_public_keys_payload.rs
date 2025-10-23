@@ -15,16 +15,16 @@
 // <https://www.gnu.org/licenses/>.
 
 use super::super::{
+    DataStructureError, DataStructureErrorImpl, VerifierDataDecode,
     common_types::{EncryptionParametersDef, SchnorrProof, Signature},
     deserialize_seq_string_base64_to_seq_integer, implement_trait_verifier_data_json_decode,
-    DataStructureError, DataStructureErrorImpl, VerifierDataDecode,
 };
 use crate::{
     data_structures::{VerifierDataToTypeTrait, VerifierDataType},
     direct_trust::{CertificateAuthority, VerifiyJSONSignatureTrait, VerifiySignatureTrait},
 };
 use rust_ev_system_library::rust_ev_crypto_primitives::prelude::{
-    elgamal::EncryptionParameters, ByteArray, HashableMessage, Integer, VerifyDomainTrait,
+    ByteArray, HashableMessage, Integer, VerifyDomainTrait, elgamal::EncryptionParameters,
 };
 use serde::Deserialize;
 use std::sync::Arc;
@@ -131,7 +131,9 @@ mod test {
         },
         *,
     };
-    use crate::config::test::{get_keystore, test_datasets_context_path, test_resources_path};
+    use crate::config::test::{
+        get_keystore, test_data_signature_hash_path, test_datasets_context_path,
+    };
     use rust_ev_system_library::rust_ev_crypto_primitives::prelude::{
         EncodeTrait, RecursiveHashTrait,
     };

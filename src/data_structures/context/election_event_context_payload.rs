@@ -440,7 +440,7 @@ mod test {
         },
         *,
     };
-    use crate::config::test::{get_keystore, test_datasets_context_path, test_resources_path};
+    use crate::config::test::{get_keystore, test_datasets_context_path, test_data_signature_hash_path};
     use rust_ev_system_library::rust_ev_crypto_primitives::prelude::{
         EncodeTrait, RecursiveHashTrait,
     };

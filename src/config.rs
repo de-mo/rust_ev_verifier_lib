@@ -380,6 +380,8 @@ pub(crate) mod test {
     const TALLY_KEYSTORE_FILE_NAME: &str = "local_direct_trust_keystore_sdm_tally.p12";
     const TALLY_KEYSTORE_PASSWORD_FILE_NAME: &str = "local_direct_trust_pw_sdm_tally.txt";
 
+    const TEST_DATA_DIR_NAME: &str = "test_data";
+    const TEST_SIGNATURE_HASH: &str = "test_signature_hash";
     const TEST_TEMP_DIR_NAME: &str = "test_temp_dir";
     const BB_ID_ONE_VOTE: &str = "A1294A24715FF21B338AE787D3133BF8";
     const BB_ID_ZERO_VOTE: &str = "EC4904FDF96874D200E5A92C193E82DF";
@@ -492,7 +494,7 @@ pub(crate) mod test {
     }
 
     pub(crate) fn get_verifier_direct_trust_path() -> PathBuf {
-        test_resources_path().join("direct-trust")
+        test_data_path().join("direct-trust")
     }
 
     pub(crate) fn get_keystore() -> Keystore {
@@ -500,7 +502,7 @@ pub(crate) mod test {
     }
 
     pub(crate) fn get_test_signing_direct_trust_path() -> PathBuf {
-        test_resources_path().join("signing_keystore")
+        test_data_path().join("signing_keystore")
     }
 
     /// Get the signing keystore
@@ -534,8 +536,12 @@ pub(crate) mod test {
             .map_err(|e| Report::new(&e).to_string())
     }
 
-    pub(crate) fn test_resources_path() -> PathBuf {
-        CONFIG_TEST.root_dir_path().join("resources").join("test")
+    pub(crate) fn test_data_path() -> PathBuf {
+        CONFIG_TEST.root_dir_path().join(TEST_DATA_DIR_NAME)
+    }
+
+    pub(crate) fn test_data_signature_hash_path() -> PathBuf {
+        test_data_path().join(TEST_SIGNATURE_HASH)
     }
 
     #[test]

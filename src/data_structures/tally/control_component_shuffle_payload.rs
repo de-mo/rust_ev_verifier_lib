@@ -155,7 +155,7 @@ mod test {
     };
     use crate::config::test::{
         get_keystore, test_ballot_box_many_votes_path, test_ballot_box_one_vote_path,
-        test_ballot_box_zero_vote_path, test_resources_path,
+        test_ballot_box_zero_vote_path, test_data_signature_hash_path,
     };
     use paste::paste;
     use rust_ev_system_library::rust_ev_crypto_primitives::prelude::{
