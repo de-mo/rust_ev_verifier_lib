@@ -17,41 +17,8 @@
 use super::super::super::result::{VerificationEvent, VerificationResult};
 use crate::{
     config::VerifierConfig,
-    data_structures::context::control_component_public_keys_payload::ControlComponentPublicKeys,
-    file_structure::{context_directory::ContextDirectoryTrait, VerificationDirectoryTrait},
+    file_structure::{VerificationDirectoryTrait, context_directory::ContextDirectoryTrait},
 };
-
-fn validate_cc_ccm_pk<S: ContextDirectoryTrait>(
-    context_dir: &S,
-    setup: &ControlComponentPublicKeys,
-    node_id: usize,
-    result: &mut VerificationResult,
-) {
-    let f = context_dir
-        .control_component_public_keys_payload_group()
-        .get_file_with_number(node_id);
-    let context = match f.decode_verifier_data().map(Box::new) {
-        Ok(d) => d,
-        Err(e) => {
-            result.push(
-                VerificationEvent::new_error_from_error(&e)
-                    .add_context(format!("Cannot read data from file {}", f.path_to_str())),
-            );
-            return;
-        }
-    };
-    let cc_pk = &context.as_ref().control_component_public_keys;
-    if setup.ccmj_election_public_key.len() != cc_pk.ccmj_election_public_key.len() {
-        result.push(VerificationEvent::new_failure(&format!("The length of CCM public keys for control component {} are identical from both sources", node_id)));
-    } else if setup.ccrj_choice_return_codes_encryption_public_key
-        != cc_pk.ccrj_choice_return_codes_encryption_public_key
-    {
-        result.push(VerificationEvent::new_failure(&format!(
-            "The CCM public keys for control component {} are identical from both sources",
-            node_id
-        )));
-    }
-}
 
 pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
     dir: &D,
@@ -59,28 +26,76 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
     result: &mut VerificationResult,
 ) {
     let context_dir = dir.context();
-    let sc_pk = match context_dir.setup_component_public_keys_payload() {
-        Ok(o) => o,
+
+    let setup_pk_payload = match context_dir.setup_component_public_keys_payload() {
+        Ok(d) => d,
         Err(e) => {
             result.push(
                 VerificationEvent::new_error_from_error(&e)
-                    .add_context("Cannot extract setup_component_public_keys_payload"),
+                    .add_context("Cannot read payload for setup_component_public_keys_payload"),
             );
             return;
         }
     };
-    for node in &sc_pk
-        .setup_component_public_keys
-        .combined_control_component_public_keys
-    {
-        validate_cc_ccm_pk(context_dir, node, node.node_id, result)
+
+    for (j, cc_pk_payload_res) in context_dir.control_component_public_keys_payload_iter() {
+        match cc_pk_payload_res {
+            Ok(cc_pk_payload) => {
+                let node_id = cc_pk_payload.control_component_public_keys.node_id;
+                let cc_ccmj_pk = cc_pk_payload
+                    .control_component_public_keys
+                    .ccmj_election_public_key
+                    .as_slice();
+                match setup_pk_payload
+                    .setup_component_public_keys
+                    .combined_control_component_public_keys
+                    .iter()
+                    .find(|n| n.node_id == node_id)
+                {
+                    Some(cc_combined_j) => {
+                        let setup_ccmj_pk = cc_combined_j.ccmj_election_public_key.as_slice();
+                        if setup_ccmj_pk.len() != cc_ccmj_pk.len() {
+                            result.push(VerificationEvent::new_failure(&format!(
+                                "The length of CCMJ Election public keys for control component {} from control_component_public_keys_payload.{} is not the same as in setup_component_public_keys_payload",
+                                node_id, j
+                            )));
+                        } else {
+                            for (i, (setup_ccmj_pk_i, cc_ccmj_pk_i)) in
+                                setup_ccmj_pk.iter().zip(cc_ccmj_pk.iter()).enumerate()
+                            {
+                                if setup_ccmj_pk_i != cc_ccmj_pk_i {
+                                    result.push(VerificationEvent::new_failure(&format!(
+                                        "A CCMJ Election public key for control component {} from control_component_public_keys_payload.{} does not match the one in setup_component_public_keys_payload at position {}",
+                                        node_id, j, i
+                                    )));
+                                }
+                            }
+                        }
+                    }
+                    None => {
+                        result.push(VerificationEvent::new_failure(&format!(
+                            "The control component {} from control_component_public_keys_payload.{} is missing from setup_component_public_keys_payload",
+                            node_id, j
+                        )));
+                    }
+                }
+            }
+            Err(e) => result.push(VerificationEvent::new_error_from_error(&e).add_context(
+                format!("Cannot read control_component_public_keys_payload.{}", j),
+            )),
+        }
     }
 }
 
 #[cfg(test)]
 mod test {
+    use rust_ev_system_library::rust_ev_crypto_primitives::prelude::Integer;
+
     use super::*;
-    use crate::config::test::{get_test_verifier_setup_dir as get_verifier_dir, CONFIG_TEST};
+    use crate::config::test::{
+        CONFIG_TEST, get_test_verifier_mock_setup_dir,
+        get_test_verifier_setup_dir as get_verifier_dir,
+    };
 
     #[test]
     fn test_ok() {
@@ -88,5 +103,148 @@ mod test {
         let mut result = VerificationResult::new();
         fn_verification(&dir, &CONFIG_TEST, &mut result);
         assert!(result.is_ok());
+    }
+
+    #[test]
+    fn change_setup_ccm() {
+        for j in 1..=4 {
+            let ccm_len = get_verifier_dir()
+                .context()
+                .setup_component_public_keys_payload()
+                .unwrap()
+                .setup_component_public_keys
+                .combined_control_component_public_keys
+                .iter()
+                .find(|n| n.node_id == j)
+                .unwrap()
+                .ccmj_election_public_key
+                .len();
+            for i in 0..ccm_len {
+                let mut mock_dir = get_test_verifier_mock_setup_dir();
+                let mut result = VerificationResult::new();
+                mock_dir
+                    .context_mut()
+                    .mock_setup_component_public_keys_payload(|d| {
+                        let cc_pk = d
+                            .setup_component_public_keys
+                            .combined_control_component_public_keys
+                            .iter_mut()
+                            .find(|n| n.node_id == j)
+                            .unwrap();
+                        cc_pk.ccmj_election_public_key[i] = Integer::from(111usize);
+                    });
+                fn_verification(&mock_dir, &CONFIG_TEST, &mut result);
+                assert!(!result.has_errors(), "Failed at CC {} at pos {}", j, i);
+                assert!(result.has_failures(), "Failed at CC {} at pos {}", j, i);
+            }
+        }
+    }
+
+    #[test]
+    fn add_setup_ccmj() {
+        for j in 1..=4 {
+            let mut mock_dir = get_test_verifier_mock_setup_dir();
+            let mut result = VerificationResult::new();
+            mock_dir
+                .context_mut()
+                .mock_setup_component_public_keys_payload(|d| {
+                    let cc_pk = d
+                        .setup_component_public_keys
+                        .combined_control_component_public_keys
+                        .iter_mut()
+                        .find(|n| n.node_id == j)
+                        .unwrap();
+                    cc_pk.ccmj_election_public_key.push(Integer::from(111usize));
+                });
+            fn_verification(&mock_dir, &CONFIG_TEST, &mut result);
+            assert!(!result.has_errors(), "Failed at CC {}", j);
+            assert!(result.has_failures(), "Failed at CC {}", j);
+        }
+    }
+
+    #[test]
+    fn remove_setup_ccm() {
+        for j in 1..=4 {
+            let mut mock_dir = get_test_verifier_mock_setup_dir();
+            let mut result = VerificationResult::new();
+            mock_dir
+                .context_mut()
+                .mock_setup_component_public_keys_payload(|d| {
+                    let cc_pk = d
+                        .setup_component_public_keys
+                        .combined_control_component_public_keys
+                        .iter_mut()
+                        .find(|n| n.node_id == j)
+                        .unwrap();
+                    cc_pk.ccmj_election_public_key.pop();
+                });
+            fn_verification(&mock_dir, &CONFIG_TEST, &mut result);
+            assert!(!result.has_errors(), "Failed at CC {}", j);
+            assert!(result.has_failures(), "Failed at CC {}", j);
+        }
+    }
+
+    #[test]
+    fn change_cc_ccm() {
+        for j in 1..=4 {
+            let ccm_len = get_verifier_dir()
+                .context()
+                .control_component_public_keys_payload_group()
+                .get_file_with_number(j)
+                .decode_verifier_data()
+                .unwrap()
+                .control_component_public_keys
+                .ccmj_election_public_key
+                .len();
+            for i in 0..ccm_len {
+                let mut result = VerificationResult::new();
+                let mut mock_dir = get_test_verifier_mock_setup_dir();
+                mock_dir
+                    .context_mut()
+                    .mock_control_component_public_keys_payload(j, |d| {
+                        d.control_component_public_keys.ccmj_election_public_key[i] =
+                            Integer::from(111usize);
+                    });
+                fn_verification(&mock_dir, &CONFIG_TEST, &mut result);
+                assert!(!result.has_errors(), "Failed at CC {} at pos {}", j, i);
+                assert!(result.has_failures(), "Failed at CC {} at pos {}", j, i);
+            }
+        }
+    }
+
+    #[test]
+    fn add_cc_ccm() {
+        for j in 1..=4 {
+            let mut result = VerificationResult::new();
+            let mut mock_dir = get_test_verifier_mock_setup_dir();
+            mock_dir
+                .context_mut()
+                .mock_control_component_public_keys_payload(j, |d| {
+                    d.control_component_public_keys
+                        .ccmj_election_public_key
+                        .push(Integer::from(111usize));
+                });
+            fn_verification(&mock_dir, &CONFIG_TEST, &mut result);
+            assert!(!result.has_errors(), "Failed at CC {}", j);
+            assert!(result.has_failures(), "Failed at CC {}", j);
+        }
+    }
+
+    #[test]
+    fn remove_cc_ccm() {
+        for j in 1..=4 {
+            let mut result = VerificationResult::new();
+            let mut mock_dir = get_test_verifier_mock_setup_dir();
+            mock_dir
+                .context_mut()
+                .mock_control_component_public_keys_payload(j, |d| {
+                    d.control_component_public_keys
+                        .ccmj_election_public_key
+                        .pop();
+                });
+            fn_verification(&mock_dir, &CONFIG_TEST, &mut result);
+            assert!(!result.has_errors(), "Failed at CC {}", j);
+            assert!(result.has_failures(), "Failed at CC {}", j);
+        }
     }
 }
