@@ -76,8 +76,8 @@ mod test {
     use super::*;
     use crate::{
         config::test::{
-            CONFIG_TEST, get_test_verifier_mock_setup_dir,
-            get_test_verifier_setup_dir as get_verifier_dir, test_data_path,
+            get_test_verifier_mock_setup_dir, get_test_verifier_setup_dir as get_verifier_dir,
+            test_data_path, CONFIG_TEST,
         },
         file_structure::VerificationDirectory,
         verification::VerificationPeriod,
@@ -115,7 +115,7 @@ mod test {
     }
 
     #[test]
-    fn test_remove_file() {
+    fn tests_in_directories() {
         let test_dir_path = test_data_path().join("verification_0302");
         for p in test_dir_path
             .read_dir()
