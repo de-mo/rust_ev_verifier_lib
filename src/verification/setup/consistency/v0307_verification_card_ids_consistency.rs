@@ -249,4 +249,28 @@ mod test {
             }
         }
     }
+
+    #[test]
+    fn change_vcs_nb_voters() {
+        let nb_vcs = get_verifier_dir()
+            .context()
+            .election_event_context_payload()
+            .unwrap()
+            .election_event_context
+            .verification_card_set_contexts
+            .len();
+        for i in 0..nb_vcs {
+            let mut result = VerificationResult::new();
+            let mut mock_dir = get_test_verifier_mock_setup_dir();
+            mock_dir
+                .context_mut()
+                .mock_election_event_context_payload(|d| {
+                    d.election_event_context.verification_card_set_contexts[i]
+                        .number_of_eligible_voters += 1
+                });
+            fn_verification(&mock_dir, &CONFIG_TEST, &mut result);
+            assert!(!result.has_errors());
+            assert!(result.has_failures());
+        }
+    }
 }
