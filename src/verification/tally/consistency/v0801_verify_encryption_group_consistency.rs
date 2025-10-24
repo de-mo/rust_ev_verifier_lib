@@ -227,8 +227,8 @@ mod test {
     #[test]
     fn change_tally_shuffle() {
         let nb = get_test_verifier_mock_tally_dir()
-            .context()
-            .vcs_directories()
+            .unwrap_tally()
+            .bb_directories()
             .len();
         for i in 0..nb {
             // p
@@ -267,8 +267,8 @@ mod test {
     #[test]
     fn change_tally_votes() {
         let nb = get_test_verifier_mock_tally_dir()
-            .context()
-            .vcs_directories()
+            .unwrap_tally()
+            .bb_directories()
             .len();
         for i in 0..nb {
             // p
@@ -310,8 +310,8 @@ mod test {
     #[test]
     fn change_cc_bb() {
         let nb = get_test_verifier_mock_tally_dir()
-            .context()
-            .vcs_directories()
+            .unwrap_tally()
+            .bb_directories()
             .len();
         for i in 0..nb {
             for j in 1..=4 {
@@ -352,8 +352,8 @@ mod test {
     #[test]
     fn change_cc_shuffle() {
         let nb = get_test_verifier_mock_tally_dir()
-            .context()
-            .vcs_directories()
+            .unwrap_tally()
+            .bb_directories()
             .len();
         for i in 0..nb {
             for j in 1..=4 {
