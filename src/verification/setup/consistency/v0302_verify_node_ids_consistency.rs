@@ -14,13 +14,12 @@
 // a copy of the GNU General Public License along with this program. If not, see
 // <https://www.gnu.org/licenses/>.
 
-use std::collections::HashSet;
-
 use super::super::super::result::{VerificationEvent, VerificationResult};
 use crate::{
     config::VerifierConfig,
     file_structure::{ContextDirectoryTrait, VerificationDirectoryTrait},
 };
+use std::collections::HashSet;
 
 const LIST_CC_NUMBER: &[usize] = &[1, 2, 3, 4];
 
@@ -30,7 +29,21 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
     result: &mut VerificationResult,
 ) {
     let context_dir = dir.context();
-    result.append(&mut verify_cc_pk_payload(context_dir));
+    let mut list_node_id = vec![];
+    for (j, cc_bb) in context_dir.control_component_public_keys_payload_iter() {
+        match cc_bb {
+            Ok(payload) => {
+                list_node_id.push(payload.control_component_public_keys.node_id);
+            }
+            Err(e) => result.push(VerificationEvent::new_error_from_error(&e).add_context(
+                format!("Error reading control_component_public_keys_payload.{}", j),
+            )),
+        }
+    }
+    result.append_with_context(
+        &verifiy_one_to_for(list_node_id.as_slice()),
+        "control_component_public_keys_payload",
+    );
 }
 
 fn verifiy_one_to_for(list: &[usize]) -> VerificationResult {
@@ -44,40 +57,13 @@ fn verifiy_one_to_for(list: &[usize]) -> VerificationResult {
     result
 }
 
-fn verify_cc_pk_payload<C: ContextDirectoryTrait>(dir: &C) -> VerificationResult {
-    let mut result = verifiy_one_to_for(
-        dir.control_component_public_keys_payload_group()
-            .get_numbers()
-            .as_slice(),
-    )
-    .clone_add_context("context/conntrolComponentPubllicKeysPayload.{}.json");
-    for (i, payload_res) in dir.control_component_public_keys_payload_iter() {
-        match payload_res {
-            Ok(paylod) => {
-                let node_id = paylod.control_component_public_keys.node_id;
-                if node_id != i {
-                    result.push(VerificationEvent::new_failure(&format!(
-                        "The node_id (={}) in the file does not correspond to the nr (={}) of the file",
-                        node_id, i
-                    )))
-                }
-            }
-            Err(e) => result.push(VerificationEvent::new_error(&format!(
-                "Cannot open conntrolComponentPubllicKeysPayload.{}.json: {}",
-                i, e
-            ))),
-        }
-    }
-    result
-}
-
 #[cfg(test)]
 mod test {
     use super::*;
     use crate::{
         config::test::{
-            get_test_verifier_mock_setup_dir, get_test_verifier_setup_dir as get_verifier_dir,
-            test_data_path, CONFIG_TEST,
+            CONFIG_TEST, get_test_verifier_mock_setup_dir,
+            get_test_verifier_setup_dir as get_verifier_dir, test_data_path,
         },
         file_structure::VerificationDirectory,
         verification::VerificationPeriod,
