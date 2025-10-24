@@ -96,6 +96,12 @@ impl MockTallyDirectory {
     pub fn bb_directories_mut(&mut self) -> &mut [MockBBDirectory] {
         &mut self.bb_directories
     }
+
+    pub fn bb_directory_mut(&mut self, name: &str) -> Option<&mut MockBBDirectory> {
+        self.bb_directories
+            .iter_mut()
+            .find(|d| d.name().as_str() == name)
+    }
 }
 
 impl TallyDirectoryTrait for MockTallyDirectory {

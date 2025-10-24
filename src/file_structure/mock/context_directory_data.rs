@@ -118,6 +118,12 @@ impl MockContextDirectory {
     pub fn vcs_directories_mut(&mut self) -> &mut [MockContextVCSDirectory] {
         &mut self.vcs_directories
     }
+
+    pub fn vcs_directory_mut(&mut self, name: &str) -> Option<&mut MockContextVCSDirectory> {
+        self.vcs_directories
+            .iter_mut()
+            .find(|d| d.name().as_str() == name)
+    }
 }
 
 impl ContextDirectoryTrait for MockContextDirectory {
