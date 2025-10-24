@@ -17,7 +17,7 @@
 use super::super::super::result::{VerificationEvent, VerificationResult};
 use crate::{
     config::VerifierConfig,
-    file_structure::{context_directory::ContextDirectoryTrait, VerificationDirectoryTrait},
+    file_structure::{VerificationDirectoryTrait, context_directory::ContextDirectoryTrait},
 };
 
 fn verify_file_name_correct(vcs_ids: &[&str], dir_names: &[String]) -> VerificationResult {
@@ -65,8 +65,8 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
 mod test {
     use super::*;
     use crate::config::test::{
-        get_test_verifier_mock_setup_dir as get_mock_verifier_dir,
-        get_test_verifier_setup_dir as get_verifier_dir, CONFIG_TEST,
+        CONFIG_TEST, get_test_verifier_mock_setup_dir as get_mock_verifier_dir,
+        get_test_verifier_setup_dir as get_verifier_dir,
     };
 
     #[test]
@@ -86,11 +86,11 @@ mod test {
     }
 
     #[test]
-    fn test_nok_add_vcs() {
+    fn test_add_vcs() {
         let mut dir = get_mock_verifier_dir();
         dir.context_mut().mock_election_event_context_payload(|d| {
             let mut context = d.election_event_context.verification_card_set_contexts[0].clone();
-            context.verification_card_set_id = "toto".to_string();
+            context.verification_card_set_id = "new-vcs-id".to_string();
             d.election_event_context
                 .verification_card_set_contexts
                 .push(context);
@@ -102,20 +102,26 @@ mod test {
     }
 
     #[test]
-    fn test_nok_change_vcs_id() {
-        let mut dir = get_mock_verifier_dir();
-        dir.context_mut().mock_election_event_context_payload(|d| {
-            d.election_event_context.verification_card_set_contexts[0].verification_card_set_id =
-                "toto".to_string();
-        });
-        let mut result = VerificationResult::new();
-        fn_verification(&dir, &CONFIG_TEST, &mut result);
-        assert!(result.has_failures());
-        assert!(!result.has_errors());
+    fn change_context() {
+        let dir = get_verifier_dir();
+        let nb_vcs = dir.context().vcs_directories().len();
+        for i in 0..nb_vcs {
+            let mut result = VerificationResult::new();
+            let mut mock_dir = get_mock_verifier_dir();
+            mock_dir
+                .context_mut()
+                .mock_election_event_context_payload(|d| {
+                    d.election_event_context.verification_card_set_contexts[i]
+                        .verification_card_set_id = "modified-vcs_id".to_string();
+                });
+            fn_verification(&mock_dir, &CONFIG_TEST, &mut result);
+            assert!(!result.has_errors(), "Failed at vcs {}", i);
+            assert!(result.has_failures(), "Failed at VCS {}", i);
+        }
     }
 
     #[test]
-    fn test_nok_change_remove_vcs() {
+    fn test_remove_vcs() {
         let mut dir = get_mock_verifier_dir();
         dir.context_mut().mock_election_event_context_payload(|d| {
             d.election_event_context

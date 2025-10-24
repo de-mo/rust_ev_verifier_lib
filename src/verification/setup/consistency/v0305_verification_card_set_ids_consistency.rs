@@ -18,8 +18,8 @@ use super::super::super::result::{VerificationEvent, VerificationResult};
 use crate::{
     config::VerifierConfig,
     file_structure::{
-        context_directory::{ContextDirectoryTrait, ContextVCSDirectoryTrait},
         VerificationDirectoryTrait,
+        context_directory::{ContextDirectoryTrait, ContextVCSDirectoryTrait},
     },
 };
 
@@ -67,7 +67,10 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::config::test::{get_test_verifier_setup_dir as get_verifier_dir, CONFIG_TEST};
+    use crate::config::test::{
+        CONFIG_TEST, get_test_verifier_mock_setup_dir,
+        get_test_verifier_setup_dir as get_verifier_dir,
+    };
 
     #[test]
     fn test_ok() {
@@ -75,5 +78,24 @@ mod test {
         let mut result = VerificationResult::new();
         fn_verification(&dir, &CONFIG_TEST, &mut result);
         assert!(result.is_ok());
+    }
+
+    #[test]
+    fn change_setup_tally_data() {
+        let dir = get_verifier_dir();
+        for vcs in dir.context().vcs_directories().iter() {
+            let mut result = VerificationResult::new();
+            let mut mock_dir = get_test_verifier_mock_setup_dir();
+            mock_dir
+                .context_mut()
+                .vcs_directory_mut(&vcs.name())
+                .unwrap()
+                .mock_setup_component_tally_data_payload(|d| {
+                    d.verification_card_set_id = "modified-vcs_id".to_string();
+                });
+            fn_verification(&mock_dir, &CONFIG_TEST, &mut result);
+            assert!(!result.has_errors(), "Failed at vcs {}", vcs.name());
+            assert!(result.has_failures(), "Failed at VCS {}", vcs.name());
+        }
     }
 }

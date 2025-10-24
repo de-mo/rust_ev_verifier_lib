@@ -15,8 +15,8 @@ The following table gives the situation of the development of the verifications 
 | Setup | 03.02        | Implemented     | Done (with negative)    |
 | Setup | 03.03        | Implemented     | Done (with negative)    |
 | Setup | 03.04        | Implemented     | Done (with negative)    |
-| Setup | 03.05        | Implemented     | Done (without negative) |
-| Setup | 03.06        | Implemented     | Done (without negative) |
+| Setup | 03.05        | Implemented     | Done (with negative)    |
+| Setup | 03.06        | Implemented     | Done (with negative)    |
 | Setup | 03.07        | Implemented     | Done (without negative) |
 | Setup | 03.08        | Implemented     | Done (without negative) |
 | Setup | 03.09        | Implemented     | Done (without negative) |
