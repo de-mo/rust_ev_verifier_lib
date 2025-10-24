@@ -203,7 +203,7 @@ impl<D: VerifierDataDecode + VerifierDataToTypeTrait + Clone> FileGroup<D> {
 mod test {
     use super::*;
     use crate::{
-        config::test::test_datasets_context_path,
+        config::test::test_datasets_context_path, consts::CONTROL_COMPONENT_ID_LIST,
         data_structures::context::control_component_public_keys_payload::ControlComponentPublicKeysPayload,
     };
 
@@ -214,7 +214,7 @@ mod test {
         assert!(fg.location_exists());
         assert!(fg.has_elements());
         assert_eq!(fg.get_location(), location);
-        assert_eq!(fg.get_numbers(), &[1, 2, 3, 4]);
+        assert_eq!(fg.get_numbers(), &CONTROL_COMPONENT_ID_LIST);
         for (i, f) in fg.iter_file() {
             let name = format!("controlComponentPublicKeysPayload.{i}.json");
             assert_eq!(f.path(), location.join(name));

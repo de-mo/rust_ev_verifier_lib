@@ -119,9 +119,12 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::config::test::{
-        CONFIG_TEST, get_test_verifier_mock_setup_dir,
-        get_test_verifier_setup_dir as get_verifier_dir,
+    use crate::{
+        config::test::{
+            CONFIG_TEST, get_test_verifier_mock_setup_dir,
+            get_test_verifier_setup_dir as get_verifier_dir,
+        },
+        consts::NUMBER_CONTROL_COMPONENTS,
     };
 
     fn nb_pk_ccr() -> usize {
@@ -193,7 +196,7 @@ mod test {
 
     #[test]
     fn change_pk_ccr_j() {
-        for j in 1..=4 {
+        for j in 1..=NUMBER_CONTROL_COMPONENTS {
             for i in 0..nb_pk_ccr() {
                 let mut result = VerificationResult::new();
                 let mut mock_dir = get_test_verifier_mock_setup_dir();
@@ -213,7 +216,7 @@ mod test {
 
     #[test]
     fn add_pk_ccr_j() {
-        for j in 1..=4 {
+        for j in 1..=NUMBER_CONTROL_COMPONENTS {
             let mut result = VerificationResult::new();
             let mut mock_dir = get_test_verifier_mock_setup_dir();
             mock_dir
@@ -231,7 +234,7 @@ mod test {
 
     #[test]
     fn remove_pk_ccr_j() {
-        for j in 1..=4 {
+        for j in 1..=NUMBER_CONTROL_COMPONENTS {
             let mut result = VerificationResult::new();
             let mut mock_dir = get_test_verifier_mock_setup_dir();
             mock_dir

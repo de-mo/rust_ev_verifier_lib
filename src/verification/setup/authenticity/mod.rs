@@ -209,9 +209,12 @@ mod test {
     use rust_ev_system_library::rust_ev_crypto_primitives::prelude::Integer;
 
     use super::*;
-    use crate::config::test::{
-        CONFIG_TEST, get_test_verifier_mock_setup_dir,
-        get_test_verifier_setup_dir as get_verifier_dir,
+    use crate::{
+        config::test::{
+            CONFIG_TEST, get_test_verifier_mock_setup_dir,
+            get_test_verifier_setup_dir as get_verifier_dir,
+        },
+        consts::NUMBER_CONTROL_COMPONENTS,
     };
 
     #[test]
@@ -304,7 +307,7 @@ mod test {
 
     #[test]
     fn test_0203_changed() {
-        for j in 1..=4 {
+        for j in 1..=NUMBER_CONTROL_COMPONENTS {
             let mut mock_dir = get_test_verifier_mock_setup_dir();
             mock_dir
                 .context_mut()

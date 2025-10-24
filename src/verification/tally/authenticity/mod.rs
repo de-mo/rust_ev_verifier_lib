@@ -210,10 +210,9 @@ mod test {
     use rust_ev_system_library::rust_ev_crypto_primitives::prelude::Integer;
 
     use super::*;
-    use crate::config::test::{
-        CONFIG_TEST, get_test_verifier_mock_tally_dir,
-        get_test_verifier_tally_dir as get_verifier_dir,
-    };
+    use crate::{config::test::{
+        get_test_verifier_mock_tally_dir, get_test_verifier_tally_dir as get_verifier_dir, CONFIG_TEST
+    }, consts::NUMBER_CONTROL_COMPONENTS};
 
     fn nb_bb() -> usize {
         get_test_verifier_mock_tally_dir()
@@ -305,7 +304,7 @@ mod test {
     #[test]
     fn test_0701_changed() {
         for i in 0..nb_bb() {
-            for j in 1..=4 {
+            for j in 1..=NUMBER_CONTROL_COMPONENTS {
                 let mut mock_dir = get_test_verifier_mock_tally_dir();
                 mock_dir
                     .unwrap_tally_mut()
@@ -332,7 +331,7 @@ mod test {
     #[test]
     fn test_0702_changed() {
         for i in 0..nb_bb() {
-            for j in 1..=4 {
+            for j in 1..=NUMBER_CONTROL_COMPONENTS {
                 let mut mock_dir = get_test_verifier_mock_tally_dir();
                 mock_dir
                     .unwrap_tally_mut()

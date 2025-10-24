@@ -20,6 +20,7 @@ use super::{
     impl_trait_get_method_for_mocked_data, impl_trait_get_method_for_mocked_group,
 };
 use crate::{
+    consts::CONTROL_COMPONENT_ID_LIST,
     data_structures::{
         ControlComponentBallotBoxPayload, ControlComponentShufflePayload,
         TallyComponentShufflePayload,

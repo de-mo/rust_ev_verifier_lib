@@ -135,8 +135,11 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::config::test::{
-        CONFIG_TEST, get_test_verifier_mock_setup_dir, get_test_verifier_setup_dir,
+    use crate::{
+        config::test::{
+            CONFIG_TEST, get_test_verifier_mock_setup_dir, get_test_verifier_setup_dir,
+        },
+        consts::NUMBER_CONTROL_COMPONENTS,
     };
 
     #[test]
@@ -187,7 +190,7 @@ mod test {
 
     #[test]
     fn change_ccm_el() {
-        for j in 1..=4 {
+        for j in 1..=NUMBER_CONTROL_COMPONENTS {
             for i in 0..2 {
                 let mut result = VerificationResult::new();
                 let mut mock_dir = get_test_verifier_mock_setup_dir();
@@ -236,7 +239,7 @@ mod test {
 
     #[test]
     fn remove_ccm_el() {
-        for j in 1..=4 {
+        for j in 1..=NUMBER_CONTROL_COMPONENTS {
             let mut result = VerificationResult::new();
             let mut mock_dir = get_test_verifier_mock_setup_dir();
             mock_dir
@@ -286,7 +289,7 @@ mod test {
 
     #[test]
     fn add_ccm_el() {
-        for j in 1..=4 {
+        for j in 1..=NUMBER_CONTROL_COMPONENTS {
             let mut result = VerificationResult::new();
             let mut mock_dir = get_test_verifier_mock_setup_dir();
             mock_dir

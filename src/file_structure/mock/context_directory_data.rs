@@ -20,6 +20,7 @@ use super::{
     impl_trait_get_method_for_mocked_data, impl_trait_get_method_for_mocked_group,
 };
 use crate::{
+    consts::CONTROL_COMPONENT_ID_LIST,
     data_structures::{
         ElectionEventContextPayload,
         context::{
@@ -215,7 +216,7 @@ mod test {
     use rust_ev_system_library::rust_ev_crypto_primitives::prelude::Integer;
 
     use super::*;
-    use crate::config::test::test_datasets_context_path;
+    use crate::{config::test::test_datasets_context_path, consts::NUMBER_CONTROL_COMPONENTS};
 
     #[test]
     fn test_mock_context() {
@@ -300,7 +301,7 @@ mod test {
             mock_dir
                 .control_component_public_keys_payload_iter()
                 .count(),
-            4
+            NUMBER_CONTROL_COMPONENTS
         );
         mock_dir.mock_control_component_public_keys_payload_as_deleted(2);
         assert_eq!(
@@ -336,7 +337,7 @@ mod test {
                     .unwrap()
                     .control_component_public_keys
                     .node_id,
-                4
+                NUMBER_CONTROL_COMPONENTS
             );
             assert!(it.next().is_none());
         }
@@ -345,7 +346,7 @@ mod test {
             mock_dir
                 .control_component_public_keys_payload_iter()
                 .count(),
-            4
+            NUMBER_CONTROL_COMPONENTS
         );
     }
 
@@ -362,7 +363,7 @@ mod test {
             mock_dir
                 .control_component_public_keys_payload_iter()
                 .count(),
-            4
+            NUMBER_CONTROL_COMPONENTS
         );
         assert_eq!(
             it.next()
@@ -390,7 +391,7 @@ mod test {
                 .unwrap()
                 .control_component_public_keys
                 .node_id,
-            4
+            NUMBER_CONTROL_COMPONENTS
         );
         assert!(it.next().is_none());
     }
@@ -407,7 +408,7 @@ mod test {
             mock_dir
                 .control_component_public_keys_payload_iter()
                 .count(),
-            4
+            NUMBER_CONTROL_COMPONENTS
         );
         assert_eq!(
             it.next()
@@ -443,7 +444,7 @@ mod test {
                 .unwrap()
                 .control_component_public_keys
                 .node_id,
-            4
+            NUMBER_CONTROL_COMPONENTS
         );
         assert!(it.next().is_none());
     }

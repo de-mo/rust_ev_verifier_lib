@@ -102,10 +102,9 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::config::test::{
-        CONFIG_TEST, get_test_verifier_mock_setup_dir,
-        get_test_verifier_setup_dir as get_verifier_dir,
-    };
+    use crate::{config::test::{
+        get_test_verifier_mock_setup_dir, get_test_verifier_setup_dir as get_verifier_dir, CONFIG_TEST
+    }, consts::NUMBER_CONTROL_COMPONENTS};
 
     #[test]
     fn test_ok() {
@@ -146,7 +145,7 @@ mod test {
 
     #[test]
     fn change_cc_pk_keys() {
-        for j in 1..=4 {
+        for j in 1..=NUMBER_CONTROL_COMPONENTS {
             let mut result = VerificationResult::new();
             let mut mock_dir = get_test_verifier_mock_setup_dir();
             mock_dir

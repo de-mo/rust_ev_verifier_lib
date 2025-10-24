@@ -150,9 +150,12 @@ mod test {
     use rust_ev_system_library::rust_ev_crypto_primitives::prelude::Integer;
 
     use super::*;
-    use crate::config::test::{
-        CONFIG_TEST, get_test_verifier_mock_setup_dir,
-        get_test_verifier_setup_dir as get_verifier_dir,
+    use crate::{
+        config::test::{
+            CONFIG_TEST, get_test_verifier_mock_setup_dir,
+            get_test_verifier_setup_dir as get_verifier_dir,
+        },
+        consts::NUMBER_CONTROL_COMPONENTS,
     };
 
     #[test]
@@ -170,7 +173,7 @@ mod test {
 
     #[test]
     fn change_ccr_pk() {
-        for j in 0..4 {
+        for j in 0..NUMBER_CONTROL_COMPONENTS {
             for i in 0..2 {
                 let mut result = VerificationResult::new();
                 let mut mock_dir = get_test_verifier_mock_setup_dir();
@@ -194,7 +197,7 @@ mod test {
 
     #[test]
     fn change_ccr_pi() {
-        for j in 0..4 {
+        for j in 0..NUMBER_CONTROL_COMPONENTS {
             for i in 0..2 {
                 // e
                 let mut result = VerificationResult::new();
@@ -230,7 +233,7 @@ mod test {
 
     #[test]
     fn change_ccm_pk() {
-        for j in 0..4 {
+        for j in 0..NUMBER_CONTROL_COMPONENTS {
             for i in 0..2 {
                 let mut result = VerificationResult::new();
                 let mut mock_dir = get_test_verifier_mock_setup_dir();
@@ -253,7 +256,7 @@ mod test {
 
     #[test]
     fn change_ccm_pi() {
-        for j in 0..4 {
+        for j in 0..NUMBER_CONTROL_COMPONENTS {
             for i in 0..2 {
                 // e
                 let mut result = VerificationResult::new();

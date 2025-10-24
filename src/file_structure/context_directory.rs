@@ -17,12 +17,13 @@
 //! Module to implement the context directory
 
 use super::{
-    file::{create_file, File},
-    file_group::{FileGroup, FileGroupDataIter, FileGroupFileIter},
     CompletnessTestTrait, FileStructureError, FileStructureErrorImpl,
+    file::{File, create_file},
+    file_group::{FileGroup, FileGroupDataIter, FileGroupFileIter},
 };
 use crate::{
     config::VerifierConfig,
+    consts::CONTROL_COMPONENT_ID_LIST,
     data_structures::context::{
         control_component_public_keys_payload::ControlComponentPublicKeysPayload,
         election_event_configuration::ElectionEventConfiguration,
@@ -170,7 +171,7 @@ macro_rules! impl_completness_test_trait_for_context {
                 if self
                     .control_component_public_keys_payload_group()
                     .get_numbers()
-                    != &vec![1, 2, 3, 4]
+                    != &CONTROL_COMPONENT_ID_LIST
                 {
                     missings.push(format!(
                         "control_component_public_keys_payload_group missing. only these parts are present: {:?}",

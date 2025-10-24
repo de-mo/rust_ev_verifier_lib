@@ -19,12 +19,11 @@ use std::collections::HashSet;
 use super::super::super::result::{VerificationEvent, VerificationResult};
 use crate::{
     config::VerifierConfig,
+    consts::CONTROL_COMPONENT_ID_LIST,
     file_structure::{
         TallyDirectoryTrait, VerificationDirectoryTrait, tally_directory::BBDirectoryTrait,
     },
 };
-
-const LIST_CC_NUMBER: &[usize] = &[1, 2, 3, 4];
 
 pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
     dir: &D,
@@ -43,10 +42,12 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
 
 fn verifiy_one_to_for(list: &[usize]) -> VerificationResult {
     let mut result = VerificationResult::new();
-    if list.iter().collect::<HashSet<_>>() != LIST_CC_NUMBER.iter().collect::<HashSet<_>>() {
+    if list.iter().collect::<HashSet<_>>()
+        != CONTROL_COMPONENT_ID_LIST.iter().collect::<HashSet<_>>()
+    {
         result.push(VerificationEvent::new_failure(&format!(
             "The list of node ids (={:?}) does not correspond to the expected list (={:?})",
-            list, LIST_CC_NUMBER
+            list, CONTROL_COMPONENT_ID_LIST
         )))
     }
     result
@@ -101,9 +102,12 @@ fn verify_for_bb_directory<B: BBDirectoryTrait>(bb_dir: &B) -> VerificationResul
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::config::test::{
-        CONFIG_TEST, get_test_verifier_mock_tally_dir,
-        get_test_verifier_tally_dir as get_verifier_dir,
+    use crate::{
+        config::test::{
+            CONFIG_TEST, get_test_verifier_mock_tally_dir,
+            get_test_verifier_tally_dir as get_verifier_dir,
+        },
+        consts::{NUMBER_CONTROL_COMPONENTS, test::MIXED_CONTROL_COMPONENT_ID_LIST},
     };
 
     #[test]
@@ -129,19 +133,12 @@ mod test {
             .bb_directories()
             .len();
         for i in 0..nb {
-            for j in 1..=4 {
+            for j in 1..=NUMBER_CONTROL_COMPONENTS {
                 let mut result = VerificationResult::new();
                 let mut mock_dir = get_test_verifier_mock_tally_dir();
                 mock_dir.unwrap_tally_mut().bb_directories_mut()[i]
                     .mock_control_component_ballot_box_payload(j, |d| {
-                        let new_j = match j {
-                            1 => 2,
-                            2 => 3,
-                            3 => 4,
-                            4 => 1,
-                            _ => unreachable!(),
-                        };
-                        d.node_id = new_j;
+                        d.node_id = MIXED_CONTROL_COMPONENT_ID_LIST[j - 1];
                     });
                 fn_verification(&mock_dir, &CONFIG_TEST, &mut result);
                 assert!(!result.has_errors(), "j={}, folder {i}", j);
@@ -157,7 +154,7 @@ mod test {
             .bb_directories()
             .len();
         for i in 0..nb {
-            for j in 1..=4 {
+            for j in 1..=NUMBER_CONTROL_COMPONENTS {
                 let mut result = VerificationResult::new();
                 let mut mock_dir = get_test_verifier_mock_tally_dir();
                 mock_dir.unwrap_tally_mut().bb_directories_mut()[i]

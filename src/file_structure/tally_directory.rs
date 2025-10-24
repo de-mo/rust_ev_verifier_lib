@@ -15,12 +15,13 @@
 // <https://www.gnu.org/licenses/>.
 
 use super::{
-    file::{create_file, File},
-    file_group::{FileGroup, FileGroupDataIter, FileGroupFileIter},
     CompletnessTestTrait, FileStructureError,
+    file::{File, create_file},
+    file_group::{FileGroup, FileGroupDataIter, FileGroupFileIter},
 };
 use crate::{
     config::VerifierConfig,
+    consts::CONTROL_COMPONENT_ID_LIST,
     data_structures::tally::{
         control_component_ballot_box_payload::ControlComponentBallotBoxPayload,
         control_component_shuffle_payload::ControlComponentShufflePayload, ech_0222::ECH0222,
@@ -83,7 +84,7 @@ pub trait BBDirectoryTrait: CompletnessTestTrait + Send + Sync {
         &self,
     ) -> &FileGroup<ControlComponentBallotBoxPayload>;
     fn control_component_shuffle_payload_group(&self)
-        -> &FileGroup<ControlComponentShufflePayload>;
+    -> &FileGroup<ControlComponentShufflePayload>;
     fn tally_component_votes_payload(
         &self,
     ) -> Result<Arc<TallyComponentVotesPayload>, FileStructureError>;
@@ -244,7 +245,7 @@ macro_rules! impl_completness_test_trait_for_tally_bb {
                 if self
                     .control_component_ballot_box_payload_group()
                     .get_numbers()
-                    != &vec![1, 2, 3, 4]
+                    != &CONTROL_COMPONENT_ID_LIST
                 {
                     missings.push(format!(
                         "{:?}/control_component_ballot_box_payload missing. only these parts are present: {:?}",
@@ -257,7 +258,7 @@ macro_rules! impl_completness_test_trait_for_tally_bb {
                 if self
                     .control_component_shuffle_payload_group()
                     .get_numbers()
-                    != &vec![1, 2, 3, 4]
+                    != &CONTROL_COMPONENT_ID_LIST
                 {
                     missings.push(format!(
                         "{:?}/control_component_shuffle_payload_group missing. only these parts are present: {:?}",

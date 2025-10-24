@@ -131,9 +131,12 @@ mod test {
     use rust_ev_system_library::rust_ev_crypto_primitives::prelude::Integer;
 
     use super::*;
-    use crate::config::test::{
-        CONFIG_TEST, get_test_verifier_mock_setup_dir,
-        get_test_verifier_setup_dir as get_verifier_dir,
+    use crate::{
+        config::test::{
+            CONFIG_TEST, get_test_verifier_mock_setup_dir,
+            get_test_verifier_setup_dir as get_verifier_dir,
+        },
+        consts::NUMBER_CONTROL_COMPONENTS,
     };
 
     #[test]
@@ -146,7 +149,7 @@ mod test {
 
     #[test]
     fn change_setup_ccm() {
-        for j in 1..=4 {
+        for j in 1..=NUMBER_CONTROL_COMPONENTS {
             let ccm_len = get_verifier_dir()
                 .context()
                 .setup_component_public_keys_payload()
@@ -199,7 +202,7 @@ mod test {
 
     #[test]
     fn change_setup_ccr() {
-        for j in 1..=4 {
+        for j in 1..=NUMBER_CONTROL_COMPONENTS {
             let ccm_len = get_verifier_dir()
                 .context()
                 .setup_component_public_keys_payload()
@@ -252,7 +255,7 @@ mod test {
 
     #[test]
     fn add_setup_ccmj() {
-        for j in 1..=4 {
+        for j in 1..=NUMBER_CONTROL_COMPONENTS {
             let mut mock_dir = get_test_verifier_mock_setup_dir();
             let mut result = VerificationResult::new();
             mock_dir
@@ -277,7 +280,7 @@ mod test {
 
     #[test]
     fn add_setup_ccrj() {
-        for j in 1..=4 {
+        for j in 1..=NUMBER_CONTROL_COMPONENTS {
             let mut mock_dir = get_test_verifier_mock_setup_dir();
             let mut result = VerificationResult::new();
             mock_dir
@@ -302,7 +305,7 @@ mod test {
 
     #[test]
     fn remove_setup_ccm() {
-        for j in 1..=4 {
+        for j in 1..=NUMBER_CONTROL_COMPONENTS {
             let mut mock_dir = get_test_verifier_mock_setup_dir();
             let mut result = VerificationResult::new();
             mock_dir
@@ -324,7 +327,7 @@ mod test {
 
     #[test]
     fn remove_setup_ccr() {
-        for j in 1..=4 {
+        for j in 1..=NUMBER_CONTROL_COMPONENTS {
             let mut mock_dir = get_test_verifier_mock_setup_dir();
             let mut result = VerificationResult::new();
             mock_dir
@@ -346,7 +349,7 @@ mod test {
 
     #[test]
     fn change_cc_ccm() {
-        for j in 1..=4 {
+        for j in 1..=NUMBER_CONTROL_COMPONENTS {
             let ccm_len = get_verifier_dir()
                 .context()
                 .control_component_public_keys_payload_group()
@@ -387,7 +390,7 @@ mod test {
 
     #[test]
     fn change_cc_ccr() {
-        for j in 1..=4 {
+        for j in 1..=NUMBER_CONTROL_COMPONENTS {
             let ccm_len = get_verifier_dir()
                 .context()
                 .control_component_public_keys_payload_group()
@@ -428,7 +431,7 @@ mod test {
 
     #[test]
     fn add_cc_ccm() {
-        for j in 1..=4 {
+        for j in 1..=NUMBER_CONTROL_COMPONENTS {
             let mut result = VerificationResult::new();
             let mut mock_dir = get_test_verifier_mock_setup_dir();
             mock_dir
@@ -449,7 +452,7 @@ mod test {
 
     #[test]
     fn add_cc_ccr() {
-        for j in 1..=4 {
+        for j in 1..=NUMBER_CONTROL_COMPONENTS {
             let mut result = VerificationResult::new();
             let mut mock_dir = get_test_verifier_mock_setup_dir();
             mock_dir
@@ -470,7 +473,7 @@ mod test {
 
     #[test]
     fn remove_cc_ccm() {
-        for j in 1..=4 {
+        for j in 1..=NUMBER_CONTROL_COMPONENTS {
             let mut result = VerificationResult::new();
             let mut mock_dir = get_test_verifier_mock_setup_dir();
             mock_dir
@@ -486,7 +489,7 @@ mod test {
 
     #[test]
     fn remove_cc_ccr() {
-        for j in 1..=4 {
+        for j in 1..=NUMBER_CONTROL_COMPONENTS {
             let mut result = VerificationResult::new();
             let mut mock_dir = get_test_verifier_mock_setup_dir();
             mock_dir
