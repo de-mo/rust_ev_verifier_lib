@@ -80,7 +80,7 @@ mod test {
     }
 
     #[test]
-    fn test_change_node_id() {
+    fn change_node_id() {
         for j in 1..=NUMBER_CONTROL_COMPONENTS {
             let mut result = VerificationResult::new();
             let mut mock_dir = get_test_verifier_mock_setup_dir();
@@ -90,6 +90,20 @@ mod test {
                     d.control_component_public_keys.node_id =
                         MIXED_CONTROL_COMPONENT_ID_LIST[j - 1];
                 });
+            fn_verification(&mock_dir, &CONFIG_TEST, &mut result);
+            assert!(!result.has_errors(), "j={}", j);
+            assert!(result.has_failures(), "j={}", j);
+        }
+    }
+
+    #[test]
+    fn remove_node_id() {
+        for j in 1..=NUMBER_CONTROL_COMPONENTS {
+            let mut result = VerificationResult::new();
+            let mut mock_dir = get_test_verifier_mock_setup_dir();
+            mock_dir
+                .context_mut()
+                .mock_control_component_public_keys_payload_as_deleted(j);
             fn_verification(&mock_dir, &CONFIG_TEST, &mut result);
             assert!(!result.has_errors(), "j={}", j);
             assert!(result.has_failures(), "j={}", j);
