@@ -45,7 +45,7 @@ The following table gives the situation of the development of the verifications 
 | Tally | 08.01        | Implemented     | Done (with negative)    |
 | Tally | 08.02        | Implemented     | Done (with negative) |
 | Tally | 08.03        | Implemented     | Done (without negative) |
-| Tally | 08.04        | Implemented     | Done (without negative) |
+| Tally | 08.04        | Implemented     | Done (with negative) |
 | Tally | 08.05        | Implemented     | Done (without negative) |
 | Tally | 08.06        | Implemented     | Done (without negative) |
 | Tally | 08.07        | Implemented     | Done (without negative) |
