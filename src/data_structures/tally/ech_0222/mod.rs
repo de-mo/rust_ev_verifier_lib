@@ -169,7 +169,7 @@ impl<'a> VerifiySignatureTrait<'a> for ECH0222 {
 }
 
 #[cfg(test)]
-mod test {
+pub(super) mod test {
     use super::*;
     use crate::{
         config::test::{get_keystore, get_test_verifier_tally_dir, test_datasets_tally_path},
@@ -185,6 +185,7 @@ mod test {
             .unwrap(),
         )
     }
+
     #[test]
     fn read_data_set() {
         let data_res = get_data_res();

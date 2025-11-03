@@ -27,21 +27,21 @@ use roxmltree::Node;
 
 #[derive(Debug, Clone)]
 pub struct ElectionGroupBallotRawData {
-    election_group_identification: String,
-    election_raw_data: Vec<ElectionRawData>,
+    pub election_group_identification: String,
+    pub election_raw_data: Vec<ElectionRawData>,
 }
 
 #[derive(Debug, Clone, Hash)]
 pub struct ElectionRawData {
-    election_identification: String,
-    list_raw_data: Option<ListRawData>,
-    ballot_positions: Vec<BallotPosition>,
-    is_unchanged_ballot: Option<bool>,
+    pub election_identification: String,
+    pub list_raw_data: Option<ListRawData>,
+    pub ballot_positions: Vec<BallotPosition>,
+    pub is_unchanged_ballot: Option<bool>,
 }
 
 #[derive(Debug, Clone, Hash)]
 pub struct ListRawData {
-    list_identification: String,
+    pub list_identification: String,
 }
 
 #[derive(Debug, Clone, Hash)]

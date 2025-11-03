@@ -452,3 +452,142 @@ impl ECh0222differencesTrait for VotingCardsInformation {
         res
     }
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use crate::{
+        config::test::test_datasets_tally_path,
+        data_structures::{VerifierDataDecode, tally::ech_0222::ECH0222},
+    };
+    use std::{fs, sync::Arc};
+
+    fn get_data_and_copy() -> (ECH0222Data, ECH0222Data) {
+        let elt = ECH0222::decode_xml(
+            fs::read_to_string(
+                test_datasets_tally_path().join("eCH-0222_v3-0_NE_20231124_TT05.xml"),
+            )
+            .unwrap(),
+        )
+        .unwrap()
+        .get_data()
+        .unwrap();
+        let orig = Arc::into_inner(elt).unwrap();
+        let copy = orig.clone();
+        (orig, copy)
+    }
+
+    #[test]
+    fn change_contest_id() {
+        let (orig, mut modified_data) = get_data_and_copy();
+        modified_data.raw_data.contest_identification = "modified".to_string();
+        let differences = orig.calculate_differences(&modified_data);
+        assert!(!differences.is_empty());
+    }
+
+    #[test]
+    fn add_cc() {
+        let (orig, mut modified_data) = get_data_and_copy();
+        let mut cc = orig
+            .raw_data
+            .counting_circle_raw_data
+            .values()
+            .next()
+            .unwrap()
+            .clone();
+        cc.counting_circle_id = "new_cc".to_string();
+        modified_data
+            .raw_data
+            .counting_circle_raw_data
+            .insert("new_cc".to_string(), cc);
+        let differences = orig.calculate_differences(&modified_data);
+        assert!(!differences.is_empty());
+    }
+
+    #[test]
+    fn remove_cc() {
+        let (orig, mut modified_data) = get_data_and_copy();
+        modified_data.raw_data.counting_circle_raw_data.remove(
+            &orig
+                .raw_data
+                .counting_circle_raw_data
+                .keys()
+                .next()
+                .unwrap()
+                .to_string(),
+        );
+        let differences = orig.calculate_differences(&modified_data);
+        assert!(!differences.is_empty());
+    }
+
+    #[test]
+    fn change_cc_id() {
+        let (orig, mut modified_data) = get_data_and_copy();
+        let cc_id = orig
+            .raw_data
+            .counting_circle_raw_data
+            .keys()
+            .next()
+            .unwrap()
+            .to_string();
+        modified_data
+            .raw_data
+            .counting_circle_raw_data
+            .get_mut(&cc_id)
+            .unwrap()
+            .counting_circle_id = "modified".to_string();
+        let differences = orig.calculate_differences(&modified_data);
+        assert!(!differences.is_empty());
+    }
+
+    #[test]
+    fn add_vote() {
+        let (orig, mut modified_data) = get_data_and_copy();
+        let mut vote = orig
+            .raw_data
+            .counting_circle_raw_data
+            .values()
+            .next()
+            .unwrap()
+            .vote_raw_data
+            .values()
+            .next()
+            .unwrap()
+            .clone();
+        vote.vote_identification = "new_vote".to_string();
+        modified_data
+            .raw_data
+            .counting_circle_raw_data
+            .values_mut()
+            .next()
+            .unwrap()
+            .vote_raw_data
+            .insert("new_vote".to_string(), vote);
+        let differences = orig.calculate_differences(&modified_data);
+        assert!(!differences.is_empty());
+    }
+
+    #[test]
+    fn add_election_groups() {
+        let (orig, mut modified_data) = get_data_and_copy();
+        let mut election_group = orig
+            .raw_data
+            .counting_circle_raw_data
+            .values()
+            .nth(1)
+            .unwrap()
+            .election_group_ballot_raw_data[0]
+            .clone();
+        election_group.election_group_identification = "new_election_group".to_string();
+        modified_data
+            .raw_data
+            .counting_circle_raw_data
+            .values_mut()
+            .next()
+            .unwrap()
+            .election_group_ballot_raw_data
+            .push(election_group);
+        let differences = orig.calculate_differences(&modified_data);
+        assert!(!differences.is_empty());
+    }
+}
