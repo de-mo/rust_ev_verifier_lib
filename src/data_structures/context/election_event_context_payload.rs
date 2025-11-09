@@ -31,13 +31,16 @@ use crate::{
 use chrono::NaiveDate;
 use chrono::NaiveDateTime;
 use regex::Regex;
-use rust_ev_system_library::preliminaries::{
-    GetHashElectionEventContextContext, PTable, PTableElement,
-    VerificationCardSetContext as VerificationCardSetContextInSystemLibrary,
-};
 use rust_ev_system_library::rust_ev_crypto_primitives::prelude::{
     ByteArray, DomainVerifications, HashableMessage, VerifyDomainTrait,
     elgamal::EncryptionParameters,
+};
+use rust_ev_system_library::{
+    preliminaries::{
+        GetHashElectionEventContextContext, PTable, PTableElement,
+        VerificationCardSetContext as VerificationCardSetContextInSystemLibrary,
+    },
+    rust_ev_crypto_primitives::prelude::EmptyContext,
 };
 use serde::Deserialize;
 use serde::de::{Deserializer, Error as SerdeError};
@@ -338,30 +341,30 @@ fn validate_max_selections_vs_write_ins(context: &ElectionEventContext) -> Vec<S
     res
 }
 
-impl VerifyDomainTrait<String> for ElectionEventContextPayload {
-    fn new_domain_verifications() -> DomainVerifications<Self, String> {
+impl VerifyDomainTrait<EmptyContext, String> for ElectionEventContextPayload {
+    fn new_domain_verifications() -> DomainVerifications<EmptyContext, Self, String> {
         let mut res = DomainVerifications::default();
-        res.add_verification(|v: &Self| {
+        res.add_verification(|v: &Self, c| {
             v.encryption_group
-                .verifiy_domain()
+                .verifiy_domain(c)
                 .iter()
                 .map(|e| e.to_string())
                 .collect::<Vec<_>>()
         });
-        res.add_verification(|v: &Self| validate_seed(&v.seed));
-        res.add_verification(|v: &Self| validate_small_primes(&v.small_primes));
-        res.add_verification(|v: &Self| validate_n_total(&v.election_event_context));
-        res.add_verification(|v: &Self| {
+        res.add_verification(|v: &Self, _c| validate_seed(&v.seed));
+        res.add_verification(|v: &Self, _c| validate_small_primes(&v.small_primes));
+        res.add_verification(|v: &Self, _c| validate_n_total(&v.election_event_context));
+        res.add_verification(|v: &Self, _c| {
             validate_max_selections_vs_write_ins(&v.election_event_context)
         });
-        res.add_verification_with_vec_of_vec_errors(|v| {
+        res.add_verification_with_vec_of_vec_errors(|v, _c| {
             v.election_event_context
                 .verification_card_set_contexts
                 .iter()
                 .map(|c| validate_voting_options_number(&c.primes_mapping_table))
                 .collect()
         });
-        res.add_verification(|v| {
+        res.add_verification(|v, _c| {
             // 05.01
             verifiy_domain_length_unique_id(
                 &v.election_event_context.election_event_id,
@@ -371,17 +374,17 @@ impl VerifyDomainTrait<String> for ElectionEventContextPayload {
         res
     }
 
-    fn verifiy_domain(&self) -> Vec<String> {
+    fn verifiy_domain(&self, context: &EmptyContext) -> Vec<String> {
         let mut res = vec![];
         res.append(
             &mut Self::new_domain_verifications()
                 .iter()
-                .flat_map(|f| f(self))
+                .flat_map(|f| f(self, context))
                 .collect(),
         );
         for vcs in &self.election_event_context.verification_card_set_contexts {
             res.extend(
-                vcs.verifiy_domain()
+                vcs.verifiy_domain(context)
                     .iter()
                     .map(|e| format!("{} (vcs_id{})", e, vcs.verification_card_set_id)),
             );
@@ -390,15 +393,17 @@ impl VerifyDomainTrait<String> for ElectionEventContextPayload {
     }
 }
 
-impl VerifyDomainTrait<String> for VerificationCardSetContext {
-    fn new_domain_verifications() -> DomainVerifications<Self, String> {
+impl VerifyDomainTrait<EmptyContext, String> for VerificationCardSetContext {
+    fn new_domain_verifications() -> DomainVerifications<EmptyContext, Self, String> {
         let mut res = DomainVerifications::default();
-        res.add_verification(|v: &Self| validate_voting_options_number(&v.primes_mapping_table));
-        res.add_verification(|v| {
+        res.add_verification(|v: &Self, _c| {
+            validate_voting_options_number(&v.primes_mapping_table)
+        });
+        res.add_verification(|v, _c| {
             // 05.01
             verifiy_domain_length_unique_id(&v.ballot_box_id, "ballot_box_id")
         });
-        res.add_verification(|v| {
+        res.add_verification(|v, _c| {
             // 05.01
             verifiy_domain_length_unique_id(&v.verification_card_set_id, "verification_card_set_id")
         });
@@ -550,7 +555,7 @@ mod test {
     fn error_election_event_id() {
         let mut ee = get_data_res().unwrap();
         ee.election_event_context.election_event_id = "1234345".to_string();
-        assert!(!ee.verifiy_domain().is_empty());
+        assert!(!ee.verifiy_domain(&EmptyContext::default()).is_empty());
     }
 }
 
@@ -569,7 +574,7 @@ mod test_domain {
             .context()
             .election_event_context_payload()
             .unwrap()
-            .verifiy_domain();
+            .verifiy_domain(&EmptyContext::default());
         assert!(res.is_empty(), "{:?}", res);
     }
 
@@ -585,7 +590,7 @@ mod test_domain {
             .context()
             .election_event_context_payload()
             .unwrap()
-            .verifiy_domain();
+            .verifiy_domain(&EmptyContext::default());
         assert!(!res.is_empty());
     }
 
@@ -610,7 +615,7 @@ mod test_domain {
                 .context()
                 .election_event_context_payload()
                 .unwrap()
-                .verifiy_domain();
+                .verifiy_domain(&EmptyContext::default());
             assert!(!res.is_empty());
         }
     }
@@ -636,7 +641,7 @@ mod test_domain {
                 .context()
                 .election_event_context_payload()
                 .unwrap()
-                .verifiy_domain();
+                .verifiy_domain(&EmptyContext::default());
             assert!(!res.is_empty());
         }
     }
@@ -651,7 +656,7 @@ mod test_domain {
             .context()
             .election_event_context_payload()
             .unwrap()
-            .verifiy_domain();
+            .verifiy_domain(&EmptyContext::default());
         assert!(!res.is_empty());
     }
 
@@ -665,7 +670,7 @@ mod test_domain {
             .context()
             .election_event_context_payload()
             .unwrap()
-            .verifiy_domain();
+            .verifiy_domain(&EmptyContext::default());
         assert!(!res.is_empty());
     }
 
@@ -679,7 +684,7 @@ mod test_domain {
             .context()
             .election_event_context_payload()
             .unwrap()
-            .verifiy_domain();
+            .verifiy_domain(&EmptyContext::default());
         assert!(!res.is_empty());
     }
 
@@ -698,7 +703,7 @@ mod test_domain {
             .context()
             .election_event_context_payload()
             .unwrap()
-            .verifiy_domain();
+            .verifiy_domain(&EmptyContext::default());
         assert!(!res.is_empty());
     }
 
@@ -723,7 +728,7 @@ mod test_domain {
                 .context()
                 .election_event_context_payload()
                 .unwrap()
-                .verifiy_domain();
+                .verifiy_domain(&EmptyContext::default());
             assert!(!res.is_empty(), "Seed tested: {}", seed);
         }
     }

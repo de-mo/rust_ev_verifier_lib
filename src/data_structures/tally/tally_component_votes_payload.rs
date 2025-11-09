@@ -27,7 +27,7 @@ use crate::{
     direct_trust::{CertificateAuthority, VerifiyJSONSignatureTrait, VerifiySignatureTrait},
 };
 use rust_ev_system_library::rust_ev_crypto_primitives::prelude::{
-    ByteArray, HashableMessage, VerifyDomainTrait, elgamal::EncryptionParameters,
+    ByteArray, EmptyContext, HashableMessage, VerifyDomainTrait, elgamal::EncryptionParameters,
 };
 use serde::Deserialize;
 use std::sync::Arc;
@@ -56,7 +56,7 @@ impl VerifierDataToTypeTrait for TallyComponentVotesPayload {
 
 implement_trait_verifier_data_json_decode!(TallyComponentVotesPayload);
 
-impl VerifyDomainTrait<String> for TallyComponentVotesPayload {}
+impl VerifyDomainTrait<EmptyContext, String> for TallyComponentVotesPayload {}
 
 impl<'a> From<&'a TallyComponentVotesPayload> for HashableMessage<'a> {
     fn from(value: &'a TallyComponentVotesPayload) -> Self {

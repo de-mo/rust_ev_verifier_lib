@@ -27,7 +27,7 @@ use crate::{
     },
     verification::{VerificationError, VerificationErrorImpl, meta_data::VerificationMetaDataList},
 };
-use rust_ev_system_library::rust_ev_crypto_primitives::prelude::VerifyDomainTrait;
+use rust_ev_system_library::rust_ev_crypto_primitives::prelude::{EmptyContext, VerifyDomainTrait};
 
 pub fn get_verifications<'a>(
     metadata_list: &'a VerificationMetaDataList,
@@ -51,7 +51,7 @@ pub fn get_verifications<'a>(
 fn validate_bb_dir<B: BBDirectoryTrait>(dir: &B, result: &mut VerificationResult) {
     match dir.tally_component_votes_payload() {
         Ok(d) => {
-            for e in d.verifiy_domain() {
+            for e in d.verifiy_domain(&EmptyContext::default()) {
                 result.push(
                     VerificationEvent::new_failure(&e)
                         .add_context("Error verifying domain for tally_component_votes_payload"),
@@ -65,7 +65,7 @@ fn validate_bb_dir<B: BBDirectoryTrait>(dir: &B, result: &mut VerificationResult
     }
     match dir.tally_component_shuffle_payload() {
         Ok(d) => {
-            for e in d.verifiy_domain() {
+            for e in d.verifiy_domain(&EmptyContext::default()) {
                 result.push(
                     VerificationEvent::new_failure(&e)
                         .add_context("Error verifying domain for tally_component_shuffle_payload"),
@@ -81,7 +81,7 @@ fn validate_bb_dir<B: BBDirectoryTrait>(dir: &B, result: &mut VerificationResult
     for (i, f) in dir.control_component_ballot_box_payload_iter() {
         match f {
             Ok(d) => {
-                for e in d.verifiy_domain() {
+                for e in d.verifiy_domain(&EmptyContext::default()) {
                     result.push(VerificationEvent::new_failure(&e)
                     .add_context(
                         format!(
@@ -104,7 +104,7 @@ fn validate_bb_dir<B: BBDirectoryTrait>(dir: &B, result: &mut VerificationResult
     for (i, f) in dir.control_component_shuffle_payload_iter() {
         match f {
             Ok(d) => {
-                for e in d.verifiy_domain() {
+                for e in d.verifiy_domain(&EmptyContext::default()) {
                     result.push(VerificationEvent::new_failure(&e).add_context(format!(
                         "Error verifying domain for {}/control_component_shuffle_payload_iter.{}",
                         dir.name(),

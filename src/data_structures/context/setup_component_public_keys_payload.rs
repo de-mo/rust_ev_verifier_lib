@@ -26,9 +26,9 @@ use crate::{
     data_structures::{VerifierDataToTypeTrait, VerifierDataType},
     direct_trust::{CertificateAuthority, VerifiyJSONSignatureTrait, VerifiySignatureTrait},
 };
-use rust_ev_system_library::rust_ev_crypto_primitives::prelude::Integer;
 use rust_ev_system_library::rust_ev_crypto_primitives::prelude::{
-    ByteArray, HashableMessage, VerifyDomainTrait, elgamal::EncryptionParameters,
+    ByteArray, EmptyContext, HashableMessage, Integer, VerifyDomainTrait,
+    elgamal::EncryptionParameters,
 };
 use serde::Deserialize;
 use std::sync::Arc;
@@ -51,7 +51,7 @@ impl VerifierDataToTypeTrait for SetupComponentPublicKeysPayload {
 
 implement_trait_verifier_data_json_decode!(SetupComponentPublicKeysPayload);
 
-impl VerifyDomainTrait<String> for SetupComponentPublicKeysPayload {}
+impl VerifyDomainTrait<EmptyContext, String> for SetupComponentPublicKeysPayload {}
 
 impl<'a> From<&'a SetupComponentPublicKeysPayload> for HashableMessage<'a> {
     fn from(value: &'a SetupComponentPublicKeysPayload) -> Self {
@@ -142,7 +142,8 @@ mod test {
     };
     use crate::{
         config::test::{
-            get_keystore, signing_keystore, test_data_signature_hash_path, test_datasets_context_path,
+            get_keystore, signing_keystore, test_data_signature_hash_path,
+            test_datasets_context_path,
         },
         direct_trust::Keystore,
     };

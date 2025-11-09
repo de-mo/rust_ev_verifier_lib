@@ -285,7 +285,7 @@ pub(super) mod test {
             #[test]
             fn verify_domain() {
                 let data = get_data_res().unwrap();
-                let verifiy_domain_res = data.verifiy_domain();
+                let verifiy_domain_res = data.verifiy_domain(&EmptyContext::default());
                 assert!(verifiy_domain_res.is_empty())
             }
         };
@@ -294,7 +294,7 @@ pub(super) mod test {
                 #[test]
                 fn [<verify_domain_ $suffix>]() {
                     let data = [<get_data_res_ $suffix>]().unwrap();
-                    let verifiy_domain_res = data.verifiy_domain();
+                    let verifiy_domain_res = data.verifiy_domain(&EmptyContext::default());
                     assert!(verifiy_domain_res.is_empty())
                 }
             }

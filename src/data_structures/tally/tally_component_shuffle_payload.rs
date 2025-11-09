@@ -28,7 +28,7 @@ use crate::{
     direct_trust::{CertificateAuthority, VerifiyJSONSignatureTrait, VerifiySignatureTrait},
 };
 use rust_ev_system_library::rust_ev_crypto_primitives::prelude::{
-    ByteArray, DomainVerifications, HashableMessage, Integer, VerifyDomainTrait,
+    ByteArray, DomainVerifications, EmptyContext, HashableMessage, Integer, VerifyDomainTrait,
     elgamal::EncryptionParameters,
 };
 use serde::Deserialize;
@@ -68,10 +68,10 @@ pub struct DecryptedVote {
     pub message: Vec<Integer>,
 }
 
-impl VerifyDomainTrait<String> for TallyComponentShufflePayload {
-    fn new_domain_verifications() -> DomainVerifications<Self, String> {
+impl VerifyDomainTrait<EmptyContext, String> for TallyComponentShufflePayload {
+    fn new_domain_verifications() -> DomainVerifications<EmptyContext, Self, String> {
         let mut res = DomainVerifications::default();
-        res.add_verification(|v: &Self| {
+        res.add_verification(|v: &Self, _c| {
             verifiy_domain_for_verifiable_shuffle(&v.verifiable_shuffle)
         });
         res

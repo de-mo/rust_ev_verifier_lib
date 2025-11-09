@@ -15,19 +15,19 @@
 // <https://www.gnu.org/licenses/>.
 
 use super::super::{
+    DataStructureError, DataStructureErrorImpl, VerifierDataDecode,
     common_types::{EncryptionParametersDef, Signature},
     deserialize_seq_seq_string_base64_to_seq_seq_integer,
-    implement_trait_verifier_data_json_decode, DataStructureError, DataStructureErrorImpl,
-    VerifierDataDecode,
+    implement_trait_verifier_data_json_decode,
 };
 use crate::{
     data_structures::{VerifierDataToTypeTrait, VerifierDataType},
     direct_trust::{CertificateAuthority, VerifiyJSONSignatureTrait, VerifiySignatureTrait},
 };
-use rust_ev_system_library::rust_ev_crypto_primitives::prelude::Integer;
 use rust_ev_system_library::rust_ev_crypto_primitives::prelude::{
-    elgamal::EncryptionParameters, ByteArray, HashableMessage, VerifyDomainTrait,
+    ByteArray, HashableMessage, VerifyDomainTrait, elgamal::EncryptionParameters,
 };
+use rust_ev_system_library::rust_ev_crypto_primitives::prelude::{EmptyContext, Integer};
 use serde::Deserialize;
 use std::sync::Arc;
 
@@ -53,7 +53,7 @@ impl VerifierDataToTypeTrait for SetupComponentTallyDataPayload {
 
 implement_trait_verifier_data_json_decode!(SetupComponentTallyDataPayload);
 
-impl VerifyDomainTrait<String> for SetupComponentTallyDataPayload {}
+impl VerifyDomainTrait<EmptyContext, String> for SetupComponentTallyDataPayload {}
 
 impl<'a> From<&'a SetupComponentTallyDataPayload> for HashableMessage<'a> {
     fn from(value: &'a SetupComponentTallyDataPayload) -> Self {

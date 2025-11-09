@@ -16,22 +16,22 @@
 
 use super::{
     super::{
+        DataStructureError, DataStructureErrorImpl, VerifierDataDecode,
         common_types::{CiphertextDef, EncryptionParametersDef, Signature},
-        implement_trait_verifier_data_json_decode, DataStructureError, DataStructureErrorImpl,
-        VerifierDataDecode,
+        implement_trait_verifier_data_json_decode,
     },
     VerifierTallyDataType,
 };
 use crate::{
     data_structures::{
-        common_types::{DecryptionProof, SchnorrProof},
         VerifierDataToTypeTrait, VerifierDataType,
+        common_types::{DecryptionProof, SchnorrProof},
     },
     direct_trust::{CertificateAuthority, VerifiyJSONSignatureTrait, VerifiySignatureTrait},
 };
 use rust_ev_system_library::rust_ev_crypto_primitives::prelude::{
+    ByteArray, EmptyContext, HashableMessage, VerifyDomainTrait,
     elgamal::{Ciphertext, EncryptionParameters},
-    ByteArray, HashableMessage, VerifyDomainTrait,
 };
 use serde::Deserialize;
 use std::sync::Arc;
@@ -78,7 +78,7 @@ pub struct ContextIds {
     pub verification_card_id: String,
 }
 
-impl VerifyDomainTrait<String> for ControlComponentBallotBoxPayload {}
+impl VerifyDomainTrait<EmptyContext, String> for ControlComponentBallotBoxPayload {}
 
 impl<'a> From<&'a ControlComponentBallotBoxPayload> for HashableMessage<'a> {
     fn from(value: &'a ControlComponentBallotBoxPayload) -> Self {
