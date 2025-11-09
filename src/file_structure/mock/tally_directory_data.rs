@@ -20,7 +20,6 @@ use super::{
     impl_trait_get_method_for_mocked_data, impl_trait_get_method_for_mocked_group,
 };
 use crate::{
-    consts::CONTROL_COMPONENT_ID_LIST,
     data_structures::{
         ControlComponentBallotBoxPayload, ControlComponentShufflePayload,
         TallyComponentShufflePayload,
@@ -34,10 +33,7 @@ use crate::{
         CompletnessTestTrait, FileStructureError, FileStructureErrorImpl, TallyDirectoryTrait,
         file::File,
         file_group::FileGroup,
-        tally_directory::{
-            BBDirectory, BBDirectoryTrait, TallyDirectory, impl_completness_test_trait_for_tally,
-            impl_completness_test_trait_for_tally_bb,
-        },
+        tally_directory::{BBDirectory, BBDirectoryTrait, TallyDirectory},
     },
 };
 use paste::paste;
@@ -62,8 +58,17 @@ pub struct MockTallyDirectory {
     mocked_ech_0222: Option<Box<MockedDataType<ECH0222>>>,
 }
 
-impl_completness_test_trait_for_tally_bb!(MockBBDirectory);
-impl_completness_test_trait_for_tally!(MockTallyDirectory);
+impl CompletnessTestTrait for MockTallyDirectory {
+    fn test_completness(&self) -> Result<Vec<String>, FileStructureError> {
+        self.dir.test_completness()
+    }
+}
+
+impl CompletnessTestTrait for MockBBDirectory {
+    fn test_completness(&self) -> Result<Vec<String>, FileStructureError> {
+        self.dir.test_completness()
+    }
+}
 
 impl MockTallyDirectory {
     pub fn new(data_location: &Path) -> Self {

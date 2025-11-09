@@ -20,7 +20,6 @@ use super::{
     impl_trait_get_method_for_mocked_data, impl_trait_get_method_for_mocked_group,
 };
 use crate::{
-    consts::CONTROL_COMPONENT_ID_LIST,
     data_structures::{
         ElectionEventContextPayload,
         context::{
@@ -36,10 +35,7 @@ use crate::{
     file_structure::{
         CompletnessTestTrait, ContextDirectory, ContextDirectoryTrait, FileStructureError,
         FileStructureErrorImpl,
-        context_directory::{
-            ContextVCSDirectory, ContextVCSDirectoryTrait, impl_completness_test_trait_for_context,
-            impl_completness_test_trait_for_context_vcs,
-        },
+        context_directory::{ContextVCSDirectory, ContextVCSDirectoryTrait},
         file::File,
         file_group::FileGroup,
     },
@@ -66,8 +62,17 @@ pub struct MockContextDirectory {
     vcs_directories: Vec<MockContextVCSDirectory>,
 }
 
-impl_completness_test_trait_for_context_vcs!(MockContextVCSDirectory);
-impl_completness_test_trait_for_context!(MockContextDirectory);
+impl CompletnessTestTrait for MockContextDirectory {
+    fn test_completness(&self) -> Result<Vec<String>, FileStructureError> {
+        self.dir.test_completness()
+    }
+}
+
+impl CompletnessTestTrait for MockContextVCSDirectory {
+    fn test_completness(&self) -> Result<Vec<String>, FileStructureError> {
+        self.dir.test_completness()
+    }
+}
 
 impl MockContextDirectory {
     pub fn new(location: &Path) -> Self {

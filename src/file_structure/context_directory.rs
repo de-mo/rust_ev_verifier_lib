@@ -151,49 +151,44 @@ impl ContextDirectory {
     }
 }
 
-macro_rules! impl_completness_test_trait_for_context {
-    ($t: ident) => {
-        impl CompletnessTestTrait for $t {
-            fn test_completness(&self) -> Result<Vec<String>, FileStructureError> {
-                if !self.location().is_dir() {
-                    return Err(FileStructureError::from(FileStructureErrorImpl::PathIsNotDir(self.location().to_path_buf())))
-                }
-                let mut missings = vec![];
-                if !self.election_event_context_payload_file().exists() {
-                    missings.push("election_event_context_payload does not exist".to_string());
-                }
-                if !self.setup_component_public_keys_payload_file().exists() {
-                    missings.push("setup_component_public_keys_payload_file does not exist".to_string());
-                }
-                if !self.election_event_configuration_file().exists() {
-                    missings.push("setup_component_public_keys_payload_file does not exist".to_string());
-                }
-                if self
-                    .control_component_public_keys_payload_group()
-                    .get_numbers()
-                    != &CONTROL_COMPONENT_ID_LIST
-                {
-                    missings.push(format!(
+impl CompletnessTestTrait for ContextDirectory {
+    fn test_completness(&self) -> Result<Vec<String>, FileStructureError> {
+        if !self.location().is_dir() {
+            return Err(FileStructureError::from(
+                FileStructureErrorImpl::PathIsNotDir(self.location().to_path_buf()),
+            ));
+        }
+        let mut missings = vec![];
+        if !self.election_event_context_payload_file().exists() {
+            missings.push("election_event_context_payload does not exist".to_string());
+        }
+        if !self.setup_component_public_keys_payload_file().exists() {
+            missings.push("setup_component_public_keys_payload_file does not exist".to_string());
+        }
+        if !self.election_event_configuration_file().exists() {
+            missings.push("setup_component_public_keys_payload_file does not exist".to_string());
+        }
+        if self
+            .control_component_public_keys_payload_group()
+            .get_numbers()
+            != &CONTROL_COMPONENT_ID_LIST
+        {
+            missings.push(format!(
                         "control_component_public_keys_payload_group missing. only these parts are present: {:?}",
                         self
                             .control_component_public_keys_payload_group()
                             .get_numbers()
                     ))
-                }
-                if self.vcs_directories().is_empty() {
-                    missings.push("No vcs directory found".to_string());
-                }
-                for d in self.vcs_directories().iter() {
-                    missings.extend(d.test_completness()?);
-                }
-                Ok(missings)
-            }
         }
+        if self.vcs_directories().is_empty() {
+            missings.push("No vcs directory found".to_string());
+        }
+        for d in self.vcs_directories().iter() {
+            missings.extend(d.test_completness()?);
+        }
+        Ok(missings)
     }
 }
-pub(crate) use impl_completness_test_trait_for_context;
-
-impl_completness_test_trait_for_context!(ContextDirectory);
 
 impl ContextDirectoryTrait for ContextDirectory {
     type VCSDirType = ContextVCSDirectory;
@@ -255,30 +250,23 @@ impl ContextDirectoryTrait for ContextDirectory {
     }
 }
 
-macro_rules! impl_completness_test_trait_for_context_vcs {
-    ($t: ident) => {
-        impl CompletnessTestTrait for $t {
-            fn test_completness(&self) -> Result<Vec<String>, FileStructureError> {
-                if !self.location().is_dir() {
-                    return Err(FileStructureError::from(
-                        FileStructureErrorImpl::PathIsNotDir(self.location().to_path_buf()),
-                    ));
-                }
-                let mut missings = vec![];
-                if !self.setup_component_tally_data_payload_file().exists() {
-                    missings.push(format!(
-                        "setup_component_tally_data_payload does not exist in {:?}",
-                        self.location().file_name().unwrap()
-                    ))
-                }
-                Ok(missings)
-            }
+impl CompletnessTestTrait for ContextVCSDirectory {
+    fn test_completness(&self) -> Result<Vec<String>, FileStructureError> {
+        if !self.location().is_dir() {
+            return Err(FileStructureError::from(
+                FileStructureErrorImpl::PathIsNotDir(self.location().to_path_buf()),
+            ));
         }
-    };
+        let mut missings = vec![];
+        if !self.setup_component_tally_data_payload_file().exists() {
+            missings.push(format!(
+                "setup_component_tally_data_payload does not exist in {:?}",
+                self.location().file_name().unwrap()
+            ))
+        }
+        Ok(missings)
+    }
 }
-pub(crate) use impl_completness_test_trait_for_context_vcs;
-
-impl_completness_test_trait_for_context_vcs!(ContextVCSDirectory);
 
 impl ContextVCSDirectory {
     /// New [VCSDirectory]
