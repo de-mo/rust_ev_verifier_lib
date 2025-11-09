@@ -15,13 +15,13 @@
 // <https://www.gnu.org/licenses/>.
 
 use super::super::{
+    DataStructureError, DataStructureErrorImpl, VerifierDataDecode,
     common_types::{EncryptionParametersDef, Signature},
-    deserialize_string_to_datetime, implement_trait_verifier_data_json_decode, DataStructureError,
-    DataStructureErrorImpl, VerifierDataDecode,
+    deserialize_string_to_datetime, implement_trait_verifier_data_json_decode,
 };
 use crate::{
     config::VerifierConfig,
-    data_structures::{verifiy_domain_length_unique_id, VerifierDataType},
+    data_structures::{VerifierDataType, verifiy_domain_length_unique_id},
     direct_trust::VerifiySignatureTrait,
 };
 use crate::{
@@ -36,11 +36,11 @@ use rust_ev_system_library::preliminaries::{
     VerificationCardSetContext as VerificationCardSetContextInSystemLibrary,
 };
 use rust_ev_system_library::rust_ev_crypto_primitives::prelude::{
-    elgamal::EncryptionParameters, ByteArray, DomainVerifications, HashableMessage,
-    VerifyDomainTrait,
+    ByteArray, DomainVerifications, HashableMessage, VerifyDomainTrait,
+    elgamal::EncryptionParameters,
 };
-use serde::de::{Deserializer, Error as SerdeError};
 use serde::Deserialize;
+use serde::de::{Deserializer, Error as SerdeError};
 use std::sync::Arc;
 
 #[derive(Deserialize, Debug, Clone)]
@@ -251,7 +251,7 @@ fn validate_seed(seed: &str) -> Vec<String> {
 ///
 /// - Size is equal to the max. supported voting options
 /// - Is sorted correctly (for 05.02)
-/// - The first ist greater or equal than 5 (for 05.02)
+/// - The first is greater or equal than 5 (for 05.02)
 fn validate_small_primes(small_primes: &[usize]) -> Vec<String> {
     let mut res = vec![];
     // Len is correct
@@ -271,6 +271,35 @@ fn validate_small_primes(small_primes: &[usize]) -> Vec<String> {
         res.push("The small primes contain 2 or 3, what is not allowed".to_string());
     };
     res
+}
+
+/// Validate n_total
+///
+/// - Number of distinct voting options across all verification card sets (n_total) is greater than 0 (05.03)
+/// - Number of distinct voting options across all verification card sets (n_total) is less or equal than n_sup (05.03)
+fn validate_n_total(context: &ElectionEventContext) -> Vec<String> {
+    let mut encoded_options = context
+        .verification_card_set_contexts
+        .iter()
+        .flat_map(|vcs| {
+            vcs.primes_mapping_table
+                .p_table
+                .iter()
+                .map(|el| el.encoded_voting_option)
+        })
+        .collect::<Vec<_>>();
+    encoded_options.sort();
+    encoded_options.dedup();
+    let n_total = encoded_options.len();
+    match     n_total {
+        0 => vec!["The number of distinct voting options across all verification card sets (n_total) must be greater than 0".to_string()],
+        n if n > VerifierConfig::maximum_number_of_supported_voting_options_n_sup() => vec![format!(
+            "The number of distinct voting options across all verification card sets (n_total) expected {} must be smaller or equal the the max. supported voting options {}",
+            n,
+            VerifierConfig::maximum_number_of_supported_voting_options_n_sup()
+        )],
+        _ => vec![],
+    }
 }
 
 /// Validate if the number of voting option in the verification card set context is correct
@@ -294,6 +323,21 @@ fn validate_voting_options_number(p_table: &PrimesMappingTable) -> Vec<String> {
     res
 }
 
+/// Validate the maximum number of selections to the number of write-ins plus one
+///
+/// Requirement 05.04
+fn validate_max_selections_vs_write_ins(context: &ElectionEventContext) -> Vec<String> {
+    let mut res = vec![];
+    if context.maximum_number_of_selections < context.maximum_number_of_write_ins_plus_one - 1 {
+        res.push(format!(
+            "The maximum number of selections {} must be greater or equal to the maximum number of write-ins plus one {} minus one",
+            context.maximum_number_of_selections,
+            context.maximum_number_of_write_ins_plus_one
+        ));
+    }
+    res
+}
+
 impl VerifyDomainTrait<String> for ElectionEventContextPayload {
     fn new_domain_verifications() -> DomainVerifications<Self, String> {
         let mut res = DomainVerifications::default();
@@ -306,6 +350,10 @@ impl VerifyDomainTrait<String> for ElectionEventContextPayload {
         });
         res.add_verification(|v: &Self| validate_seed(&v.seed));
         res.add_verification(|v: &Self| validate_small_primes(&v.small_primes));
+        res.add_verification(|v: &Self| validate_n_total(&v.election_event_context));
+        res.add_verification(|v: &Self| {
+            validate_max_selections_vs_write_ins(&v.election_event_context)
+        });
         res.add_verification_with_vec_of_vec_errors(|v| {
             v.election_event_context
                 .verification_card_set_contexts
@@ -314,11 +362,30 @@ impl VerifyDomainTrait<String> for ElectionEventContextPayload {
                 .collect()
         });
         res.add_verification(|v| {
+            // 05.01
             verifiy_domain_length_unique_id(
                 &v.election_event_context.election_event_id,
                 "election event id",
             )
         });
+        res
+    }
+
+    fn verifiy_domain(&self) -> Vec<String> {
+        let mut res = vec![];
+        res.append(
+            &mut Self::new_domain_verifications()
+                .iter()
+                .flat_map(|f| f(self))
+                .collect(),
+        );
+        for vcs in &self.election_event_context.verification_card_set_contexts {
+            res.extend(
+                vcs.verifiy_domain()
+                    .iter()
+                    .map(|e| format!("{} (vcs_id{})", e, vcs.verification_card_set_id)),
+            );
+        }
         res
     }
 }
@@ -327,6 +394,14 @@ impl VerifyDomainTrait<String> for VerificationCardSetContext {
     fn new_domain_verifications() -> DomainVerifications<Self, String> {
         let mut res = DomainVerifications::default();
         res.add_verification(|v: &Self| validate_voting_options_number(&v.primes_mapping_table));
+        res.add_verification(|v| {
+            // 05.01
+            verifiy_domain_length_unique_id(&v.ballot_box_id, "ballot_box_id")
+        });
+        res.add_verification(|v| {
+            // 05.01
+            verifiy_domain_length_unique_id(&v.verification_card_set_id, "verification_card_set_id")
+        });
         res
     }
 }
@@ -440,7 +515,9 @@ mod test {
         },
         *,
     };
-    use crate::config::test::{get_keystore, test_datasets_context_path, test_data_signature_hash_path};
+    use crate::config::test::{
+        get_keystore, test_data_signature_hash_path, test_datasets_context_path,
+    };
     use rust_ev_system_library::rust_ev_crypto_primitives::prelude::{
         EncodeTrait, RecursiveHashTrait,
     };
@@ -474,5 +551,180 @@ mod test {
         let mut ee = get_data_res().unwrap();
         ee.election_event_context.election_event_id = "1234345".to_string();
         assert!(!ee.verifiy_domain().is_empty());
+    }
+}
+
+#[cfg(test)]
+mod test_domain {
+    use super::*;
+    use crate::{
+        config::test::{get_test_verifier_mock_setup_dir, get_test_verifier_setup_dir},
+        file_structure::{ContextDirectoryTrait, VerificationDirectoryTrait},
+    };
+
+    #[test]
+    fn ok() {
+        let dir = get_test_verifier_setup_dir();
+        let res = dir
+            .context()
+            .election_event_context_payload()
+            .unwrap()
+            .verifiy_domain();
+        assert!(res.is_empty(), "{:?}", res);
+    }
+
+    #[test]
+    fn eeid() {
+        let mut mock_dir = get_test_verifier_mock_setup_dir();
+        mock_dir
+            .context_mut()
+            .mock_election_event_context_payload(|d| {
+                d.election_event_context.election_event_id = "mocked_id".to_string()
+            });
+        let res = mock_dir
+            .context()
+            .election_event_context_payload()
+            .unwrap()
+            .verifiy_domain();
+        assert!(!res.is_empty());
+    }
+
+    #[test]
+    fn bbid() {
+        let nb = get_test_verifier_setup_dir()
+            .context()
+            .election_event_context_payload()
+            .unwrap()
+            .election_event_context
+            .verification_card_set_contexts
+            .len();
+        for i in 0..nb {
+            let mut mock_dir = get_test_verifier_mock_setup_dir();
+            mock_dir
+                .context_mut()
+                .mock_election_event_context_payload(|d| {
+                    d.election_event_context.verification_card_set_contexts[i].ballot_box_id =
+                        "mocked_id".to_string()
+                });
+            let res = mock_dir
+                .context()
+                .election_event_context_payload()
+                .unwrap()
+                .verifiy_domain();
+            assert!(!res.is_empty());
+        }
+    }
+
+    #[test]
+    fn vcsid() {
+        let nb = get_test_verifier_setup_dir()
+            .context()
+            .election_event_context_payload()
+            .unwrap()
+            .election_event_context
+            .verification_card_set_contexts
+            .len();
+        for i in 0..nb {
+            let mut mock_dir = get_test_verifier_mock_setup_dir();
+            mock_dir
+                .context_mut()
+                .mock_election_event_context_payload(|d| {
+                    d.election_event_context.verification_card_set_contexts[i]
+                        .verification_card_set_id = "mocked_id".to_string()
+                });
+            let res = mock_dir
+                .context()
+                .election_event_context_payload()
+                .unwrap()
+                .verifiy_domain();
+            assert!(!res.is_empty());
+        }
+    }
+
+    #[test]
+    fn p() {
+        let mut mock_dir = get_test_verifier_mock_setup_dir();
+        mock_dir
+            .context_mut()
+            .mock_election_event_context_payload(|d| d.encryption_group.set_p(&1234.into()));
+        let res = mock_dir
+            .context()
+            .election_event_context_payload()
+            .unwrap()
+            .verifiy_domain();
+        assert!(!res.is_empty());
+    }
+
+    #[test]
+    fn q() {
+        let mut mock_dir = get_test_verifier_mock_setup_dir();
+        mock_dir
+            .context_mut()
+            .mock_election_event_context_payload(|d| d.encryption_group.set_q(&1234.into()));
+        let res = mock_dir
+            .context()
+            .election_event_context_payload()
+            .unwrap()
+            .verifiy_domain();
+        assert!(!res.is_empty());
+    }
+
+    #[test]
+    fn g() {
+        let mut mock_dir = get_test_verifier_mock_setup_dir();
+        mock_dir
+            .context_mut()
+            .mock_election_event_context_payload(|d| d.encryption_group.set_g(&1.into()));
+        let res = mock_dir
+            .context()
+            .election_event_context_payload()
+            .unwrap()
+            .verifiy_domain();
+        assert!(!res.is_empty());
+    }
+
+    #[test]
+    fn phi_max() {
+        let mut mock_dir = get_test_verifier_mock_setup_dir();
+        mock_dir
+            .context_mut()
+            .mock_election_event_context_payload(|d| {
+                d.election_event_context.maximum_number_of_selections = d
+                    .election_event_context
+                    .maximum_number_of_write_ins_plus_one
+                    - 2
+            });
+        let res = mock_dir
+            .context()
+            .election_event_context_payload()
+            .unwrap()
+            .verifiy_domain();
+        assert!(!res.is_empty());
+    }
+
+    #[test]
+    fn seed() {
+        let seeds = vec![
+            "invalid_seed",
+            "SG_2023010_TT01",
+            "Sg_20230101_TT01",
+            "SG_202301a1_TT01",
+            "SG_20230101_tt01",
+            "SG_20230101_TT0a",
+            "SG_20231301_TT01",
+            "SG_20231201_AA01",
+        ];
+        for seed in seeds {
+            let mut mock_dir = get_test_verifier_mock_setup_dir();
+            mock_dir
+                .context_mut()
+                .mock_election_event_context_payload(|d| d.seed = seed.to_string());
+            let res = mock_dir
+                .context()
+                .election_event_context_payload()
+                .unwrap()
+                .verifiy_domain();
+            assert!(!res.is_empty(), "Seed tested: {}", seed);
+        }
     }
 }

@@ -20,12 +20,12 @@ The following table gives the situation of the development of the verifications 
 | Setup | 03.07        | Implemented     | Done (with negative)    |
 | Setup | 03.08        | Implemented     | Done (with negative)    |
 | Setup | 03.09        | Implemented     | Done (with negative)    |
-| Setup | 03.10        | Implemented     | Done (with negative) |
+| Setup | 03.10        | Implemented     | Done (with negative)    |
 | setup | 03.11        | Implemented     | Done (with negative)    |
 | setup | 03.12        | Implemented     | Done (with negative)    |
 | Setup | 03.13        | Implemented     | Done (without negative) |
 | Setup | 03.14        | Implemented     | Done (with negative)    |
-| Setup | 04.01        | Implemented     | Done (without negative) |
+| Setup | 04.01        | Implemented     | Done (with negative)    |
 | Setup | 05.01        | Implemented     | Done (with negative)    |
 | Setup | 05.02        | Implemented     | Done (with negative)    |
 | Setup | 05.03        | Implemented     | Done (with negative)    |
@@ -53,6 +53,6 @@ The following table gives the situation of the development of the verifications 
 | Tally | 08.09        | Implemented     | Done (with negative)    |
 | Tally | 08.10        | Implemented     | Done (without negative) |
 | Tally | 08.11        | Implemented     | Done (without negative) |
-| Tally | 09.01        | Implemented     | Done (without negative) |
+| Tally | 09.01        | Implemented     | Done (with negative)    |
 | Tally | 10.01        | Implemented     | Done (without negative) |
 | Tally | 10.02        | Implemented     | Done (without negative) |
