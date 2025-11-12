@@ -20,8 +20,8 @@ use super::super::super::result::{VerificationEvent, VerificationResult};
 use crate::{
     config::VerifierConfig,
     file_structure::{
-        context_directory::ContextVCSDirectoryTrait, tally_directory::BBDirectoryTrait,
         ContextDirectoryTrait, TallyDirectoryTrait, VerificationDirectoryTrait,
+        context_directory::ContextVCSDirectoryTrait, tally_directory::BBDirectoryTrait,
     },
 };
 
@@ -88,10 +88,12 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
         };
         for (i, cc_bb_paylod) in bb_dir.control_component_ballot_box_payload_iter() {
             if let Err(e) = cc_bb_paylod {
-                result.push(VerificationEvent::new_error_from_error(&e).add_context(format!(
-                    "{}/control_component_ballot_box_payload_{} cannot be read",
-                    bb_id, i
-                )));
+                result.push(
+                    VerificationEvent::new_error_from_error(&e).add_context(format!(
+                        "{}/control_component_ballot_box_payload_{} cannot be read",
+                        bb_id, i
+                    )),
+                );
                 break;
             }
             let bb_vc_ids = cc_bb_paylod
@@ -114,7 +116,13 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::config::test::{get_test_verifier_tally_dir as get_verifier_dir, CONFIG_TEST};
+    use crate::{
+        config::test::{
+            CONFIG_TEST, get_test_verifier_mock_tally_dir,
+            get_test_verifier_tally_dir as get_verifier_dir,
+        },
+        consts::NUMBER_CONTROL_COMPONENTS,
+    };
 
     #[test]
     fn test_ok() {
@@ -130,5 +138,88 @@ mod test {
             }
         }
         assert!(result.is_ok());
+    }
+
+    #[test]
+    fn modify_cc_bb() {
+        let dir = get_verifier_dir();
+        for bb in dir.unwrap_tally().bb_directories().iter() {
+            for j in 1..=NUMBER_CONTROL_COMPONENTS {
+                let len_votes = bb
+                    .control_component_ballot_box_payload_iter()
+                    .find(|p| p.0 == j)
+                    .unwrap()
+                    .1
+                    .unwrap()
+                    .confirmed_encrypted_votes
+                    .len();
+                for i in 0..len_votes {
+                    let mut result = VerificationResult::new();
+                    let mut mock_dir = get_test_verifier_mock_tally_dir();
+                    mock_dir
+                        .unwrap_tally_mut()
+                        .bb_directory_mut(&bb.name())
+                        .unwrap()
+                        .mock_control_component_ballot_box_payload(j, |d| {
+                            d.confirmed_encrypted_votes[i]
+                                .context_ids
+                                .verification_card_id = "modified-vc_id".to_string();
+                        });
+                    fn_verification(&mock_dir, &CONFIG_TEST, &mut result);
+                    assert!(
+                        !result.has_errors(),
+                        "Failed at bb {} cc_bb {}",
+                        bb.name(),
+                        j
+                    );
+                    assert!(
+                        result.has_failures(),
+                        "Failed at bb {} cc_bb {}",
+                        bb.name(),
+                        j
+                    );
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn modify_context() {
+        let dir = get_verifier_dir();
+        for vcs in dir.context().vcs_directories().iter() {
+            let context = dir.context().election_event_context_payload().unwrap();
+            let bb_id = context
+                .election_event_context
+                .find_ballot_box_id(vcs.name().as_str())
+                .unwrap();
+            if dir
+                .unwrap_tally()
+                .bb_directories()
+                .iter()
+                .find(|bb| bb.tally_component_votes_payload().unwrap().ballot_box_id == bb_id)
+                .unwrap()
+                .control_component_ballot_box_payload_iter()
+                .next()
+                .unwrap()
+                .1
+                .unwrap()
+                .confirmed_encrypted_votes
+                .is_empty()
+            {
+                continue;
+            }
+            let mut result = VerificationResult::new();
+            let mut mock_dir = get_test_verifier_mock_tally_dir();
+            mock_dir
+                .context_mut()
+                .vcs_directory_mut(&vcs.name())
+                .unwrap()
+                .mock_setup_component_tally_data_payload(|p| {
+                    p.verification_card_ids.clear();
+                });
+            fn_verification(&mock_dir, &CONFIG_TEST, &mut result);
+            assert!(!result.has_errors(), "Failed at vcs {}", vcs.name(),);
+            assert!(result.has_failures(), "Failed at vcs {}", vcs.name(),);
+        }
     }
 }
