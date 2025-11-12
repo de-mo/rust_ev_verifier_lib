@@ -67,7 +67,10 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::config::test::{get_test_verifier_tally_dir as get_verifier_dir, CONFIG_TEST};
+    use crate::config::test::{
+        CONFIG_TEST, get_test_verifier_mock_tally_dir,
+        get_test_verifier_tally_dir as get_verifier_dir,
+    };
 
     #[test]
     fn test_ok() {
@@ -83,5 +86,54 @@ mod test {
             }
         }
         assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_add_bb() {
+        let mut dir = get_test_verifier_mock_tally_dir();
+        dir.context_mut().mock_election_event_context_payload(|d| {
+            let mut context = d.election_event_context.verification_card_set_contexts[0].clone();
+            context.ballot_box_id = "new-bb-id".to_string();
+            d.election_event_context
+                .verification_card_set_contexts
+                .push(context);
+        });
+        let mut result = VerificationResult::new();
+        fn_verification(&dir, &CONFIG_TEST, &mut result);
+        assert!(result.has_failures());
+        assert!(!result.has_errors());
+    }
+
+    #[test]
+    fn change_context() {
+        let dir = get_verifier_dir();
+        let nb_vcs = dir.context().vcs_directories().len();
+        for i in 0..nb_vcs {
+            let mut result = VerificationResult::new();
+            let mut mock_dir = get_test_verifier_mock_tally_dir();
+            mock_dir
+                .context_mut()
+                .mock_election_event_context_payload(|d| {
+                    d.election_event_context.verification_card_set_contexts[i].ballot_box_id =
+                        "modified-bb_id".to_string();
+                });
+            fn_verification(&mock_dir, &CONFIG_TEST, &mut result);
+            assert!(!result.has_errors(), "Failed at vcs {}", i);
+            assert!(result.has_failures(), "Failed at VCS {}", i);
+        }
+    }
+
+    #[test]
+    fn test_remove_bb() {
+        let mut dir = get_test_verifier_mock_tally_dir();
+        dir.context_mut().mock_election_event_context_payload(|d| {
+            d.election_event_context
+                .verification_card_set_contexts
+                .pop();
+        });
+        let mut result = VerificationResult::new();
+        fn_verification(&dir, &CONFIG_TEST, &mut result);
+        assert!(result.has_failures());
+        assert!(!result.has_errors());
     }
 }
