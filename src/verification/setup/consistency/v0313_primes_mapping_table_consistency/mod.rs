@@ -111,7 +111,10 @@ fn verify_1_same_actual_voting_options(ee_context: &ElectionEventContext) -> Ver
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::config::test::{CONFIG_TEST, get_test_verifier_setup_dir as get_verifier_dir};
+    use crate::config::test::{
+        CONFIG_TEST, get_test_verifier_mock_setup_dir,
+        get_test_verifier_setup_dir as get_verifier_dir,
+    };
 
     #[test]
     fn test_ok() {
@@ -127,5 +130,195 @@ mod test {
             }
         }
         assert!(result.is_ok());
+    }
+
+    #[test]
+    fn change_p_table_element() {
+        let dir = get_verifier_dir();
+        for (i, vcs) in dir
+            .context()
+            .election_event_context_payload()
+            .unwrap()
+            .election_event_context
+            .verification_card_set_contexts
+            .iter()
+            .enumerate()
+        {
+            for (j, _p_table_element) in vcs.primes_mapping_table.p_table.iter().enumerate() {
+                {
+                    // encoded_voting_option change
+                    let mut result = VerificationResult::new();
+                    let mut mock_dir = get_test_verifier_mock_setup_dir();
+                    mock_dir
+                        .context_mut()
+                        .mock_election_event_context_payload(|d| {
+                            d.election_event_context.verification_card_set_contexts[i]
+                                .primes_mapping_table
+                                .p_table[j]
+                                .encoded_voting_option = 1usize
+                        });
+                    fn_verification(&mock_dir, &CONFIG_TEST, &mut result);
+                    assert!(
+                        !result.has_errors(),
+                        "Failed at vcs {} in position {j} of pTable for encoded_voting_option change",
+                        &vcs.verification_card_set_id
+                    );
+                    assert!(
+                        result.has_failures(),
+                        "Failed at VCS {} in position {j} of pTable for encoded_voting_option change",
+                        &vcs.verification_card_set_id
+                    );
+                }
+                {
+                    // actual_voting_option change
+                    let mut result = VerificationResult::new();
+                    let mut mock_dir = get_test_verifier_mock_setup_dir();
+                    mock_dir
+                        .context_mut()
+                        .mock_election_event_context_payload(|d| {
+                            d.election_event_context.verification_card_set_contexts[i]
+                                .primes_mapping_table
+                                .p_table[j]
+                                .actual_voting_option = "Changed".to_string()
+                        });
+                    fn_verification(&mock_dir, &CONFIG_TEST, &mut result);
+                    assert!(
+                        !result.has_errors(),
+                        "Failed at vcs {} in position {j} of pTable for actual_voting_option change",
+                        &vcs.verification_card_set_id
+                    );
+                    assert!(
+                        result.has_failures(),
+                        "Failed at VCS {} in position {j} of pTable for actual_voting_option change",
+                        &vcs.verification_card_set_id
+                    );
+                }
+                {
+                    // semantic_information change
+                    let mut result = VerificationResult::new();
+                    let mut mock_dir = get_test_verifier_mock_setup_dir();
+                    mock_dir
+                        .context_mut()
+                        .mock_election_event_context_payload(|d| {
+                            d.election_event_context.verification_card_set_contexts[i]
+                                .primes_mapping_table
+                                .p_table[j]
+                                .semantic_information = "Changed".to_string()
+                        });
+                    fn_verification(&mock_dir, &CONFIG_TEST, &mut result);
+                    assert!(
+                        !result.has_errors(),
+                        "Failed at vcs {} in position {j} of pTable for semantic_information change",
+                        &vcs.verification_card_set_id
+                    );
+                    assert!(
+                        result.has_failures(),
+                        "Failed at VCS {} in position {j} of pTable for semantic_information change",
+                        &vcs.verification_card_set_id
+                    );
+                }
+                {
+                    // correctness_information change
+                    let mut result = VerificationResult::new();
+                    let mut mock_dir = get_test_verifier_mock_setup_dir();
+                    mock_dir
+                        .context_mut()
+                        .mock_election_event_context_payload(|d| {
+                            d.election_event_context.verification_card_set_contexts[i]
+                                .primes_mapping_table
+                                .p_table[j]
+                                .correctness_information = "Changed".to_string()
+                        });
+                    fn_verification(&mock_dir, &CONFIG_TEST, &mut result);
+                    assert!(
+                        !result.has_errors(),
+                        "Failed at vcs {} in position {j} of pTable for correctness_information change",
+                        &vcs.verification_card_set_id
+                    );
+                    assert!(
+                        result.has_failures(),
+                        "Failed at VCS {} in position {j} of pTable for correctness_information change",
+                        &vcs.verification_card_set_id
+                    );
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn remove_p_table_element() {
+        let dir = get_verifier_dir();
+        for (i, vcs) in dir
+            .context()
+            .election_event_context_payload()
+            .unwrap()
+            .election_event_context
+            .verification_card_set_contexts
+            .iter()
+            .enumerate()
+        {
+            let mut result = VerificationResult::new();
+            let mut mock_dir = get_test_verifier_mock_setup_dir();
+            mock_dir
+                .context_mut()
+                .mock_election_event_context_payload(|d| {
+                    d.election_event_context.verification_card_set_contexts[i]
+                        .primes_mapping_table
+                        .p_table
+                        .pop();
+                });
+            fn_verification(&mock_dir, &CONFIG_TEST, &mut result);
+            assert!(
+                !result.has_errors(),
+                "Failed at vcs {}",
+                &vcs.verification_card_set_id
+            );
+            assert!(
+                result.has_failures(),
+                "Failed at VCS {}",
+                &vcs.verification_card_set_id
+            );
+        }
+    }
+
+    #[test]
+    fn add_p_table_element() {
+        let dir = get_verifier_dir();
+        for (i, vcs) in dir
+            .context()
+            .election_event_context_payload()
+            .unwrap()
+            .election_event_context
+            .verification_card_set_contexts
+            .iter()
+            .enumerate()
+        {
+            let mut result = VerificationResult::new();
+            let mut mock_dir = get_test_verifier_mock_setup_dir();
+            mock_dir
+                .context_mut()
+                .mock_election_event_context_payload(|d| {
+                    d.election_event_context.verification_card_set_contexts[i]
+                        .primes_mapping_table
+                        .p_table
+                        .push(PTableElement {
+                            actual_voting_option: "New".to_string(),
+                            encoded_voting_option: 1usize,
+                            semantic_information: "New".to_string(),
+                            correctness_information: "New".to_string(),
+                        })
+                });
+            fn_verification(&mock_dir, &CONFIG_TEST, &mut result);
+            assert!(
+                !result.has_errors(),
+                "Failed at vcs {}",
+                &vcs.verification_card_set_id
+            );
+            assert!(
+                result.has_failures(),
+                "Failed at VCS {}",
+                &vcs.verification_card_set_id
+            );
+        }
     }
 }
