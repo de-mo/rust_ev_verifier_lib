@@ -344,6 +344,7 @@ fn validate_max_selections_vs_write_ins(context: &ElectionEventContext) -> Vec<S
 impl VerifyDomainTrait<EmptyContext, String> for ElectionEventContextPayload {
     fn new_domain_verifications() -> DomainVerifications<EmptyContext, Self, String> {
         let mut res = DomainVerifications::default();
+        // Add verification for encryption group
         res.add_verification(|v: &Self, c| {
             v.encryption_group
                 .verifiy_domain(c)
@@ -351,18 +352,12 @@ impl VerifyDomainTrait<EmptyContext, String> for ElectionEventContextPayload {
                 .map(|e| e.to_string())
                 .collect::<Vec<_>>()
         });
+
         res.add_verification(|v: &Self, _c| validate_seed(&v.seed));
         res.add_verification(|v: &Self, _c| validate_small_primes(&v.small_primes));
         res.add_verification(|v: &Self, _c| validate_n_total(&v.election_event_context));
         res.add_verification(|v: &Self, _c| {
             validate_max_selections_vs_write_ins(&v.election_event_context)
-        });
-        res.add_verification_with_vec_of_vec_errors(|v, _c| {
-            v.election_event_context
-                .verification_card_set_contexts
-                .iter()
-                .map(|c| validate_voting_options_number(&c.primes_mapping_table))
-                .collect()
         });
         res.add_verification(|v, _c| {
             // 05.01
@@ -371,24 +366,19 @@ impl VerifyDomainTrait<EmptyContext, String> for ElectionEventContextPayload {
                 "election event id",
             )
         });
-        res
-    }
-
-    fn verifiy_domain(&self, context: &EmptyContext) -> Vec<String> {
-        let mut res = vec![];
-        res.append(
-            &mut Self::new_domain_verifications()
+        // Add verification for each verification card set context
+        res.add_verification_with_vec_of_vec_errors(|v, c| {
+            v.election_event_context
+                .verification_card_set_contexts
                 .iter()
-                .flat_map(|f| f(self, context))
-                .collect(),
-        );
-        for vcs in &self.election_event_context.verification_card_set_contexts {
-            res.extend(
-                vcs.verifiy_domain(context)
-                    .iter()
-                    .map(|e| format!("{} (vcs_id{})", e, vcs.verification_card_set_id)),
-            );
-        }
+                .map(|vcs| {
+                    vcs.verifiy_domain(c)
+                        .iter()
+                        .map(|e| format!("{} (vcs_id{})", e, vcs.verification_card_set_id))
+                        .collect::<Vec<_>>()
+                })
+                .collect::<Vec<_>>()
+        });
         res
     }
 }
