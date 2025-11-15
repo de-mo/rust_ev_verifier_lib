@@ -18,7 +18,7 @@ use super::super::super::result::{VerificationEvent, VerificationResult};
 use crate::{
     config::VerifierConfig,
     file_structure::{
-        tally_directory::BBDirectoryTrait, TallyDirectoryTrait, VerificationDirectoryTrait,
+        TallyDirectoryTrait, VerificationDirectoryTrait, tally_directory::BBDirectoryTrait,
     },
 };
 
@@ -55,6 +55,19 @@ fn verify_for_bb_directory<B: BBDirectoryTrait>(bb_dir: &B) -> VerificationResul
         }
     };
 
+    let nb_mixed_votes = match bb_dir.tally_component_shuffle_payload() {
+        Ok(p) => p.verifiable_shuffle.shuffled_ciphertexts.len(),
+        Err(e) => {
+            result.push(
+                VerificationEvent::new_error_from_error(&e).add_context(format!(
+                    "{}/tally_component_shuffle_payload cannot be read",
+                    bb_name
+                )),
+            );
+            return result;
+        }
+    };
+
     for (i, cc_bb_payload_res) in bb_dir.control_component_ballot_box_payload_iter() {
         match cc_bb_payload_res {
             Ok(p) => {
@@ -77,17 +90,10 @@ fn verify_for_bb_directory<B: BBDirectoryTrait>(bb_dir: &B) -> VerificationResul
     for (i, cc_bb_payload_res) in bb_dir.control_component_shuffle_payload_iter() {
         match cc_bb_payload_res {
             Ok(p) => {
-                if nb_votes < 2 {
-                    if p.verifiable_shuffle.shuffled_ciphertexts.len() != nb_votes + 2 {
-                        result.push(VerificationEvent::new_failure(&format!(
-                            "The number of vote {} in {}/control_component_ballot_box_payload_{} must be {}, since the number of votes {} in tally_component_votes_payload is less than 2",
-                            p.verifiable_shuffle.shuffled_ciphertexts.len(), bb_name, i, nb_votes + 2, nb_votes
-                        )));
-                    }
-                } else if p.verifiable_shuffle.shuffled_ciphertexts.len() != nb_votes {
+                if nb_mixed_votes != p.verifiable_decryptions.ciphertexts.len() {
                     result.push(VerificationEvent::new_failure(&format!(
-                    "The number of vote {} in {}/control_component_ballot_box_payload_{} is not the same than the number of votes {} in tally_component_votes_payload",
-                    p.verifiable_shuffle.shuffled_ciphertexts.len(), bb_name, i, nb_votes
+                    "The number of mixed vote {} in {}/control_component_shuffle_payload_{} is not the same than the number of mixed votes {} in tally_component_shuffle_payload",
+                    p.verifiable_decryptions.ciphertexts.len(), bb_name, i, nb_mixed_votes
                 )));
                 }
             }
@@ -100,28 +106,23 @@ fn verify_for_bb_directory<B: BBDirectoryTrait>(bb_dir: &B) -> VerificationResul
         }
     }
 
-    match bb_dir.tally_component_shuffle_payload() {
-        Ok(p) => {
-            if nb_votes < 2 {
-                if p.verifiable_plaintext_decryption.decrypted_votes.len() != nb_votes + 2 {
-                    result.push(VerificationEvent::new_failure(&format!(
-                        "The number of vote {} in {}/tally_component_shuffle_payload must be {}, since the number of votes {} in tally_component_votes_payload is less than 2",
-                        p.verifiable_plaintext_decryption.decrypted_votes.len(), bb_name, nb_votes + 2, nb_votes
-                    )));
-                }
-            } else if p.verifiable_plaintext_decryption.decrypted_votes.len() != nb_votes {
+    match nb_votes {
+        n if n < 2 => {
+            if nb_mixed_votes != n + 2 {
                 result.push(VerificationEvent::new_failure(&format!(
-                "The number of vote {} in {}/tally_component_shuffle_payload is not the same than the number of votes {} in tally_component_votes_payload",
-                p.verifiable_plaintext_decryption.decrypted_votes.len(), bb_name, nb_votes
+                "The number of mixed votes {} in {}/tally_component_shuffle_payload is not equal to the number of votes {} in tally_component_votes_payload plus two",
+                nb_mixed_votes, bb_name, n
             )));
             }
         }
-        Err(e) => result.push(
-            VerificationEvent::new_error_from_error(&e).add_context(format!(
-                "{}/tally_component_shuffle_payload cannot be read",
-                bb_name
-            )),
-        ),
+        n => {
+            if nb_mixed_votes != n {
+                result.push(VerificationEvent::new_failure(&format!(
+                "The number of mixed votes {} in {}/tally_component_shuffle_payload is not equal to the number of votes {} in tally_component_votes_payload",
+                nb_mixed_votes, bb_name, nb_votes
+            )));
+            }
+        }
     }
 
     result
@@ -130,7 +131,13 @@ fn verify_for_bb_directory<B: BBDirectoryTrait>(bb_dir: &B) -> VerificationResul
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::config::test::{get_test_verifier_tally_dir as get_verifier_dir, CONFIG_TEST};
+    use crate::{
+        config::test::{
+            CONFIG_TEST, get_test_verifier_mock_tally_dir,
+            get_test_verifier_tally_dir as get_verifier_dir,
+        },
+        consts::NUMBER_CONTROL_COMPONENTS,
+    };
 
     #[test]
     fn test_ok() {
@@ -146,5 +153,177 @@ mod test {
             }
         }
         assert!(result.is_ok());
+    }
+
+    #[test]
+    fn add_vote_tally() {
+        let dir = get_verifier_dir();
+        let nb = dir.unwrap_tally().bb_directories().len();
+        for i in 0..nb {
+            let mut result = VerificationResult::new();
+            let mut mock_dir = get_test_verifier_mock_tally_dir();
+            mock_dir.unwrap_tally_mut().bb_directories_mut()[i]
+                .mock_tally_component_votes_payload(|d| d.decrypted_votes.push(vec![1usize; 10]));
+            fn_verification(&mock_dir, &CONFIG_TEST, &mut result);
+            assert!(
+                !result.has_errors(),
+                "Failed for decrypted votes for bb id {i}"
+            );
+            assert!(
+                result.has_failures(),
+                "Failed for decrypted votes for bb id {i}"
+            );
+        }
+    }
+
+    #[test]
+    fn remove_vote_tally() {
+        let dir = get_verifier_dir();
+        let nb = dir.unwrap_tally().bb_directories().len();
+        for i in 0..nb {
+            let bb = &dir.unwrap_tally().bb_directories()[i];
+            if bb
+                .tally_component_votes_payload()
+                .unwrap()
+                .decrypted_votes
+                .is_empty()
+            {
+                continue;
+            }
+            let mut result = VerificationResult::new();
+            let mut mock_dir = get_test_verifier_mock_tally_dir();
+            mock_dir.unwrap_tally_mut().bb_directories_mut()[i].mock_tally_component_votes_payload(
+                |d| {
+                    d.decrypted_votes.pop();
+                },
+            );
+            fn_verification(&mock_dir, &CONFIG_TEST, &mut result);
+            assert!(
+                !result.has_errors(),
+                "Failed for decrypted votes for bb {}",
+                bb.name()
+            );
+            assert!(
+                result.has_failures(),
+                "Failed for decrypted votes for bb {}",
+                bb.name()
+            );
+        }
+    }
+
+    #[test]
+    fn remove_vote_cc() {
+        let dir = get_verifier_dir();
+        let nb = dir.unwrap_tally().bb_directories().len();
+        for i in 0..nb {
+            for j in 1..=NUMBER_CONTROL_COMPONENTS {
+                let bb = &dir.unwrap_tally().bb_directories()[i];
+                if bb
+                    .control_component_ballot_box_payload_iter()
+                    .nth(j - 1)
+                    .unwrap()
+                    .1
+                    .as_ref()
+                    .unwrap()
+                    .confirmed_encrypted_votes
+                    .is_empty()
+                {
+                    continue;
+                }
+                let mut result = VerificationResult::new();
+                let mut mock_dir = get_test_verifier_mock_tally_dir();
+                mock_dir.unwrap_tally_mut().bb_directories_mut()[i]
+                    .mock_control_component_ballot_box_payload(j, |d| {
+                        d.confirmed_encrypted_votes.pop();
+                    });
+                fn_verification(&mock_dir, &CONFIG_TEST, &mut result);
+                assert!(
+                    !result.has_errors(),
+                    "Failed for decrypted votes for bb {} and cc {j}",
+                    bb.name()
+                );
+                assert!(
+                    result.has_failures(),
+                    "Failed for decrypted votes for bb {} and cc {j}",
+                    bb.name()
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn remove_mixed_vote_tally() {
+        let dir = get_verifier_dir();
+        let nb = dir.unwrap_tally().bb_directories().len();
+        for i in 0..nb {
+            let bb = &dir.unwrap_tally().bb_directories()[i];
+            if bb
+                .tally_component_shuffle_payload()
+                .unwrap()
+                .verifiable_shuffle
+                .shuffled_ciphertexts
+                .is_empty()
+            {
+                continue;
+            }
+            let mut result = VerificationResult::new();
+            let mut mock_dir = get_test_verifier_mock_tally_dir();
+            mock_dir.unwrap_tally_mut().bb_directories_mut()[i]
+                .mock_tally_component_shuffle_payload(|d| {
+                    d.verifiable_shuffle.shuffled_ciphertexts.pop();
+                });
+            fn_verification(&mock_dir, &CONFIG_TEST, &mut result);
+            assert!(
+                !result.has_errors(),
+                "Failed for decrypted votes for bb {}",
+                bb.name()
+            );
+            assert!(
+                result.has_failures(),
+                "Failed for decrypted votes for bb {}",
+                bb.name()
+            );
+        }
+    }
+
+    #[test]
+    fn remove_mixed_vote_cc() {
+        let dir = get_verifier_dir();
+        let nb = dir.unwrap_tally().bb_directories().len();
+        for i in 0..nb {
+            for j in 1..=NUMBER_CONTROL_COMPONENTS {
+                let bb = &dir.unwrap_tally().bb_directories()[i];
+                if bb
+                    .control_component_shuffle_payload_iter()
+                    .nth(j - 1)
+                    .unwrap()
+                    .1
+                    .as_ref()
+                    .unwrap()
+                    .verifiable_decryptions
+                    .ciphertexts
+                    .is_empty()
+                {
+                    continue;
+                }
+                let mut result = VerificationResult::new();
+                let mut mock_dir = get_test_verifier_mock_tally_dir();
+                mock_dir.unwrap_tally_mut().bb_directories_mut()[i]
+                    .mock_control_component_shuffle_payload(j, |d| {
+                        d.verifiable_decryptions.ciphertexts.pop();
+                    });
+                fn_verification(&mock_dir, &CONFIG_TEST, &mut result);
+                assert!(
+                    !result.has_errors(),
+                    "Failed for decrypted votes for bb {} and cc {j}",
+                    bb.name()
+                );
+                assert!(
+                    result.has_failures(),
+                    "Failed for decrypted votes for bb {} and cc {j}",
+                    bb.name()
+                );
+            }
+        }
     }
 }
