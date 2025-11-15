@@ -1,0 +1,182 @@
+{
+	"encryptionGroup": {
+		"p": "sNV4Zbge19HnBkRvPmtJnNQdHFJBU2LCnsMO1HFdMUxEGew0pcVnqnPBQMhNgxbPOmmDXttsgwkeAekdzzY19Xpx3vDyeN1b7hdXAC0KZdQsGjpHcddPht/m1qzbe5UKKmvbzZFp1Q79ommZU6mfPO/dio+kAsTvR60uJCz5W7QecMWHYDHN6XAQXcLFwBh4NpvdMJiThG0IUJq1w/oj27j+GQZGVl1fOyPHHskMNl5EbjgORTdPAOKhzwzgfWcHmUl4rFv7GlAtCz/p3CZQunnwWaAgp2Mzm5k0XTyreb9bJyWZG/U0DT8FLyFfP0KPAzagw6xGoKgTVB3iDl400z7xR0NE79IarJJ9zTpnkeKUEf+Vf8kA8kjHQDrxC4uzHVbKTkJrF9iwmDU5biLnqpSMp9WZl3qDlawYw/+RskFF61rvbWERU0Sk1CZWGsg2YCIrYWrr9Iv/8DHTqp1l5v8GJanD97eR4rj8A4R2PYtHBGO4yTb7wzj5AuM53oNP",
+		"q": "WGq8MtwPa+jzgyI3nzWkzmoOjikgqbFhT2GHajiumKYiDPYaUuKz1TngoGQmwYtnnTTBr222QYSPAPSO55sa+r0473h5PG6t9wurgBaFMuoWDR0juOunw2/za1ZtvcqFFTXt5si06od+0TTMqdTPnnfuxUfSAWJ3o9aXEhZ8rdoPOGLDsBjm9LgILuFi4Aw8G03umExJwjaEKE1a4f0R7dx/DIMjKy6vnZHjj2SGGy8iNxwHIpungHFQ54ZwPrODzKS8Vi39jSgWhZ/07hMoXTz4LNAQU7GZzcyaLp5VvN+tk5LMjfqaBp+Cl5Cvn6FHgZtQYdYjUFQJqg7xBy8aaZ94o6Gid+kNVkk+5p0zyPFKCP/Kv+SAeSRjoB14hcXZjqtlJyE1i+xYTBqctxFz1UpGU+rMy71BytYMYf/I2SCi9a13trCIqaJSahMrDWQbMBEVsLV1+kX/+Bjp1U6y83+DEtTh+9vI8Vx+AcI7HsWjgjHcZJt94Zx8gXGc70Gn",
+		"g": "Ag=="
+	},
+	"electionEventId": "EF5E156CFA5F5B7B4539FAAF9022ACAD",
+	"ballotBoxId": "4E1225621A711D08B97D90282D4C4A99",
+	"decryptedVotes": [
+		[
+			11,
+			31,
+			43,
+			83,
+			107,
+			167,
+			269,
+			277,
+			281,
+			283,
+			307,
+			317,
+			347,
+			349,
+			359,
+			373,
+			389
+		],
+		[
+			7,
+			17,
+			43,
+			89,
+			163,
+			167,
+			257,
+			1693,
+			1699,
+			1721,
+			1741,
+			1789,
+			1831,
+			1867,
+			2851,
+			2861,
+			2879
+		],
+		[
+			13,
+			41,
+			61,
+			89,
+			97,
+			107,
+			193,
+			787,
+			797,
+			827,
+			857,
+			877,
+			911,
+			953,
+			983,
+			1019,
+			2027
+		],
+		[
+			7,
+			17,
+			43,
+			67,
+			163,
+			167,
+			257,
+			1693,
+			1699,
+			1721,
+			1741,
+			1789,
+			1831,
+			1867,
+			1873,
+			1951,
+			1993
+		]
+	],
+	"decodedVotes": [
+		[
+			"55ca0139-72ba-4c45-ad2a-6c3c5810fe50_n_1|fdcb5033-af99-36ba-ad7a-8cc8a00d303c",
+			"aa6b1efd-332b-4734-bcac-17de1d50d463_n_1|65af7ed3-0e34-3909-a10a-ca726e62f892",
+			"aa6b1efd-332b-4734-bcac-17de1d50d463_n_2|b8e5d537-2993-3399-9b03-58734352b28c",
+			"aa6b1efd-332b-4734-bcac-17de1d50d463_t_1|e3f6bf3f-84f0-3ab3-a62a-ad1598d7237b",
+			"3f6cec3a-1419-4366-bab8-6f051d8f9f12|85312e91-07dc-4e74-8372-26589810e561|0",
+			"3f6cec3a-1419-4366-bab8-6f051d8f9f12|6e98d554-89ea-3f01-bedc-c6ed7f03c0c2",
+			"9ee2b8ae-e9ad-474c-92e8-c58a99012422|7c9541a6-fca9-5655-acf1-366d81200320",
+			"9ee2b8ae-e9ad-474c-92e8-c58a99012422|5cc5ce98-26d3-4d2b-9be2-e90e8440bd30|0",
+			"9ee2b8ae-e9ad-474c-92e8-c58a99012422|5cc5ce98-26d3-4d2b-9be2-e90e8440bd30|1",
+			"9ee2b8ae-e9ad-474c-92e8-c58a99012422|c6e89255-5404-44fd-8eb4-74e39a2b8425|0",
+			"9ee2b8ae-e9ad-474c-92e8-c58a99012422|c6e89255-5404-44fd-8eb4-74e39a2b8425|1",
+			"9ee2b8ae-e9ad-474c-92e8-c58a99012422|be4c5c48-5a05-4dbb-9d33-a288aac0e5d7|0",
+			"9ee2b8ae-e9ad-474c-92e8-c58a99012422|be4c5c48-5a05-4dbb-9d33-a288aac0e5d7|1",
+			"9ee2b8ae-e9ad-474c-92e8-c58a99012422|dbcb6aa1-3201-4373-bcee-e370d252218b|0",
+			"9ee2b8ae-e9ad-474c-92e8-c58a99012422|dbcb6aa1-3201-4373-bcee-e370d252218b|1",
+			"9ee2b8ae-e9ad-474c-92e8-c58a99012422|73fda3ce-ccd8-4a97-b0cb-a9ab684944ee|0",
+			"9ee2b8ae-e9ad-474c-92e8-c58a99012422|73fda3ce-ccd8-4a97-b0cb-a9ab684944ee|1"
+		],
+		[
+			"55ca0139-72ba-4c45-ad2a-6c3c5810fe50_n_1|f10012d8-cc6c-3e1b-bc4c-1ae4eeb96fa4",
+			"aa6b1efd-332b-4734-bcac-17de1d50d463_n_1|096ecd59-d745-3b9e-87a7-5cb1e4ccc5e1",
+			"aa6b1efd-332b-4734-bcac-17de1d50d463_n_2|b8e5d537-2993-3399-9b03-58734352b28c",
+			"aa6b1efd-332b-4734-bcac-17de1d50d463_t_1|71796fea-593f-3f87-b569-0f81dd36ef4c",
+			"3f6cec3a-1419-4366-bab8-6f051d8f9f12|6361fa4d-a6e8-37fa-9245-a3747182f8c3",
+			"3f6cec3a-1419-4366-bab8-6f051d8f9f12|6e98d554-89ea-3f01-bedc-c6ed7f03c0c2",
+			"9ee2b8ae-e9ad-474c-92e8-c58a99012422|bceaff18-75e3-4046-b97e-fbd376a2a96c",
+			"9ee2b8ae-e9ad-474c-92e8-c58a99012422|ffefb6a8-e214-420f-a82e-aabb3f721719|0",
+			"9ee2b8ae-e9ad-474c-92e8-c58a99012422|ffefb6a8-e214-420f-a82e-aabb3f721719|1",
+			"9ee2b8ae-e9ad-474c-92e8-c58a99012422|7e586a59-4d11-468c-803a-c0cabcc04690|0",
+			"9ee2b8ae-e9ad-474c-92e8-c58a99012422|c29bd997-2415-40f7-8674-1602552ec438|0",
+			"9ee2b8ae-e9ad-474c-92e8-c58a99012422|38c76758-0587-4779-8644-3df1f05a39cd|0",
+			"9ee2b8ae-e9ad-474c-92e8-c58a99012422|494a147c-b1fc-4584-959d-04794121b6cd|0",
+			"9ee2b8ae-e9ad-474c-92e8-c58a99012422|f5a912b1-9213-464d-bbc1-333db11a31af|0",
+			"9ee2b8ae-e9ad-474c-92e8-c58a99012422|d8e9b199-de92-35d3-aa70-ec28e82a1019",
+			"9ee2b8ae-e9ad-474c-92e8-c58a99012422|6688f479-a791-343e-b282-3fc0e1a2634c",
+			"9ee2b8ae-e9ad-474c-92e8-c58a99012422|bb2386d3-d680-3a8a-ad3a-0b109e867454"
+		],
+		[
+			"55ca0139-72ba-4c45-ad2a-6c3c5810fe50_n_1|fcff0e97-0f94-3a43-a4ca-a9fd5518f393",
+			"aa6b1efd-332b-4734-bcac-17de1d50d463_n_1|79f1c7e8-0c12-391f-aaa0-e2c59582fad9",
+			"aa6b1efd-332b-4734-bcac-17de1d50d463_n_2|4e79e4cb-37cb-3dd9-891a-a2e807a0f494",
+			"aa6b1efd-332b-4734-bcac-17de1d50d463_t_1|71796fea-593f-3f87-b569-0f81dd36ef4c",
+			"3f6cec3a-1419-4366-bab8-6f051d8f9f12|1e8478c4-bf06-4186-a954-55f7e6320bda|0",
+			"3f6cec3a-1419-4366-bab8-6f051d8f9f12|85312e91-07dc-4e74-8372-26589810e561|0",
+			"9ee2b8ae-e9ad-474c-92e8-c58a99012422|94adaaca-2361-4925-80dc-bf6c148e447a",
+			"9ee2b8ae-e9ad-474c-92e8-c58a99012422|59779a38-f4d6-4df7-8e10-f221c5f0f704|0",
+			"9ee2b8ae-e9ad-474c-92e8-c58a99012422|59779a38-f4d6-4df7-8e10-f221c5f0f704|1",
+			"9ee2b8ae-e9ad-474c-92e8-c58a99012422|eb7a48e9-f34e-45d8-8903-3fb54c9211d1|0",
+			"9ee2b8ae-e9ad-474c-92e8-c58a99012422|1555c1f2-23d7-46ac-a8e4-22f225636076|0",
+			"9ee2b8ae-e9ad-474c-92e8-c58a99012422|2477b241-36c2-46e8-8d21-55d1915bd29b|0",
+			"9ee2b8ae-e9ad-474c-92e8-c58a99012422|1e8cd71c-bf64-4aba-bdf7-626c53aae867|0",
+			"9ee2b8ae-e9ad-474c-92e8-c58a99012422|68254988-4538-4aa2-8c63-ab05f530ac2e|0",
+			"9ee2b8ae-e9ad-474c-92e8-c58a99012422|7bb9c701-4e00-4f84-a9a2-ab7fc5cd6ac4|0",
+			"9ee2b8ae-e9ad-474c-92e8-c58a99012422|09f6285b-e2bb-497d-80d3-06177a6a501d|0",
+			"9ee2b8ae-e9ad-474c-92e8-c58a99012422|fbe4b48c-b17c-4742-af4c-52d506f42321|0"
+		],
+		[
+			"55ca0139-72ba-4c45-ad2a-6c3c5810fe50_n_1|f10012d8-cc6c-3e1b-bc4c-1ae4eeb96fa4",
+			"aa6b1efd-332b-4734-bcac-17de1d50d463_n_1|096ecd59-d745-3b9e-87a7-5cb1e4ccc5e1",
+			"aa6b1efd-332b-4734-bcac-17de1d50d463_n_2|b8e5d537-2993-3399-9b03-58734352b28c",
+			"aa6b1efd-332b-4734-bcac-17de1d50d463_t_1|ffbf2b03-ce7e-3e49-9c01-dd60a92aa898",
+			"3f6cec3a-1419-4366-bab8-6f051d8f9f12|6361fa4d-a6e8-37fa-9245-a3747182f8c3",
+			"3f6cec3a-1419-4366-bab8-6f051d8f9f12|6e98d554-89ea-3f01-bedc-c6ed7f03c0c2",
+			"9ee2b8ae-e9ad-474c-92e8-c58a99012422|bceaff18-75e3-4046-b97e-fbd376a2a96c",
+			"9ee2b8ae-e9ad-474c-92e8-c58a99012422|ffefb6a8-e214-420f-a82e-aabb3f721719|0",
+			"9ee2b8ae-e9ad-474c-92e8-c58a99012422|ffefb6a8-e214-420f-a82e-aabb3f721719|1",
+			"9ee2b8ae-e9ad-474c-92e8-c58a99012422|7e586a59-4d11-468c-803a-c0cabcc04690|0",
+			"9ee2b8ae-e9ad-474c-92e8-c58a99012422|c29bd997-2415-40f7-8674-1602552ec438|0",
+			"9ee2b8ae-e9ad-474c-92e8-c58a99012422|38c76758-0587-4779-8644-3df1f05a39cd|0",
+			"9ee2b8ae-e9ad-474c-92e8-c58a99012422|494a147c-b1fc-4584-959d-04794121b6cd|0",
+			"9ee2b8ae-e9ad-474c-92e8-c58a99012422|f5a912b1-9213-464d-bbc1-333db11a31af|0",
+			"9ee2b8ae-e9ad-474c-92e8-c58a99012422|850a2a10-65bb-4b33-ab96-12cf372266ad|0",
+			"9ee2b8ae-e9ad-474c-92e8-c58a99012422|7069835f-47a4-4318-8378-570e71213a61|0",
+			"9ee2b8ae-e9ad-474c-92e8-c58a99012422|da373042-8e40-453a-b90d-8314c13ec02c|0"
+		]
+	],
+	"decodedWriteIns": [
+		[
+			"Jonschwil 3 Kandidat 2"
+		],
+		[
+			"Jonschwil 2 Kandidat 1",
+			"Jonschwil 2 Kandidat 2"
+		],
+		[],
+		[
+			"Jonschwil 1 Kandidat 1",
+			"Jonschwil 1 Kandidat 2"
+		]
+	],
+	"signature": {
+		"signatureContents": "DDqXBCoaxJAWGKEGv7DGC7ndbmE93lO912Xg7rnR8CVvh+6O6DT2O4uwVnuxNWckdad0VlEe9h9jYqme+KFx5Z3L3P5FXrvn0haknLeuhdfpOU0ewYiiuKtgeJEhzW3EXw6qOQBb0hGonAR53BFBvbeiyF8+B51WntIRJYfL5sbv9MaXrrgfRY6tj1991g50RPwUM+Yg5PWOEO01PMKfFaB6z7PNkWrEBPQLrFqFeClk9m5hf1Hi109JgR3XEdMYS6WTYBaVukP/KrJdp+MttlkIz9BDJI/3fyYt2hQoelcV1yXHjJbgMP0IcBNuWYeZZQIZ0F4BOZCRsa1kal1ZFIxMv4sbTwaEPOVUBHxauyjwLtzwKDqGFNDITaBfA6R+AlrL6z4I7yQ4rYvtJFZ4+Oeyy+Fz0ITcEyj5mWbPP6bgstHZR7jjb2GGzoLXNfbfnIK0ZUp+nImJfjN04v58orNPDReUEvFo6kFJqgbUTn7k7oKXKlxOHLX3uylr5tGb"
+	}
+}

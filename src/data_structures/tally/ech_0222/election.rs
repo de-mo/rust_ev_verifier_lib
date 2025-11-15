@@ -119,6 +119,7 @@ impl ElectionGroupBallotRawData {
             .iter()
             .flat_map(|eg| eg.write_in_position_ids())
             .collect::<Vec<_>>();
+        let mut write_ins_iter = write_ins.iter();
         let decoded_votes_with_write_ins = decoded_votes
             .iter()
             .enumerate()
@@ -139,7 +140,6 @@ impl ElectionGroupBallotRawData {
                                 ),
                             })?;
                     let third_position = split.next();
-                    let mut write_ins_iter = write_ins.iter();
                     if write_ins_ids.contains(&second_position) {
                         Ok(DecodedVoteWithWriteIn {
                             first_position,

@@ -320,7 +320,9 @@ impl QuestionRawData {
     pub(super) fn from_node(node: &Node) -> Self {
         let first_child = node.first_element_child().unwrap();
         let question_identification = first_child.text().unwrap().to_string();
-        let casted = first_child.next_sibling().map(|n| Casted::from_node(&n));
+        let casted = first_child
+            .next_sibling_element()
+            .map(|n| Casted::from_node(&n));
         Self {
             question_identification,
             casted,
@@ -349,17 +351,11 @@ impl QuestionRawData {
 
 impl Casted {
     pub(super) fn from_node(node: &Node) -> Self {
-        let mut children = node.element_children();
+        let first_child = node.first_element_child().unwrap();
         Self {
-            casted_vote: children
-                .next()
-                .unwrap()
-                .text()
-                .unwrap()
-                .parse::<usize>()
-                .unwrap(),
-            answer_option_identification: children
-                .next()
+            casted_vote: first_child.text().unwrap().parse::<usize>().unwrap(),
+            answer_option_identification: first_child
+                .next_sibling_element()
                 .map(|n| AnswerOptionIdentification::from_node(&n)),
         }
     }
