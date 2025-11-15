@@ -28,12 +28,6 @@ A major difference with the Swiss Post Verifier is that the verifications does n
 
 The algorithm `VerifyECH0222` uses a complete different implementation as specified by Swiss Post (see [README](src/data_structures/tally/ech_0222/README.md)). The reason is that it is complex and unnecessary to generate an XML file that match the hash value (spaces, tabs, prefix must be exactly the same). We prefer to compare the business relevant data.
 
-###  Future works
-
-The Verifier is not ready for production.
-
-- For most of the verifications, the negative unit tests are not implemented. A mechanisms of mocks is implemented (see [README](src/verification/README.md))
-
 ## Usage
 
 See the [crate documentation](https://docs.rs/crate/rust_ev_verifier_lib/latest)
@@ -43,4 +37,3 @@ See the [crate documentation](https://docs.rs/crate/rust_ev_verifier_lib/latest)
 rust_ev_verifier_lib is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 
 See [LICENSE](LICENSE)
-
