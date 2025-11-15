@@ -543,23 +543,18 @@ mod test {
     #[test]
     fn add_vote() {
         let (orig, mut modified_data) = get_data_and_copy();
-        let mut vote = orig
+        let (cc_id, mut vote) = orig
             .raw_data
             .counting_circle_raw_data
-            .values()
-            .next()
-            .unwrap()
-            .vote_raw_data
-            .values()
-            .next()
-            .unwrap()
-            .clone();
+            .iter()
+            .find(|(_, cc)| !cc.vote_raw_data.is_empty())
+            .map(|(cc_id, cc)| (cc_id, cc.vote_raw_data.values().next().unwrap().clone()))
+            .unwrap();
         vote.vote_identification = "new_vote".to_string();
         modified_data
             .raw_data
             .counting_circle_raw_data
-            .values_mut()
-            .next()
+            .get_mut(cc_id)
             .unwrap()
             .vote_raw_data
             .insert("new_vote".to_string(), vote);
@@ -570,20 +565,18 @@ mod test {
     #[test]
     fn add_election_groups() {
         let (orig, mut modified_data) = get_data_and_copy();
-        let mut election_group = orig
+        let (cc_id, mut election_group) = orig
             .raw_data
             .counting_circle_raw_data
-            .values()
-            .nth(1)
-            .unwrap()
-            .election_group_ballot_raw_data[0]
-            .clone();
+            .iter()
+            .find(|(_, cc)| !cc.election_group_ballot_raw_data.is_empty())
+            .map(|(cc_id, cc)| (cc_id, cc.election_group_ballot_raw_data[0].clone()))
+            .unwrap();
         election_group.election_group_identification = "new_election_group".to_string();
         modified_data
             .raw_data
             .counting_circle_raw_data
-            .values_mut()
-            .next()
+            .get_mut(cc_id)
             .unwrap()
             .election_group_ballot_raw_data
             .push(election_group);
