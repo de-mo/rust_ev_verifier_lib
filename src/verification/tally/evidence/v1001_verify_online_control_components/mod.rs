@@ -17,21 +17,21 @@
 mod verify_online_control_components_ballot_box;
 
 use crate::{
+    VerifierConfig,
     data_structures::{
-        context::setup_component_public_keys_payload::SetupComponentPublicKeys,
         ElectionEventContextPayload,
+        context::setup_component_public_keys_payload::SetupComponentPublicKeys,
     },
     file_structure::{
-        context_directory::ContextVCSDirectoryTrait, tally_directory::BBDirectoryTrait,
         ContextDirectoryTrait, TallyDirectoryTrait, VerificationDirectoryTrait,
+        context_directory::ContextVCSDirectoryTrait, tally_directory::BBDirectoryTrait,
     },
     verification::{VerificationEvent, VerificationResult},
-    VerifierConfig,
 };
 use rayon::prelude::*;
 use rust_ev_system_library::rust_ev_crypto_primitives::prelude::mix_net::ShuffleArgument as CryptoShuffleArgument;
 use verify_online_control_components_ballot_box::{
-    verify_online_control_components_ballot_box, ContextAlgorithm41, InputsAlgorithm41,
+    ContextAlgorithm41, InputsAlgorithm41, verify_online_control_components_ballot_box,
 };
 
 pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
@@ -126,7 +126,7 @@ fn verify_for_ballotbox<B: BBDirectoryTrait, S: ContextVCSDirectoryTrait>(
         None => {
             return VerificationResult::from(&VerificationEvent::new_error(&format!(
                 "No verification card set found for ballot box {bb_id}"
-            )))
+            )));
         }
     };
 
@@ -235,7 +235,7 @@ fn verify_for_ballotbox<B: BBDirectoryTrait, S: ContextVCSDirectoryTrait>(
             return VerificationResult::from(
                 &VerificationEvent::new_error_from_error(&e)
                     .add_context("Error creating Shuffle Argument"),
-            )
+            );
         }
     };
     let cs_dec = control_component_shuffle_payloads
@@ -253,7 +253,7 @@ fn verify_for_ballotbox<B: BBDirectoryTrait, S: ContextVCSDirectoryTrait>(
             return VerificationResult::from(
                 &VerificationEvent::new_error_from_error(&e)
                     .add_context("setup_component_tally_data_payload cannot be read"),
-            )
+            );
         }
     };
 
@@ -305,7 +305,10 @@ fn verify_for_ballotbox<B: BBDirectoryTrait, S: ContextVCSDirectoryTrait>(
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::config::test::{get_test_verifier_tally_dir as get_verifier_dir, CONFIG_TEST};
+    use crate::config::test::{
+        CONFIG_TEST, get_test_verifier_mock_tally_dir,
+        get_test_verifier_tally_dir as get_verifier_dir,
+    };
 
     #[test]
     fn test_ok() {
@@ -321,5 +324,52 @@ mod test {
             }
         }
         assert!(result.is_ok());
+    }
+
+    #[test]
+    fn change_vc1() {
+        let dir = get_verifier_dir();
+        let nb = dir.unwrap_tally().bb_directories().len();
+        for i in 0..nb {
+            let bb = &dir.unwrap_tally().bb_directories()[i];
+            if bb
+                .control_component_ballot_box_payload_iter()
+                .nth(0)
+                .unwrap()
+                .1
+                .unwrap()
+                .confirmed_encrypted_votes
+                .is_empty()
+            {
+                continue;
+            }
+            let mut result = VerificationResult::new();
+            let mut mock_dir = get_test_verifier_mock_tally_dir();
+            mock_dir.unwrap_tally_mut().bb_directories_mut()[i]
+                .mock_control_component_ballot_box_payload(1, |d| {
+                    d.confirmed_encrypted_votes[0]
+                        .context_ids
+                        .verification_card_id = "corrupted_vc_id".to_string();
+                });
+            fn_verification(&mock_dir, &CONFIG_TEST, &mut result);
+            assert!(!result.is_ok(), "Failed for vote 0 for bb {}", bb.name());
+        }
+    }
+
+    #[test]
+    fn change_c_mix() {
+        let dir = get_verifier_dir();
+        let nb = dir.unwrap_tally().bb_directories().len();
+        for i in 0..nb {
+            let bb = &dir.unwrap_tally().bb_directories()[i];
+            let mut result = VerificationResult::new();
+            let mut mock_dir = get_test_verifier_mock_tally_dir();
+            mock_dir.unwrap_tally_mut().bb_directories_mut()[i]
+                .mock_control_component_shuffle_payload(2, |d| {
+                    d.verifiable_shuffle.shuffled_ciphertexts[0].gamma = 1.into();
+                });
+            fn_verification(&mock_dir, &CONFIG_TEST, &mut result);
+            assert!(!result.is_ok(), "Failed for vote 0 for bb {}", bb.name());
+        }
     }
 }
