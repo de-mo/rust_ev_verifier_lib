@@ -15,8 +15,8 @@
 // <https://www.gnu.org/licenses/>.
 
 use super::{
-    VerficationsWithErrorAndFailuresType, VerificationError, VerificationErrorImpl,
-    VerificationPeriod, VerificationStatus, meta_data::VerificationMetaDataList,
+    VerficationsWithErrorAndFailures, VerificationError, VerificationErrorImpl, VerificationPeriod,
+    VerificationStatus, meta_data::VerificationMetaDataList,
 };
 use crate::{
     config::VerifierConfig,
@@ -30,7 +30,7 @@ use chrono::NaiveDate;
 use rust_ev_system_library::rust_ev_crypto_primitives::prelude::EncodeTrait;
 use std::{collections::HashMap, sync::Arc};
 
-type VerificationErrorsFailureInformationType = Vec<(String, (Vec<String>, Vec<String>))>;
+pub struct VerificationErrorsFailureInformation(Vec<(String, (Vec<String>, Vec<String>))>);
 
 /// Trait to get the information of the manual verifications in form of string
 ///
@@ -78,8 +78,29 @@ pub trait ManualVerificationInformationTrait {
     /// - The second element of the tuple is a tuple with the list of errors and the list of failures
     ///
     /// Return empty if it is not relevant
-    fn verification_errors_and_failures(&self) -> VerificationErrorsFailureInformationType {
-        vec![]
+    fn verification_errors_and_failures(&self) -> VerificationErrorsFailureInformation {
+        VerificationErrorsFailureInformation(vec![])
+    }
+}
+
+impl VerificationErrorsFailureInformation {
+    /// Get an iterator over the errors and failures
+    pub fn iter(&self) -> impl Iterator<Item = (&String, &(Vec<String>, Vec<String>))> {
+        self.0.iter().map(|(k, v)| (k, v))
+    }
+
+    pub fn has_errors(&self, id: &str) -> bool {
+        match self.0.iter().find(|(k, _)| k == id) {
+            Some((_, (errors, _))) => !errors.is_empty(),
+            None => false,
+        }
+    }
+
+    pub fn has_failures(&self, id: &str) -> bool {
+        match self.0.iter().find(|(k, _)| k == id) {
+            Some((_, (_, failures))) => !failures.is_empty(),
+            None => false,
+        }
     }
 }
 
@@ -111,7 +132,7 @@ struct ManualVerificationsForAllPeriod<D: VerificationDirectoryTrait> {
 pub struct VerificationsResult {
     metadata: VerificationMetaDataList,
     verifications_status: HashMap<String, VerificationStatus>,
-    verifications_with_errors_and_failures: VerficationsWithErrorAndFailuresType,
+    verifications_with_errors_and_failures: VerficationsWithErrorAndFailures,
     excluded_verifications: Vec<String>,
 }
 
@@ -268,7 +289,7 @@ impl VerificationsResult {
     /// Inputs:
     /// - `metadata`: The metadalist of the verifications to collect some information, like the name
     /// - `verifications_status`: The verifications (key is verification id) with the status [VerificationStatus]
-    /// - `verifications_with_errors_and_failures`: see [VerficationsWithErrorAndFailuresType]
+    /// - `verifications_with_errors_and_failures`: see [VerficationsWithErrorAndFailures]
     /// - `excluded_verifications`: The list of excluded verifications. The vector contains the id of the verifications
     ///
     /// It is recommended to deliver in `verifications_with_errors_and_failures` on the verifications having errors or failures. The verification with success should
@@ -276,7 +297,7 @@ impl VerificationsResult {
     pub fn new(
         metadata: &VerificationMetaDataList,
         verifications_status: &HashMap<String, VerificationStatus>,
-        verifications_with_errors_and_failures: &VerficationsWithErrorAndFailuresType,
+        verifications_with_errors_and_failures: &VerficationsWithErrorAndFailures,
         excluded_verifications: &[String],
     ) -> Self {
         Self {
@@ -341,9 +362,7 @@ impl VerificationsResult {
             format!(
                 "{}",
                 self.verifications_with_errors_and_failures
-                    .values()
-                    .filter(|(errors, _)| !errors.is_empty())
-                    .count()
+                    .number_of_verifications_with_errors()
             ),
         ));
         res.push((
@@ -351,9 +370,7 @@ impl VerificationsResult {
             format!(
                 "{}",
                 self.verifications_with_errors_and_failures
-                    .values()
-                    .filter(|(_, failures)| !failures.is_empty())
-                    .count()
+                    .number_of_verifications_with_failures()
             ),
         ));
         res
@@ -380,11 +397,13 @@ impl VerificationsResult {
             .collect::<Vec<_>>()
     }
 
-    fn verification_errors_and_failures(&self) -> VerificationErrorsFailureInformationType {
-        self.verifications_with_errors_and_failures
-            .iter()
-            .map(|(k, v)| (k.clone(), v.clone()))
-            .collect()
+    fn verification_errors_and_failures(&self) -> VerificationErrorsFailureInformation {
+        VerificationErrorsFailureInformation(
+            self.verifications_with_errors_and_failures
+                .iter()
+                .map(|(k, v)| (k.clone(), v.clone()))
+                .collect(),
+        )
     }
 }
 
@@ -396,7 +415,7 @@ impl<D: VerificationDirectoryTrait> ManualVerificationsSetup<D> {
     /// - `config`: Verifier configuration
     /// - `metadata`: The metadalist of the verifications to collect some information, like the name
     /// - `verifications_status`: The verifications (key is verification id) with the status [VerificationStatus]
-    /// - `verifications_with_errors_and_failures`: see [VerficationsWithErrorAndFailuresType]
+    /// - `verifications_with_errors_and_failures`: see [VerficationsWithErrorAndFailures]
     /// - `excluded_verifications`: The list of excluded verifications. The vector contains the id of the verifications
     ///
     /// It is recommended to deliver in `verifications_with_errors_and_failures` on the verifications having errors or failures. The verification with success should
@@ -406,7 +425,7 @@ impl<D: VerificationDirectoryTrait> ManualVerificationsSetup<D> {
         config: &'static VerifierConfig,
         metadata: &VerificationMetaDataList,
         verifications_status: &HashMap<String, VerificationStatus>,
-        verifications_with_errors_and_failures: &VerficationsWithErrorAndFailuresType,
+        verifications_with_errors_and_failures: &VerficationsWithErrorAndFailures,
         excluded_verifications: &[String],
     ) -> Result<Self, VerificationError> {
         Ok(Self {
@@ -451,7 +470,7 @@ impl<D: VerificationDirectoryTrait> ManualVerificationInformationTrait
         self.verifications_result.verification_stati_to_key_value()
     }
 
-    fn verification_errors_and_failures(&self) -> VerificationErrorsFailureInformationType {
+    fn verification_errors_and_failures(&self) -> VerificationErrorsFailureInformation {
         self.verifications_result.verification_errors_and_failures()
     }
 
@@ -478,7 +497,7 @@ impl<D: VerificationDirectoryTrait> ManualVerificationsTally<D> {
         config: &'static VerifierConfig,
         metadata: &VerificationMetaDataList,
         verifications_status: &HashMap<String, VerificationStatus>,
-        verifications_with_errors_and_failures: &VerficationsWithErrorAndFailuresType,
+        verifications_with_errors_and_failures: &VerficationsWithErrorAndFailures,
         excluded_verifications: &[String],
     ) -> Result<Self, VerificationError> {
         let tally_dir = directory.unwrap_tally();
@@ -574,7 +593,7 @@ impl<D: VerificationDirectoryTrait> ManualVerificationInformationTrait
         self.verifications_result.verification_stati_to_key_value()
     }
 
-    fn verification_errors_and_failures(&self) -> VerificationErrorsFailureInformationType {
+    fn verification_errors_and_failures(&self) -> VerificationErrorsFailureInformation {
         self.verifications_result.verification_errors_and_failures()
     }
 
@@ -591,7 +610,7 @@ impl<D: VerificationDirectoryTrait> ManualVerifications<D> {
     /// - `directory`: Verification directory
     /// - `config`: Verifier configuration
     /// - `verifications_status`: The verifications (key is verification id) with the status [VerificationStatus]
-    /// - `verifications_with_errors_and_failures`: see [VerficationsWithErrorAndFailuresType]
+    /// - `verifications_with_errors_and_failures`: see [VerficationsWithErrorAndFailures]
     /// - `excluded_verifications`: The list of excluded verifications. The vector contains the id of the verifications
     ///
     /// It is recommended to deliver in `verifications_with_errors_and_failures` on the verifications having errors or failures. The verification with success should
@@ -601,7 +620,7 @@ impl<D: VerificationDirectoryTrait> ManualVerifications<D> {
         directory: Arc<D>,
         config: &'static VerifierConfig,
         verifications_status: &HashMap<String, VerificationStatus>,
-        verifications_with_errors_and_failures: &VerficationsWithErrorAndFailuresType,
+        verifications_with_errors_and_failures: &VerficationsWithErrorAndFailures,
         excluded_verifications: &[String],
     ) -> Result<Self, VerificationError> {
         let meta_data =
@@ -671,7 +690,7 @@ impl<D: VerificationDirectoryTrait> ManualVerificationInformationTrait for Manua
         }
     }
 
-    fn verification_errors_and_failures(&self) -> VerificationErrorsFailureInformationType {
+    fn verification_errors_and_failures(&self) -> VerificationErrorsFailureInformation {
         match self {
             ManualVerifications::Setup(s) => s.verification_errors_and_failures(),
             ManualVerifications::Tally(t) => t.verification_errors_and_failures(),

@@ -258,24 +258,28 @@ impl<D: VerificationDirectoryTrait> ReportInformationTrait for ManualVerificatio
                 .verification_errors_and_failures()
                 .iter()
                 .flat_map(|(id, (errors, failures))| {
-                    vec![
-                        ReportOutputDataBlock::new_with_strings(
+                    let mut res = vec![];
+                    if !errors.is_empty() {
+                        res.push(ReportOutputDataBlock::new_with_strings(
                             ReportOutputDataBlockTitle::VerificationErrors(id.clone()),
                             &errors
                                 .iter()
                                 .enumerate()
                                 .map(|(i, s)| format!("[{}] - {}", i + 1, s))
                                 .collect::<Vec<_>>(),
-                        ),
-                        ReportOutputDataBlock::new_with_strings(
+                        ));
+                    }
+                    if !failures.is_empty() {
+                        res.push(ReportOutputDataBlock::new_with_strings(
                             ReportOutputDataBlockTitle::VerificationFailures(id.clone()),
                             &failures
                                 .iter()
                                 .enumerate()
                                 .map(|(i, s)| format!("[{}] - {}", i + 1, s))
                                 .collect::<Vec<_>>(),
-                        ),
-                    ]
+                        ));
+                    }
+                    res
                 })
                 .collect::<Vec<_>>(),
         );

@@ -42,7 +42,9 @@ pub struct VerificationResult {
     results: Vec<VerificationEvent>,
 }
 
-pub type VerficationsWithErrorAndFailuresType = HashMap<String, (Vec<String>, Vec<String>)>;
+/// Type representing verifications with errors and failures
+#[derive(Clone, Debug, Default)]
+pub struct VerficationsWithErrorAndFailures(HashMap<String, (Vec<String>, Vec<String>)>);
 
 impl VerificationEventKind {
     pub fn is_error(&self) -> bool {
@@ -128,6 +130,42 @@ impl VerificationEvent {
     /// Contexts of the event
     pub fn contexts(&self) -> Vec<&str> {
         self.results.iter().skip(1).map(|s| s.as_str()).collect()
+    }
+}
+
+impl VerficationsWithErrorAndFailures {
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    pub fn has_errors(&self, id: &str) -> Option<bool> {
+        self.0.get(id).map(|(errors, _)| !errors.is_empty())
+    }
+
+    pub fn has_failures(&self, id: &str) -> Option<bool> {
+        self.0.get(id).map(|(_, failures)| !failures.is_empty())
+    }
+
+    pub fn number_of_verifications_with_errors(&self) -> usize {
+        self.0
+            .values()
+            .filter(|(errors, _)| !errors.is_empty())
+            .count()
+    }
+
+    pub fn number_of_verifications_with_failures(&self) -> usize {
+        self.0
+            .values()
+            .filter(|(_, failures)| !failures.is_empty())
+            .count()
+    }
+
+    pub fn iter(&self) -> impl Iterator<Item = (&String, &(Vec<String>, Vec<String>))> {
+        self.0.iter()
+    }
+
+    pub fn insert<S: Into<String>>(&mut self, id: S, errors: Vec<String>, failures: Vec<String>) {
+        self.0.insert(id.into(), (errors, failures));
     }
 }
 
@@ -408,5 +446,47 @@ mod test {
             "Error: Context 2\nbacktrace:\n0: inner 22 error\n1: Context 22\n2: Context Inner\n3: Context 1\n4: Context 2"
                 .to_string()
         );
+    }
+
+    #[test]
+    fn number_of_verifications_with_errors_or_failures() {
+        let mut verifs = VerficationsWithErrorAndFailures::new();
+        verifs
+            .0
+            .insert("test1".to_string(), (vec!["error1".to_string()], vec![]));
+        verifs
+            .0
+            .insert("test2".to_string(), (vec![], vec!["failure1".to_string()]));
+        verifs.0.insert(
+            "test3".to_string(),
+            (vec!["error2".to_string()], vec!["failure2".to_string()]),
+        );
+
+        assert_eq!(verifs.number_of_verifications_with_errors(), 2);
+        assert_eq!(verifs.number_of_verifications_with_failures(), 2);
+    }
+
+    #[test]
+    fn has_errors_or_failures() {
+        let mut verifs = VerficationsWithErrorAndFailures::new();
+        verifs
+            .0
+            .insert("test1".to_string(), (vec!["error1".to_string()], vec![]));
+        verifs
+            .0
+            .insert("test2".to_string(), (vec![], vec!["failure1".to_string()]));
+        verifs.0.insert(
+            "test3".to_string(),
+            (vec!["error2".to_string()], vec!["failure2".to_string()]),
+        );
+
+        assert_eq!(verifs.has_errors("test1"), Some(true));
+        assert_eq!(verifs.has_errors("test2"), Some(false));
+        assert_eq!(verifs.has_errors("test3"), Some(true));
+        assert_eq!(verifs.has_errors("test4"), None);
+        assert_eq!(verifs.has_failures("test1"), Some(false));
+        assert_eq!(verifs.has_failures("test2"), Some(true));
+        assert_eq!(verifs.has_failures("test3"), Some(true));
+        assert_eq!(verifs.has_failures("test4"), None);
     }
 }

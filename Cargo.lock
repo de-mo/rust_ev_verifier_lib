@@ -1482,23 +1482,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "rust_ev_crypto_primitives"
-version = "0.8.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1b17fa76cdeb4a928cf310c51abca0a270f156e353c52e7d475e1a4e4e8c7042"
-dependencies = [
- "argon2",
- "data-encoding",
- "lazy_static",
- "num-traits",
- "openssl",
- "rug",
- "rug-miller-rabin",
- "thiserror",
- "tracing",
-]
-
-[[package]]
 name = "rust_ev_system_library"
 version = "0.3.1"
 dependencies = [
@@ -1506,24 +1489,7 @@ dependencies = [
  "rayon",
  "regex",
  "roxmltree",
- "rust_ev_crypto_primitives 0.8.2",
- "thiserror",
- "tracing",
- "xml-canonicalization",
- "xot",
-]
-
-[[package]]
-name = "rust_ev_system_library"
-version = "0.3.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b029227f33b15d209a4bdfd223b62851b30af2a3fccf0f2be3de598c1b75557e"
-dependencies = [
- "chrono",
- "rayon",
- "regex",
- "roxmltree",
- "rust_ev_crypto_primitives 0.8.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "rust_ev_crypto_primitives",
  "thiserror",
  "tracing",
  "xml-canonicalization",
@@ -1541,9 +1507,9 @@ dependencies = [
  "dotenvy",
  "headless_chrome",
  "rayon",
- "rust_ev_system_library 0.3.1",
+ "rust_ev_system_library",
  "rust_ev_verifier_application_lib",
- "rust_ev_verifier_lib 0.4.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "rust_ev_verifier_lib",
  "serde",
  "serde_json",
  "strum",
@@ -1566,32 +1532,7 @@ dependencies = [
  "rayon",
  "regex",
  "roxmltree",
- "rust_ev_system_library 0.3.1",
- "serde",
- "serde_json",
- "strum",
- "thiserror",
- "tracing",
- "zip 6.0.0",
-]
-
-[[package]]
-name = "rust_ev_verifier_lib"
-version = "0.4.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "00c24221ec51d3c75977a6ed0eb9b3b1bec70cd5d36fb919e55517a270cacabc"
-dependencies = [
- "chrono",
- "data-encoding",
- "dotenvy",
- "enum-kinds",
- "glob",
- "lazy_static",
- "quick-xml 0.38.3",
- "rayon",
- "regex",
- "roxmltree",
- "rust_ev_system_library 0.3.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "rust_ev_system_library",
  "serde",
  "serde_json",
  "strum",
