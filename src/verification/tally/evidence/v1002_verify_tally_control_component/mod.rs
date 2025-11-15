@@ -19,20 +19,20 @@ mod verify_process_plaintexts;
 mod verify_tally_control_component_ballot_box;
 
 use crate::{
+    VerifierConfig,
     data_structures::ElectionEventContextPayload,
     file_structure::{
-        tally_directory::BBDirectoryTrait, ContextDirectoryTrait, TallyDirectoryTrait,
-        VerificationDirectoryTrait,
+        ContextDirectoryTrait, TallyDirectoryTrait, VerificationDirectoryTrait,
+        tally_directory::BBDirectoryTrait,
     },
     verification::{VerificationEvent, VerificationResult},
-    VerifierConfig,
 };
 use rayon::prelude::*;
 use rust_ev_system_library::rust_ev_crypto_primitives::prelude::{
-    mix_net::ShuffleArgument, Integer,
+    Integer, mix_net::ShuffleArgument,
 };
 use verify_tally_control_component_ballot_box::{
-    verify_tally_control_component_ballot_box, ContextAlgorithm42, InputsAlgorithm42,
+    ContextAlgorithm42, InputsAlgorithm42, verify_tally_control_component_ballot_box,
 };
 
 pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
@@ -156,7 +156,7 @@ fn verify_for_ballotbox<B: BBDirectoryTrait>(
         None => {
             return VerificationResult::from(&VerificationEvent::new_error(&format!(
                 "No verification card set found for ballot box {bb_id}"
-            )))
+            )));
         }
     };
 
@@ -249,7 +249,10 @@ fn verify_for_ballotbox<B: BBDirectoryTrait>(
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::config::test::{get_test_verifier_tally_dir as get_verifier_dir, CONFIG_TEST};
+    use crate::config::test::{
+        CONFIG_TEST, get_test_verifier_mock_tally_dir,
+        get_test_verifier_tally_dir as get_verifier_dir,
+    };
 
     #[test]
     fn test_ok() {
@@ -265,5 +268,155 @@ mod test {
             }
         }
         assert!(result.is_ok());
+    }
+
+    #[test]
+    fn change_c_mix_5() {
+        let dir = get_verifier_dir();
+        let nb = dir.unwrap_tally().bb_directories().len();
+        for i in 0..nb {
+            let bb = &dir.unwrap_tally().bb_directories()[i];
+            let mut result = VerificationResult::new();
+            let mut mock_dir = get_test_verifier_mock_tally_dir();
+            mock_dir.unwrap_tally_mut().bb_directories_mut()[i]
+                .mock_tally_component_shuffle_payload(|d| {
+                    d.verifiable_shuffle.shuffled_ciphertexts[0].gamma = 1.into();
+                });
+            fn_verification(&mock_dir, &CONFIG_TEST, &mut result);
+            assert!(!result.is_ok(), "Failed for vote 0 for bb {}", bb.name());
+        }
+    }
+
+    #[test]
+    fn change_c_dec_4() {
+        let dir = get_verifier_dir();
+        let nb = dir.unwrap_tally().bb_directories().len();
+        for i in 0..nb {
+            let bb = &dir.unwrap_tally().bb_directories()[i];
+            let mut result = VerificationResult::new();
+            let mut mock_dir = get_test_verifier_mock_tally_dir();
+            mock_dir.unwrap_tally_mut().bb_directories_mut()[i]
+                .mock_control_component_shuffle_payload(4, |d| {
+                    d.verifiable_decryptions.ciphertexts[0].gamma = 1.into();
+                });
+            fn_verification(&mock_dir, &CONFIG_TEST, &mut result);
+            assert!(!result.is_ok(), "Failed for vote 0 for bb {}", bb.name());
+        }
+    }
+
+    #[test]
+    fn change_c_pi_mix_5() {
+        let dir = get_verifier_dir();
+        let nb = dir.unwrap_tally().bb_directories().len();
+        for i in 0..nb {
+            let bb = &dir.unwrap_tally().bb_directories()[i];
+            let mut result = VerificationResult::new();
+            let mut mock_dir = get_test_verifier_mock_tally_dir();
+            mock_dir.unwrap_tally_mut().bb_directories_mut()[i]
+                .mock_tally_component_shuffle_payload(|d| {
+                    d.verifiable_shuffle.shuffle_argument.c_a.push(1.into());
+                });
+            fn_verification(&mock_dir, &CONFIG_TEST, &mut result);
+            assert!(!result.is_ok(), "Failed for vote 0 for bb {}", bb.name());
+        }
+    }
+
+    #[test]
+    fn change_c_pi_dec_5() {
+        let dir = get_verifier_dir();
+        let nb = dir.unwrap_tally().bb_directories().len();
+        for i in 0..nb {
+            let bb = &dir.unwrap_tally().bb_directories()[i];
+            let mut result = VerificationResult::new();
+            let mut mock_dir = get_test_verifier_mock_tally_dir();
+            mock_dir.unwrap_tally_mut().bb_directories_mut()[i]
+                .mock_tally_component_shuffle_payload(|d| {
+                    d.verifiable_plaintext_decryption.decryption_proofs[0].e = 1.into();
+                });
+            fn_verification(&mock_dir, &CONFIG_TEST, &mut result);
+            assert!(!result.is_ok(), "Failed for vote 0 for bb {}", bb.name());
+        }
+    }
+
+    #[test]
+    fn change_decrypted_vote() {
+        let dir = get_verifier_dir();
+        let nb = dir.unwrap_tally().bb_directories().len();
+        for i in 0..nb {
+            let bb = &dir.unwrap_tally().bb_directories()[i];
+            if bb
+                .tally_component_votes_payload()
+                .unwrap()
+                .decrypted_votes
+                .is_empty()
+            {
+                continue;
+            }
+            let mut result = VerificationResult::new();
+            let mut mock_dir = get_test_verifier_mock_tally_dir();
+            mock_dir.unwrap_tally_mut().bb_directories_mut()[i]
+                .mock_tally_component_votes_payload(|d| d.decrypted_votes[0][0] = 1);
+            fn_verification(&mock_dir, &CONFIG_TEST, &mut result);
+            assert!(!result.is_ok(), "Failed for vote 0 for bb {}", bb.name());
+        }
+    }
+
+    #[test]
+    fn change_decoded_vote() {
+        let dir = get_verifier_dir();
+        let nb = dir.unwrap_tally().bb_directories().len();
+        for i in 0..nb {
+            let bb = &dir.unwrap_tally().bb_directories()[i];
+            if bb
+                .tally_component_votes_payload()
+                .unwrap()
+                .decoded_votes
+                .is_empty()
+            {
+                continue;
+            }
+            let mut result = VerificationResult::new();
+            let mut mock_dir = get_test_verifier_mock_tally_dir();
+            mock_dir.unwrap_tally_mut().bb_directories_mut()[i].mock_tally_component_votes_payload(
+                |d| d.decoded_votes[0][0] = "faked".to_string(),
+            );
+            fn_verification(&mock_dir, &CONFIG_TEST, &mut result);
+            assert!(!result.is_ok(), "Failed for vote 0 for bb {}", bb.name());
+        }
+    }
+
+    #[test]
+    fn change_write_ins() {
+        let dir = get_verifier_dir();
+        let nb = dir.unwrap_tally().bb_directories().len();
+        for i in 0..nb {
+            let bb = &dir.unwrap_tally().bb_directories()[i];
+            if bb
+                .tally_component_votes_payload()
+                .unwrap()
+                .decoded_write_ins
+                .is_empty()
+            {
+                continue;
+            }
+            let id_write_ins = bb
+                .tally_component_votes_payload()
+                .unwrap()
+                .decoded_write_ins
+                .iter()
+                .enumerate()
+                .find(|(_, w)| !w.is_empty())
+                .map(|(i, _)| i);
+            if id_write_ins.is_none() {
+                continue;
+            }
+            let mut result = VerificationResult::new();
+            let mut mock_dir = get_test_verifier_mock_tally_dir();
+            mock_dir.unwrap_tally_mut().bb_directories_mut()[i].mock_tally_component_votes_payload(
+                |d| d.decoded_write_ins[id_write_ins.unwrap()][0] = "faked".to_string(),
+            );
+            fn_verification(&mock_dir, &CONFIG_TEST, &mut result);
+            assert!(!result.is_ok(), "Failed for vote 0 for bb {}", bb.name());
+        }
     }
 }
