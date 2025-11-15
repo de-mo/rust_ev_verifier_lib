@@ -19,16 +19,15 @@ use super::super::{
     deserialize_seq_string_base64_to_seq_integer, deserialize_string_base64_to_integer,
 };
 use rust_ev_system_library::rust_ev_crypto_primitives::prelude::{
+    EmptyContext, HashableMessage, Integer, VerifyDomainTrait,
     elgamal::Ciphertext,
     mix_net::{
-        MixnetError,
-        HadamardArgument as CryptoHadamardArgument,
+        HadamardArgument as CryptoHadamardArgument, MixnetError,
         MultiExponentiationArgument as CryptoMultiExponentiationArgument,
         ProductArgument as CryptoProductArgument, ShuffleArgument as CryptoShuffleArgument,
         SingleValueProductArgument as CryptoSingleValueProductArgument,
         ZeroArgument as CryptoZeroArgument,
     },
-    HashableMessage, Integer, VerifyDomainTrait,
 };
 use serde::Deserialize;
 
@@ -41,12 +40,12 @@ pub struct VerifiableShuffle {
 }
 
 pub fn verifiy_domain_for_verifiable_shuffle(value: &VerifiableShuffle) -> Vec<String> {
-    value.verifiy_domain()
+    value.verifiy_domain(&EmptyContext::default())
 }
 
-impl VerifyDomainTrait<String> for VerifiableShuffle {
-    fn verifiy_domain(&self) -> Vec<String> {
-        self.shuffle_argument.verifiy_domain()
+impl VerifyDomainTrait<EmptyContext, String> for VerifiableShuffle {
+    fn verifiy_domain(&self, context: &EmptyContext) -> Vec<String> {
+        self.shuffle_argument.verifiy_domain(context)
     }
 }
 
@@ -64,8 +63,8 @@ pub struct ShuffleArgument {
     pub multi_exponentiation_argument: MultiExponentiationArgument,
 }
 
-impl VerifyDomainTrait<String> for ShuffleArgument {
-    fn verifiy_domain(&self) -> Vec<String> {
+impl VerifyDomainTrait<EmptyContext, String> for ShuffleArgument {
+    fn verifiy_domain(&self, _context: &EmptyContext) -> Vec<String> {
         match CryptoShuffleArgument::try_from(self) {
             Ok(_) => Vec::default(),
             Err(e) => vec![e.to_string()],

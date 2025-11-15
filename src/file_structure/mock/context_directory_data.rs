@@ -35,10 +35,7 @@ use crate::{
     file_structure::{
         CompletnessTestTrait, ContextDirectory, ContextDirectoryTrait, FileStructureError,
         FileStructureErrorImpl,
-        context_directory::{
-            ContextVCSDirectory, ContextVCSDirectoryTrait, impl_completness_test_trait_for_context,
-            impl_completness_test_trait_for_context_vcs,
-        },
+        context_directory::{ContextVCSDirectory, ContextVCSDirectoryTrait},
         file::File,
         file_group::FileGroup,
     },
@@ -65,8 +62,17 @@ pub struct MockContextDirectory {
     vcs_directories: Vec<MockContextVCSDirectory>,
 }
 
-impl_completness_test_trait_for_context_vcs!(MockContextVCSDirectory);
-impl_completness_test_trait_for_context!(MockContextDirectory);
+impl CompletnessTestTrait for MockContextDirectory {
+    fn test_completness(&self) -> Result<Vec<String>, FileStructureError> {
+        self.dir.test_completness()
+    }
+}
+
+impl CompletnessTestTrait for MockContextVCSDirectory {
+    fn test_completness(&self) -> Result<Vec<String>, FileStructureError> {
+        self.dir.test_completness()
+    }
+}
 
 impl MockContextDirectory {
     pub fn new(location: &Path) -> Self {
@@ -117,6 +123,12 @@ impl MockContextDirectory {
 
     pub fn vcs_directories_mut(&mut self) -> &mut [MockContextVCSDirectory] {
         &mut self.vcs_directories
+    }
+
+    pub fn vcs_directory_mut(&mut self, name: &str) -> Option<&mut MockContextVCSDirectory> {
+        self.vcs_directories
+            .iter_mut()
+            .find(|d| d.name().as_str() == name)
     }
 }
 
@@ -209,7 +221,7 @@ mod test {
     use rust_ev_system_library::rust_ev_crypto_primitives::prelude::Integer;
 
     use super::*;
-    use crate::config::test::test_datasets_context_path;
+    use crate::{config::test::test_datasets_context_path, consts::NUMBER_CONTROL_COMPONENTS};
 
     #[test]
     fn test_mock_context() {
@@ -294,7 +306,7 @@ mod test {
             mock_dir
                 .control_component_public_keys_payload_iter()
                 .count(),
-            4
+            NUMBER_CONTROL_COMPONENTS
         );
         mock_dir.mock_control_component_public_keys_payload_as_deleted(2);
         assert_eq!(
@@ -330,7 +342,7 @@ mod test {
                     .unwrap()
                     .control_component_public_keys
                     .node_id,
-                4
+                NUMBER_CONTROL_COMPONENTS
             );
             assert!(it.next().is_none());
         }
@@ -339,7 +351,7 @@ mod test {
             mock_dir
                 .control_component_public_keys_payload_iter()
                 .count(),
-            4
+            NUMBER_CONTROL_COMPONENTS
         );
     }
 
@@ -356,7 +368,7 @@ mod test {
             mock_dir
                 .control_component_public_keys_payload_iter()
                 .count(),
-            4
+            NUMBER_CONTROL_COMPONENTS
         );
         assert_eq!(
             it.next()
@@ -384,7 +396,7 @@ mod test {
                 .unwrap()
                 .control_component_public_keys
                 .node_id,
-            4
+            NUMBER_CONTROL_COMPONENTS
         );
         assert!(it.next().is_none());
     }
@@ -401,7 +413,7 @@ mod test {
             mock_dir
                 .control_component_public_keys_payload_iter()
                 .count(),
-            4
+            NUMBER_CONTROL_COMPONENTS
         );
         assert_eq!(
             it.next()
@@ -437,7 +449,7 @@ mod test {
                 .unwrap()
                 .control_component_public_keys
                 .node_id,
-            4
+            NUMBER_CONTROL_COMPONENTS
         );
         assert!(it.next().is_none());
     }

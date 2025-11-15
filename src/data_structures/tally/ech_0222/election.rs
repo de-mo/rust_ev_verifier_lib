@@ -27,21 +27,21 @@ use roxmltree::Node;
 
 #[derive(Debug, Clone)]
 pub struct ElectionGroupBallotRawData {
-    election_group_identification: String,
-    election_raw_data: Vec<ElectionRawData>,
+    pub election_group_identification: String,
+    pub election_raw_data: Vec<ElectionRawData>,
 }
 
 #[derive(Debug, Clone, Hash)]
 pub struct ElectionRawData {
-    election_identification: String,
-    list_raw_data: Option<ListRawData>,
-    ballot_positions: Vec<BallotPosition>,
-    is_unchanged_ballot: Option<bool>,
+    pub election_identification: String,
+    pub list_raw_data: Option<ListRawData>,
+    pub ballot_positions: Vec<BallotPosition>,
+    pub is_unchanged_ballot: Option<bool>,
 }
 
 #[derive(Debug, Clone, Hash)]
 pub struct ListRawData {
-    list_identification: String,
+    pub list_identification: String,
 }
 
 #[derive(Debug, Clone, Hash)]
@@ -119,6 +119,7 @@ impl ElectionGroupBallotRawData {
             .iter()
             .flat_map(|eg| eg.write_in_position_ids())
             .collect::<Vec<_>>();
+        let mut write_ins_iter = write_ins.iter();
         let decoded_votes_with_write_ins = decoded_votes
             .iter()
             .enumerate()
@@ -139,7 +140,6 @@ impl ElectionGroupBallotRawData {
                                 ),
                             })?;
                     let third_position = split.next();
-                    let mut write_ins_iter = write_ins.iter();
                     if write_ins_ids.contains(&second_position) {
                         Ok(DecodedVoteWithWriteIn {
                             first_position,

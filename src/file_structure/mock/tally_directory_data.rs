@@ -33,10 +33,7 @@ use crate::{
         CompletnessTestTrait, FileStructureError, FileStructureErrorImpl, TallyDirectoryTrait,
         file::File,
         file_group::FileGroup,
-        tally_directory::{
-            BBDirectory, BBDirectoryTrait, TallyDirectory, impl_completness_test_trait_for_tally,
-            impl_completness_test_trait_for_tally_bb,
-        },
+        tally_directory::{BBDirectory, BBDirectoryTrait, TallyDirectory},
     },
 };
 use paste::paste;
@@ -61,8 +58,17 @@ pub struct MockTallyDirectory {
     mocked_ech_0222: Option<Box<MockedDataType<ECH0222>>>,
 }
 
-impl_completness_test_trait_for_tally_bb!(MockBBDirectory);
-impl_completness_test_trait_for_tally!(MockTallyDirectory);
+impl CompletnessTestTrait for MockTallyDirectory {
+    fn test_completness(&self) -> Result<Vec<String>, FileStructureError> {
+        self.dir.test_completness()
+    }
+}
+
+impl CompletnessTestTrait for MockBBDirectory {
+    fn test_completness(&self) -> Result<Vec<String>, FileStructureError> {
+        self.dir.test_completness()
+    }
+}
 
 impl MockTallyDirectory {
     pub fn new(data_location: &Path) -> Self {
@@ -95,6 +101,12 @@ impl MockTallyDirectory {
 
     pub fn bb_directories_mut(&mut self) -> &mut [MockBBDirectory] {
         &mut self.bb_directories
+    }
+
+    pub fn bb_directory_mut(&mut self, name: &str) -> Option<&mut MockBBDirectory> {
+        self.bb_directories
+            .iter_mut()
+            .find(|d| d.name().as_str() == name)
     }
 }
 

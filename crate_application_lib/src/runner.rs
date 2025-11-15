@@ -212,8 +212,8 @@ impl<'a> RunStrategy<'a> for RunParallel {
             action_after_verification(VerificationRunInformation {
                 id: v.id().to_string(),
                 status: v.status(),
-                failures: v.verification_result().errors_to_string(),
-                errors: v.verification_result().failures_to_string(),
+                errors: v.verification_result().errors_to_string(),
+                failures: v.verification_result().failures_to_string(),
             });
         });
     }

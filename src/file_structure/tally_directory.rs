@@ -15,12 +15,13 @@
 // <https://www.gnu.org/licenses/>.
 
 use super::{
-    file::{create_file, File},
-    file_group::{FileGroup, FileGroupDataIter, FileGroupFileIter},
     CompletnessTestTrait, FileStructureError,
+    file::{File, create_file},
+    file_group::{FileGroup, FileGroupDataIter, FileGroupFileIter},
 };
 use crate::{
     config::VerifierConfig,
+    consts::CONTROL_COMPONENT_ID_LIST,
     data_structures::tally::{
         control_component_ballot_box_payload::ControlComponentBallotBoxPayload,
         control_component_shuffle_payload::ControlComponentShufflePayload, ech_0222::ECH0222,
@@ -83,7 +84,7 @@ pub trait BBDirectoryTrait: CompletnessTestTrait + Send + Sync {
         &self,
     ) -> &FileGroup<ControlComponentBallotBoxPayload>;
     fn control_component_shuffle_payload_group(&self)
-        -> &FileGroup<ControlComponentShufflePayload>;
+    -> &FileGroup<ControlComponentShufflePayload>;
     fn tally_component_votes_payload(
         &self,
     ) -> Result<Arc<TallyComponentVotesPayload>, FileStructureError>;
@@ -131,28 +132,21 @@ impl TallyDirectoryTrait for TallyDirectory {
     }
 }
 
-macro_rules! impl_completness_test_trait_for_tally {
-    ($t: ident) => {
-        impl CompletnessTestTrait for $t {
-            fn test_completness(&self) -> Result<Vec<String>, FileStructureError> {
-                let mut missings = vec![];
-                if !self.ech_0222_file().exists() {
-                    missings.push("ech_0222 does not exist".to_string())
-                }
-                if self.bb_directories().is_empty() {
-                    missings.push("No bb directory found".to_string());
-                }
-                for d in self.bb_directories().iter() {
-                    missings.extend(d.test_completness()?)
-                }
-                Ok(missings)
-            }
+impl CompletnessTestTrait for TallyDirectory {
+    fn test_completness(&self) -> Result<Vec<String>, FileStructureError> {
+        let mut missings = vec![];
+        if !self.ech_0222_file().exists() {
+            missings.push("ech_0222 does not exist".to_string())
         }
-    };
+        if self.bb_directories().is_empty() {
+            missings.push("No bb directory found".to_string());
+        }
+        for d in self.bb_directories().iter() {
+            missings.extend(d.test_completness()?)
+        }
+        Ok(missings)
+    }
 }
-pub(crate) use impl_completness_test_trait_for_tally;
-
-impl_completness_test_trait_for_tally!(TallyDirectory);
 
 impl BBDirectoryTrait for BBDirectory {
     fn tally_component_votes_payload_file(&self) -> &File<TallyComponentVotesPayload> {
@@ -224,57 +218,48 @@ impl BBDirectoryTrait for BBDirectory {
     }
 }
 
-macro_rules! impl_completness_test_trait_for_tally_bb {
-    ($t: ident) => {
-        impl CompletnessTestTrait for $t {
-            fn test_completness(&self) -> Result<Vec<String>, FileStructureError> {
-                let mut missings = vec![];
-                if !self.tally_component_shuffle_payload_file().exists() {
-                    missings.push(format!(
-                        "{:?}/tally_component_shuffle_payload does not exist",
-                        self.location().file_name().unwrap()
-                    ))
-                }
-                if !self.tally_component_shuffle_payload_file().exists() {
-                    missings.push(format!(
-                        "{:?}/tally_component_shuffle_payload does not exist",
-                        self.location().file_name().unwrap()
-                    ))
-                }
-                if self
+impl CompletnessTestTrait for BBDirectory {
+    fn test_completness(&self) -> Result<Vec<String>, FileStructureError> {
+        let mut missings = vec![];
+        if !self.tally_component_shuffle_payload_file().exists() {
+            missings.push(format!(
+                "{:?}/tally_component_shuffle_payload does not exist",
+                self.location().file_name().unwrap()
+            ))
+        }
+        if !self.tally_component_shuffle_payload_file().exists() {
+            missings.push(format!(
+                "{:?}/tally_component_shuffle_payload does not exist",
+                self.location().file_name().unwrap()
+            ))
+        }
+        if self
+            .control_component_ballot_box_payload_group()
+            .get_numbers()
+            != &CONTROL_COMPONENT_ID_LIST
+        {
+            missings.push(format!(
+                "{:?}/control_component_ballot_box_payload missing. only these parts are present: {:?}",
+                self.location().file_name().unwrap(),
+                self
                     .control_component_ballot_box_payload_group()
                     .get_numbers()
-                    != &vec![1, 2, 3, 4]
-                {
-                    missings.push(format!(
-                        "{:?}/control_component_ballot_box_payload missing. only these parts are present: {:?}",
-                        self.location().file_name().unwrap(),
-                        self
-                            .control_component_ballot_box_payload_group()
-                            .get_numbers()
-                    ))
-                }
-                if self
+            ))
+        }
+        if self.control_component_shuffle_payload_group().get_numbers()
+            != &CONTROL_COMPONENT_ID_LIST
+        {
+            missings.push(format!(
+                "{:?}/control_component_shuffle_payload_group missing. only these parts are present: {:?}",
+                self.location().file_name().unwrap(),
+                self
                     .control_component_shuffle_payload_group()
                     .get_numbers()
-                    != &vec![1, 2, 3, 4]
-                {
-                    missings.push(format!(
-                        "{:?}/control_component_shuffle_payload_group missing. only these parts are present: {:?}",
-                        self.location().file_name().unwrap(),
-                        self
-                            .control_component_shuffle_payload_group()
-                            .get_numbers()
-                    ))
-                }
-                Ok(missings)
-            }
+            ))
         }
-    };
+        Ok(missings)
+    }
 }
-pub(crate) use impl_completness_test_trait_for_tally_bb;
-
-impl_completness_test_trait_for_tally_bb!(BBDirectory);
 
 impl TallyDirectory {
     #[allow(clippy::redundant_clone)]

@@ -16,9 +16,9 @@
 
 use super::{
     super::{
+        DataStructureError, DataStructureErrorImpl, VerifierDataDecode,
         common_types::{EncryptionParametersDef, Signature},
-        implement_trait_verifier_data_json_decode, DataStructureError, DataStructureErrorImpl,
-        VerifierDataDecode,
+        implement_trait_verifier_data_json_decode,
     },
     VerifierTallyDataType,
 };
@@ -27,7 +27,7 @@ use crate::{
     direct_trust::{CertificateAuthority, VerifiyJSONSignatureTrait, VerifiySignatureTrait},
 };
 use rust_ev_system_library::rust_ev_crypto_primitives::prelude::{
-    elgamal::EncryptionParameters, ByteArray, HashableMessage, VerifyDomainTrait,
+    ByteArray, EmptyContext, HashableMessage, VerifyDomainTrait, elgamal::EncryptionParameters,
 };
 use serde::Deserialize;
 use std::sync::Arc;
@@ -56,7 +56,7 @@ impl VerifierDataToTypeTrait for TallyComponentVotesPayload {
 
 implement_trait_verifier_data_json_decode!(TallyComponentVotesPayload);
 
-impl VerifyDomainTrait<String> for TallyComponentVotesPayload {}
+impl VerifyDomainTrait<EmptyContext, String> for TallyComponentVotesPayload {}
 
 impl<'a> From<&'a TallyComponentVotesPayload> for HashableMessage<'a> {
     fn from(value: &'a TallyComponentVotesPayload) -> Self {
@@ -114,7 +114,7 @@ mod test {
     };
     use crate::config::test::{
         get_keystore, test_ballot_box_one_vote_path, test_ballot_box_zero_vote_path,
-        test_resources_path,
+        test_data_signature_hash_path,
     };
     use rust_ev_system_library::rust_ev_crypto_primitives::prelude::{
         EncodeTrait, RecursiveHashTrait,

@@ -17,7 +17,7 @@
 use super::super::super::result::{VerificationEvent, VerificationResult};
 use crate::{
     config::VerifierConfig,
-    file_structure::{context_directory::ContextDirectoryTrait, VerificationDirectoryTrait},
+    file_structure::{VerificationDirectoryTrait, context_directory::ContextDirectoryTrait},
 };
 
 use rust_ev_system_library::rust_ev_crypto_primitives::prelude::elgamal::EncryptionParameters;
@@ -41,10 +41,12 @@ pub(super) fn fn_0501_verify_encryption_parameters<D: VerificationDirectoryTrait
     let eg_test = match EncryptionParameters::get_encryption_parameters(&eg.seed) {
         Ok(eg) => eg,
         Err(e) => {
-            result.push(VerificationEvent::new_error_from_error(&e).add_context(format!(
-                "Error calculating encrpytion parameters from seed {}",
-                eg.seed
-            )));
+            result.push(
+                VerificationEvent::new_error_from_error(&e).add_context(format!(
+                    "Error calculating encrpytion parameters from seed {}",
+                    eg.seed
+                )),
+            );
             return;
         }
     };
@@ -73,8 +75,13 @@ pub(super) fn fn_0501_verify_encryption_parameters<D: VerificationDirectoryTrait
 
 #[cfg(test)]
 mod test {
+    use rust_ev_system_library::rust_ev_crypto_primitives::prelude::Integer;
+
     use super::*;
-    use crate::config::test::{get_test_verifier_setup_dir as get_verifier_dir, CONFIG_TEST};
+    use crate::config::test::{
+        CONFIG_TEST, get_test_verifier_mock_setup_dir,
+        get_test_verifier_setup_dir as get_verifier_dir,
+    };
 
     #[test]
     fn test_0501_ok() {
@@ -82,5 +89,57 @@ mod test {
         let mut result = VerificationResult::new();
         fn_0501_verify_encryption_parameters(&dir, &CONFIG_TEST, &mut result);
         assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_wrong_seed() {
+        let mut result = VerificationResult::new();
+        let mut mock_dir = get_test_verifier_mock_setup_dir();
+        mock_dir
+            .context_mut()
+            .mock_election_event_context_payload(|d| {
+                d.seed = "wrongseed".to_string();
+            });
+        fn_0501_verify_encryption_parameters(&mock_dir, &CONFIG_TEST, &mut result);
+        assert!(result.has_failures());
+    }
+
+    #[test]
+    fn test_wrong_p() {
+        let mut result = VerificationResult::new();
+        let mut mock_dir = get_test_verifier_mock_setup_dir();
+        mock_dir
+            .context_mut()
+            .mock_election_event_context_payload(|d| {
+                d.encryption_group.set_p(&Integer::from(13u32));
+            });
+        fn_0501_verify_encryption_parameters(&mock_dir, &CONFIG_TEST, &mut result);
+        assert!(result.has_failures());
+    }
+
+    #[test]
+    fn test_wrong_q() {
+        let mut result = VerificationResult::new();
+        let mut mock_dir = get_test_verifier_mock_setup_dir();
+        mock_dir
+            .context_mut()
+            .mock_election_event_context_payload(|d| {
+                d.encryption_group.set_q(&Integer::from(13u32));
+            });
+        fn_0501_verify_encryption_parameters(&mock_dir, &CONFIG_TEST, &mut result);
+        assert!(result.has_failures());
+    }
+
+    #[test]
+    fn test_wrong_g() {
+        let mut result = VerificationResult::new();
+        let mut mock_dir = get_test_verifier_mock_setup_dir();
+        mock_dir
+            .context_mut()
+            .mock_election_event_context_payload(|d| {
+                d.encryption_group.set_g(&Integer::from(13u32));
+            });
+        fn_0501_verify_encryption_parameters(&mock_dir, &CONFIG_TEST, &mut result);
+        assert!(result.has_failures());
     }
 }

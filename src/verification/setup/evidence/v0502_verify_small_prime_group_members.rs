@@ -17,7 +17,7 @@
 use super::super::super::result::{VerificationEvent, VerificationResult};
 use crate::{
     config::VerifierConfig,
-    file_structure::{context_directory::ContextDirectoryTrait, VerificationDirectoryTrait},
+    file_structure::{VerificationDirectoryTrait, context_directory::ContextDirectoryTrait},
 };
 
 pub(super) fn fn_0502_verify_small_prime_group_members<D: VerificationDirectoryTrait>(
@@ -26,7 +26,7 @@ pub(super) fn fn_0502_verify_small_prime_group_members<D: VerificationDirectoryT
     result: &mut VerificationResult,
 ) {
     let context_dir = dir.context();
-    let eg = match context_dir.election_event_context_payload() {
+    let ee_context = match context_dir.election_event_context_payload() {
         Ok(eg) => eg,
         Err(e) => {
             result.push(
@@ -36,7 +36,7 @@ pub(super) fn fn_0502_verify_small_prime_group_members<D: VerificationDirectoryT
             return;
         }
     };
-    let primes = match eg.encryption_group.get_small_prime_group_members(
+    let primes = match ee_context.encryption_group.get_small_prime_group_members(
         VerifierConfig::maximum_number_of_supported_voting_options_n_sup(),
     ) {
         Ok(p) => p,
@@ -48,24 +48,26 @@ pub(super) fn fn_0502_verify_small_prime_group_members<D: VerificationDirectoryT
             return;
         }
     };
-    if eg.small_primes.len() != primes.len() {
+    if ee_context.small_primes.len() != primes.len() {
         result.push(VerificationEvent::new_failure(&format!(
             "length of primes not the same: calculated: {} / expected {}",
             primes.len(),
-            eg.small_primes.len()
+            ee_context.small_primes.len()
         )))
-    } else if eg.small_primes != primes {
-        let mut i = 0usize;
-        while eg.small_primes[i] == primes[i] {
-            i += 1;
-        }
+    }
+    if let Some(i) = ee_context
+        .small_primes
+        .iter()
+        .zip(primes.iter())
+        .position(|(a, b)| a != b)
+    {
         result.push(
             VerificationEvent::new_failure(
                 &format!(
                     "Small prime group members are not the same. First error at position {}: calculated {} / expected {}",
                     i + 1,
                     primes[i],
-                    eg.small_primes[i]
+                    ee_context.small_primes[i]
                 )
             )
         )
@@ -74,8 +76,13 @@ pub(super) fn fn_0502_verify_small_prime_group_members<D: VerificationDirectoryT
 
 #[cfg(test)]
 mod test {
+    use rust_ev_system_library::rust_ev_crypto_primitives::prelude::Integer;
+
     use super::*;
-    use crate::config::test::{get_test_verifier_setup_dir as get_verifier_dir, CONFIG_TEST};
+    use crate::config::test::{
+        CONFIG_TEST, get_test_verifier_mock_setup_dir,
+        get_test_verifier_setup_dir as get_verifier_dir,
+    };
 
     #[test]
     fn test_0502_ok() {
@@ -91,5 +98,45 @@ mod test {
             }
         }
         assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_wrong_p() {
+        let mut result = VerificationResult::new();
+        let mut mock_dir = get_test_verifier_mock_setup_dir();
+        mock_dir
+            .context_mut()
+            .mock_election_event_context_payload(|d| {
+                d.encryption_group
+                    .set_p(&(d.encryption_group.p() + Integer::from(2u32)));
+            });
+        fn_0502_verify_small_prime_group_members(&mock_dir, &CONFIG_TEST, &mut result);
+        assert!(result.has_failures());
+    }
+
+    #[test]
+    fn test_small_primes_changed() {
+        let mut result = VerificationResult::new();
+        let mut mock_dir = get_test_verifier_mock_setup_dir();
+        mock_dir
+            .context_mut()
+            .mock_election_event_context_payload(|d| {
+                d.small_primes[1] = 17usize;
+            });
+        fn_0502_verify_small_prime_group_members(&mock_dir, &CONFIG_TEST, &mut result);
+        assert!(result.has_failures());
+    }
+
+    #[test]
+    fn test_small_primes_deleted() {
+        let mut result = VerificationResult::new();
+        let mut mock_dir = get_test_verifier_mock_setup_dir();
+        mock_dir
+            .context_mut()
+            .mock_election_event_context_payload(|d| {
+                d.small_primes = d.small_primes[10..d.small_primes.len() - 1].to_vec();
+            });
+        fn_0502_verify_small_prime_group_members(&mock_dir, &CONFIG_TEST, &mut result);
+        assert!(result.has_failures());
     }
 }

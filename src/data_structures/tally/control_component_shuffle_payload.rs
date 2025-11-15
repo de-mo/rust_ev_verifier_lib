@@ -14,13 +14,13 @@
 // a copy of the GNU General Public License along with this program. If not, see
 // <https://www.gnu.org/licenses/>.
 
-use super::verifiable_shuffle::VerifiableShuffle;
 use super::VerifierTallyDataType;
+use super::verifiable_shuffle::VerifiableShuffle;
 use super::{
     super::{
+        DataStructureError, DataStructureErrorImpl, VerifierDataDecode,
         common_types::{EncryptionParametersDef, Signature},
-        deserialize_seq_ciphertext, implement_trait_verifier_data_json_decode, DataStructureError,
-        DataStructureErrorImpl, VerifierDataDecode,
+        deserialize_seq_ciphertext, implement_trait_verifier_data_json_decode,
     },
     verifiable_shuffle::verifiy_domain_for_verifiable_shuffle,
 };
@@ -30,10 +30,12 @@ use crate::{
     data_structures::common_types::DecryptionProof,
     direct_trust::{CertificateAuthority, VerifiyJSONSignatureTrait},
 };
-use rust_ev_system_library::rust_ev_crypto_primitives::prelude::DomainVerifications;
 use rust_ev_system_library::rust_ev_crypto_primitives::prelude::{
-    elgamal::{Ciphertext, EncryptionParameters},
     ByteArray, HashableMessage, VerifyDomainTrait,
+    elgamal::{Ciphertext, EncryptionParameters},
+};
+use rust_ev_system_library::rust_ev_crypto_primitives::prelude::{
+    DomainVerifications, EmptyContext,
 };
 use serde::Deserialize;
 use std::sync::Arc;
@@ -67,10 +69,10 @@ pub struct VerifiableDecryptions {
     pub decryption_proofs: Vec<DecryptionProof>,
 }
 
-impl VerifyDomainTrait<String> for ControlComponentShufflePayload {
-    fn new_domain_verifications() -> DomainVerifications<Self, String> {
+impl VerifyDomainTrait<EmptyContext, String> for ControlComponentShufflePayload {
+    fn new_domain_verifications() -> DomainVerifications<EmptyContext, Self, String> {
         let mut res = DomainVerifications::default();
-        res.add_verification(|v: &Self| {
+        res.add_verification(|v: &Self, _c| {
             verifiy_domain_for_verifiable_shuffle(&v.verifiable_shuffle)
         });
         res
@@ -155,7 +157,7 @@ mod test {
     };
     use crate::config::test::{
         get_keystore, test_ballot_box_many_votes_path, test_ballot_box_one_vote_path,
-        test_ballot_box_zero_vote_path, test_resources_path,
+        test_ballot_box_zero_vote_path, test_data_signature_hash_path,
     };
     use paste::paste;
     use rust_ev_system_library::rust_ev_crypto_primitives::prelude::{

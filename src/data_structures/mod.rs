@@ -137,106 +137,6 @@ macro_rules! implement_trait_verifier_data_json_decode {
 }
 use implement_trait_verifier_data_json_decode;
 
-/*impl VerifierContextDataTrait for VerifierData {
-    fn setup_component_public_keys_payload(self) -> Option<SetupComponentPublicKeysPayload> {
-        match self {
-            VerifierData::Context(d) => d.setup_component_public_keys_payload(),
-            _ => None,
-        }
-    }
-
-    fn election_event_context_payload(self) -> Option<ElectionEventContextPayload> {
-        match self {
-            VerifierData::Context(d) => d.election_event_context_payload(),
-            _ => None,
-        }
-    }
-
-    fn setup_component_tally_data_payload(self) -> Option<SetupComponentTallyDataPayload> {
-        match self {
-            VerifierData::Context(d) => d.setup_component_tally_data_payload(),
-            _ => None,
-        }
-    }
-
-    fn control_component_public_keys_payload(self) -> Option<ControlComponentPublicKeysPayload> {
-        match self {
-            VerifierData::Context(d) => d.control_component_public_keys_payload(),
-            _ => None,
-        }
-    }
-
-    fn election_event_configuration(self) -> Option<ElectionEventConfiguration> {
-        match self {
-            VerifierData::Context(d) => d.election_event_configuration(),
-            _ => None,
-        }
-    }
-}*/
-
-/*impl VerifierSetupDataTrait for VerifierData {
-    fn setup_component_verification_data_payload(
-        self,
-    ) -> Option<SetupComponentVerificationDataPayload> {
-        match self {
-            VerifierData::Setup(d) => d.setup_component_verification_data_payload(),
-            _ => None,
-        }
-    }
-
-    fn control_component_code_shares_payload(self) -> Option<ControlComponentCodeSharesPayload> {
-        match self {
-            VerifierData::Setup(d) => d.control_component_code_shares_payload(),
-            _ => None,
-        }
-    }
-}*/
-
-/*impl VerifierTallyDataTrait for VerifierData {
-    fn e_voting_decrypt(self) -> Option<EVotingDecrypt> {
-        match self {
-            VerifierData::Tally(d) => d.e_voting_decrypt(),
-            _ => None,
-        }
-    }
-    fn ech_0110(self) -> Option<ECH0110> {
-        match self {
-            VerifierData::Tally(d) => d.ech_0110(),
-            _ => None,
-        }
-    }
-    fn ech_0222(self) -> Option<ECH0222> {
-        match self {
-            VerifierData::Tally(d) => d.ech_0222(),
-            _ => None,
-        }
-    }
-    fn tally_component_votes_payload(self) -> Option<TallyComponentVotesPayload> {
-        match self {
-            VerifierData::Tally(d) => d.tally_component_votes_payload(),
-            _ => None,
-        }
-    }
-    fn tally_component_shuffle_payload(self) -> Option<TallyComponentShufflePayload> {
-        match self {
-            VerifierData::Tally(d) => d.tally_component_shuffle_payload(),
-            _ => None,
-        }
-    }
-    fn control_component_ballot_box_payload(self) -> Option<ControlComponentBallotBoxPayload> {
-        match self {
-            VerifierData::Tally(d) => d.control_component_ballot_box_payload(),
-            _ => None,
-        }
-    }
-    fn control_component_shuffle_payload(self) -> Option<ControlComponentShufflePayload> {
-        match self {
-            VerifierData::Tally(d) => d.control_component_shuffle_payload(),
-            _ => None,
-        }
-    }
-}*/
-
 /// Verification of the length of unique ID according the expected length l_id
 ///
 /// `name` is used for the error message
@@ -385,7 +285,7 @@ pub(super) mod test {
             #[test]
             fn verify_domain() {
                 let data = get_data_res().unwrap();
-                let verifiy_domain_res = data.verifiy_domain();
+                let verifiy_domain_res = data.verifiy_domain(&EmptyContext::default());
                 assert!(verifiy_domain_res.is_empty())
             }
         };
@@ -394,7 +294,7 @@ pub(super) mod test {
                 #[test]
                 fn [<verify_domain_ $suffix>]() {
                     let data = [<get_data_res_ $suffix>]().unwrap();
-                    let verifiy_domain_res = data.verifiy_domain();
+                    let verifiy_domain_res = data.verifiy_domain(&EmptyContext::default());
                     assert!(verifiy_domain_res.is_empty())
                 }
             }
@@ -458,7 +358,7 @@ pub(super) mod test {
         ($t: ident, $p: literal) => {
             #[test]
             fn test_hash_json() {
-                let path = test_resources_path().join("test_data").join($p);
+                let path = test_data_signature_hash_path().join($p);
                 for tc in file_to_test_cases(&path).as_array().unwrap().iter() {
                     let test_data = json_to_testdata::<$t>(tc);
                     let hash_context = HashableMessage::from(&test_data.context);

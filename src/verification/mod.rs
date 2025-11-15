@@ -29,7 +29,7 @@ use std::fmt::Display;
 pub use self::{
     manual::*,
     meta_data::*,
-    result::{VerficationsWithErrorAndFailuresType, VerificationEvent, VerificationResult},
+    result::{VerficationsWithErrorAndFailures, VerificationEvent, VerificationResult},
     setup::get_verifications as get_verifications_setup,
     suite::VerificationSuite,
     tally::get_verifications as get_verifications_tally,

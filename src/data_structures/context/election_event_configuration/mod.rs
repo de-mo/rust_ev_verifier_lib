@@ -30,7 +30,7 @@ pub use election::{
     Candidate, Election, ElectionInformation, EmptyList, List, TypeOfIdInElection, WriteInPosition,
 };
 use roxmltree::{Document, Node};
-use rust_ev_system_library::rust_ev_crypto_primitives::prelude::VerifyDomainTrait;
+use rust_ev_system_library::rust_ev_crypto_primitives::prelude::{EmptyContext, VerifyDomainTrait};
 use std::sync::Arc;
 pub use vote::*;
 
@@ -153,7 +153,7 @@ fn decode_xml(s: &str) -> Result<ElectionEventConfigurationData, DataStructureEr
     })
 }
 
-impl VerifyDomainTrait<String> for ElectionEventConfiguration {}
+impl VerifyDomainTrait<EmptyContext, String> for ElectionEventConfiguration {}
 
 impl VerifierDataDecode for ElectionEventConfiguration {
     fn decode_xml<'a>(s: String) -> Result<Self, DataStructureError> {

@@ -18,8 +18,8 @@ use super::super::super::result::{VerificationEvent, VerificationResult};
 use crate::{
     config::VerifierConfig,
     file_structure::{
-        context_directory::{ContextDirectoryTrait, ContextVCSDirectoryTrait},
         VerificationDirectoryTrait,
+        context_directory::{ContextDirectoryTrait, ContextVCSDirectoryTrait},
     },
 };
 
@@ -102,7 +102,9 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::config::test::{get_test_verifier_setup_dir as get_verifier_dir, CONFIG_TEST};
+    use crate::{config::test::{
+        get_test_verifier_mock_setup_dir, get_test_verifier_setup_dir as get_verifier_dir, CONFIG_TEST
+    }, consts::NUMBER_CONTROL_COMPONENTS};
 
     #[test]
     fn test_ok() {
@@ -110,5 +112,69 @@ mod test {
         let mut result = VerificationResult::new();
         fn_verification(&dir, &CONFIG_TEST, &mut result);
         assert!(result.is_ok());
+    }
+
+    #[test]
+    fn change_in_context() {
+        let mut result = VerificationResult::new();
+        let mut mock_dir = get_test_verifier_mock_setup_dir();
+        mock_dir
+            .context_mut()
+            .mock_election_event_context_payload(|d| {
+                d.election_event_context.election_event_id =
+                    "modified-election-event-id".to_string();
+            });
+        fn_verification(&mock_dir, &CONFIG_TEST, &mut result);
+        assert!(!result.has_errors());
+        assert!(result.has_failures());
+    }
+
+    #[test]
+    fn change_setup_pk_keys() {
+        let mut result = VerificationResult::new();
+        let mut mock_dir = get_test_verifier_mock_setup_dir();
+        mock_dir
+            .context_mut()
+            .mock_setup_component_public_keys_payload(|d| {
+                d.election_event_id = "modified-election-event-id".to_string();
+            });
+        fn_verification(&mock_dir, &CONFIG_TEST, &mut result);
+        assert!(!result.has_errors());
+        assert!(result.has_failures());
+    }
+
+    #[test]
+    fn change_cc_pk_keys() {
+        for j in 1..=NUMBER_CONTROL_COMPONENTS {
+            let mut result = VerificationResult::new();
+            let mut mock_dir = get_test_verifier_mock_setup_dir();
+            mock_dir
+                .context_mut()
+                .mock_control_component_public_keys_payload(j, |d| {
+                    d.election_event_id = "modified-election-event-id".to_string();
+                });
+            fn_verification(&mock_dir, &CONFIG_TEST, &mut result);
+            assert!(!result.has_errors(), "Failed at CC {}", j);
+            assert!(result.has_failures(), "Failed at CC {}", j);
+        }
+    }
+
+    #[test]
+    fn change_setup_tally_data() {
+        let dir = get_verifier_dir();
+        for vcs in dir.context().vcs_directories().iter() {
+            let mut result = VerificationResult::new();
+            let mut mock_dir = get_test_verifier_mock_setup_dir();
+            mock_dir
+                .context_mut()
+                .vcs_directory_mut(&vcs.name())
+                .unwrap()
+                .mock_setup_component_tally_data_payload(|d| {
+                    d.election_event_id = "modified-election-event-id".to_string();
+                });
+            fn_verification(&mock_dir, &CONFIG_TEST, &mut result);
+            assert!(!result.has_errors(), "Failed at vcs {}", vcs.name());
+            assert!(result.has_failures(), "Failed at VCS {}", vcs.name());
+        }
     }
 }

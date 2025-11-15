@@ -90,7 +90,7 @@ impl<'a> ReportOutputFile<'a> {
 
     fn generate_txt(&self) -> Result<Vec<u8>, ReportErrorImpl> {
         let mut content: String = self.report_data.output_to_string(4);
-        content.push_str("\n Signatures:\n\n");
+        content.push_str("\n\nSignatures:\n\n");
         content.push_str(&self.options.signatures().join("\n\n"));
         Ok(content.into_bytes())
     }

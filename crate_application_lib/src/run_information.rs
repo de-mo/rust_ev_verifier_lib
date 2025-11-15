@@ -23,8 +23,8 @@ use rust_ev_verifier_lib::{
     VerifierConfig,
     file_structure::VerificationDirectory,
     verification::{
-        ManualVerifications, VerificationMetaDataList, VerificationPeriod, VerificationStatus,
-        get_verifications_setup, get_verifications_tally,
+        ManualVerifications, VerficationsWithErrorAndFailures, VerificationMetaDataList,
+        VerificationPeriod, VerificationStatus, get_verifications_setup, get_verifications_tally,
     },
 };
 use std::{collections::HashMap, path::Path, sync::Arc, time::SystemTime};
@@ -39,7 +39,7 @@ pub struct RunInformation {
     verification_metadata: Option<VerificationMetaDataList>,
     excluded_verifications: Vec<String>,
     verifications_status: HashMap<String, VerificationStatus>,
-    verifications_with_errors_and_failures: HashMap<String, (Vec<String>, Vec<String>)>,
+    verifications_with_errors_and_failures: VerficationsWithErrorAndFailures,
     runner_information: RunnerInformation,
 }
 
@@ -53,7 +53,7 @@ impl RunInformation {
             verification_metadata: None,
             verifications_status: HashMap::default(),
             excluded_verifications: vec![],
-            verifications_with_errors_and_failures: HashMap::default(),
+            verifications_with_errors_and_failures: VerficationsWithErrorAndFailures::default(),
             runner_information: RunnerInformation::new(config),
         }
     }
@@ -122,7 +122,8 @@ impl RunInformation {
         if verif_info.status != VerificationStatus::FinishedSuccessfully {
             self.verifications_with_errors_and_failures.insert(
                 verif_info.id.clone(),
-                (verif_info.errors.clone(), verif_info.failures.clone()),
+                verif_info.errors.clone(),
+                verif_info.failures.clone(),
             );
         }
     }
@@ -219,9 +220,7 @@ impl RunInformation {
     /// Value of the [HashMap] is a tuple:
     ///     - First element is the list of errors
     ///     - Seconde element is the list of failures
-    pub fn verifications_with_errors_and_failures(
-        &self,
-    ) -> &HashMap<String, (Vec<String>, Vec<String>)> {
+    pub fn verifications_with_errors_and_failures(&self) -> &VerficationsWithErrorAndFailures {
         &self.verifications_with_errors_and_failures
     }
 

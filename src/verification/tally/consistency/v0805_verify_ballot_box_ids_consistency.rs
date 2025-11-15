@@ -18,7 +18,7 @@ use super::super::super::result::{VerificationEvent, VerificationResult};
 use crate::{
     config::VerifierConfig,
     file_structure::{
-        tally_directory::BBDirectoryTrait, TallyDirectoryTrait, VerificationDirectoryTrait,
+        TallyDirectoryTrait, VerificationDirectoryTrait, tally_directory::BBDirectoryTrait,
     },
 };
 
@@ -52,10 +52,12 @@ fn verify_for_bb_directory<B: BBDirectoryTrait>(bb_dir: &B) -> VerificationResul
                 )));
                 }
             }
-            Err(e) => result.push(VerificationEvent::new_error_from_error(&e).add_context(format!(
-                "{}/control_component_ballot_box_payload_{} cannot be read",
-                bb_id, i
-            ))),
+            Err(e) => result.push(VerificationEvent::new_error_from_error(&e).add_context(
+                format!(
+                    "{}/control_component_ballot_box_payload_{} cannot be read",
+                    bb_id, i
+                ),
+            )),
         }
     }
 
@@ -69,10 +71,12 @@ fn verify_for_bb_directory<B: BBDirectoryTrait>(bb_dir: &B) -> VerificationResul
                 )));
                 }
             }
-            Err(e) => result.push(VerificationEvent::new_error_from_error(&e).add_context(format!(
-                "{}/control_component_shuffle_payload_{} cannot be read",
-                bb_id, i
-            ))),
+            Err(e) => result.push(VerificationEvent::new_error_from_error(&e).add_context(
+                format!(
+                    "{}/control_component_shuffle_payload_{} cannot be read",
+                    bb_id, i
+                ),
+            )),
         }
     }
 
@@ -85,10 +89,29 @@ fn verify_for_bb_directory<B: BBDirectoryTrait>(bb_dir: &B) -> VerificationResul
             )));
             }
         }
-        Err(e) => result.push(VerificationEvent::new_error_from_error(&e).add_context(format!(
-            "{}/tally_component_shuffle_payload cannot be read",
-            bb_id
-        ))),
+        Err(e) => result.push(
+            VerificationEvent::new_error_from_error(&e).add_context(format!(
+                "{}/tally_component_shuffle_payload cannot be read",
+                bb_id
+            )),
+        ),
+    }
+
+    match bb_dir.tally_component_votes_payload() {
+        Ok(p) => {
+            if p.ballot_box_id != bb_id {
+                result.push(VerificationEvent::new_failure(&format!(
+                "bb_id (={}) in {}/tally_component_votes_payload is not the same than the directory",
+                &p.ballot_box_id, bb_id
+            )));
+            }
+        }
+        Err(e) => result.push(
+            VerificationEvent::new_error_from_error(&e).add_context(format!(
+                "{}/tally_component_votes_payload cannot be read",
+                bb_id
+            )),
+        ),
     }
 
     result
@@ -97,7 +120,13 @@ fn verify_for_bb_directory<B: BBDirectoryTrait>(bb_dir: &B) -> VerificationResul
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::config::test::{get_test_verifier_tally_dir as get_verifier_dir, CONFIG_TEST};
+    use crate::{
+        config::test::{
+            CONFIG_TEST, get_test_verifier_mock_tally_dir,
+            get_test_verifier_tally_dir as get_verifier_dir,
+        },
+        consts::NUMBER_CONTROL_COMPONENTS,
+    };
 
     #[test]
     fn test_ok() {
@@ -113,5 +142,105 @@ mod test {
             }
         }
         assert!(result.is_ok());
+    }
+
+    #[test]
+    fn change_in_tally_component_votes() {
+        let dir = get_verifier_dir();
+        for bb in dir.unwrap_tally().bb_directories().iter() {
+            let mut result = VerificationResult::new();
+            let mut mock_dir = get_test_verifier_mock_tally_dir();
+            mock_dir
+                .unwrap_tally_mut()
+                .bb_directory_mut(&bb.name())
+                .unwrap()
+                .mock_tally_component_votes_payload(|d| {
+                    d.ballot_box_id = "modified-bb-id".to_string();
+                });
+            fn_verification(&mock_dir, &CONFIG_TEST, &mut result);
+            assert!(!result.has_errors(), "Failed at bb {}", bb.name());
+            assert!(result.has_failures(), "Failed at bb {}", bb.name());
+        }
+    }
+
+    #[test]
+    fn change_in_tally_component_shuffle() {
+        let dir = get_verifier_dir();
+        for bb in dir.unwrap_tally().bb_directories().iter() {
+            let mut result = VerificationResult::new();
+            let mut mock_dir = get_test_verifier_mock_tally_dir();
+            mock_dir
+                .unwrap_tally_mut()
+                .bb_directory_mut(&bb.name())
+                .unwrap()
+                .mock_tally_component_shuffle_payload(|d| {
+                    d.ballot_box_id = "modified-ballot_box_id".to_string();
+                });
+            fn_verification(&mock_dir, &CONFIG_TEST, &mut result);
+            assert!(!result.has_errors(), "Failed at bb {}", bb.name());
+            assert!(result.has_failures(), "Failed at bb {}", bb.name());
+        }
+    }
+
+    #[test]
+    fn change_in_cc_bb() {
+        let dir = get_verifier_dir();
+        for bb in dir.unwrap_tally().bb_directories().iter() {
+            for j in 1..=NUMBER_CONTROL_COMPONENTS {
+                let mut result = VerificationResult::new();
+                let mut mock_dir = get_test_verifier_mock_tally_dir();
+                mock_dir
+                    .unwrap_tally_mut()
+                    .bb_directory_mut(&bb.name())
+                    .unwrap()
+                    .mock_control_component_ballot_box_payload(j, |d| {
+                        d.ballot_box_id = "modified-ballot_box_id".to_string();
+                    });
+                fn_verification(&mock_dir, &CONFIG_TEST, &mut result);
+                assert!(
+                    !result.has_errors(),
+                    "Failed at bb {} cc_bb {}",
+                    bb.name(),
+                    j
+                );
+                assert!(
+                    result.has_failures(),
+                    "Failed at bb {} cc_bb {}",
+                    bb.name(),
+                    j
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn change_in_cc_shuffle() {
+        let dir = get_verifier_dir();
+        for bb in dir.unwrap_tally().bb_directories().iter() {
+            for j in 1..=NUMBER_CONTROL_COMPONENTS {
+                let mut result = VerificationResult::new();
+                let mut mock_dir = get_test_verifier_mock_tally_dir();
+                mock_dir
+                    .unwrap_tally_mut()
+                    .bb_directory_mut(&bb.name())
+                    .unwrap()
+                    .mock_control_component_shuffle_payload(j, |d| {
+                        d.ballot_box_id = "modified-ballot_box_id".to_string();
+                    });
+                fn_verification(&mock_dir, &CONFIG_TEST, &mut result);
+                assert!(
+                    !result.has_errors(),
+                    "Failed at bb {} cc_bb {}",
+                    bb.name(),
+                    j
+                );
+                assert!(
+                    result.has_failures(),
+                    "Failed at bb {} cc_bb {}",
+                    bb.name(),
+                    j
+                );
+            }
+        }
     }
 }

@@ -169,11 +169,17 @@ impl<'a> VerifiySignatureTrait<'a> for ECH0222 {
 }
 
 #[cfg(test)]
-mod test {
+pub(super) mod test {
     use super::*;
     use crate::{
-        config::test::{get_keystore, get_test_verifier_tally_dir, test_datasets_tally_path},
-        file_structure::{ContextDirectoryTrait, TallyDirectoryTrait, VerificationDirectoryTrait},
+        config::test::{
+            get_keystore, get_test_verifier_tally_dir, test_data_path, test_datasets_tally_path,
+        },
+        file_structure::{
+            ContextDirectoryTrait, TallyDirectoryTrait, VerificationDirectory,
+            VerificationDirectoryTrait,
+        },
+        verification::VerificationPeriod,
     };
     use std::fs;
 
@@ -185,6 +191,7 @@ mod test {
             .unwrap(),
         )
     }
+
     #[test]
     fn read_data_set() {
         let data_res = get_data_res();
@@ -233,6 +240,48 @@ mod test {
     fn compare_ech0222() {
         let dir = get_test_verifier_tally_dir();
         let loaded = get_data_res().unwrap().get_data().unwrap();
+        let calculated = ECH0222Data::create_ech0222_data(
+            &dir.context()
+                .election_event_context_payload()
+                .as_ref()
+                .unwrap()
+                .election_event_context,
+            dir.context()
+                .election_event_configuration()
+                .as_ref()
+                .unwrap()
+                .get_data()
+                .unwrap()
+                .as_ref(),
+            dir.unwrap_tally().bb_directories(),
+        )
+        .unwrap();
+        let diff = loaded.as_ref().calculate_differences(&calculated);
+        assert!(
+            diff.is_empty(),
+            "{:?}",
+            diff.iter()
+                .map(|d| d.to_string())
+                .collect::<Vec<_>>()
+                .join("\n")
+        )
+    }
+
+    #[test]
+    fn compare_ech0222_with_writeins() {
+        let test_dir_path = test_data_path().join("ech_0222_with_write_ins");
+        let dir = VerificationDirectory::new(&VerificationPeriod::Tally, &test_dir_path);
+        let loaded = ECH0222::decode_xml(
+            fs::read_to_string(
+                test_dir_path
+                    .join("tally")
+                    .join("eCH-0222_v3-0_SG_20251110_TT01.xml"),
+            )
+            .unwrap(),
+        )
+        .unwrap()
+        .get_data()
+        .unwrap();
         let calculated = ECH0222Data::create_ech0222_data(
             &dir.context()
                 .election_event_context_payload()

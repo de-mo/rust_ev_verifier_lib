@@ -22,8 +22,8 @@ use crate::{
         TallyComponentShufflePayload,
     },
     file_structure::{
-        tally_directory::BBDirectoryTrait, ContextDirectoryTrait, TallyDirectoryTrait,
-        VerificationDirectoryTrait,
+        ContextDirectoryTrait, TallyDirectoryTrait, VerificationDirectoryTrait,
+        tally_directory::BBDirectoryTrait,
     },
 };
 use rust_ev_system_library::preliminaries::PTableTrait;
@@ -85,11 +85,13 @@ fn verify_pro_ballot_box<B: BBDirectoryTrait>(bb_dir: &B, delta: usize) -> Verif
                     i
                 ),
             ),
-            Err(e) => res.push(VerificationEvent::new_error_from_error(&e).add_context(format!(
-                "{}/control_component_ballot_box_payload_.{} has wrong format",
-                bb_dir.name(),
-                i
-            ))),
+            Err(e) => res.push(
+                VerificationEvent::new_error_from_error(&e).add_context(format!(
+                    "{}/control_component_ballot_box_payload_.{} has wrong format",
+                    bb_dir.name(),
+                    i
+                )),
+            ),
         }
     }
 
@@ -103,11 +105,13 @@ fn verify_pro_ballot_box<B: BBDirectoryTrait>(bb_dir: &B, delta: usize) -> Verif
                     i
                 ),
             ),
-            Err(e) => res.push(VerificationEvent::new_error_from_error(&e).add_context(format!(
-                "{}/control_component_ballot_box_payload_.{} has wrong format",
-                bb_dir.name(),
-                i
-            ))),
+            Err(e) => res.push(
+                VerificationEvent::new_error_from_error(&e).add_context(format!(
+                    "{}/control_component_ballot_box_payload_.{} has wrong format",
+                    bb_dir.name(),
+                    i
+                )),
+            ),
         }
     }
 
@@ -116,10 +120,12 @@ fn verify_pro_ballot_box<B: BBDirectoryTrait>(bb_dir: &B, delta: usize) -> Verif
             &verify_tally_shuffle_payload(&tally_shuffle_payload, delta),
             format!("{}/tally_component_shuffle_payload", bb_dir.name(),),
         ),
-        Err(e) => res.push(VerificationEvent::new_error_from_error(&e).add_context(format!(
-            "{}/tally_component_shuffle_payload has wrong format",
-            bb_dir.name(),
-        ))),
+        Err(e) => res.push(
+            VerificationEvent::new_error_from_error(&e).add_context(format!(
+                "{}/tally_component_shuffle_payload has wrong format",
+                bb_dir.name(),
+            )),
+        ),
     }
     res
 }
@@ -184,8 +190,16 @@ fn verify_vec_ciphertexts(data: &[&Ciphertext], delta: usize) -> VerificationRes
 
 #[cfg(test)]
 mod test {
+    use rust_ev_system_library::rust_ev_crypto_primitives::prelude::Integer;
+
     use super::*;
-    use crate::config::test::{get_test_verifier_tally_dir as get_verifier_dir, CONFIG_TEST};
+    use crate::{
+        config::test::{
+            CONFIG_TEST, get_test_verifier_mock_tally_dir,
+            get_test_verifier_tally_dir as get_verifier_dir,
+        },
+        consts::NUMBER_CONTROL_COMPONENTS,
+    };
 
     #[test]
     fn test_ok() {
@@ -193,5 +207,180 @@ mod test {
         let mut result = VerificationResult::new();
         fn_verification(&dir, &CONFIG_TEST, &mut result);
         assert!(result.is_ok());
+    }
+
+    #[test]
+    fn remove_ciphertext_tally_shuffle() {
+        let dir = get_verifier_dir();
+        let nb = dir.unwrap_tally().bb_directories().len();
+        for i in 0..nb {
+            for c_i in 0..dir.unwrap_tally().bb_directories()[i]
+                .tally_component_shuffle_payload()
+                .unwrap()
+                .verifiable_shuffle
+                .shuffled_ciphertexts
+                .len()
+            {
+                let mut result = VerificationResult::new();
+                let mut mock_dir = get_test_verifier_mock_tally_dir();
+                mock_dir.unwrap_tally_mut().bb_directories_mut()[i]
+                    .mock_tally_component_shuffle_payload(|d| {
+                        d.verifiable_shuffle.shuffled_ciphertexts[c_i].phis.pop();
+                    });
+                fn_verification(&mock_dir, &CONFIG_TEST, &mut result);
+                assert!(!result.has_errors());
+                assert!(result.has_failures());
+            }
+        }
+    }
+
+    #[test]
+    fn add_ciphertext_tally_shuffle() {
+        let dir = get_verifier_dir();
+        let nb = dir.unwrap_tally().bb_directories().len();
+        for i in 0..nb {
+            for c_i in 0..dir.unwrap_tally().bb_directories()[i]
+                .tally_component_shuffle_payload()
+                .unwrap()
+                .verifiable_shuffle
+                .shuffled_ciphertexts
+                .len()
+            {
+                let mut result = VerificationResult::new();
+                let mut mock_dir = get_test_verifier_mock_tally_dir();
+                mock_dir.unwrap_tally_mut().bb_directories_mut()[i]
+                    .mock_tally_component_shuffle_payload(|d| {
+                        d.verifiable_shuffle.shuffled_ciphertexts[c_i]
+                            .phis
+                            .push(Integer::from(123usize));
+                    });
+                fn_verification(&mock_dir, &CONFIG_TEST, &mut result);
+                assert!(!result.has_errors());
+                assert!(result.has_failures());
+            }
+        }
+    }
+
+    #[test]
+    fn remove_ciphertext_cc_shuffle() {
+        let dir = get_verifier_dir();
+        let nb = dir.unwrap_tally().bb_directories().len();
+        for i in 0..nb {
+            for j in 1..=NUMBER_CONTROL_COMPONENTS {
+                for c_i in 0..dir.unwrap_tally().bb_directories()[i]
+                    .control_component_shuffle_payload_iter()
+                    .find(|(idx, _)| *idx == j)
+                    .unwrap()
+                    .1
+                    .unwrap()
+                    .verifiable_shuffle
+                    .shuffled_ciphertexts
+                    .len()
+                {
+                    let mut result = VerificationResult::new();
+                    let mut mock_dir = get_test_verifier_mock_tally_dir();
+                    mock_dir.unwrap_tally_mut().bb_directories_mut()[i]
+                        .mock_control_component_shuffle_payload(j, |d| {
+                            d.verifiable_shuffle.shuffled_ciphertexts[c_i].phis.pop();
+                        });
+                    fn_verification(&mock_dir, &CONFIG_TEST, &mut result);
+                    assert!(!result.has_errors());
+                    assert!(result.has_failures());
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn add_ciphertext_cc_shuffle() {
+        let dir = get_verifier_dir();
+        let nb = dir.unwrap_tally().bb_directories().len();
+        for i in 0..nb {
+            for j in 1..=NUMBER_CONTROL_COMPONENTS {
+                for c_i in 0..dir.unwrap_tally().bb_directories()[i]
+                    .control_component_shuffle_payload_iter()
+                    .find(|(idx, _)| *idx == j)
+                    .unwrap()
+                    .1
+                    .unwrap()
+                    .verifiable_shuffle
+                    .shuffled_ciphertexts
+                    .len()
+                {
+                    let mut result = VerificationResult::new();
+                    let mut mock_dir = get_test_verifier_mock_tally_dir();
+                    mock_dir.unwrap_tally_mut().bb_directories_mut()[i]
+                        .mock_control_component_shuffle_payload(j, |d| {
+                            d.verifiable_shuffle.shuffled_ciphertexts[c_i]
+                                .phis
+                                .push(Integer::from(123usize));
+                        });
+                    fn_verification(&mock_dir, &CONFIG_TEST, &mut result);
+                    assert!(!result.has_errors());
+                    assert!(result.has_failures());
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn remove_ciphertext_cc_bb() {
+        let dir = get_verifier_dir();
+        let nb = dir.unwrap_tally().bb_directories().len();
+        for i in 0..nb {
+            for j in 1..=NUMBER_CONTROL_COMPONENTS {
+                for c_i in 0..dir.unwrap_tally().bb_directories()[i]
+                    .control_component_ballot_box_payload_iter()
+                    .find(|(idx, _)| *idx == j)
+                    .unwrap()
+                    .1
+                    .unwrap()
+                    .confirmed_encrypted_votes
+                    .len()
+                {
+                    let mut result = VerificationResult::new();
+                    let mut mock_dir = get_test_verifier_mock_tally_dir();
+                    mock_dir.unwrap_tally_mut().bb_directories_mut()[i]
+                        .mock_control_component_ballot_box_payload(j, |d| {
+                            d.confirmed_encrypted_votes[c_i].encrypted_vote.phis.pop();
+                        });
+                    fn_verification(&mock_dir, &CONFIG_TEST, &mut result);
+                    assert!(!result.has_errors());
+                    assert!(result.has_failures());
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn add_ciphertext_cc_bb() {
+        let dir = get_verifier_dir();
+        let nb = dir.unwrap_tally().bb_directories().len();
+        for i in 0..nb {
+            for j in 1..=NUMBER_CONTROL_COMPONENTS {
+                for c_i in 0..dir.unwrap_tally().bb_directories()[i]
+                    .control_component_ballot_box_payload_iter()
+                    .find(|(idx, _)| *idx == j)
+                    .unwrap()
+                    .1
+                    .unwrap()
+                    .confirmed_encrypted_votes
+                    .len()
+                {
+                    let mut result = VerificationResult::new();
+                    let mut mock_dir = get_test_verifier_mock_tally_dir();
+                    mock_dir.unwrap_tally_mut().bb_directories_mut()[i]
+                        .mock_control_component_ballot_box_payload(j, |d| {
+                            d.confirmed_encrypted_votes[c_i]
+                                .encrypted_vote
+                                .phis
+                                .push(Integer::from(123usize));
+                        });
+                    fn_verification(&mock_dir, &CONFIG_TEST, &mut result);
+                    assert!(!result.has_errors());
+                    assert!(result.has_failures());
+                }
+            }
+        }
     }
 }

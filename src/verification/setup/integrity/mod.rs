@@ -22,34 +22,36 @@ use super::super::{
 use crate::{
     config::VerifierConfig,
     file_structure::{
-        context_directory::{ContextDirectoryTrait, ContextVCSDirectoryTrait},
         VerificationDirectoryTrait,
+        context_directory::{ContextDirectoryTrait, ContextVCSDirectoryTrait},
     },
-    verification::{meta_data::VerificationMetaDataList, VerificationError, VerificationErrorImpl},
+    verification::{VerificationError, VerificationErrorImpl, meta_data::VerificationMetaDataList},
 };
-use rust_ev_system_library::rust_ev_crypto_primitives::prelude::VerifyDomainTrait;
+use rust_ev_system_library::rust_ev_crypto_primitives::prelude::{EmptyContext, VerifyDomainTrait};
 
 pub fn get_verifications<'a>(
     metadata_list: &'a VerificationMetaDataList,
     config: &'static VerifierConfig,
 ) -> Result<VerificationList<'a>, VerificationError> {
-    Ok(VerificationList(vec![Verification::new(
-        "04.01",
-        "VerifySetupIntegrity",
-        fn_0401_verify_setup_integrity,
-        metadata_list,
-        config,
-    )
-    .map_err(|e| VerificationErrorImpl::GetVerification {
-        name: "VerifySetupIntegrity",
-        source: Box::new(e),
-    })?]))
+    Ok(VerificationList(vec![
+        Verification::new(
+            "04.01",
+            "VerifySetupIntegrity",
+            fn_0401_verify_setup_integrity,
+            metadata_list,
+            config,
+        )
+        .map_err(|e| VerificationErrorImpl::GetVerification {
+            name: "VerifySetupIntegrity",
+            source: Box::new(e),
+        })?,
+    ]))
 }
 
 fn validate_context_vcs_dir<V: ContextVCSDirectoryTrait>(dir: &V, result: &mut VerificationResult) {
     match dir.setup_component_tally_data_payload() {
         Ok(d) => {
-            for e in d.verifiy_domain() {
+            for e in d.verifiy_domain(&EmptyContext::default()) {
                 result.push(VerificationEvent::new_failure(&e).add_context(format!(
                     "Error verifying domain for {}/setup_component_tally_data_payload",
                     dir.name()
@@ -66,7 +68,7 @@ fn validate_context_vcs_dir<V: ContextVCSDirectoryTrait>(dir: &V, result: &mut V
 fn validate_context_dir<C: ContextDirectoryTrait>(dir: &C, result: &mut VerificationResult) {
     match dir.election_event_context_payload() {
         Ok(d) => {
-            for e in d.verifiy_domain() {
+            for e in d.verifiy_domain(&EmptyContext::default()) {
                 result.push(
                     VerificationEvent::new_failure(&e)
                         .add_context("Error verifying domain for election_event_context_payload"),
@@ -80,7 +82,7 @@ fn validate_context_dir<C: ContextDirectoryTrait>(dir: &C, result: &mut Verifica
     }
     match dir.setup_component_public_keys_payload() {
         Ok(d) => {
-            for e in d.verifiy_domain() {
+            for e in d.verifiy_domain(&EmptyContext::default()) {
                 result.push(
                     VerificationEvent::new_failure(&e).add_context(
                         "Error verifying domain for setup_component_public_keys_payload",
@@ -95,7 +97,7 @@ fn validate_context_dir<C: ContextDirectoryTrait>(dir: &C, result: &mut Verifica
     }
     match dir.election_event_configuration() {
         Ok(d) => {
-            for e in d.verifiy_domain() {
+            for e in d.verifiy_domain(&EmptyContext::default()) {
                 result.push(
                     VerificationEvent::new_failure(&e)
                         .add_context("Error verifying domain for election_event_configuration"),
@@ -110,7 +112,7 @@ fn validate_context_dir<C: ContextDirectoryTrait>(dir: &C, result: &mut Verifica
     for (i, f) in dir.control_component_public_keys_payload_iter() {
         match f {
             Ok(d) => {
-                for e in d.verifiy_domain() {
+                for e in d.verifiy_domain(&EmptyContext::default()) {
                     result.push(VerificationEvent::new_failure(&e).add_context(format!(
                         "Error verifying domain for control_component_public_keys_payload.{i}"
                     )))
@@ -138,7 +140,7 @@ fn fn_0401_verify_setup_integrity<D: VerificationDirectoryTrait>(
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::config::test::{get_test_verifier_setup_dir as get_verifier_dir, CONFIG_TEST};
+    use crate::config::test::{CONFIG_TEST, get_test_verifier_setup_dir as get_verifier_dir};
 
     #[test]
     fn test_ok() {

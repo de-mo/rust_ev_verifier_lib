@@ -18,8 +18,8 @@ use super::super::super::result::{VerificationEvent, VerificationResult};
 use crate::{
     config::VerifierConfig,
     file_structure::{
-        tally_directory::BBDirectoryTrait, ContextDirectoryTrait, TallyDirectoryTrait,
-        VerificationDirectoryTrait,
+        ContextDirectoryTrait, TallyDirectoryTrait, VerificationDirectoryTrait,
+        tally_directory::BBDirectoryTrait,
     },
 };
 use rust_ev_system_library::preliminaries::PTableTrait;
@@ -74,12 +74,12 @@ fn verify_pro_ballot_box<B: BBDirectoryTrait>(bb_dir: &B, delta: usize) -> Verif
     let tally_shuffle_payload = match bb_dir.tally_component_shuffle_payload() {
         Ok(tally_shuffle_payload) => tally_shuffle_payload,
         Err(e) => {
-            return VerificationResult::from(&VerificationEvent::new_error_from_error(&e).add_context(
-                format!(
+            return VerificationResult::from(
+                &VerificationEvent::new_error_from_error(&e).add_context(format!(
                     "{}/tally_component_shuffle_payload has wrong format",
                     bb_dir.name(),
-                ),
-            ))
+                )),
+            );
         }
     };
 
@@ -130,7 +130,11 @@ fn verify_pro_ballot_box<B: BBDirectoryTrait>(bb_dir: &B, delta: usize) -> Verif
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::config::test::{get_test_verifier_tally_dir as get_verifier_dir, CONFIG_TEST};
+    use crate::config::test::{
+        CONFIG_TEST, get_test_verifier_mock_tally_dir,
+        get_test_verifier_tally_dir as get_verifier_dir,
+    };
+    use rust_ev_system_library::rust_ev_crypto_primitives::prelude::Integer;
 
     #[test]
     fn test_ok() {
@@ -146,5 +150,105 @@ mod test {
             }
         }
         assert!(result.is_ok());
+    }
+
+    #[test]
+    fn remove_plaintext_tally_shuffle() {
+        let dir = get_verifier_dir();
+        let nb = dir.unwrap_tally().bb_directories().len();
+        for i in 0..nb {
+            for c_i in 0..dir.unwrap_tally().bb_directories()[i]
+                .tally_component_shuffle_payload()
+                .unwrap()
+                .verifiable_plaintext_decryption
+                .decrypted_votes
+                .len()
+            {
+                {
+                    // Decrypted votes
+                    let mut result = VerificationResult::new();
+                    let mut mock_dir = get_test_verifier_mock_tally_dir();
+                    mock_dir.unwrap_tally_mut().bb_directories_mut()[i]
+                        .mock_tally_component_shuffle_payload(|d| {
+                            d.verifiable_plaintext_decryption.decrypted_votes[c_i]
+                                .message
+                                .pop();
+                        });
+                    fn_verification(&mock_dir, &CONFIG_TEST, &mut result);
+                    assert!(
+                        !result.has_errors(),
+                        "Failed for decrypted votes at position {c_i}"
+                    );
+                    assert!(
+                        result.has_failures(),
+                        "Failed for decrypted votes at position {c_i}"
+                    );
+                }
+                {
+                    // Decryption proofs
+                    let mut result = VerificationResult::new();
+                    let mut mock_dir = get_test_verifier_mock_tally_dir();
+                    mock_dir.unwrap_tally_mut().bb_directories_mut()[i]
+                        .mock_tally_component_shuffle_payload(|d| {
+                            d.verifiable_plaintext_decryption.decryption_proofs[c_i]
+                                .z
+                                .pop();
+                        });
+                    fn_verification(&mock_dir, &CONFIG_TEST, &mut result);
+                    assert!(
+                        !result.has_errors(),
+                        "Failed for decrypted votes at position {c_i}"
+                    );
+                    assert!(
+                        result.has_failures(),
+                        "Failed for decrypted votes at position {c_i}"
+                    );
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn add_plaintext_tally_shuffle() {
+        let dir = get_verifier_dir();
+        let nb = dir.unwrap_tally().bb_directories().len();
+        for i in 0..nb {
+            for c_i in 0..dir.unwrap_tally().bb_directories()[i]
+                .tally_component_shuffle_payload()
+                .unwrap()
+                .verifiable_plaintext_decryption
+                .decrypted_votes
+                .len()
+            {
+                {
+                    // Decrypted votes
+                    let mut result = VerificationResult::new();
+                    let mut mock_dir = get_test_verifier_mock_tally_dir();
+                    mock_dir.unwrap_tally_mut().bb_directories_mut()[i]
+                        .mock_tally_component_shuffle_payload(|d| {
+                            d.verifiable_plaintext_decryption.decrypted_votes[c_i]
+                                .message
+                                .push(Integer::from(123usize));
+                        });
+                    fn_verification(&mock_dir, &CONFIG_TEST, &mut result);
+                    assert!(!result.has_errors());
+                    assert!(result.has_failures());
+                }
+                {
+                    // Decrypted proofs
+                    let mut result = VerificationResult::new();
+                    let mut mock_dir = get_test_verifier_mock_tally_dir();
+                    mock_dir.unwrap_tally_mut().bb_directories_mut()[i]
+                        .mock_tally_component_shuffle_payload(|d| {
+                            d.verifiable_plaintext_decryption.decryption_proofs[c_i]
+                                .z
+                                .push(Integer::from(123usize));
+                        });
+                    fn_verification(&mock_dir, &CONFIG_TEST, &mut result);
+                    assert!(!result.has_errors());
+                    assert!(result.has_failures());
+                }
+            }
+        }
     }
 }

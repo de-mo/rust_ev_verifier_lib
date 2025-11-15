@@ -18,9 +18,9 @@ use super::super::super::result::{VerificationEvent, VerificationResult};
 use crate::{
     config::VerifierConfig,
     file_structure::{
+        VerificationDirectoryTrait,
         context_directory::ContextDirectoryTrait,
         tally_directory::{BBDirectoryTrait, TallyDirectoryTrait},
-        VerificationDirectoryTrait,
     },
 };
 use rust_ev_system_library::rust_ev_crypto_primitives::prelude::elgamal::EncryptionParameters;
@@ -53,11 +53,13 @@ fn verify_encryption_group_for_tally_bb_dir<B: BBDirectoryTrait>(
                 &verify_encryption_group(&s.encryption_group, eg),
                 format!("{}/control_component_ballot_box_payload.{}", dir.name(), i),
             ),
-            Err(e) => result.push(VerificationEvent::new_error_from_error(&e).add_context(format!(
-                "{}/control_component_ballot_box_payload.{} has wrong format",
-                dir.name(),
-                i
-            ))),
+            Err(e) => result.push(VerificationEvent::new_error_from_error(&e).add_context(
+                format!(
+                    "{}/control_component_ballot_box_payload.{} has wrong format",
+                    dir.name(),
+                    i
+                ),
+            )),
         }
     }
 
@@ -67,11 +69,13 @@ fn verify_encryption_group_for_tally_bb_dir<B: BBDirectoryTrait>(
                 &verify_encryption_group(&s.encryption_group, eg),
                 format!("{}/control_component_shuffle_payload.{}", dir.name(), i),
             ),
-            Err(e) => result.push(VerificationEvent::new_error_from_error(&e).add_context(format!(
-                "{}/control_component_shuffle_payload.{} has wrong format",
-                dir.name(),
-                i
-            ))),
+            Err(e) => result.push(VerificationEvent::new_error_from_error(&e).add_context(
+                format!(
+                    "{}/control_component_shuffle_payload.{} has wrong format",
+                    dir.name(),
+                    i
+                ),
+            )),
         }
     }
 
@@ -80,10 +84,12 @@ fn verify_encryption_group_for_tally_bb_dir<B: BBDirectoryTrait>(
             &verify_encryption_group(&s.encryption_group, eg),
             format!("{}/tally_component_shuffle_payload", dir.name()),
         ),
-        Err(e) => result.push(VerificationEvent::new_error_from_error(&e).add_context(format!(
-            "{}/tally_component_shuffle_payload has wrong format",
-            dir.name()
-        ))),
+        Err(e) => result.push(
+            VerificationEvent::new_error_from_error(&e).add_context(format!(
+                "{}/tally_component_shuffle_payload has wrong format",
+                dir.name()
+            )),
+        ),
     }
 
     match dir.tally_component_votes_payload() {
@@ -91,10 +97,12 @@ fn verify_encryption_group_for_tally_bb_dir<B: BBDirectoryTrait>(
             &verify_encryption_group(&s.encryption_group, eg),
             format!("{}/tally_component_votes_payload", dir.name()),
         ),
-        Err(e) => result.push(VerificationEvent::new_error_from_error(&e).add_context(format!(
-            "{}/tally_component_votes_payload has wrong format",
-            dir.name()
-        ))),
+        Err(e) => result.push(
+            VerificationEvent::new_error_from_error(&e).add_context(format!(
+                "{}/tally_component_votes_payload has wrong format",
+                dir.name()
+            )),
+        ),
     }
 }
 
@@ -105,7 +113,7 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
 ) {
     let config_dir = dir.context();
     let tally_dir = dir.unwrap_tally();
-    let payload = match config_dir.election_event_context_payload() {
+    let ee_context_payload = match config_dir.election_event_context_payload() {
         Ok(p) => p,
         Err(e) => {
             result.push(
@@ -115,7 +123,7 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
             return;
         }
     };
-    let eg = &payload.encryption_group;
+    let eg = &ee_context_payload.encryption_group;
 
     for bb in tally_dir.bb_directories().iter() {
         verify_encryption_group_for_tally_bb_dir(bb, eg, result);
@@ -127,7 +135,13 @@ mod test {
     use rust_ev_system_library::rust_ev_crypto_primitives::prelude::Integer;
 
     use super::*;
-    use crate::config::test::{get_test_verifier_tally_dir as get_verifier_dir, CONFIG_TEST};
+    use crate::{
+        config::test::{
+            CONFIG_TEST, get_test_verifier_mock_tally_dir,
+            get_test_verifier_tally_dir as get_verifier_dir,
+        },
+        consts::NUMBER_CONTROL_COMPONENTS,
+    };
 
     #[test]
     fn test_ok() {
@@ -170,5 +184,213 @@ mod test {
         result.append_with_context(&verify_encryption_group(&eg, &eg_expected), "toto");
         assert!(!result.has_errors());
         assert_eq!(result.failures().len(), 3)
+    }
+
+    #[test]
+    fn change_context() {
+        // p
+        let mut result = VerificationResult::new();
+        let mut mock_dir = get_test_verifier_mock_tally_dir();
+        fn_verification(&mock_dir, &CONFIG_TEST, &mut result);
+        assert!(result.is_ok());
+        mock_dir
+            .context_mut()
+            .mock_election_event_context_payload(|d| {
+                d.encryption_group.set_p(&Integer::from(1234usize));
+            });
+        fn_verification(&mock_dir, &CONFIG_TEST, &mut result);
+        assert!(result.has_failures());
+        // q
+        let mut result = VerificationResult::new();
+        let mut mock_dir = get_test_verifier_mock_tally_dir();
+        fn_verification(&mock_dir, &CONFIG_TEST, &mut result);
+        assert!(result.is_ok());
+        mock_dir
+            .context_mut()
+            .mock_election_event_context_payload(|d| {
+                d.encryption_group.set_q(&Integer::from(1234usize));
+            });
+        fn_verification(&mock_dir, &CONFIG_TEST, &mut result);
+        assert!(result.has_failures());
+        // g
+        let mut result = VerificationResult::new();
+        let mut mock_dir = get_test_verifier_mock_tally_dir();
+        fn_verification(&mock_dir, &CONFIG_TEST, &mut result);
+        assert!(result.is_ok());
+        mock_dir
+            .context_mut()
+            .mock_election_event_context_payload(|d| {
+                d.encryption_group.set_g(&Integer::from(1234usize));
+            });
+        fn_verification(&mock_dir, &CONFIG_TEST, &mut result);
+        assert!(!result.has_errors());
+        assert!(result.has_failures());
+    }
+
+    #[test]
+    fn change_tally_shuffle() {
+        let nb = get_test_verifier_mock_tally_dir()
+            .unwrap_tally()
+            .bb_directories()
+            .len();
+        for i in 0..nb {
+            // p
+            let mut result = VerificationResult::new();
+            let mut mock_dir = get_test_verifier_mock_tally_dir();
+            mock_dir.unwrap_tally_mut().bb_directories_mut()[i]
+                .mock_tally_component_shuffle_payload(|d| {
+                    d.encryption_group.set_p(&Integer::from(1234usize));
+                });
+            fn_verification(&mock_dir, &CONFIG_TEST, &mut result);
+            assert!(!result.has_errors());
+            assert!(result.has_failures());
+            // q
+            let mut result = VerificationResult::new();
+            let mut mock_dir = get_test_verifier_mock_tally_dir();
+            mock_dir.unwrap_tally_mut().bb_directories_mut()[i]
+                .mock_tally_component_shuffle_payload(|d| {
+                    d.encryption_group.set_q(&Integer::from(1234usize));
+                });
+            fn_verification(&mock_dir, &CONFIG_TEST, &mut result);
+            assert!(!result.has_errors());
+            assert!(result.has_failures());
+            // g
+            let mut result = VerificationResult::new();
+            let mut mock_dir = get_test_verifier_mock_tally_dir();
+            mock_dir.unwrap_tally_mut().bb_directories_mut()[i]
+                .mock_tally_component_shuffle_payload(|d| {
+                    d.encryption_group.set_g(&Integer::from(1234usize));
+                });
+            fn_verification(&mock_dir, &CONFIG_TEST, &mut result);
+            assert!(!result.has_errors());
+            assert!(result.has_failures());
+        }
+    }
+
+    #[test]
+    fn change_tally_votes() {
+        let nb = get_test_verifier_mock_tally_dir()
+            .unwrap_tally()
+            .bb_directories()
+            .len();
+        for i in 0..nb {
+            // p
+            let mut result = VerificationResult::new();
+            let mut mock_dir = get_test_verifier_mock_tally_dir();
+            mock_dir.unwrap_tally_mut().bb_directories_mut()[i].mock_tally_component_votes_payload(
+                |d| {
+                    d.encryption_group.set_p(&Integer::from(1234usize));
+                },
+            );
+            fn_verification(&mock_dir, &CONFIG_TEST, &mut result);
+            assert!(!result.has_errors());
+            assert!(result.has_failures());
+            // q
+            let mut result = VerificationResult::new();
+            let mut mock_dir = get_test_verifier_mock_tally_dir();
+            mock_dir.unwrap_tally_mut().bb_directories_mut()[i].mock_tally_component_votes_payload(
+                |d| {
+                    d.encryption_group.set_q(&Integer::from(1234usize));
+                },
+            );
+            fn_verification(&mock_dir, &CONFIG_TEST, &mut result);
+            assert!(!result.has_errors());
+            assert!(result.has_failures());
+            // g
+            let mut result = VerificationResult::new();
+            let mut mock_dir = get_test_verifier_mock_tally_dir();
+            mock_dir.unwrap_tally_mut().bb_directories_mut()[i].mock_tally_component_votes_payload(
+                |d| {
+                    d.encryption_group.set_g(&Integer::from(1234usize));
+                },
+            );
+            fn_verification(&mock_dir, &CONFIG_TEST, &mut result);
+            assert!(!result.has_errors());
+            assert!(result.has_failures());
+        }
+    }
+
+    #[test]
+    fn change_cc_bb() {
+        let nb = get_test_verifier_mock_tally_dir()
+            .unwrap_tally()
+            .bb_directories()
+            .len();
+        for i in 0..nb {
+            for j in 1..=NUMBER_CONTROL_COMPONENTS {
+                // p
+                let mut result = VerificationResult::new();
+                let mut mock_dir = get_test_verifier_mock_tally_dir();
+                mock_dir.unwrap_tally_mut().bb_directories_mut()[i]
+                    .mock_control_component_ballot_box_payload(j, |d| {
+                        d.encryption_group.set_p(&Integer::from(1234usize));
+                    });
+                fn_verification(&mock_dir, &CONFIG_TEST, &mut result);
+                assert!(!result.has_errors());
+                assert!(result.has_failures());
+                // q
+                let mut result = VerificationResult::new();
+                let mut mock_dir = get_test_verifier_mock_tally_dir();
+                mock_dir.unwrap_tally_mut().bb_directories_mut()[i]
+                    .mock_control_component_ballot_box_payload(j, |d| {
+                        d.encryption_group.set_q(&Integer::from(1234usize));
+                    });
+                fn_verification(&mock_dir, &CONFIG_TEST, &mut result);
+                assert!(!result.has_errors());
+                assert!(result.has_failures());
+                // g
+                let mut result = VerificationResult::new();
+                let mut mock_dir = get_test_verifier_mock_tally_dir();
+                mock_dir.unwrap_tally_mut().bb_directories_mut()[i]
+                    .mock_control_component_ballot_box_payload(j, |d| {
+                        d.encryption_group.set_g(&Integer::from(1234usize));
+                    });
+                fn_verification(&mock_dir, &CONFIG_TEST, &mut result);
+                assert!(!result.has_errors());
+                assert!(result.has_failures());
+            }
+        }
+    }
+
+    #[test]
+    fn change_cc_shuffle() {
+        let nb = get_test_verifier_mock_tally_dir()
+            .unwrap_tally()
+            .bb_directories()
+            .len();
+        for i in 0..nb {
+            for j in 1..=NUMBER_CONTROL_COMPONENTS {
+                // p
+                let mut result = VerificationResult::new();
+                let mut mock_dir = get_test_verifier_mock_tally_dir();
+                mock_dir.unwrap_tally_mut().bb_directories_mut()[i]
+                    .mock_control_component_shuffle_payload(j, |d| {
+                        d.encryption_group.set_p(&Integer::from(1234usize));
+                    });
+                fn_verification(&mock_dir, &CONFIG_TEST, &mut result);
+                assert!(!result.has_errors());
+                assert!(result.has_failures());
+                // q
+                let mut result = VerificationResult::new();
+                let mut mock_dir = get_test_verifier_mock_tally_dir();
+                mock_dir.unwrap_tally_mut().bb_directories_mut()[i]
+                    .mock_control_component_shuffle_payload(j, |d| {
+                        d.encryption_group.set_q(&Integer::from(1234usize));
+                    });
+                fn_verification(&mock_dir, &CONFIG_TEST, &mut result);
+                assert!(!result.has_errors());
+                assert!(result.has_failures());
+                // g
+                let mut result = VerificationResult::new();
+                let mut mock_dir = get_test_verifier_mock_tally_dir();
+                mock_dir.unwrap_tally_mut().bb_directories_mut()[i]
+                    .mock_control_component_shuffle_payload(j, |d| {
+                        d.encryption_group.set_g(&Integer::from(1234usize));
+                    });
+                fn_verification(&mock_dir, &CONFIG_TEST, &mut result);
+                assert!(!result.has_errors());
+                assert!(result.has_failures());
+            }
+        }
     }
 }

@@ -22,8 +22,8 @@ use crate::{
         setup_component_tally_data_payload::SetupComponentTallyDataPayload,
     },
     file_structure::{
-        context_directory::{ContextDirectoryTrait, ContextVCSDirectoryTrait},
         VerificationDirectoryTrait,
+        context_directory::{ContextDirectoryTrait, ContextVCSDirectoryTrait},
     },
 };
 use std::collections::HashSet;
@@ -120,7 +120,10 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::config::test::{get_test_verifier_setup_dir as get_verifier_dir, CONFIG_TEST};
+    use crate::config::test::{
+        CONFIG_TEST, get_test_verifier_mock_setup_dir,
+        get_test_verifier_setup_dir as get_verifier_dir,
+    };
 
     #[test]
     fn test_ok() {
@@ -136,5 +139,138 @@ mod test {
             }
         }
         assert!(result.is_ok());
+    }
+
+    #[test]
+    fn add_vc_id() {
+        let dir = get_verifier_dir();
+        for vcs in dir.context().vcs_directories().iter() {
+            let mut result = VerificationResult::new();
+            let mut mock_dir = get_test_verifier_mock_setup_dir();
+            mock_dir
+                .context_mut()
+                .vcs_directory_mut(&vcs.name())
+                .unwrap()
+                .mock_setup_component_tally_data_payload(|d| {
+                    d.verification_card_ids.push("new-vc-id".to_string());
+                });
+            fn_verification(&mock_dir, &CONFIG_TEST, &mut result);
+            assert!(!result.has_errors(), "Failed at vcs {}", vcs.name());
+            assert!(result.has_failures(), "Failed at VCS {}", vcs.name());
+        }
+    }
+
+    #[test]
+    fn remove_vc_id() {
+        let dir = get_verifier_dir();
+        for vcs in dir.context().vcs_directories().iter() {
+            let mut result = VerificationResult::new();
+            let mut mock_dir = get_test_verifier_mock_setup_dir();
+            mock_dir
+                .context_mut()
+                .vcs_directory_mut(&vcs.name())
+                .unwrap()
+                .mock_setup_component_tally_data_payload(|d| {
+                    d.verification_card_ids.pop();
+                });
+            fn_verification(&mock_dir, &CONFIG_TEST, &mut result);
+            assert!(!result.has_errors(), "Failed at vcs {}", vcs.name());
+            assert!(result.has_failures(), "Failed at VCS {}", vcs.name());
+        }
+    }
+
+    #[test]
+    fn duplicate_in_same_vcs() {
+        let dir = get_verifier_dir();
+        for vcs in dir.context().vcs_directories().iter() {
+            let mut result = VerificationResult::new();
+            let mut mock_dir = get_test_verifier_mock_setup_dir();
+            mock_dir
+                .context_mut()
+                .vcs_directory_mut(&vcs.name())
+                .unwrap()
+                .mock_setup_component_tally_data_payload(|d| {
+                    if d.verification_card_ids.len() > 1 {
+                        d.verification_card_ids[0] = d.verification_card_ids[1].clone();
+                    } else {
+                        // If there is only one vc id, duplicate it
+                        d.verification_card_ids
+                            .push(d.verification_card_ids[0].clone());
+                    }
+                });
+            fn_verification(&mock_dir, &CONFIG_TEST, &mut result);
+            assert!(!result.has_errors(), "Failed at vcs {}", vcs.name());
+            assert!(result.has_failures(), "Failed at VCS {}", vcs.name());
+        }
+    }
+
+    #[test]
+    fn duplicate_in_other_vcs() {
+        let dir = get_verifier_dir();
+        let mut first_vc_ids = dir
+            .context()
+            .vcs_directories()
+            .iter()
+            .map(|vcs| {
+                vcs.setup_component_tally_data_payload()
+                    .unwrap()
+                    .verification_card_ids
+                    .first()
+                    .unwrap()
+                    .clone()
+            })
+            .collect::<Vec<_>>();
+        let last = first_vc_ids.pop();
+        first_vc_ids.insert(0, last.unwrap());
+        for (vcs, first_vc_id) in dir
+            .context()
+            .vcs_directories()
+            .iter()
+            .zip(first_vc_ids.iter())
+        {
+            let vc_len = vcs
+                .setup_component_tally_data_payload()
+                .unwrap()
+                .verification_card_ids
+                .len();
+            for i in 0..vc_len {
+                let mut result = VerificationResult::new();
+                let mut mock_dir = get_test_verifier_mock_setup_dir();
+                mock_dir
+                    .context_mut()
+                    .vcs_directory_mut(&vcs.name())
+                    .unwrap()
+                    .mock_setup_component_tally_data_payload(|d| {
+                        d.verification_card_ids[i] = first_vc_id.clone();
+                    });
+                fn_verification(&mock_dir, &CONFIG_TEST, &mut result);
+                assert!(!result.has_errors(), "Failed at vcs {}", vcs.name());
+                assert!(result.has_failures(), "Failed at VCS {}", vcs.name());
+            }
+        }
+    }
+
+    #[test]
+    fn change_vcs_nb_voters() {
+        let nb_vcs = get_verifier_dir()
+            .context()
+            .election_event_context_payload()
+            .unwrap()
+            .election_event_context
+            .verification_card_set_contexts
+            .len();
+        for i in 0..nb_vcs {
+            let mut result = VerificationResult::new();
+            let mut mock_dir = get_test_verifier_mock_setup_dir();
+            mock_dir
+                .context_mut()
+                .mock_election_event_context_payload(|d| {
+                    d.election_event_context.verification_card_set_contexts[i]
+                        .number_of_eligible_voters += 1
+                });
+            fn_verification(&mock_dir, &CONFIG_TEST, &mut result);
+            assert!(!result.has_errors());
+            assert!(result.has_failures());
+        }
     }
 }

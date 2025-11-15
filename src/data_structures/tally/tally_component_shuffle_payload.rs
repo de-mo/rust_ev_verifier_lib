@@ -16,20 +16,20 @@
 
 use super::{
     super::{
+        DataStructureError, DataStructureErrorImpl, VerifierDataDecode,
         common_types::{EncryptionParametersDef, Signature},
         deserialize_seq_string_base64_to_seq_integer, implement_trait_verifier_data_json_decode,
-        DataStructureError, DataStructureErrorImpl, VerifierDataDecode,
     },
-    verifiable_shuffle::{verifiy_domain_for_verifiable_shuffle, VerifiableShuffle},
     VerifierTallyDataType,
+    verifiable_shuffle::{VerifiableShuffle, verifiy_domain_for_verifiable_shuffle},
 };
 use crate::{
-    data_structures::{common_types::DecryptionProof, VerifierDataToTypeTrait, VerifierDataType},
+    data_structures::{VerifierDataToTypeTrait, VerifierDataType, common_types::DecryptionProof},
     direct_trust::{CertificateAuthority, VerifiyJSONSignatureTrait, VerifiySignatureTrait},
 };
 use rust_ev_system_library::rust_ev_crypto_primitives::prelude::{
-    elgamal::EncryptionParameters, ByteArray, DomainVerifications, HashableMessage, Integer,
-    VerifyDomainTrait,
+    ByteArray, DomainVerifications, EmptyContext, HashableMessage, Integer, VerifyDomainTrait,
+    elgamal::EncryptionParameters,
 };
 use serde::Deserialize;
 use std::sync::Arc;
@@ -68,10 +68,10 @@ pub struct DecryptedVote {
     pub message: Vec<Integer>,
 }
 
-impl VerifyDomainTrait<String> for TallyComponentShufflePayload {
-    fn new_domain_verifications() -> DomainVerifications<Self, String> {
+impl VerifyDomainTrait<EmptyContext, String> for TallyComponentShufflePayload {
+    fn new_domain_verifications() -> DomainVerifications<EmptyContext, Self, String> {
         let mut res = DomainVerifications::default();
-        res.add_verification(|v: &Self| {
+        res.add_verification(|v: &Self, _c| {
             verifiy_domain_for_verifiable_shuffle(&v.verifiable_shuffle)
         });
         res
@@ -155,7 +155,7 @@ mod test_one {
     };
     use crate::config::test::{
         get_keystore, test_ballot_box_many_votes_path, test_ballot_box_one_vote_path,
-        test_ballot_box_zero_vote_path, test_resources_path,
+        test_ballot_box_zero_vote_path, test_data_signature_hash_path,
     };
     use paste::paste;
     use rust_ev_system_library::rust_ev_crypto_primitives::prelude::{
@@ -192,43 +192,49 @@ mod test_one {
     #[test]
     fn test_argument_correct() {
         let data = get_data_res_many_votes().unwrap();
-        assert!(data
-            .verifiable_shuffle
-            .shuffle_argument
-            .product_argument
-            .c_b
-            .is_some());
-        assert!(data
-            .verifiable_shuffle
-            .shuffle_argument
-            .product_argument
-            .hadamard_argument
-            .is_some());
+        assert!(
+            data.verifiable_shuffle
+                .shuffle_argument
+                .product_argument
+                .c_b
+                .is_some()
+        );
+        assert!(
+            data.verifiable_shuffle
+                .shuffle_argument
+                .product_argument
+                .hadamard_argument
+                .is_some()
+        );
         let data = get_data_res_one_vote().unwrap();
-        assert!(data
-            .verifiable_shuffle
-            .shuffle_argument
-            .product_argument
-            .c_b
-            .is_none());
-        assert!(data
-            .verifiable_shuffle
-            .shuffle_argument
-            .product_argument
-            .hadamard_argument
-            .is_none());
+        assert!(
+            data.verifiable_shuffle
+                .shuffle_argument
+                .product_argument
+                .c_b
+                .is_none()
+        );
+        assert!(
+            data.verifiable_shuffle
+                .shuffle_argument
+                .product_argument
+                .hadamard_argument
+                .is_none()
+        );
         let data = get_data_res_zero_vote().unwrap();
-        assert!(data
-            .verifiable_shuffle
-            .shuffle_argument
-            .product_argument
-            .c_b
-            .is_none());
-        assert!(data
-            .verifiable_shuffle
-            .shuffle_argument
-            .product_argument
-            .hadamard_argument
-            .is_none());
+        assert!(
+            data.verifiable_shuffle
+                .shuffle_argument
+                .product_argument
+                .c_b
+                .is_none()
+        );
+        assert!(
+            data.verifiable_shuffle
+                .shuffle_argument
+                .product_argument
+                .hadamard_argument
+                .is_none()
+        );
     }
 }

@@ -26,7 +26,7 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
     result: &mut VerificationResult,
 ) {
     let context_dir = dir.context();
-    let payload = match context_dir.election_event_context_payload() {
+    let ee_payload = match context_dir.election_event_context_payload() {
         Ok(o) => o,
         Err(e) => {
             result.push(
@@ -36,9 +36,11 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
             return;
         }
     };
-    let vcs_contexts = &payload
+    let vcs_contexts = &ee_payload
         .election_event_context
-        .verification_card_set_contexts;
+        .verification_card_set_contexts
+        .as_slice();
+
     let total_voter = match context_dir.election_event_configuration() {
         Ok(o) => match o.get_data() {
             Ok(o) => o.register.len(),
@@ -58,6 +60,7 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
             return;
         }
     };
+
     if total_voter
         != vcs_contexts
             .iter()
@@ -74,7 +77,12 @@ pub(super) fn fn_verification<D: VerificationDirectoryTrait>(
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::config::test::{CONFIG_TEST, get_test_verifier_setup_dir as get_verifier_dir};
+    use crate::config::test::{
+        CONFIG_TEST, get_test_verifier_mock_setup_dir,
+        get_test_verifier_setup_dir as get_verifier_dir,
+    };
+    use crate::data_structures::context::election_event_configuration::Voter;
+    use crate::data_structures::mock::MockXmlTrait;
 
     #[test]
     fn test_ok() {
@@ -82,5 +90,64 @@ mod test {
         let mut result = VerificationResult::new();
         fn_verification(&dir, &CONFIG_TEST, &mut result);
         assert!(result.is_ok());
+    }
+
+    #[test]
+    fn change_vcs_nb_voters() {
+        let nb_vcs = get_verifier_dir()
+            .context()
+            .election_event_context_payload()
+            .unwrap()
+            .election_event_context
+            .verification_card_set_contexts
+            .len();
+        for i in 0..nb_vcs {
+            let mut result = VerificationResult::new();
+            let mut mock_dir = get_test_verifier_mock_setup_dir();
+            mock_dir
+                .context_mut()
+                .mock_election_event_context_payload(|d| {
+                    d.election_event_context.verification_card_set_contexts[i]
+                        .number_of_eligible_voters += 1
+                });
+            fn_verification(&mock_dir, &CONFIG_TEST, &mut result);
+            assert!(!result.has_errors());
+            assert!(result.has_failures());
+        }
+    }
+
+    #[test]
+    fn add_voter() {
+        let mut result = VerificationResult::new();
+        let mut mock_dir = get_test_verifier_mock_setup_dir();
+        mock_dir
+            .context_mut()
+            .mock_election_event_configuration(|d| {
+                d.set_data(|d| {
+                    d.register.push(Voter {
+                        voter_identification: "mck_id".to_string(),
+                        authorization: "mock_auth".to_string(),
+                    })
+                });
+            });
+        fn_verification(&mock_dir, &CONFIG_TEST, &mut result);
+        assert!(!result.has_errors());
+        assert!(result.has_failures());
+    }
+
+    #[test]
+    fn remove_voter() {
+        let mut result = VerificationResult::new();
+        let mut mock_dir = get_test_verifier_mock_setup_dir();
+        mock_dir
+            .context_mut()
+            .mock_election_event_configuration(|d| {
+                d.set_data(|d| {
+                    d.register.pop();
+                });
+            });
+        fn_verification(&mock_dir, &CONFIG_TEST, &mut result);
+        assert!(!result.has_errors());
+        assert!(result.has_failures());
     }
 }
